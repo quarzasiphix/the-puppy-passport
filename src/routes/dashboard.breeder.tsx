@@ -10,7 +10,7 @@ export const Route = createFileRoute("/dashboard/breeder")({
   component: BreederDashboardLayout,
 });
 
-const items = [
+const items: { to: any; label: string; icon: any; exact?: boolean }[] = [
   { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/breeder/litters", label: "Litters", icon: Baby },
   { to: "/dashboard/breeder/puppies", label: "Puppies", icon: Dog },
@@ -21,7 +21,7 @@ const items = [
   { to: "/dashboard/breeder/documents", label: "Documents", icon: FileText },
   { to: "/dashboard/breeder/profile", label: "Public profile", icon: User },
   { to: "/dashboard/breeder/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 function BreederDashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
