@@ -9,61 +9,310 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as PublicRouteImport } from './routes/_public'
+import { Route as PublicIndexRouteImport } from './routes/_public.index'
+import { Route as PublicTransportRouteImport } from './routes/_public.transport'
+import { Route as PublicSigninRouteImport } from './routes/_public.signin'
+import { Route as PublicPlannedLittersRouteImport } from './routes/_public.planned-litters'
+import { Route as PublicHowItWorksRouteImport } from './routes/_public.how-it-works'
+import { Route as PublicFindADogRouteImport } from './routes/_public.find-a-dog'
+import { Route as PublicCreateBreederRouteImport } from './routes/_public.create-breeder'
+import { Route as PublicBreedersRouteImport } from './routes/_public.breeders'
+import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
+import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
+import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
 
-const IndexRoute = IndexRouteImport.update({
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicTransportRoute = PublicTransportRouteImport.update({
+  id: '/transport',
+  path: '/transport',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicSigninRoute = PublicSigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicPlannedLittersRoute = PublicPlannedLittersRouteImport.update({
+  id: '/planned-litters',
+  path: '/planned-litters',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicHowItWorksRoute = PublicHowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicFindADogRoute = PublicFindADogRouteImport.update({
+  id: '/find-a-dog',
+  path: '/find-a-dog',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicCreateBreederRoute = PublicCreateBreederRouteImport.update({
+  id: '/create-breeder',
+  path: '/create-breeder',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicBreedersRoute = PublicBreedersRouteImport.update({
+  id: '/breeders',
+  path: '/breeders',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicTransportRequestRoute = PublicTransportRequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => PublicTransportRoute,
+} as any)
+const PublicPuppiesIdRoute = PublicPuppiesIdRouteImport.update({
+  id: '/puppies/$id',
+  path: '/puppies/$id',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicBreedersSlugRoute = PublicBreedersSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PublicBreedersRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof PublicIndexRoute
+  '/breeders': typeof PublicBreedersRouteWithChildren
+  '/create-breeder': typeof PublicCreateBreederRoute
+  '/find-a-dog': typeof PublicFindADogRoute
+  '/how-it-works': typeof PublicHowItWorksRoute
+  '/planned-litters': typeof PublicPlannedLittersRoute
+  '/signin': typeof PublicSigninRoute
+  '/transport': typeof PublicTransportRouteWithChildren
+  '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/puppies/$id': typeof PublicPuppiesIdRoute
+  '/transport/request': typeof PublicTransportRequestRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/breeders': typeof PublicBreedersRouteWithChildren
+  '/create-breeder': typeof PublicCreateBreederRoute
+  '/find-a-dog': typeof PublicFindADogRoute
+  '/how-it-works': typeof PublicHowItWorksRoute
+  '/planned-litters': typeof PublicPlannedLittersRoute
+  '/signin': typeof PublicSigninRoute
+  '/transport': typeof PublicTransportRouteWithChildren
+  '/': typeof PublicIndexRoute
+  '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/puppies/$id': typeof PublicPuppiesIdRoute
+  '/transport/request': typeof PublicTransportRequestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_public': typeof PublicRouteWithChildren
+  '/_public/breeders': typeof PublicBreedersRouteWithChildren
+  '/_public/create-breeder': typeof PublicCreateBreederRoute
+  '/_public/find-a-dog': typeof PublicFindADogRoute
+  '/_public/how-it-works': typeof PublicHowItWorksRoute
+  '/_public/planned-litters': typeof PublicPlannedLittersRoute
+  '/_public/signin': typeof PublicSigninRoute
+  '/_public/transport': typeof PublicTransportRouteWithChildren
+  '/_public/': typeof PublicIndexRoute
+  '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/_public/puppies/$id': typeof PublicPuppiesIdRoute
+  '/_public/transport/request': typeof PublicTransportRequestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/breeders'
+    | '/create-breeder'
+    | '/find-a-dog'
+    | '/how-it-works'
+    | '/planned-litters'
+    | '/signin'
+    | '/transport'
+    | '/breeders/$slug'
+    | '/puppies/$id'
+    | '/transport/request'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/breeders'
+    | '/create-breeder'
+    | '/find-a-dog'
+    | '/how-it-works'
+    | '/planned-litters'
+    | '/signin'
+    | '/transport'
+    | '/'
+    | '/breeders/$slug'
+    | '/puppies/$id'
+    | '/transport/request'
+  id:
+    | '__root__'
+    | '/_public'
+    | '/_public/breeders'
+    | '/_public/create-breeder'
+    | '/_public/find-a-dog'
+    | '/_public/how-it-works'
+    | '/_public/planned-litters'
+    | '/_public/signin'
+    | '/_public/transport'
+    | '/_public/'
+    | '/_public/breeders/$slug'
+    | '/_public/puppies/$id'
+    | '/_public/transport/request'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  PublicRoute: typeof PublicRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_public/': {
+      id: '/_public/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/transport': {
+      id: '/_public/transport'
+      path: '/transport'
+      fullPath: '/transport'
+      preLoaderRoute: typeof PublicTransportRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/signin': {
+      id: '/_public/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof PublicSigninRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/planned-litters': {
+      id: '/_public/planned-litters'
+      path: '/planned-litters'
+      fullPath: '/planned-litters'
+      preLoaderRoute: typeof PublicPlannedLittersRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/how-it-works': {
+      id: '/_public/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof PublicHowItWorksRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/find-a-dog': {
+      id: '/_public/find-a-dog'
+      path: '/find-a-dog'
+      fullPath: '/find-a-dog'
+      preLoaderRoute: typeof PublicFindADogRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/create-breeder': {
+      id: '/_public/create-breeder'
+      path: '/create-breeder'
+      fullPath: '/create-breeder'
+      preLoaderRoute: typeof PublicCreateBreederRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/breeders': {
+      id: '/_public/breeders'
+      path: '/breeders'
+      fullPath: '/breeders'
+      preLoaderRoute: typeof PublicBreedersRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/transport/request': {
+      id: '/_public/transport/request'
+      path: '/request'
+      fullPath: '/transport/request'
+      preLoaderRoute: typeof PublicTransportRequestRouteImport
+      parentRoute: typeof PublicTransportRoute
+    }
+    '/_public/puppies/$id': {
+      id: '/_public/puppies/$id'
+      path: '/puppies/$id'
+      fullPath: '/puppies/$id'
+      preLoaderRoute: typeof PublicPuppiesIdRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/breeders/$slug': {
+      id: '/_public/breeders/$slug'
+      path: '/$slug'
+      fullPath: '/breeders/$slug'
+      preLoaderRoute: typeof PublicBreedersSlugRouteImport
+      parentRoute: typeof PublicBreedersRoute
     }
   }
 }
 
+interface PublicBreedersRouteChildren {
+  PublicBreedersSlugRoute: typeof PublicBreedersSlugRoute
+}
+
+const PublicBreedersRouteChildren: PublicBreedersRouteChildren = {
+  PublicBreedersSlugRoute: PublicBreedersSlugRoute,
+}
+
+const PublicBreedersRouteWithChildren = PublicBreedersRoute._addFileChildren(
+  PublicBreedersRouteChildren,
+)
+
+interface PublicTransportRouteChildren {
+  PublicTransportRequestRoute: typeof PublicTransportRequestRoute
+}
+
+const PublicTransportRouteChildren: PublicTransportRouteChildren = {
+  PublicTransportRequestRoute: PublicTransportRequestRoute,
+}
+
+const PublicTransportRouteWithChildren = PublicTransportRoute._addFileChildren(
+  PublicTransportRouteChildren,
+)
+
+interface PublicRouteChildren {
+  PublicBreedersRoute: typeof PublicBreedersRouteWithChildren
+  PublicCreateBreederRoute: typeof PublicCreateBreederRoute
+  PublicFindADogRoute: typeof PublicFindADogRoute
+  PublicHowItWorksRoute: typeof PublicHowItWorksRoute
+  PublicPlannedLittersRoute: typeof PublicPlannedLittersRoute
+  PublicSigninRoute: typeof PublicSigninRoute
+  PublicTransportRoute: typeof PublicTransportRouteWithChildren
+  PublicIndexRoute: typeof PublicIndexRoute
+  PublicPuppiesIdRoute: typeof PublicPuppiesIdRoute
+}
+
+const PublicRouteChildren: PublicRouteChildren = {
+  PublicBreedersRoute: PublicBreedersRouteWithChildren,
+  PublicCreateBreederRoute: PublicCreateBreederRoute,
+  PublicFindADogRoute: PublicFindADogRoute,
+  PublicHowItWorksRoute: PublicHowItWorksRoute,
+  PublicPlannedLittersRoute: PublicPlannedLittersRoute,
+  PublicSigninRoute: PublicSigninRoute,
+  PublicTransportRoute: PublicTransportRouteWithChildren,
+  PublicIndexRoute: PublicIndexRoute,
+  PublicPuppiesIdRoute: PublicPuppiesIdRoute,
+}
+
+const PublicRouteWithChildren =
+  PublicRoute._addFileChildren(PublicRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  PublicRoute: PublicRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
