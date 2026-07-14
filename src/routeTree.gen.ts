@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as PublicIndexRouteImport } from './routes/_public.index'
+import { Route as DashboardBuyerRouteImport } from './routes/dashboard.buyer'
 import { Route as DashboardBreederRouteImport } from './routes/dashboard.breeder'
 import { Route as PublicTransportRouteImport } from './routes/_public.transport'
 import { Route as PublicSigninRouteImport } from './routes/_public.signin'
@@ -19,7 +20,16 @@ import { Route as PublicHowItWorksRouteImport } from './routes/_public.how-it-wo
 import { Route as PublicFindADogRouteImport } from './routes/_public.find-a-dog'
 import { Route as PublicCreateBreederRouteImport } from './routes/_public.create-breeder'
 import { Route as PublicBreedersRouteImport } from './routes/_public.breeders'
+import { Route as DashboardBuyerIndexRouteImport } from './routes/dashboard.buyer.index'
 import { Route as DashboardBreederIndexRouteImport } from './routes/dashboard.breeder.index'
+import { Route as DashboardBuyerTransportRouteImport } from './routes/dashboard.buyer.transport'
+import { Route as DashboardBuyerSavedRouteImport } from './routes/dashboard.buyer.saved'
+import { Route as DashboardBuyerReservationsRouteImport } from './routes/dashboard.buyer.reservations'
+import { Route as DashboardBuyerProfileRouteImport } from './routes/dashboard.buyer.profile'
+import { Route as DashboardBuyerMessagesRouteImport } from './routes/dashboard.buyer.messages'
+import { Route as DashboardBuyerFollowedRouteImport } from './routes/dashboard.buyer.followed'
+import { Route as DashboardBuyerDocumentsRouteImport } from './routes/dashboard.buyer.documents'
+import { Route as DashboardBuyerApplicationsRouteImport } from './routes/dashboard.buyer.applications'
 import { Route as DashboardBreederTransportRouteImport } from './routes/dashboard.breeder.transport'
 import { Route as DashboardBreederSettingsRouteImport } from './routes/dashboard.breeder.settings'
 import { Route as DashboardBreederReservationsRouteImport } from './routes/dashboard.breeder.reservations'
@@ -42,6 +52,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicRoute,
+} as any)
+const DashboardBuyerRoute = DashboardBuyerRouteImport.update({
+  id: '/dashboard/buyer',
+  path: '/dashboard/buyer',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardBreederRoute = DashboardBreederRouteImport.update({
   id: '/dashboard/breeder',
@@ -83,11 +98,58 @@ const PublicBreedersRoute = PublicBreedersRouteImport.update({
   path: '/breeders',
   getParentRoute: () => PublicRoute,
 } as any)
+const DashboardBuyerIndexRoute = DashboardBuyerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
 const DashboardBreederIndexRoute = DashboardBreederIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardBreederRoute,
 } as any)
+const DashboardBuyerTransportRoute = DashboardBuyerTransportRouteImport.update({
+  id: '/transport',
+  path: '/transport',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerSavedRoute = DashboardBuyerSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerReservationsRoute =
+  DashboardBuyerReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => DashboardBuyerRoute,
+  } as any)
+const DashboardBuyerProfileRoute = DashboardBuyerProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerMessagesRoute = DashboardBuyerMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerFollowedRoute = DashboardBuyerFollowedRouteImport.update({
+  id: '/followed',
+  path: '/followed',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerDocumentsRoute = DashboardBuyerDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerApplicationsRoute =
+  DashboardBuyerApplicationsRouteImport.update({
+    id: '/applications',
+    path: '/applications',
+    getParentRoute: () => DashboardBuyerRoute,
+  } as any)
 const DashboardBreederTransportRoute =
   DashboardBreederTransportRouteImport.update({
     id: '/transport',
@@ -171,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof PublicSigninRoute
   '/transport': typeof PublicTransportRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
+  '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -183,7 +246,16 @@ export interface FileRoutesByFullPath {
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
   '/dashboard/breeder/transport': typeof DashboardBreederTransportRoute
+  '/dashboard/buyer/applications': typeof DashboardBuyerApplicationsRoute
+  '/dashboard/buyer/documents': typeof DashboardBuyerDocumentsRoute
+  '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
+  '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
+  '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
+  '/dashboard/buyer/': typeof DashboardBuyerIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
 }
 export interface FileRoutesByTo {
@@ -207,7 +279,16 @@ export interface FileRoutesByTo {
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
   '/dashboard/breeder/transport': typeof DashboardBreederTransportRoute
+  '/dashboard/buyer/applications': typeof DashboardBuyerApplicationsRoute
+  '/dashboard/buyer/documents': typeof DashboardBuyerDocumentsRoute
+  '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
+  '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
+  '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
   '/dashboard/breeder': typeof DashboardBreederIndexRoute
+  '/dashboard/buyer': typeof DashboardBuyerIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
 }
 export interface FileRoutesById {
@@ -221,6 +302,7 @@ export interface FileRoutesById {
   '/_public/signin': typeof PublicSigninRoute
   '/_public/transport': typeof PublicTransportRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
+  '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
   '/_public/': typeof PublicIndexRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
@@ -234,7 +316,16 @@ export interface FileRoutesById {
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
   '/dashboard/breeder/transport': typeof DashboardBreederTransportRoute
+  '/dashboard/buyer/applications': typeof DashboardBuyerApplicationsRoute
+  '/dashboard/buyer/documents': typeof DashboardBuyerDocumentsRoute
+  '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
+  '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
+  '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
+  '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
+  '/dashboard/buyer/': typeof DashboardBuyerIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
 }
 export interface FileRouteTypes {
@@ -249,6 +340,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/transport'
     | '/dashboard/breeder'
+    | '/dashboard/buyer'
     | '/breeders/$slug'
     | '/puppies/$id'
     | '/transport/request'
@@ -261,7 +353,16 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
     | '/dashboard/breeder/transport'
+    | '/dashboard/buyer/applications'
+    | '/dashboard/buyer/documents'
+    | '/dashboard/buyer/followed'
+    | '/dashboard/buyer/messages'
+    | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/reservations'
+    | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/transport'
     | '/dashboard/breeder/'
+    | '/dashboard/buyer/'
     | '/dashboard/breeder/litters/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -285,7 +386,16 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
     | '/dashboard/breeder/transport'
+    | '/dashboard/buyer/applications'
+    | '/dashboard/buyer/documents'
+    | '/dashboard/buyer/followed'
+    | '/dashboard/buyer/messages'
+    | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/reservations'
+    | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/transport'
     | '/dashboard/breeder'
+    | '/dashboard/buyer'
     | '/dashboard/breeder/litters/$id'
   id:
     | '__root__'
@@ -298,6 +408,7 @@ export interface FileRouteTypes {
     | '/_public/signin'
     | '/_public/transport'
     | '/dashboard/breeder'
+    | '/dashboard/buyer'
     | '/_public/'
     | '/_public/breeders/$slug'
     | '/_public/puppies/$id'
@@ -311,13 +422,23 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
     | '/dashboard/breeder/transport'
+    | '/dashboard/buyer/applications'
+    | '/dashboard/buyer/documents'
+    | '/dashboard/buyer/followed'
+    | '/dashboard/buyer/messages'
+    | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/reservations'
+    | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/transport'
     | '/dashboard/breeder/'
+    | '/dashboard/buyer/'
     | '/dashboard/breeder/litters/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   PublicRoute: typeof PublicRouteWithChildren
   DashboardBreederRoute: typeof DashboardBreederRouteWithChildren
+  DashboardBuyerRoute: typeof DashboardBuyerRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +456,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/dashboard/buyer': {
+      id: '/dashboard/buyer'
+      path: '/dashboard/buyer'
+      fullPath: '/dashboard/buyer'
+      preLoaderRoute: typeof DashboardBuyerRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/breeder': {
       id: '/dashboard/breeder'
@@ -392,12 +520,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicBreedersRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/dashboard/buyer/': {
+      id: '/dashboard/buyer/'
+      path: '/'
+      fullPath: '/dashboard/buyer/'
+      preLoaderRoute: typeof DashboardBuyerIndexRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
     '/dashboard/breeder/': {
       id: '/dashboard/breeder/'
       path: '/'
       fullPath: '/dashboard/breeder/'
       preLoaderRoute: typeof DashboardBreederIndexRouteImport
       parentRoute: typeof DashboardBreederRoute
+    }
+    '/dashboard/buyer/transport': {
+      id: '/dashboard/buyer/transport'
+      path: '/transport'
+      fullPath: '/dashboard/buyer/transport'
+      preLoaderRoute: typeof DashboardBuyerTransportRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/saved': {
+      id: '/dashboard/buyer/saved'
+      path: '/saved'
+      fullPath: '/dashboard/buyer/saved'
+      preLoaderRoute: typeof DashboardBuyerSavedRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/reservations': {
+      id: '/dashboard/buyer/reservations'
+      path: '/reservations'
+      fullPath: '/dashboard/buyer/reservations'
+      preLoaderRoute: typeof DashboardBuyerReservationsRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/profile': {
+      id: '/dashboard/buyer/profile'
+      path: '/profile'
+      fullPath: '/dashboard/buyer/profile'
+      preLoaderRoute: typeof DashboardBuyerProfileRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/messages': {
+      id: '/dashboard/buyer/messages'
+      path: '/messages'
+      fullPath: '/dashboard/buyer/messages'
+      preLoaderRoute: typeof DashboardBuyerMessagesRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/followed': {
+      id: '/dashboard/buyer/followed'
+      path: '/followed'
+      fullPath: '/dashboard/buyer/followed'
+      preLoaderRoute: typeof DashboardBuyerFollowedRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/documents': {
+      id: '/dashboard/buyer/documents'
+      path: '/documents'
+      fullPath: '/dashboard/buyer/documents'
+      preLoaderRoute: typeof DashboardBuyerDocumentsRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/applications': {
+      id: '/dashboard/buyer/applications'
+      path: '/applications'
+      fullPath: '/dashboard/buyer/applications'
+      preLoaderRoute: typeof DashboardBuyerApplicationsRouteImport
+      parentRoute: typeof DashboardBuyerRoute
     }
     '/dashboard/breeder/transport': {
       id: '/dashboard/breeder/transport'
@@ -587,9 +778,38 @@ const DashboardBreederRouteChildren: DashboardBreederRouteChildren = {
 const DashboardBreederRouteWithChildren =
   DashboardBreederRoute._addFileChildren(DashboardBreederRouteChildren)
 
+interface DashboardBuyerRouteChildren {
+  DashboardBuyerApplicationsRoute: typeof DashboardBuyerApplicationsRoute
+  DashboardBuyerDocumentsRoute: typeof DashboardBuyerDocumentsRoute
+  DashboardBuyerFollowedRoute: typeof DashboardBuyerFollowedRoute
+  DashboardBuyerMessagesRoute: typeof DashboardBuyerMessagesRoute
+  DashboardBuyerProfileRoute: typeof DashboardBuyerProfileRoute
+  DashboardBuyerReservationsRoute: typeof DashboardBuyerReservationsRoute
+  DashboardBuyerSavedRoute: typeof DashboardBuyerSavedRoute
+  DashboardBuyerTransportRoute: typeof DashboardBuyerTransportRoute
+  DashboardBuyerIndexRoute: typeof DashboardBuyerIndexRoute
+}
+
+const DashboardBuyerRouteChildren: DashboardBuyerRouteChildren = {
+  DashboardBuyerApplicationsRoute: DashboardBuyerApplicationsRoute,
+  DashboardBuyerDocumentsRoute: DashboardBuyerDocumentsRoute,
+  DashboardBuyerFollowedRoute: DashboardBuyerFollowedRoute,
+  DashboardBuyerMessagesRoute: DashboardBuyerMessagesRoute,
+  DashboardBuyerProfileRoute: DashboardBuyerProfileRoute,
+  DashboardBuyerReservationsRoute: DashboardBuyerReservationsRoute,
+  DashboardBuyerSavedRoute: DashboardBuyerSavedRoute,
+  DashboardBuyerTransportRoute: DashboardBuyerTransportRoute,
+  DashboardBuyerIndexRoute: DashboardBuyerIndexRoute,
+}
+
+const DashboardBuyerRouteWithChildren = DashboardBuyerRoute._addFileChildren(
+  DashboardBuyerRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   PublicRoute: PublicRouteWithChildren,
   DashboardBreederRoute: DashboardBreederRouteWithChildren,
+  DashboardBuyerRoute: DashboardBuyerRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
