@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { plannedLitters } from "@/lib/mock-data";
+import { listPublishedLitters } from "@/lib/queries/marketplace";
 import { LitterCard } from "@/components/cards";
 
 export const Route = createFileRoute("/_public/planned-litters")({
+  loader: () => listPublishedLitters("planned"),
   head: () => ({ meta: [{ title: "Planned litters — Havenpaw" }] }),
   component: PlannedLittersPage,
 });
 
 function PlannedLittersPage() {
+  const plannedLitters = Route.useLoaderData();
   return (
     <div className="container-page py-10">
       <header className="mb-8">
@@ -18,9 +20,19 @@ function PlannedLittersPage() {
           applications have the best chance.
         </p>
       </header>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {plannedLitters.map((l) => <LitterCard key={l.id} l={l} planned />)}
-      </div>
+      {plannedLitters.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            No planned litters right now — check back soon.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {plannedLitters.map((l) => (
+            <LitterCard key={l.id} l={l} planned />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

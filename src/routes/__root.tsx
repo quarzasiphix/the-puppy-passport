@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -73,21 +75,25 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: async (): Promise<{ auth: CurrentUser | null }> => {
+    const auth = await getCurrentUser();
+    return { auth };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Havenpaw — Puppies from verified breeders" },
+      { title: "Havenpaw — Professional animal transport across Europe" },
       {
         name: "description",
         content:
-          "A trustworthy marketplace to find puppies from verified European breeders. Discover litters, apply directly, reserve and arrange safe transport.",
+          "Request individual, express, VIP or shared transport for a dog. We verify the required information, plan the journey and handle transport from pickup to handover. Also home to verified breeders, foundations and adoption listings.",
       },
-      { property: "og:title", content: "Havenpaw — Puppies from verified breeders" },
+      { property: "og:title", content: "Havenpaw — Professional animal transport across Europe" },
       {
         property: "og:description",
         content:
-          "Discover litters, apply directly to breeders, reserve your puppy and arrange safe transport across Europe.",
+          "Request animal transport across Poland and Europe, or find a dog from a verified breeder or foundation.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -130,6 +136,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
 }

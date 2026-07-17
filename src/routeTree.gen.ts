@@ -11,20 +11,68 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as PublicIndexRouteImport } from './routes/_public.index'
+import { Route as DashboardOperationsRouteImport } from './routes/dashboard.operations'
+import { Route as DashboardFoundationRouteImport } from './routes/dashboard.foundation'
+import { Route as DashboardDriverRouteImport } from './routes/dashboard.driver'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard.buyer'
 import { Route as DashboardBreederRouteImport } from './routes/dashboard.breeder'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as PublicTransportRouteImport } from './routes/_public.transport'
+import { Route as PublicTermsRouteImport } from './routes/_public.terms'
+import { Route as PublicSignupRouteImport } from './routes/_public.signup'
 import { Route as PublicSigninRouteImport } from './routes/_public.signin'
+import { Route as PublicResetPasswordRouteImport } from './routes/_public.reset-password'
+import { Route as PublicRehomeRouteImport } from './routes/_public.rehome'
+import { Route as PublicPrivacyRouteImport } from './routes/_public.privacy'
+import { Route as PublicPlannedRoutesRouteImport } from './routes/_public.planned-routes'
 import { Route as PublicPlannedLittersRouteImport } from './routes/_public.planned-litters'
 import { Route as PublicHowItWorksRouteImport } from './routes/_public.how-it-works'
+import { Route as PublicFoundationsRouteImport } from './routes/_public.foundations'
+import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
+import { Route as PublicFindYourDogRouteImport } from './routes/_public.find-your-dog'
 import { Route as PublicFindADogRouteImport } from './routes/_public.find-a-dog'
+import { Route as PublicEstimateRouteImport } from './routes/_public.estimate'
 import { Route as PublicCreateBreederRouteImport } from './routes/_public.create-breeder'
+import { Route as PublicCookiesRouteImport } from './routes/_public.cookies'
+import { Route as PublicCommunityRouteImport } from './routes/_public.community'
 import { Route as PublicBreedersRouteImport } from './routes/_public.breeders'
+import { Route as PublicBreederMapRouteImport } from './routes/_public.breeder-map'
+import { Route as PublicAdoptionsRouteImport } from './routes/_public.adoptions'
+import { Route as DashboardOperationsIndexRouteImport } from './routes/dashboard.operations.index'
+import { Route as DashboardFoundationIndexRouteImport } from './routes/dashboard.foundation.index'
+import { Route as DashboardDriverIndexRouteImport } from './routes/dashboard.driver.index'
 import { Route as DashboardBuyerIndexRouteImport } from './routes/dashboard.buyer.index'
 import { Route as DashboardBreederIndexRouteImport } from './routes/dashboard.breeder.index'
+import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
+import { Route as DashboardOperationsVehiclesRouteImport } from './routes/dashboard.operations.vehicles'
+import { Route as DashboardOperationsRoutesRouteImport } from './routes/dashboard.operations.routes'
+import { Route as DashboardOperationsReviewQueueRouteImport } from './routes/dashboard.operations.review-queue'
+import { Route as DashboardOperationsQuotationsRouteImport } from './routes/dashboard.operations.quotations'
+import { Route as DashboardOperationsProfitabilityRouteImport } from './routes/dashboard.operations.profitability'
+import { Route as DashboardOperationsNewRequestsRouteImport } from './routes/dashboard.operations.new-requests'
+import { Route as DashboardOperationsMatchingRouteImport } from './routes/dashboard.operations.matching'
+import { Route as DashboardOperationsIncidentsRouteImport } from './routes/dashboard.operations.incidents'
+import { Route as DashboardOperationsDriversRouteImport } from './routes/dashboard.operations.drivers'
+import { Route as DashboardOperationsDocumentsRouteImport } from './routes/dashboard.operations.documents'
+import { Route as DashboardOperationsDispatchRouteImport } from './routes/dashboard.operations.dispatch'
+import { Route as DashboardOperationsComplianceHoldsRouteImport } from './routes/dashboard.operations.compliance-holds'
+import { Route as DashboardOperationsCompletedRouteImport } from './routes/dashboard.operations.completed'
+import { Route as DashboardOperationsCalendarRouteImport } from './routes/dashboard.operations.calendar'
+import { Route as DashboardOperationsActiveRouteImport } from './routes/dashboard.operations.active'
+import { Route as DashboardFoundationUrgentRouteImport } from './routes/dashboard.foundation.urgent'
+import { Route as DashboardFoundationTransportRouteImport } from './routes/dashboard.foundation.transport'
+import { Route as DashboardFoundationTeamRouteImport } from './routes/dashboard.foundation.team'
+import { Route as DashboardFoundationSettingsRouteImport } from './routes/dashboard.foundation.settings'
+import { Route as DashboardFoundationProfileRouteImport } from './routes/dashboard.foundation.profile'
+import { Route as DashboardFoundationMessagesRouteImport } from './routes/dashboard.foundation.messages'
+import { Route as DashboardFoundationDocumentsRouteImport } from './routes/dashboard.foundation.documents'
+import { Route as DashboardFoundationApplicationsRouteImport } from './routes/dashboard.foundation.applications'
+import { Route as DashboardFoundationAnimalsRouteImport } from './routes/dashboard.foundation.animals'
 import { Route as DashboardBuyerTransportRouteImport } from './routes/dashboard.buyer.transport'
+import { Route as DashboardBuyerScheduledRouteImport } from './routes/dashboard.buyer.scheduled'
 import { Route as DashboardBuyerSavedRouteImport } from './routes/dashboard.buyer.saved'
 import { Route as DashboardBuyerReservationsRouteImport } from './routes/dashboard.buyer.reservations'
+import { Route as DashboardBuyerQuotationsRouteImport } from './routes/dashboard.buyer.quotations'
 import { Route as DashboardBuyerProfileRouteImport } from './routes/dashboard.buyer.profile'
 import { Route as DashboardBuyerMessagesRouteImport } from './routes/dashboard.buyer.messages'
 import { Route as DashboardBuyerFollowedRouteImport } from './routes/dashboard.buyer.followed'
@@ -35,13 +83,29 @@ import { Route as DashboardBreederSettingsRouteImport } from './routes/dashboard
 import { Route as DashboardBreederReservationsRouteImport } from './routes/dashboard.breeder.reservations'
 import { Route as DashboardBreederPuppiesRouteImport } from './routes/dashboard.breeder.puppies'
 import { Route as DashboardBreederProfileRouteImport } from './routes/dashboard.breeder.profile'
+import { Route as DashboardBreederParentDogsRouteImport } from './routes/dashboard.breeder.parent-dogs'
 import { Route as DashboardBreederMessagesRouteImport } from './routes/dashboard.breeder.messages'
 import { Route as DashboardBreederLittersRouteImport } from './routes/dashboard.breeder.litters'
 import { Route as DashboardBreederDocumentsRouteImport } from './routes/dashboard.breeder.documents'
+import { Route as DashboardBreederChampionsRouteImport } from './routes/dashboard.breeder.champions'
 import { Route as DashboardBreederApplicationsRouteImport } from './routes/dashboard.breeder.applications'
+import { Route as DashboardBreederAchievementsRouteImport } from './routes/dashboard.breeder.achievements'
+import { Route as DashboardAdminUsersRouteImport } from './routes/dashboard.admin.users'
+import { Route as DashboardAdminSettingsRouteImport } from './routes/dashboard.admin.settings'
+import { Route as DashboardAdminReportsRouteImport } from './routes/dashboard.admin.reports'
+import { Route as DashboardAdminOrganisationsRouteImport } from './routes/dashboard.admin.organisations'
+import { Route as DashboardAdminModerationRouteImport } from './routes/dashboard.admin.moderation'
+import { Route as DashboardAdminListingsRouteImport } from './routes/dashboard.admin.listings'
+import { Route as DashboardAdminFoundationVerificationRouteImport } from './routes/dashboard.admin.foundation-verification'
+import { Route as DashboardAdminBreederVerificationRouteImport } from './routes/dashboard.admin.breeder-verification'
+import { Route as DashboardAdminAuditLogsRouteImport } from './routes/dashboard.admin.audit-logs'
+import { Route as DashboardAdminAchievementVerificationRouteImport } from './routes/dashboard.admin.achievement-verification'
 import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
+import { Route as PublicAdoptionsIdRouteImport } from './routes/_public.adoptions.$id'
+import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard.operations.routes.$id'
+import { Route as DashboardOperationsRequestsIdRouteImport } from './routes/dashboard.operations.requests.$id'
 import { Route as DashboardBreederLittersIdRouteImport } from './routes/dashboard.breeder.litters.$id'
 
 const PublicRoute = PublicRouteImport.update({
@@ -53,6 +117,21 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PublicRoute,
 } as any)
+const DashboardOperationsRoute = DashboardOperationsRouteImport.update({
+  id: '/dashboard/operations',
+  path: '/dashboard/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardFoundationRoute = DashboardFoundationRouteImport.update({
+  id: '/dashboard/foundation',
+  path: '/dashboard/foundation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardDriverRoute = DashboardDriverRouteImport.update({
+  id: '/dashboard/driver',
+  path: '/dashboard/driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardBuyerRoute = DashboardBuyerRouteImport.update({
   id: '/dashboard/buyer',
   path: '/dashboard/buyer',
@@ -63,14 +142,49 @@ const DashboardBreederRoute = DashboardBreederRouteImport.update({
   path: '/dashboard/breeder',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/dashboard/admin',
+  path: '/dashboard/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicTransportRoute = PublicTransportRouteImport.update({
   id: '/transport',
   path: '/transport',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicTermsRoute = PublicTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicSignupRoute = PublicSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicSigninRoute = PublicSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicResetPasswordRoute = PublicResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicRehomeRoute = PublicRehomeRouteImport.update({
+  id: '/rehome',
+  path: '/rehome',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicPrivacyRoute = PublicPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicPlannedRoutesRoute = PublicPlannedRoutesRouteImport.update({
+  id: '/planned-routes',
+  path: '/planned-routes',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicPlannedLittersRoute = PublicPlannedLittersRouteImport.update({
@@ -83,9 +197,29 @@ const PublicHowItWorksRoute = PublicHowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicFoundationsRoute = PublicFoundationsRouteImport.update({
+  id: '/foundations',
+  path: '/foundations',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicFindYourDogRoute = PublicFindYourDogRouteImport.update({
+  id: '/find-your-dog',
+  path: '/find-your-dog',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicFindADogRoute = PublicFindADogRouteImport.update({
   id: '/find-a-dog',
   path: '/find-a-dog',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicEstimateRoute = PublicEstimateRouteImport.update({
+  id: '/estimate',
+  path: '/estimate',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicCreateBreederRoute = PublicCreateBreederRouteImport.update({
@@ -93,10 +227,47 @@ const PublicCreateBreederRoute = PublicCreateBreederRouteImport.update({
   path: '/create-breeder',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicCookiesRoute = PublicCookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicCommunityRoute = PublicCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicBreedersRoute = PublicBreedersRouteImport.update({
   id: '/breeders',
   path: '/breeders',
   getParentRoute: () => PublicRoute,
+} as any)
+const PublicBreederMapRoute = PublicBreederMapRouteImport.update({
+  id: '/breeder-map',
+  path: '/breeder-map',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicAdoptionsRoute = PublicAdoptionsRouteImport.update({
+  id: '/adoptions',
+  path: '/adoptions',
+  getParentRoute: () => PublicRoute,
+} as any)
+const DashboardOperationsIndexRoute =
+  DashboardOperationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardFoundationIndexRoute =
+  DashboardFoundationIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardDriverIndexRoute = DashboardDriverIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardDriverRoute,
 } as any)
 const DashboardBuyerIndexRoute = DashboardBuyerIndexRouteImport.update({
   id: '/',
@@ -108,9 +279,162 @@ const DashboardBreederIndexRoute = DashboardBreederIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardBreederRoute,
 } as any)
+const DashboardAdminIndexRoute = DashboardAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardOperationsVehiclesRoute =
+  DashboardOperationsVehiclesRouteImport.update({
+    id: '/vehicles',
+    path: '/vehicles',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsRoutesRoute =
+  DashboardOperationsRoutesRouteImport.update({
+    id: '/routes',
+    path: '/routes',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsReviewQueueRoute =
+  DashboardOperationsReviewQueueRouteImport.update({
+    id: '/review-queue',
+    path: '/review-queue',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsQuotationsRoute =
+  DashboardOperationsQuotationsRouteImport.update({
+    id: '/quotations',
+    path: '/quotations',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsProfitabilityRoute =
+  DashboardOperationsProfitabilityRouteImport.update({
+    id: '/profitability',
+    path: '/profitability',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsNewRequestsRoute =
+  DashboardOperationsNewRequestsRouteImport.update({
+    id: '/new-requests',
+    path: '/new-requests',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsMatchingRoute =
+  DashboardOperationsMatchingRouteImport.update({
+    id: '/matching',
+    path: '/matching',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsIncidentsRoute =
+  DashboardOperationsIncidentsRouteImport.update({
+    id: '/incidents',
+    path: '/incidents',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsDriversRoute =
+  DashboardOperationsDriversRouteImport.update({
+    id: '/drivers',
+    path: '/drivers',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsDocumentsRoute =
+  DashboardOperationsDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsDispatchRoute =
+  DashboardOperationsDispatchRouteImport.update({
+    id: '/dispatch',
+    path: '/dispatch',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsComplianceHoldsRoute =
+  DashboardOperationsComplianceHoldsRouteImport.update({
+    id: '/compliance-holds',
+    path: '/compliance-holds',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsCompletedRoute =
+  DashboardOperationsCompletedRouteImport.update({
+    id: '/completed',
+    path: '/completed',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsCalendarRoute =
+  DashboardOperationsCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsActiveRoute =
+  DashboardOperationsActiveRouteImport.update({
+    id: '/active',
+    path: '/active',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardFoundationUrgentRoute =
+  DashboardFoundationUrgentRouteImport.update({
+    id: '/urgent',
+    path: '/urgent',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationTransportRoute =
+  DashboardFoundationTransportRouteImport.update({
+    id: '/transport',
+    path: '/transport',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationTeamRoute = DashboardFoundationTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => DashboardFoundationRoute,
+} as any)
+const DashboardFoundationSettingsRoute =
+  DashboardFoundationSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationProfileRoute =
+  DashboardFoundationProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationMessagesRoute =
+  DashboardFoundationMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationDocumentsRoute =
+  DashboardFoundationDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationApplicationsRoute =
+  DashboardFoundationApplicationsRouteImport.update({
+    id: '/applications',
+    path: '/applications',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationAnimalsRoute =
+  DashboardFoundationAnimalsRouteImport.update({
+    id: '/animals',
+    path: '/animals',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
 const DashboardBuyerTransportRoute = DashboardBuyerTransportRouteImport.update({
   id: '/transport',
   path: '/transport',
+  getParentRoute: () => DashboardBuyerRoute,
+} as any)
+const DashboardBuyerScheduledRoute = DashboardBuyerScheduledRouteImport.update({
+  id: '/scheduled',
+  path: '/scheduled',
   getParentRoute: () => DashboardBuyerRoute,
 } as any)
 const DashboardBuyerSavedRoute = DashboardBuyerSavedRouteImport.update({
@@ -122,6 +446,12 @@ const DashboardBuyerReservationsRoute =
   DashboardBuyerReservationsRouteImport.update({
     id: '/reservations',
     path: '/reservations',
+    getParentRoute: () => DashboardBuyerRoute,
+  } as any)
+const DashboardBuyerQuotationsRoute =
+  DashboardBuyerQuotationsRouteImport.update({
+    id: '/quotations',
+    path: '/quotations',
     getParentRoute: () => DashboardBuyerRoute,
   } as any)
 const DashboardBuyerProfileRoute = DashboardBuyerProfileRouteImport.update({
@@ -178,6 +508,12 @@ const DashboardBreederProfileRoute = DashboardBreederProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => DashboardBreederRoute,
 } as any)
+const DashboardBreederParentDogsRoute =
+  DashboardBreederParentDogsRouteImport.update({
+    id: '/parent-dogs',
+    path: '/parent-dogs',
+    getParentRoute: () => DashboardBreederRoute,
+  } as any)
 const DashboardBreederMessagesRoute =
   DashboardBreederMessagesRouteImport.update({
     id: '/messages',
@@ -195,11 +531,78 @@ const DashboardBreederDocumentsRoute =
     path: '/documents',
     getParentRoute: () => DashboardBreederRoute,
   } as any)
+const DashboardBreederChampionsRoute =
+  DashboardBreederChampionsRouteImport.update({
+    id: '/champions',
+    path: '/champions',
+    getParentRoute: () => DashboardBreederRoute,
+  } as any)
 const DashboardBreederApplicationsRoute =
   DashboardBreederApplicationsRouteImport.update({
     id: '/applications',
     path: '/applications',
     getParentRoute: () => DashboardBreederRoute,
+  } as any)
+const DashboardBreederAchievementsRoute =
+  DashboardBreederAchievementsRouteImport.update({
+    id: '/achievements',
+    path: '/achievements',
+    getParentRoute: () => DashboardBreederRoute,
+  } as any)
+const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminSettingsRoute = DashboardAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminReportsRoute = DashboardAdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminOrganisationsRoute =
+  DashboardAdminOrganisationsRouteImport.update({
+    id: '/organisations',
+    path: '/organisations',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminModerationRoute =
+  DashboardAdminModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminListingsRoute = DashboardAdminListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminFoundationVerificationRoute =
+  DashboardAdminFoundationVerificationRouteImport.update({
+    id: '/foundation-verification',
+    path: '/foundation-verification',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminBreederVerificationRoute =
+  DashboardAdminBreederVerificationRouteImport.update({
+    id: '/breeder-verification',
+    path: '/breeder-verification',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
+const DashboardAdminAuditLogsRoute = DashboardAdminAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
+  getParentRoute: () => DashboardAdminRoute,
+} as any)
+const DashboardAdminAchievementVerificationRoute =
+  DashboardAdminAchievementVerificationRouteImport.update({
+    id: '/achievement-verification',
+    path: '/achievement-verification',
+    getParentRoute: () => DashboardAdminRoute,
   } as any)
 const PublicTransportRequestRoute = PublicTransportRequestRouteImport.update({
   id: '/request',
@@ -216,6 +619,23 @@ const PublicBreedersSlugRoute = PublicBreedersSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PublicBreedersRoute,
 } as any)
+const PublicAdoptionsIdRoute = PublicAdoptionsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PublicAdoptionsRoute,
+} as any)
+const DashboardOperationsRoutesIdRoute =
+  DashboardOperationsRoutesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardOperationsRoutesRoute,
+  } as any)
+const DashboardOperationsRequestsIdRoute =
+  DashboardOperationsRequestsIdRouteImport.update({
+    id: '/requests/$id',
+    path: '/requests/$id',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
 const DashboardBreederLittersIdRoute =
   DashboardBreederLittersIdRouteImport.update({
     id: '/$id',
@@ -225,22 +645,54 @@ const DashboardBreederLittersIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/adoptions': typeof PublicAdoptionsRouteWithChildren
+  '/breeder-map': typeof PublicBreederMapRoute
   '/breeders': typeof PublicBreedersRouteWithChildren
+  '/community': typeof PublicCommunityRoute
+  '/cookies': typeof PublicCookiesRoute
   '/create-breeder': typeof PublicCreateBreederRoute
+  '/estimate': typeof PublicEstimateRoute
   '/find-a-dog': typeof PublicFindADogRoute
+  '/find-your-dog': typeof PublicFindYourDogRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
+  '/foundations': typeof PublicFoundationsRoute
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
+  '/planned-routes': typeof PublicPlannedRoutesRoute
+  '/privacy': typeof PublicPrivacyRoute
+  '/rehome': typeof PublicRehomeRoute
+  '/reset-password': typeof PublicResetPasswordRoute
   '/signin': typeof PublicSigninRoute
+  '/signup': typeof PublicSignupRoute
+  '/terms': typeof PublicTermsRoute
   '/transport': typeof PublicTransportRouteWithChildren
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
+  '/dashboard/driver': typeof DashboardDriverRouteWithChildren
+  '/dashboard/foundation': typeof DashboardFoundationRouteWithChildren
+  '/dashboard/operations': typeof DashboardOperationsRouteWithChildren
+  '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
+  '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
+  '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
+  '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
+  '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
+  '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
+  '/dashboard/admin/reports': typeof DashboardAdminReportsRoute
+  '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/breeder/achievements': typeof DashboardBreederAchievementsRoute
   '/dashboard/breeder/applications': typeof DashboardBreederApplicationsRoute
+  '/dashboard/breeder/champions': typeof DashboardBreederChampionsRoute
   '/dashboard/breeder/documents': typeof DashboardBreederDocumentsRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
+  '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -251,29 +703,89 @@ export interface FileRoutesByFullPath {
   '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
   '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
   '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/quotations': typeof DashboardBuyerQuotationsRoute
   '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/scheduled': typeof DashboardBuyerScheduledRoute
   '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
+  '/dashboard/foundation/animals': typeof DashboardFoundationAnimalsRoute
+  '/dashboard/foundation/applications': typeof DashboardFoundationApplicationsRoute
+  '/dashboard/foundation/documents': typeof DashboardFoundationDocumentsRoute
+  '/dashboard/foundation/messages': typeof DashboardFoundationMessagesRoute
+  '/dashboard/foundation/profile': typeof DashboardFoundationProfileRoute
+  '/dashboard/foundation/settings': typeof DashboardFoundationSettingsRoute
+  '/dashboard/foundation/team': typeof DashboardFoundationTeamRoute
+  '/dashboard/foundation/transport': typeof DashboardFoundationTransportRoute
+  '/dashboard/foundation/urgent': typeof DashboardFoundationUrgentRoute
+  '/dashboard/operations/active': typeof DashboardOperationsActiveRoute
+  '/dashboard/operations/calendar': typeof DashboardOperationsCalendarRoute
+  '/dashboard/operations/completed': typeof DashboardOperationsCompletedRoute
+  '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
+  '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
+  '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
+  '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
+  '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
+  '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
+  '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
+  '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
   '/dashboard/buyer/': typeof DashboardBuyerIndexRoute
+  '/dashboard/driver/': typeof DashboardDriverIndexRoute
+  '/dashboard/foundation/': typeof DashboardFoundationIndexRoute
+  '/dashboard/operations/': typeof DashboardOperationsIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
+  '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
 }
 export interface FileRoutesByTo {
+  '/adoptions': typeof PublicAdoptionsRouteWithChildren
+  '/breeder-map': typeof PublicBreederMapRoute
   '/breeders': typeof PublicBreedersRouteWithChildren
+  '/community': typeof PublicCommunityRoute
+  '/cookies': typeof PublicCookiesRoute
   '/create-breeder': typeof PublicCreateBreederRoute
+  '/estimate': typeof PublicEstimateRoute
   '/find-a-dog': typeof PublicFindADogRoute
+  '/find-your-dog': typeof PublicFindYourDogRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
+  '/foundations': typeof PublicFoundationsRoute
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
+  '/planned-routes': typeof PublicPlannedRoutesRoute
+  '/privacy': typeof PublicPrivacyRoute
+  '/rehome': typeof PublicRehomeRoute
+  '/reset-password': typeof PublicResetPasswordRoute
   '/signin': typeof PublicSigninRoute
+  '/signup': typeof PublicSignupRoute
+  '/terms': typeof PublicTermsRoute
   '/transport': typeof PublicTransportRouteWithChildren
   '/': typeof PublicIndexRoute
+  '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
+  '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
+  '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
+  '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
+  '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
+  '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
+  '/dashboard/admin/reports': typeof DashboardAdminReportsRoute
+  '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/breeder/achievements': typeof DashboardBreederAchievementsRoute
   '/dashboard/breeder/applications': typeof DashboardBreederApplicationsRoute
+  '/dashboard/breeder/champions': typeof DashboardBreederChampionsRoute
   '/dashboard/breeder/documents': typeof DashboardBreederDocumentsRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
+  '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -284,33 +796,97 @@ export interface FileRoutesByTo {
   '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
   '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
   '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/quotations': typeof DashboardBuyerQuotationsRoute
   '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/scheduled': typeof DashboardBuyerScheduledRoute
   '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
+  '/dashboard/foundation/animals': typeof DashboardFoundationAnimalsRoute
+  '/dashboard/foundation/applications': typeof DashboardFoundationApplicationsRoute
+  '/dashboard/foundation/documents': typeof DashboardFoundationDocumentsRoute
+  '/dashboard/foundation/messages': typeof DashboardFoundationMessagesRoute
+  '/dashboard/foundation/profile': typeof DashboardFoundationProfileRoute
+  '/dashboard/foundation/settings': typeof DashboardFoundationSettingsRoute
+  '/dashboard/foundation/team': typeof DashboardFoundationTeamRoute
+  '/dashboard/foundation/transport': typeof DashboardFoundationTransportRoute
+  '/dashboard/foundation/urgent': typeof DashboardFoundationUrgentRoute
+  '/dashboard/operations/active': typeof DashboardOperationsActiveRoute
+  '/dashboard/operations/calendar': typeof DashboardOperationsCalendarRoute
+  '/dashboard/operations/completed': typeof DashboardOperationsCompletedRoute
+  '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
+  '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
+  '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
+  '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
+  '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
+  '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
+  '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
+  '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/breeder': typeof DashboardBreederIndexRoute
   '/dashboard/buyer': typeof DashboardBuyerIndexRoute
+  '/dashboard/driver': typeof DashboardDriverIndexRoute
+  '/dashboard/foundation': typeof DashboardFoundationIndexRoute
+  '/dashboard/operations': typeof DashboardOperationsIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
+  '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_public': typeof PublicRouteWithChildren
+  '/_public/adoptions': typeof PublicAdoptionsRouteWithChildren
+  '/_public/breeder-map': typeof PublicBreederMapRoute
   '/_public/breeders': typeof PublicBreedersRouteWithChildren
+  '/_public/community': typeof PublicCommunityRoute
+  '/_public/cookies': typeof PublicCookiesRoute
   '/_public/create-breeder': typeof PublicCreateBreederRoute
+  '/_public/estimate': typeof PublicEstimateRoute
   '/_public/find-a-dog': typeof PublicFindADogRoute
+  '/_public/find-your-dog': typeof PublicFindYourDogRoute
+  '/_public/forgot-password': typeof PublicForgotPasswordRoute
+  '/_public/foundations': typeof PublicFoundationsRoute
   '/_public/how-it-works': typeof PublicHowItWorksRoute
   '/_public/planned-litters': typeof PublicPlannedLittersRoute
+  '/_public/planned-routes': typeof PublicPlannedRoutesRoute
+  '/_public/privacy': typeof PublicPrivacyRoute
+  '/_public/rehome': typeof PublicRehomeRoute
+  '/_public/reset-password': typeof PublicResetPasswordRoute
   '/_public/signin': typeof PublicSigninRoute
+  '/_public/signup': typeof PublicSignupRoute
+  '/_public/terms': typeof PublicTermsRoute
   '/_public/transport': typeof PublicTransportRouteWithChildren
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
+  '/dashboard/driver': typeof DashboardDriverRouteWithChildren
+  '/dashboard/foundation': typeof DashboardFoundationRouteWithChildren
+  '/dashboard/operations': typeof DashboardOperationsRouteWithChildren
   '/_public/': typeof PublicIndexRoute
+  '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
+  '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
+  '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
+  '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
+  '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
+  '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
+  '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
+  '/dashboard/admin/reports': typeof DashboardAdminReportsRoute
+  '/dashboard/admin/settings': typeof DashboardAdminSettingsRoute
+  '/dashboard/admin/users': typeof DashboardAdminUsersRoute
+  '/dashboard/breeder/achievements': typeof DashboardBreederAchievementsRoute
   '/dashboard/breeder/applications': typeof DashboardBreederApplicationsRoute
+  '/dashboard/breeder/champions': typeof DashboardBreederChampionsRoute
   '/dashboard/breeder/documents': typeof DashboardBreederDocumentsRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
+  '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -321,33 +897,97 @@ export interface FileRoutesById {
   '/dashboard/buyer/followed': typeof DashboardBuyerFollowedRoute
   '/dashboard/buyer/messages': typeof DashboardBuyerMessagesRoute
   '/dashboard/buyer/profile': typeof DashboardBuyerProfileRoute
+  '/dashboard/buyer/quotations': typeof DashboardBuyerQuotationsRoute
   '/dashboard/buyer/reservations': typeof DashboardBuyerReservationsRoute
   '/dashboard/buyer/saved': typeof DashboardBuyerSavedRoute
+  '/dashboard/buyer/scheduled': typeof DashboardBuyerScheduledRoute
   '/dashboard/buyer/transport': typeof DashboardBuyerTransportRoute
+  '/dashboard/foundation/animals': typeof DashboardFoundationAnimalsRoute
+  '/dashboard/foundation/applications': typeof DashboardFoundationApplicationsRoute
+  '/dashboard/foundation/documents': typeof DashboardFoundationDocumentsRoute
+  '/dashboard/foundation/messages': typeof DashboardFoundationMessagesRoute
+  '/dashboard/foundation/profile': typeof DashboardFoundationProfileRoute
+  '/dashboard/foundation/settings': typeof DashboardFoundationSettingsRoute
+  '/dashboard/foundation/team': typeof DashboardFoundationTeamRoute
+  '/dashboard/foundation/transport': typeof DashboardFoundationTransportRoute
+  '/dashboard/foundation/urgent': typeof DashboardFoundationUrgentRoute
+  '/dashboard/operations/active': typeof DashboardOperationsActiveRoute
+  '/dashboard/operations/calendar': typeof DashboardOperationsCalendarRoute
+  '/dashboard/operations/completed': typeof DashboardOperationsCompletedRoute
+  '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
+  '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
+  '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
+  '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
+  '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
+  '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
+  '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
+  '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
   '/dashboard/buyer/': typeof DashboardBuyerIndexRoute
+  '/dashboard/driver/': typeof DashboardDriverIndexRoute
+  '/dashboard/foundation/': typeof DashboardFoundationIndexRoute
+  '/dashboard/operations/': typeof DashboardOperationsIndexRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
+  '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/adoptions'
+    | '/breeder-map'
     | '/breeders'
+    | '/community'
+    | '/cookies'
     | '/create-breeder'
+    | '/estimate'
     | '/find-a-dog'
+    | '/find-your-dog'
+    | '/forgot-password'
+    | '/foundations'
     | '/how-it-works'
     | '/planned-litters'
+    | '/planned-routes'
+    | '/privacy'
+    | '/rehome'
+    | '/reset-password'
     | '/signin'
+    | '/signup'
+    | '/terms'
     | '/transport'
+    | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
+    | '/dashboard/driver'
+    | '/dashboard/foundation'
+    | '/dashboard/operations'
+    | '/adoptions/$id'
     | '/breeders/$slug'
     | '/puppies/$id'
     | '/transport/request'
+    | '/dashboard/admin/achievement-verification'
+    | '/dashboard/admin/audit-logs'
+    | '/dashboard/admin/breeder-verification'
+    | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/listings'
+    | '/dashboard/admin/moderation'
+    | '/dashboard/admin/organisations'
+    | '/dashboard/admin/reports'
+    | '/dashboard/admin/settings'
+    | '/dashboard/admin/users'
+    | '/dashboard/breeder/achievements'
     | '/dashboard/breeder/applications'
+    | '/dashboard/breeder/champions'
     | '/dashboard/breeder/documents'
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
+    | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -358,29 +998,89 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/followed'
     | '/dashboard/buyer/messages'
     | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/quotations'
     | '/dashboard/buyer/reservations'
     | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/scheduled'
     | '/dashboard/buyer/transport'
+    | '/dashboard/foundation/animals'
+    | '/dashboard/foundation/applications'
+    | '/dashboard/foundation/documents'
+    | '/dashboard/foundation/messages'
+    | '/dashboard/foundation/profile'
+    | '/dashboard/foundation/settings'
+    | '/dashboard/foundation/team'
+    | '/dashboard/foundation/transport'
+    | '/dashboard/foundation/urgent'
+    | '/dashboard/operations/active'
+    | '/dashboard/operations/calendar'
+    | '/dashboard/operations/completed'
+    | '/dashboard/operations/compliance-holds'
+    | '/dashboard/operations/dispatch'
+    | '/dashboard/operations/documents'
+    | '/dashboard/operations/drivers'
+    | '/dashboard/operations/incidents'
+    | '/dashboard/operations/matching'
+    | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/profitability'
+    | '/dashboard/operations/quotations'
+    | '/dashboard/operations/review-queue'
+    | '/dashboard/operations/routes'
+    | '/dashboard/operations/vehicles'
+    | '/dashboard/admin/'
     | '/dashboard/breeder/'
     | '/dashboard/buyer/'
+    | '/dashboard/driver/'
+    | '/dashboard/foundation/'
+    | '/dashboard/operations/'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/operations/requests/$id'
+    | '/dashboard/operations/routes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/adoptions'
+    | '/breeder-map'
     | '/breeders'
+    | '/community'
+    | '/cookies'
     | '/create-breeder'
+    | '/estimate'
     | '/find-a-dog'
+    | '/find-your-dog'
+    | '/forgot-password'
+    | '/foundations'
     | '/how-it-works'
     | '/planned-litters'
+    | '/planned-routes'
+    | '/privacy'
+    | '/rehome'
+    | '/reset-password'
     | '/signin'
+    | '/signup'
+    | '/terms'
     | '/transport'
     | '/'
+    | '/adoptions/$id'
     | '/breeders/$slug'
     | '/puppies/$id'
     | '/transport/request'
+    | '/dashboard/admin/achievement-verification'
+    | '/dashboard/admin/audit-logs'
+    | '/dashboard/admin/breeder-verification'
+    | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/listings'
+    | '/dashboard/admin/moderation'
+    | '/dashboard/admin/organisations'
+    | '/dashboard/admin/reports'
+    | '/dashboard/admin/settings'
+    | '/dashboard/admin/users'
+    | '/dashboard/breeder/achievements'
     | '/dashboard/breeder/applications'
+    | '/dashboard/breeder/champions'
     | '/dashboard/breeder/documents'
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
+    | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -391,32 +1091,96 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/followed'
     | '/dashboard/buyer/messages'
     | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/quotations'
     | '/dashboard/buyer/reservations'
     | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/scheduled'
     | '/dashboard/buyer/transport'
+    | '/dashboard/foundation/animals'
+    | '/dashboard/foundation/applications'
+    | '/dashboard/foundation/documents'
+    | '/dashboard/foundation/messages'
+    | '/dashboard/foundation/profile'
+    | '/dashboard/foundation/settings'
+    | '/dashboard/foundation/team'
+    | '/dashboard/foundation/transport'
+    | '/dashboard/foundation/urgent'
+    | '/dashboard/operations/active'
+    | '/dashboard/operations/calendar'
+    | '/dashboard/operations/completed'
+    | '/dashboard/operations/compliance-holds'
+    | '/dashboard/operations/dispatch'
+    | '/dashboard/operations/documents'
+    | '/dashboard/operations/drivers'
+    | '/dashboard/operations/incidents'
+    | '/dashboard/operations/matching'
+    | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/profitability'
+    | '/dashboard/operations/quotations'
+    | '/dashboard/operations/review-queue'
+    | '/dashboard/operations/routes'
+    | '/dashboard/operations/vehicles'
+    | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
+    | '/dashboard/driver'
+    | '/dashboard/foundation'
+    | '/dashboard/operations'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/operations/requests/$id'
+    | '/dashboard/operations/routes/$id'
   id:
     | '__root__'
     | '/_public'
+    | '/_public/adoptions'
+    | '/_public/breeder-map'
     | '/_public/breeders'
+    | '/_public/community'
+    | '/_public/cookies'
     | '/_public/create-breeder'
+    | '/_public/estimate'
     | '/_public/find-a-dog'
+    | '/_public/find-your-dog'
+    | '/_public/forgot-password'
+    | '/_public/foundations'
     | '/_public/how-it-works'
     | '/_public/planned-litters'
+    | '/_public/planned-routes'
+    | '/_public/privacy'
+    | '/_public/rehome'
+    | '/_public/reset-password'
     | '/_public/signin'
+    | '/_public/signup'
+    | '/_public/terms'
     | '/_public/transport'
+    | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
+    | '/dashboard/driver'
+    | '/dashboard/foundation'
+    | '/dashboard/operations'
     | '/_public/'
+    | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
+    | '/dashboard/admin/achievement-verification'
+    | '/dashboard/admin/audit-logs'
+    | '/dashboard/admin/breeder-verification'
+    | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/listings'
+    | '/dashboard/admin/moderation'
+    | '/dashboard/admin/organisations'
+    | '/dashboard/admin/reports'
+    | '/dashboard/admin/settings'
+    | '/dashboard/admin/users'
+    | '/dashboard/breeder/achievements'
     | '/dashboard/breeder/applications'
+    | '/dashboard/breeder/champions'
     | '/dashboard/breeder/documents'
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
+    | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -427,18 +1191,54 @@ export interface FileRouteTypes {
     | '/dashboard/buyer/followed'
     | '/dashboard/buyer/messages'
     | '/dashboard/buyer/profile'
+    | '/dashboard/buyer/quotations'
     | '/dashboard/buyer/reservations'
     | '/dashboard/buyer/saved'
+    | '/dashboard/buyer/scheduled'
     | '/dashboard/buyer/transport'
+    | '/dashboard/foundation/animals'
+    | '/dashboard/foundation/applications'
+    | '/dashboard/foundation/documents'
+    | '/dashboard/foundation/messages'
+    | '/dashboard/foundation/profile'
+    | '/dashboard/foundation/settings'
+    | '/dashboard/foundation/team'
+    | '/dashboard/foundation/transport'
+    | '/dashboard/foundation/urgent'
+    | '/dashboard/operations/active'
+    | '/dashboard/operations/calendar'
+    | '/dashboard/operations/completed'
+    | '/dashboard/operations/compliance-holds'
+    | '/dashboard/operations/dispatch'
+    | '/dashboard/operations/documents'
+    | '/dashboard/operations/drivers'
+    | '/dashboard/operations/incidents'
+    | '/dashboard/operations/matching'
+    | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/profitability'
+    | '/dashboard/operations/quotations'
+    | '/dashboard/operations/review-queue'
+    | '/dashboard/operations/routes'
+    | '/dashboard/operations/vehicles'
+    | '/dashboard/admin/'
     | '/dashboard/breeder/'
     | '/dashboard/buyer/'
+    | '/dashboard/driver/'
+    | '/dashboard/foundation/'
+    | '/dashboard/operations/'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/operations/requests/$id'
+    | '/dashboard/operations/routes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   PublicRoute: typeof PublicRouteWithChildren
+  DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardBreederRoute: typeof DashboardBreederRouteWithChildren
   DashboardBuyerRoute: typeof DashboardBuyerRouteWithChildren
+  DashboardDriverRoute: typeof DashboardDriverRouteWithChildren
+  DashboardFoundationRoute: typeof DashboardFoundationRouteWithChildren
+  DashboardOperationsRoute: typeof DashboardOperationsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -457,6 +1257,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/dashboard/operations': {
+      id: '/dashboard/operations'
+      path: '/dashboard/operations'
+      fullPath: '/dashboard/operations'
+      preLoaderRoute: typeof DashboardOperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/foundation': {
+      id: '/dashboard/foundation'
+      path: '/dashboard/foundation'
+      fullPath: '/dashboard/foundation'
+      preLoaderRoute: typeof DashboardFoundationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/driver': {
+      id: '/dashboard/driver'
+      path: '/dashboard/driver'
+      fullPath: '/dashboard/driver'
+      preLoaderRoute: typeof DashboardDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/buyer': {
       id: '/dashboard/buyer'
       path: '/dashboard/buyer'
@@ -471,6 +1292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/dashboard/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_public/transport': {
       id: '/_public/transport'
       path: '/transport'
@@ -478,11 +1306,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicTransportRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/terms': {
+      id: '/_public/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof PublicTermsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/signup': {
+      id: '/_public/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof PublicSignupRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/signin': {
       id: '/_public/signin'
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof PublicSigninRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/reset-password': {
+      id: '/_public/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof PublicResetPasswordRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/rehome': {
+      id: '/_public/rehome'
+      path: '/rehome'
+      fullPath: '/rehome'
+      preLoaderRoute: typeof PublicRehomeRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/privacy': {
+      id: '/_public/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PublicPrivacyRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/planned-routes': {
+      id: '/_public/planned-routes'
+      path: '/planned-routes'
+      fullPath: '/planned-routes'
+      preLoaderRoute: typeof PublicPlannedRoutesRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/planned-litters': {
@@ -499,11 +1369,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicHowItWorksRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/foundations': {
+      id: '/_public/foundations'
+      path: '/foundations'
+      fullPath: '/foundations'
+      preLoaderRoute: typeof PublicFoundationsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/forgot-password': {
+      id: '/_public/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof PublicForgotPasswordRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/find-your-dog': {
+      id: '/_public/find-your-dog'
+      path: '/find-your-dog'
+      fullPath: '/find-your-dog'
+      preLoaderRoute: typeof PublicFindYourDogRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/find-a-dog': {
       id: '/_public/find-a-dog'
       path: '/find-a-dog'
       fullPath: '/find-a-dog'
       preLoaderRoute: typeof PublicFindADogRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/estimate': {
+      id: '/_public/estimate'
+      path: '/estimate'
+      fullPath: '/estimate'
+      preLoaderRoute: typeof PublicEstimateRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/create-breeder': {
@@ -513,12 +1411,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicCreateBreederRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/cookies': {
+      id: '/_public/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof PublicCookiesRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/community': {
+      id: '/_public/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof PublicCommunityRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/breeders': {
       id: '/_public/breeders'
       path: '/breeders'
       fullPath: '/breeders'
       preLoaderRoute: typeof PublicBreedersRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_public/breeder-map': {
+      id: '/_public/breeder-map'
+      path: '/breeder-map'
+      fullPath: '/breeder-map'
+      preLoaderRoute: typeof PublicBreederMapRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/adoptions': {
+      id: '/_public/adoptions'
+      path: '/adoptions'
+      fullPath: '/adoptions'
+      preLoaderRoute: typeof PublicAdoptionsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/dashboard/operations/': {
+      id: '/dashboard/operations/'
+      path: '/'
+      fullPath: '/dashboard/operations/'
+      preLoaderRoute: typeof DashboardOperationsIndexRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/foundation/': {
+      id: '/dashboard/foundation/'
+      path: '/'
+      fullPath: '/dashboard/foundation/'
+      preLoaderRoute: typeof DashboardFoundationIndexRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/driver/': {
+      id: '/dashboard/driver/'
+      path: '/'
+      fullPath: '/dashboard/driver/'
+      preLoaderRoute: typeof DashboardDriverIndexRouteImport
+      parentRoute: typeof DashboardDriverRoute
     }
     '/dashboard/buyer/': {
       id: '/dashboard/buyer/'
@@ -534,11 +1481,193 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederIndexRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
+    '/dashboard/admin/': {
+      id: '/dashboard/admin/'
+      path: '/'
+      fullPath: '/dashboard/admin/'
+      preLoaderRoute: typeof DashboardAdminIndexRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/operations/vehicles': {
+      id: '/dashboard/operations/vehicles'
+      path: '/vehicles'
+      fullPath: '/dashboard/operations/vehicles'
+      preLoaderRoute: typeof DashboardOperationsVehiclesRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/routes': {
+      id: '/dashboard/operations/routes'
+      path: '/routes'
+      fullPath: '/dashboard/operations/routes'
+      preLoaderRoute: typeof DashboardOperationsRoutesRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/review-queue': {
+      id: '/dashboard/operations/review-queue'
+      path: '/review-queue'
+      fullPath: '/dashboard/operations/review-queue'
+      preLoaderRoute: typeof DashboardOperationsReviewQueueRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/quotations': {
+      id: '/dashboard/operations/quotations'
+      path: '/quotations'
+      fullPath: '/dashboard/operations/quotations'
+      preLoaderRoute: typeof DashboardOperationsQuotationsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/profitability': {
+      id: '/dashboard/operations/profitability'
+      path: '/profitability'
+      fullPath: '/dashboard/operations/profitability'
+      preLoaderRoute: typeof DashboardOperationsProfitabilityRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/new-requests': {
+      id: '/dashboard/operations/new-requests'
+      path: '/new-requests'
+      fullPath: '/dashboard/operations/new-requests'
+      preLoaderRoute: typeof DashboardOperationsNewRequestsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/matching': {
+      id: '/dashboard/operations/matching'
+      path: '/matching'
+      fullPath: '/dashboard/operations/matching'
+      preLoaderRoute: typeof DashboardOperationsMatchingRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/incidents': {
+      id: '/dashboard/operations/incidents'
+      path: '/incidents'
+      fullPath: '/dashboard/operations/incidents'
+      preLoaderRoute: typeof DashboardOperationsIncidentsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/drivers': {
+      id: '/dashboard/operations/drivers'
+      path: '/drivers'
+      fullPath: '/dashboard/operations/drivers'
+      preLoaderRoute: typeof DashboardOperationsDriversRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/documents': {
+      id: '/dashboard/operations/documents'
+      path: '/documents'
+      fullPath: '/dashboard/operations/documents'
+      preLoaderRoute: typeof DashboardOperationsDocumentsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/dispatch': {
+      id: '/dashboard/operations/dispatch'
+      path: '/dispatch'
+      fullPath: '/dashboard/operations/dispatch'
+      preLoaderRoute: typeof DashboardOperationsDispatchRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/compliance-holds': {
+      id: '/dashboard/operations/compliance-holds'
+      path: '/compliance-holds'
+      fullPath: '/dashboard/operations/compliance-holds'
+      preLoaderRoute: typeof DashboardOperationsComplianceHoldsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/completed': {
+      id: '/dashboard/operations/completed'
+      path: '/completed'
+      fullPath: '/dashboard/operations/completed'
+      preLoaderRoute: typeof DashboardOperationsCompletedRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/calendar': {
+      id: '/dashboard/operations/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/operations/calendar'
+      preLoaderRoute: typeof DashboardOperationsCalendarRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/active': {
+      id: '/dashboard/operations/active'
+      path: '/active'
+      fullPath: '/dashboard/operations/active'
+      preLoaderRoute: typeof DashboardOperationsActiveRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/foundation/urgent': {
+      id: '/dashboard/foundation/urgent'
+      path: '/urgent'
+      fullPath: '/dashboard/foundation/urgent'
+      preLoaderRoute: typeof DashboardFoundationUrgentRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/transport': {
+      id: '/dashboard/foundation/transport'
+      path: '/transport'
+      fullPath: '/dashboard/foundation/transport'
+      preLoaderRoute: typeof DashboardFoundationTransportRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/team': {
+      id: '/dashboard/foundation/team'
+      path: '/team'
+      fullPath: '/dashboard/foundation/team'
+      preLoaderRoute: typeof DashboardFoundationTeamRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/settings': {
+      id: '/dashboard/foundation/settings'
+      path: '/settings'
+      fullPath: '/dashboard/foundation/settings'
+      preLoaderRoute: typeof DashboardFoundationSettingsRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/profile': {
+      id: '/dashboard/foundation/profile'
+      path: '/profile'
+      fullPath: '/dashboard/foundation/profile'
+      preLoaderRoute: typeof DashboardFoundationProfileRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/messages': {
+      id: '/dashboard/foundation/messages'
+      path: '/messages'
+      fullPath: '/dashboard/foundation/messages'
+      preLoaderRoute: typeof DashboardFoundationMessagesRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/documents': {
+      id: '/dashboard/foundation/documents'
+      path: '/documents'
+      fullPath: '/dashboard/foundation/documents'
+      preLoaderRoute: typeof DashboardFoundationDocumentsRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/applications': {
+      id: '/dashboard/foundation/applications'
+      path: '/applications'
+      fullPath: '/dashboard/foundation/applications'
+      preLoaderRoute: typeof DashboardFoundationApplicationsRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/animals': {
+      id: '/dashboard/foundation/animals'
+      path: '/animals'
+      fullPath: '/dashboard/foundation/animals'
+      preLoaderRoute: typeof DashboardFoundationAnimalsRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
     '/dashboard/buyer/transport': {
       id: '/dashboard/buyer/transport'
       path: '/transport'
       fullPath: '/dashboard/buyer/transport'
       preLoaderRoute: typeof DashboardBuyerTransportRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/scheduled': {
+      id: '/dashboard/buyer/scheduled'
+      path: '/scheduled'
+      fullPath: '/dashboard/buyer/scheduled'
+      preLoaderRoute: typeof DashboardBuyerScheduledRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
     '/dashboard/buyer/saved': {
@@ -553,6 +1682,13 @@ declare module '@tanstack/react-router' {
       path: '/reservations'
       fullPath: '/dashboard/buyer/reservations'
       preLoaderRoute: typeof DashboardBuyerReservationsRouteImport
+      parentRoute: typeof DashboardBuyerRoute
+    }
+    '/dashboard/buyer/quotations': {
+      id: '/dashboard/buyer/quotations'
+      path: '/quotations'
+      fullPath: '/dashboard/buyer/quotations'
+      preLoaderRoute: typeof DashboardBuyerQuotationsRouteImport
       parentRoute: typeof DashboardBuyerRoute
     }
     '/dashboard/buyer/profile': {
@@ -625,6 +1761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederProfileRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
+    '/dashboard/breeder/parent-dogs': {
+      id: '/dashboard/breeder/parent-dogs'
+      path: '/parent-dogs'
+      fullPath: '/dashboard/breeder/parent-dogs'
+      preLoaderRoute: typeof DashboardBreederParentDogsRouteImport
+      parentRoute: typeof DashboardBreederRoute
+    }
     '/dashboard/breeder/messages': {
       id: '/dashboard/breeder/messages'
       path: '/messages'
@@ -646,12 +1789,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederDocumentsRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
+    '/dashboard/breeder/champions': {
+      id: '/dashboard/breeder/champions'
+      path: '/champions'
+      fullPath: '/dashboard/breeder/champions'
+      preLoaderRoute: typeof DashboardBreederChampionsRouteImport
+      parentRoute: typeof DashboardBreederRoute
+    }
     '/dashboard/breeder/applications': {
       id: '/dashboard/breeder/applications'
       path: '/applications'
       fullPath: '/dashboard/breeder/applications'
       preLoaderRoute: typeof DashboardBreederApplicationsRouteImport
       parentRoute: typeof DashboardBreederRoute
+    }
+    '/dashboard/breeder/achievements': {
+      id: '/dashboard/breeder/achievements'
+      path: '/achievements'
+      fullPath: '/dashboard/breeder/achievements'
+      preLoaderRoute: typeof DashboardBreederAchievementsRouteImport
+      parentRoute: typeof DashboardBreederRoute
+    }
+    '/dashboard/admin/users': {
+      id: '/dashboard/admin/users'
+      path: '/users'
+      fullPath: '/dashboard/admin/users'
+      preLoaderRoute: typeof DashboardAdminUsersRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/settings': {
+      id: '/dashboard/admin/settings'
+      path: '/settings'
+      fullPath: '/dashboard/admin/settings'
+      preLoaderRoute: typeof DashboardAdminSettingsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/reports': {
+      id: '/dashboard/admin/reports'
+      path: '/reports'
+      fullPath: '/dashboard/admin/reports'
+      preLoaderRoute: typeof DashboardAdminReportsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/organisations': {
+      id: '/dashboard/admin/organisations'
+      path: '/organisations'
+      fullPath: '/dashboard/admin/organisations'
+      preLoaderRoute: typeof DashboardAdminOrganisationsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/moderation': {
+      id: '/dashboard/admin/moderation'
+      path: '/moderation'
+      fullPath: '/dashboard/admin/moderation'
+      preLoaderRoute: typeof DashboardAdminModerationRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/listings': {
+      id: '/dashboard/admin/listings'
+      path: '/listings'
+      fullPath: '/dashboard/admin/listings'
+      preLoaderRoute: typeof DashboardAdminListingsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/foundation-verification': {
+      id: '/dashboard/admin/foundation-verification'
+      path: '/foundation-verification'
+      fullPath: '/dashboard/admin/foundation-verification'
+      preLoaderRoute: typeof DashboardAdminFoundationVerificationRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/breeder-verification': {
+      id: '/dashboard/admin/breeder-verification'
+      path: '/breeder-verification'
+      fullPath: '/dashboard/admin/breeder-verification'
+      preLoaderRoute: typeof DashboardAdminBreederVerificationRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/audit-logs': {
+      id: '/dashboard/admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/dashboard/admin/audit-logs'
+      preLoaderRoute: typeof DashboardAdminAuditLogsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
+    '/dashboard/admin/achievement-verification': {
+      id: '/dashboard/admin/achievement-verification'
+      path: '/achievement-verification'
+      fullPath: '/dashboard/admin/achievement-verification'
+      preLoaderRoute: typeof DashboardAdminAchievementVerificationRouteImport
+      parentRoute: typeof DashboardAdminRoute
     }
     '/_public/transport/request': {
       id: '/_public/transport/request'
@@ -674,6 +1901,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicBreedersSlugRouteImport
       parentRoute: typeof PublicBreedersRoute
     }
+    '/_public/adoptions/$id': {
+      id: '/_public/adoptions/$id'
+      path: '/$id'
+      fullPath: '/adoptions/$id'
+      preLoaderRoute: typeof PublicAdoptionsIdRouteImport
+      parentRoute: typeof PublicAdoptionsRoute
+    }
+    '/dashboard/operations/routes/$id': {
+      id: '/dashboard/operations/routes/$id'
+      path: '/$id'
+      fullPath: '/dashboard/operations/routes/$id'
+      preLoaderRoute: typeof DashboardOperationsRoutesIdRouteImport
+      parentRoute: typeof DashboardOperationsRoutesRoute
+    }
+    '/dashboard/operations/requests/$id': {
+      id: '/dashboard/operations/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/dashboard/operations/requests/$id'
+      preLoaderRoute: typeof DashboardOperationsRequestsIdRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
     '/dashboard/breeder/litters/$id': {
       id: '/dashboard/breeder/litters/$id'
       path: '/$id'
@@ -683,6 +1931,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface PublicAdoptionsRouteChildren {
+  PublicAdoptionsIdRoute: typeof PublicAdoptionsIdRoute
+}
+
+const PublicAdoptionsRouteChildren: PublicAdoptionsRouteChildren = {
+  PublicAdoptionsIdRoute: PublicAdoptionsIdRoute,
+}
+
+const PublicAdoptionsRouteWithChildren = PublicAdoptionsRoute._addFileChildren(
+  PublicAdoptionsRouteChildren,
+)
 
 interface PublicBreedersRouteChildren {
   PublicBreedersSlugRoute: typeof PublicBreedersSlugRoute
@@ -709,24 +1969,52 @@ const PublicTransportRouteWithChildren = PublicTransportRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
+  PublicAdoptionsRoute: typeof PublicAdoptionsRouteWithChildren
+  PublicBreederMapRoute: typeof PublicBreederMapRoute
   PublicBreedersRoute: typeof PublicBreedersRouteWithChildren
+  PublicCommunityRoute: typeof PublicCommunityRoute
+  PublicCookiesRoute: typeof PublicCookiesRoute
   PublicCreateBreederRoute: typeof PublicCreateBreederRoute
+  PublicEstimateRoute: typeof PublicEstimateRoute
   PublicFindADogRoute: typeof PublicFindADogRoute
+  PublicFindYourDogRoute: typeof PublicFindYourDogRoute
+  PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
+  PublicFoundationsRoute: typeof PublicFoundationsRoute
   PublicHowItWorksRoute: typeof PublicHowItWorksRoute
   PublicPlannedLittersRoute: typeof PublicPlannedLittersRoute
+  PublicPlannedRoutesRoute: typeof PublicPlannedRoutesRoute
+  PublicPrivacyRoute: typeof PublicPrivacyRoute
+  PublicRehomeRoute: typeof PublicRehomeRoute
+  PublicResetPasswordRoute: typeof PublicResetPasswordRoute
   PublicSigninRoute: typeof PublicSigninRoute
+  PublicSignupRoute: typeof PublicSignupRoute
+  PublicTermsRoute: typeof PublicTermsRoute
   PublicTransportRoute: typeof PublicTransportRouteWithChildren
   PublicIndexRoute: typeof PublicIndexRoute
   PublicPuppiesIdRoute: typeof PublicPuppiesIdRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicAdoptionsRoute: PublicAdoptionsRouteWithChildren,
+  PublicBreederMapRoute: PublicBreederMapRoute,
   PublicBreedersRoute: PublicBreedersRouteWithChildren,
+  PublicCommunityRoute: PublicCommunityRoute,
+  PublicCookiesRoute: PublicCookiesRoute,
   PublicCreateBreederRoute: PublicCreateBreederRoute,
+  PublicEstimateRoute: PublicEstimateRoute,
   PublicFindADogRoute: PublicFindADogRoute,
+  PublicFindYourDogRoute: PublicFindYourDogRoute,
+  PublicForgotPasswordRoute: PublicForgotPasswordRoute,
+  PublicFoundationsRoute: PublicFoundationsRoute,
   PublicHowItWorksRoute: PublicHowItWorksRoute,
   PublicPlannedLittersRoute: PublicPlannedLittersRoute,
+  PublicPlannedRoutesRoute: PublicPlannedRoutesRoute,
+  PublicPrivacyRoute: PublicPrivacyRoute,
+  PublicRehomeRoute: PublicRehomeRoute,
+  PublicResetPasswordRoute: PublicResetPasswordRoute,
   PublicSigninRoute: PublicSigninRoute,
+  PublicSignupRoute: PublicSignupRoute,
+  PublicTermsRoute: PublicTermsRoute,
   PublicTransportRoute: PublicTransportRouteWithChildren,
   PublicIndexRoute: PublicIndexRoute,
   PublicPuppiesIdRoute: PublicPuppiesIdRoute,
@@ -734,6 +2022,41 @@ const PublicRouteChildren: PublicRouteChildren = {
 
 const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
+
+interface DashboardAdminRouteChildren {
+  DashboardAdminAchievementVerificationRoute: typeof DashboardAdminAchievementVerificationRoute
+  DashboardAdminAuditLogsRoute: typeof DashboardAdminAuditLogsRoute
+  DashboardAdminBreederVerificationRoute: typeof DashboardAdminBreederVerificationRoute
+  DashboardAdminFoundationVerificationRoute: typeof DashboardAdminFoundationVerificationRoute
+  DashboardAdminListingsRoute: typeof DashboardAdminListingsRoute
+  DashboardAdminModerationRoute: typeof DashboardAdminModerationRoute
+  DashboardAdminOrganisationsRoute: typeof DashboardAdminOrganisationsRoute
+  DashboardAdminReportsRoute: typeof DashboardAdminReportsRoute
+  DashboardAdminSettingsRoute: typeof DashboardAdminSettingsRoute
+  DashboardAdminUsersRoute: typeof DashboardAdminUsersRoute
+  DashboardAdminIndexRoute: typeof DashboardAdminIndexRoute
+}
+
+const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminAchievementVerificationRoute:
+    DashboardAdminAchievementVerificationRoute,
+  DashboardAdminAuditLogsRoute: DashboardAdminAuditLogsRoute,
+  DashboardAdminBreederVerificationRoute:
+    DashboardAdminBreederVerificationRoute,
+  DashboardAdminFoundationVerificationRoute:
+    DashboardAdminFoundationVerificationRoute,
+  DashboardAdminListingsRoute: DashboardAdminListingsRoute,
+  DashboardAdminModerationRoute: DashboardAdminModerationRoute,
+  DashboardAdminOrganisationsRoute: DashboardAdminOrganisationsRoute,
+  DashboardAdminReportsRoute: DashboardAdminReportsRoute,
+  DashboardAdminSettingsRoute: DashboardAdminSettingsRoute,
+  DashboardAdminUsersRoute: DashboardAdminUsersRoute,
+  DashboardAdminIndexRoute: DashboardAdminIndexRoute,
+}
+
+const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
+  DashboardAdminRouteChildren,
+)
 
 interface DashboardBreederLittersRouteChildren {
   DashboardBreederLittersIdRoute: typeof DashboardBreederLittersIdRoute
@@ -750,10 +2073,13 @@ const DashboardBreederLittersRouteWithChildren =
   )
 
 interface DashboardBreederRouteChildren {
+  DashboardBreederAchievementsRoute: typeof DashboardBreederAchievementsRoute
   DashboardBreederApplicationsRoute: typeof DashboardBreederApplicationsRoute
+  DashboardBreederChampionsRoute: typeof DashboardBreederChampionsRoute
   DashboardBreederDocumentsRoute: typeof DashboardBreederDocumentsRoute
   DashboardBreederLittersRoute: typeof DashboardBreederLittersRouteWithChildren
   DashboardBreederMessagesRoute: typeof DashboardBreederMessagesRoute
+  DashboardBreederParentDogsRoute: typeof DashboardBreederParentDogsRoute
   DashboardBreederProfileRoute: typeof DashboardBreederProfileRoute
   DashboardBreederPuppiesRoute: typeof DashboardBreederPuppiesRoute
   DashboardBreederReservationsRoute: typeof DashboardBreederReservationsRoute
@@ -763,10 +2089,13 @@ interface DashboardBreederRouteChildren {
 }
 
 const DashboardBreederRouteChildren: DashboardBreederRouteChildren = {
+  DashboardBreederAchievementsRoute: DashboardBreederAchievementsRoute,
   DashboardBreederApplicationsRoute: DashboardBreederApplicationsRoute,
+  DashboardBreederChampionsRoute: DashboardBreederChampionsRoute,
   DashboardBreederDocumentsRoute: DashboardBreederDocumentsRoute,
   DashboardBreederLittersRoute: DashboardBreederLittersRouteWithChildren,
   DashboardBreederMessagesRoute: DashboardBreederMessagesRoute,
+  DashboardBreederParentDogsRoute: DashboardBreederParentDogsRoute,
   DashboardBreederProfileRoute: DashboardBreederProfileRoute,
   DashboardBreederPuppiesRoute: DashboardBreederPuppiesRoute,
   DashboardBreederReservationsRoute: DashboardBreederReservationsRoute,
@@ -784,8 +2113,10 @@ interface DashboardBuyerRouteChildren {
   DashboardBuyerFollowedRoute: typeof DashboardBuyerFollowedRoute
   DashboardBuyerMessagesRoute: typeof DashboardBuyerMessagesRoute
   DashboardBuyerProfileRoute: typeof DashboardBuyerProfileRoute
+  DashboardBuyerQuotationsRoute: typeof DashboardBuyerQuotationsRoute
   DashboardBuyerReservationsRoute: typeof DashboardBuyerReservationsRoute
   DashboardBuyerSavedRoute: typeof DashboardBuyerSavedRoute
+  DashboardBuyerScheduledRoute: typeof DashboardBuyerScheduledRoute
   DashboardBuyerTransportRoute: typeof DashboardBuyerTransportRoute
   DashboardBuyerIndexRoute: typeof DashboardBuyerIndexRoute
 }
@@ -796,8 +2127,10 @@ const DashboardBuyerRouteChildren: DashboardBuyerRouteChildren = {
   DashboardBuyerFollowedRoute: DashboardBuyerFollowedRoute,
   DashboardBuyerMessagesRoute: DashboardBuyerMessagesRoute,
   DashboardBuyerProfileRoute: DashboardBuyerProfileRoute,
+  DashboardBuyerQuotationsRoute: DashboardBuyerQuotationsRoute,
   DashboardBuyerReservationsRoute: DashboardBuyerReservationsRoute,
   DashboardBuyerSavedRoute: DashboardBuyerSavedRoute,
+  DashboardBuyerScheduledRoute: DashboardBuyerScheduledRoute,
   DashboardBuyerTransportRoute: DashboardBuyerTransportRoute,
   DashboardBuyerIndexRoute: DashboardBuyerIndexRoute,
 }
@@ -806,11 +2139,124 @@ const DashboardBuyerRouteWithChildren = DashboardBuyerRoute._addFileChildren(
   DashboardBuyerRouteChildren,
 )
 
+interface DashboardDriverRouteChildren {
+  DashboardDriverIndexRoute: typeof DashboardDriverIndexRoute
+}
+
+const DashboardDriverRouteChildren: DashboardDriverRouteChildren = {
+  DashboardDriverIndexRoute: DashboardDriverIndexRoute,
+}
+
+const DashboardDriverRouteWithChildren = DashboardDriverRoute._addFileChildren(
+  DashboardDriverRouteChildren,
+)
+
+interface DashboardFoundationRouteChildren {
+  DashboardFoundationAnimalsRoute: typeof DashboardFoundationAnimalsRoute
+  DashboardFoundationApplicationsRoute: typeof DashboardFoundationApplicationsRoute
+  DashboardFoundationDocumentsRoute: typeof DashboardFoundationDocumentsRoute
+  DashboardFoundationMessagesRoute: typeof DashboardFoundationMessagesRoute
+  DashboardFoundationProfileRoute: typeof DashboardFoundationProfileRoute
+  DashboardFoundationSettingsRoute: typeof DashboardFoundationSettingsRoute
+  DashboardFoundationTeamRoute: typeof DashboardFoundationTeamRoute
+  DashboardFoundationTransportRoute: typeof DashboardFoundationTransportRoute
+  DashboardFoundationUrgentRoute: typeof DashboardFoundationUrgentRoute
+  DashboardFoundationIndexRoute: typeof DashboardFoundationIndexRoute
+}
+
+const DashboardFoundationRouteChildren: DashboardFoundationRouteChildren = {
+  DashboardFoundationAnimalsRoute: DashboardFoundationAnimalsRoute,
+  DashboardFoundationApplicationsRoute: DashboardFoundationApplicationsRoute,
+  DashboardFoundationDocumentsRoute: DashboardFoundationDocumentsRoute,
+  DashboardFoundationMessagesRoute: DashboardFoundationMessagesRoute,
+  DashboardFoundationProfileRoute: DashboardFoundationProfileRoute,
+  DashboardFoundationSettingsRoute: DashboardFoundationSettingsRoute,
+  DashboardFoundationTeamRoute: DashboardFoundationTeamRoute,
+  DashboardFoundationTransportRoute: DashboardFoundationTransportRoute,
+  DashboardFoundationUrgentRoute: DashboardFoundationUrgentRoute,
+  DashboardFoundationIndexRoute: DashboardFoundationIndexRoute,
+}
+
+const DashboardFoundationRouteWithChildren =
+  DashboardFoundationRoute._addFileChildren(DashboardFoundationRouteChildren)
+
+interface DashboardOperationsRoutesRouteChildren {
+  DashboardOperationsRoutesIdRoute: typeof DashboardOperationsRoutesIdRoute
+}
+
+const DashboardOperationsRoutesRouteChildren: DashboardOperationsRoutesRouteChildren =
+  {
+    DashboardOperationsRoutesIdRoute: DashboardOperationsRoutesIdRoute,
+  }
+
+const DashboardOperationsRoutesRouteWithChildren =
+  DashboardOperationsRoutesRoute._addFileChildren(
+    DashboardOperationsRoutesRouteChildren,
+  )
+
+interface DashboardOperationsRouteChildren {
+  DashboardOperationsActiveRoute: typeof DashboardOperationsActiveRoute
+  DashboardOperationsCalendarRoute: typeof DashboardOperationsCalendarRoute
+  DashboardOperationsCompletedRoute: typeof DashboardOperationsCompletedRoute
+  DashboardOperationsComplianceHoldsRoute: typeof DashboardOperationsComplianceHoldsRoute
+  DashboardOperationsDispatchRoute: typeof DashboardOperationsDispatchRoute
+  DashboardOperationsDocumentsRoute: typeof DashboardOperationsDocumentsRoute
+  DashboardOperationsDriversRoute: typeof DashboardOperationsDriversRoute
+  DashboardOperationsIncidentsRoute: typeof DashboardOperationsIncidentsRoute
+  DashboardOperationsMatchingRoute: typeof DashboardOperationsMatchingRoute
+  DashboardOperationsNewRequestsRoute: typeof DashboardOperationsNewRequestsRoute
+  DashboardOperationsProfitabilityRoute: typeof DashboardOperationsProfitabilityRoute
+  DashboardOperationsQuotationsRoute: typeof DashboardOperationsQuotationsRoute
+  DashboardOperationsReviewQueueRoute: typeof DashboardOperationsReviewQueueRoute
+  DashboardOperationsRoutesRoute: typeof DashboardOperationsRoutesRouteWithChildren
+  DashboardOperationsVehiclesRoute: typeof DashboardOperationsVehiclesRoute
+  DashboardOperationsIndexRoute: typeof DashboardOperationsIndexRoute
+  DashboardOperationsRequestsIdRoute: typeof DashboardOperationsRequestsIdRoute
+}
+
+const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
+  DashboardOperationsActiveRoute: DashboardOperationsActiveRoute,
+  DashboardOperationsCalendarRoute: DashboardOperationsCalendarRoute,
+  DashboardOperationsCompletedRoute: DashboardOperationsCompletedRoute,
+  DashboardOperationsComplianceHoldsRoute:
+    DashboardOperationsComplianceHoldsRoute,
+  DashboardOperationsDispatchRoute: DashboardOperationsDispatchRoute,
+  DashboardOperationsDocumentsRoute: DashboardOperationsDocumentsRoute,
+  DashboardOperationsDriversRoute: DashboardOperationsDriversRoute,
+  DashboardOperationsIncidentsRoute: DashboardOperationsIncidentsRoute,
+  DashboardOperationsMatchingRoute: DashboardOperationsMatchingRoute,
+  DashboardOperationsNewRequestsRoute: DashboardOperationsNewRequestsRoute,
+  DashboardOperationsProfitabilityRoute: DashboardOperationsProfitabilityRoute,
+  DashboardOperationsQuotationsRoute: DashboardOperationsQuotationsRoute,
+  DashboardOperationsReviewQueueRoute: DashboardOperationsReviewQueueRoute,
+  DashboardOperationsRoutesRoute: DashboardOperationsRoutesRouteWithChildren,
+  DashboardOperationsVehiclesRoute: DashboardOperationsVehiclesRoute,
+  DashboardOperationsIndexRoute: DashboardOperationsIndexRoute,
+  DashboardOperationsRequestsIdRoute: DashboardOperationsRequestsIdRoute,
+}
+
+const DashboardOperationsRouteWithChildren =
+  DashboardOperationsRoute._addFileChildren(DashboardOperationsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   PublicRoute: PublicRouteWithChildren,
+  DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardBreederRoute: DashboardBreederRouteWithChildren,
   DashboardBuyerRoute: DashboardBuyerRouteWithChildren,
+  DashboardDriverRoute: DashboardDriverRouteWithChildren,
+  DashboardFoundationRoute: DashboardFoundationRouteWithChildren,
+  DashboardOperationsRoute: DashboardOperationsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

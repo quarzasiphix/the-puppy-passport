@@ -1,14 +1,63 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, MapPin, Calendar, ArrowRight, ShieldCheck, HeartHandshake, FileCheck2, Stethoscope, Truck, PawPrint, ChevronRight, Users } from "lucide-react";
+import {
+  Truck,
+  Route as RouteIcon,
+  ShieldCheck,
+  HeartHandshake,
+  FileCheck2,
+  Stethoscope,
+  ChevronRight,
+  Users,
+  Zap,
+  Crown,
+  Package,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { puppies, breeders, plannedLitters } from "@/lib/mock-data";
 import { PuppyCard, LitterCard, BreederCard } from "@/components/cards";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import {
+  listPublishedPuppies,
+  listPublishedLitters,
+  listApprovedKennels,
+} from "@/lib/queries/marketplace";
+import { ActionLauncher } from "@/components/action-launcher";
 import hero from "@/assets/hero-breeder.jpg";
 import transportImg from "@/assets/transport.jpg";
 
 export const Route = createFileRoute("/_public/")({
+  loader: async () => {
+    const supabase = getSupabaseBrowserClient();
+    const [orgs, animals, litters, featuredPuppies, upcomingLitters, verifiedBreeders] =
+      await Promise.all([
+        supabase
+          .from("organisations")
+          .select("*", { count: "exact", head: true })
+          .eq("verification_status", "approved")
+          .eq("is_public", true),
+        supabase
+          .from("animals")
+          .select("*", { count: "exact", head: true })
+          .eq("is_published", true)
+          .in("availability_status", ["available", "applications_open"]),
+        supabase
+          .from("litters")
+          .select("*", { count: "exact", head: true })
+          .eq("is_published", true)
+          .eq("status", "planned"),
+        listPublishedPuppies(),
+        listPublishedLitters("planned"),
+        listApprovedKennels(),
+      ]);
+    return {
+      verifiedOrgs: orgs.count ?? 0,
+      availableAnimals: animals.count ?? 0,
+      plannedLitters: litters.count ?? 0,
+      featuredPuppies: featuredPuppies.slice(0, 6),
+      upcomingLitters: upcomingLitters.slice(0, 3),
+      verifiedBreeders: verifiedBreeders.slice(0, 4),
+    };
+  },
   component: Home,
 });
 
@@ -16,11 +65,13 @@ function Home() {
   return (
     <div>
       <Hero />
+      <ActionLauncher variant="homepage" />
+      <ServiceCategories />
       <Trust />
+      <TransportSection />
       <FeaturedPuppies />
       <UpcomingLitters />
       <VerifiedBreeders />
-      <TransportSection />
       <HowItWorksStrip />
       <FinalCTA />
     </div>
@@ -28,39 +79,42 @@ function Home() {
 }
 
 function Hero() {
+  const { verifiedOrgs, availableAnimals, plannedLitters: plannedCount } = Route.useLoaderData();
   return (
     <section className="relative overflow-hidden border-b border-border/60 bg-secondary/40">
       <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
         <div className="flex flex-col justify-center">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-            <PawPrint className="size-3.5" /> A specialist puppy marketplace
+            <Truck className="size-3.5" /> Professional animal transport
           </span>
           <h1 className="mt-4 font-display text-5xl font-medium leading-[1.05] tracking-tight text-foreground md:text-6xl">
-            Find a dog from a <span className="italic text-primary">verified breeder</span>.
+            Professional animal <span className="italic text-primary">transport</span> across
+            Europe.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-            Discover litters from vetted European breeders, apply directly, complete the
-            reservation process, and arrange safe transport — all in one place.
+            Request individual, express, VIP or shared transport for a dog. We verify the required
+            information, plan the journey and handle transport from pickup to handover.
           </p>
 
-          <div className="mt-8 rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.1fr_1fr_1fr_auto]">
-              <Field icon={<Search className="size-4" />} placeholder="Breed (e.g. Border Collie)" />
-              <Field icon={<MapPin className="size-4" />} placeholder="Location" />
-              <Field icon={<Calendar className="size-4" />} placeholder="Ready by" />
-              <Button asChild size="lg" className="h-12 gap-1">
-                <Link to="/find-a-dog">
-                  Search <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild size="lg" className="h-12 gap-1">
+              <Link to="/transport/request">
+                Request transport <Truck className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12 gap-1">
+              <Link to="/planned-routes">
+                View planned routes <RouteIcon className="size-4" />
+              </Link>
+            </Button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              ["Available now", "/find-a-dog"],
-              ["Planned litters", "/planned-litters"],
-              ["Transport available", "/transport"],
+              ["Available puppies", "/find-a-dog"],
+              ["Dogs for adoption", "/adoptions"],
+              ["Verified breeders", "/breeders"],
+              ["Foundations & rescues", "/foundations"],
             ].map(([label, href]) => (
               <Link
                 key={label}
@@ -73,9 +127,9 @@ function Hero() {
           </div>
 
           <dl className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t border-border/60 pt-6 text-sm">
-            <Stat label="Verified breeders" value="240+" />
-            <Stat label="Successful handovers" value="3,800" />
-            <Stat label="Countries covered" value="18" />
+            <Stat label="Verified breeders & foundations" value={String(verifiedOrgs)} />
+            <Stat label="Available puppies" value={String(availableAnimals)} />
+            <Stat label="Planned litters" value={String(plannedCount)} />
           </dl>
         </div>
 
@@ -84,7 +138,7 @@ function Hero() {
           <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-xl">
             <img
               src={hero}
-              alt="Breeder with a litter of puppies"
+              alt="Breeder handing over a puppy for transport"
               width={1600}
               height={1200}
               className="aspect-[4/5] size-full object-cover"
@@ -93,31 +147,20 @@ function Hero() {
           <div className="absolute -bottom-6 -left-6 hidden max-w-xs rounded-2xl border border-border/70 bg-card p-4 shadow-lg md:block">
             <div className="flex items-center gap-3">
               <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                <ShieldCheck className="size-5" />
+                <Truck className="size-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Cichy Las Kennel</p>
-                <p className="text-xs text-muted-foreground">Verified · Warsaw, Poland</p>
+                <p className="text-sm font-semibold">Warsaw → Amsterdam</p>
+                <p className="text-xs text-muted-foreground">Shared route · ready for scheduling</p>
               </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              14 yrs experience · ZKwP / FCI · 4 puppies available
+              Documents reviewed · vehicle and driver assigned
             </p>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function Field({ icon, placeholder }: { icon: React.ReactNode; placeholder: string }) {
-  return (
-    <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-        {icon}
-      </span>
-      <Input placeholder={placeholder} className="h-12 border-transparent bg-secondary/60 pl-9" />
-    </div>
   );
 }
 
@@ -130,16 +173,78 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Trust() {
-  const items = [
-    { icon: ShieldCheck, label: "Verified breeders", desc: "Identity, kennel & association checked." },
-    { icon: FileCheck2, label: "Confirmed litter info", desc: "Parents, birth date and pedigree." },
-    { icon: Stethoscope, label: "Health tests visible", desc: "HD, ED, DNA & eye tests on file." },
-    { icon: HeartHandshake, label: "Structured applications", desc: "Fair, transparent buyer flow." },
-    { icon: Truck, label: "Safe transport", desc: "Planned routes with rest stops." },
+function ServiceCategories() {
+  const categories = [
+    {
+      icon: Package,
+      title: "Shared",
+      desc: "Flexible dates, lower price, planned European routes.",
+    },
+    { icon: Truck, title: "Individual", desc: "Dedicated planning, direct pickup and handover." },
+    {
+      icon: Zap,
+      title: "Express",
+      desc: "Priority quotation and the earliest available departure.",
+    },
+    {
+      icon: Crown,
+      title: "VIP",
+      desc: "Dedicated scheduling, premium communication, extra updates.",
+    },
   ];
   return (
-    <section className="border-b border-border/60 bg-background">
+    <section className="container-page py-16">
+      <SectionHeader
+        eyebrow="Transport services"
+        title="Four transport categories, one professional standard"
+        desc="Every category meets the same legal and animal-welfare requirements — the difference is scheduling, privacy and communication, not the minimum standard of care."
+        cta={{ label: "Compare transport options", to: "/transport" }}
+      />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {categories.map((c) => (
+          <div key={c.title} className="rounded-2xl border border-border/70 bg-card p-6">
+            <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+              <c.icon className="size-5" />
+            </div>
+            <h3 className="mt-4 font-display text-lg font-semibold">{c.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Trust() {
+  const items = [
+    {
+      icon: ShieldCheck,
+      label: "Verified breeders & foundations",
+      desc: "Identity, association & registration checked.",
+    },
+    {
+      icon: FileCheck2,
+      label: "Document review",
+      desc: "Passport, microchip and health documents checked before scheduling.",
+    },
+    {
+      icon: Stethoscope,
+      label: "Health information visible",
+      desc: "Health tests and veterinary status on file.",
+    },
+    {
+      icon: HeartHandshake,
+      label: "Structured applications",
+      desc: "Fair, transparent buyer and adoption flow.",
+    },
+    {
+      icon: Truck,
+      label: "Operational transport",
+      desc: "Planned routes, assigned vehicles and drivers, tracked status.",
+    },
+  ];
+  return (
+    <section className="border-y border-border/60 bg-background">
       <div className="container-page grid gap-6 py-10 md:grid-cols-5">
         {items.map((it) => (
           <div key={it.label} className="flex items-start gap-3">
@@ -180,7 +285,7 @@ function SectionHeader({
       {cta && (
         <Button asChild variant="outline">
           <Link to={cta.to}>
-            {cta.label} <ArrowRight className="ml-1 size-4" />
+            {cta.label} <ChevronRight className="ml-1 size-4" />
           </Link>
         </Button>
       )}
@@ -189,16 +294,18 @@ function SectionHeader({
 }
 
 function FeaturedPuppies() {
+  const { featuredPuppies } = Route.useLoaderData();
+  if (featuredPuppies.length === 0) return null;
   return (
     <section className="container-page py-16">
       <SectionHeader
-        eyebrow="Featured puppies"
+        eyebrow="Marketplace"
         title="Puppies ready to meet their family"
-        desc="Handpicked, currently available or open for applications from verified breeders."
+        desc="Currently available or open for applications from verified breeders."
         cta={{ label: "See all puppies", to: "/find-a-dog" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {puppies.slice(0, 6).map((p) => (
+        {featuredPuppies.map((p) => (
           <PuppyCard key={p.id} p={p} />
         ))}
       </div>
@@ -207,17 +314,19 @@ function FeaturedPuppies() {
 }
 
 function UpcomingLitters() {
+  const { upcomingLitters } = Route.useLoaderData();
+  if (upcomingLitters.length === 0) return null;
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">
       <div className="container-page">
         <SectionHeader
           eyebrow="Upcoming litters"
-          title="Planned litters for autumn and winter"
+          title="Planned litters"
           desc="Reserve your place on the waiting list — breeders confirm homes before puppies are born."
           cta={{ label: "All planned litters", to: "/planned-litters" }}
         />
         <div className="grid gap-6 lg:grid-cols-3">
-          {plannedLitters.map((l) => (
+          {upcomingLitters.map((l) => (
             <LitterCard key={l.id} l={l} planned />
           ))}
         </div>
@@ -227,6 +336,8 @@ function UpcomingLitters() {
 }
 
 function VerifiedBreeders() {
+  const { verifiedBreeders } = Route.useLoaderData();
+  if (verifiedBreeders.length === 0) return null;
   return (
     <section className="container-page py-16">
       <SectionHeader
@@ -235,7 +346,7 @@ function VerifiedBreeders() {
         cta={{ label: "Browse breeders", to: "/breeders" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {breeders.map((b) => (
+        {verifiedBreeders.map((b) => (
           <BreederCard key={b.id} b={b} />
         ))}
       </div>
@@ -249,23 +360,31 @@ function TransportSection() {
       <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
         <div className="grid lg:grid-cols-2">
           <div className="relative aspect-[4/3] lg:aspect-auto">
-            <img src={transportImg} alt="Transport" loading="lazy" className="absolute inset-0 size-full object-cover" />
+            <img
+              src={transportImg}
+              alt="Transport crate loaded into a van"
+              loading="lazy"
+              className="absolute inset-0 size-full object-cover"
+            />
           </div>
           <div className="flex flex-col justify-center p-8 md:p-12">
-            <p className="text-xs font-medium uppercase tracking-wider text-accent">Transport</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-accent">
+              How transport works
+            </p>
             <h2 className="mt-2 font-display text-3xl font-medium">
-              Safe, planned transport across Europe
+              From request to handover, fully tracked
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Whether you're travelling from Warsaw to Berlin or Kraków to Amsterdam, we
-              coordinate pickup, rest stops and delivery — with all documents in order.
+              Submit a transport request, we review the animal and document information, prepare a
+              quotation, and — once accepted — plan pickup, route and handover. Final eligibility
+              and pricing are confirmed after review, not guaranteed up front.
             </p>
 
             <div className="mt-6 rounded-xl border border-border bg-background p-4">
               <div className="flex items-center justify-between text-sm">
                 <div>
                   <div className="font-medium">Warsaw, Poland</div>
-                  <div className="text-xs text-muted-foreground">Cichy Las Kennel</div>
+                  <div className="text-xs text-muted-foreground">Pickup</div>
                 </div>
                 <div className="flex flex-1 items-center px-4">
                   <div className="h-px flex-1 border-t border-dashed border-border" />
@@ -273,19 +392,25 @@ function TransportSection() {
                   <div className="h-px flex-1 border-t border-dashed border-border" />
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">Berlin, Germany</div>
-                  <div className="text-xs text-muted-foreground">Home delivery</div>
+                  <div className="font-medium">Amsterdam, Netherlands</div>
+                  <div className="text-xs text-muted-foreground">Handover</div>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <Badge variant="secondary">Shared van</Badge>
-                <Badge variant="secondary">~ 7 hrs total</Badge>
-                <Badge variant="secondary">€320 per puppy</Badge>
+                <Badge variant="secondary">Shared route</Badge>
+                <Badge variant="secondary">Documents reviewed</Badge>
+                <Badge variant="secondary">Ready for scheduling</Badge>
               </div>
             </div>
 
             <ul className="mt-6 grid grid-cols-2 gap-3 text-sm">
-              {["Pickup from breeder", "Planned rest stops", "Document checklist", "Delivery status updates", "Shared or individual"].map((f) => (
+              {[
+                "Document review",
+                "Compliance check",
+                "Route & vehicle assignment",
+                "Status updates",
+                "Shared or individual",
+              ].map((f) => (
                 <li key={f} className="flex items-start gap-2 text-muted-foreground">
                   <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
                   {f}
@@ -295,10 +420,10 @@ function TransportSection() {
 
             <div className="mt-8 flex gap-2">
               <Button asChild size="lg">
-                <Link to="/transport">Check transport options</Link>
+                <Link to="/transport/request">Request transport</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/transport/request">Request a quote</Link>
+                <Link to="/transport">Compare service categories</Link>
               </Button>
             </div>
           </div>
@@ -310,16 +435,23 @@ function TransportSection() {
 
 function HowItWorksStrip() {
   const steps = [
-    ["Find a breeder or litter", "Search by breed, region and readiness."],
-    ["Submit an application", "Answer questions about your home and plans."],
-    ["Get approved by the breeder", "The breeder confirms fit and next steps."],
-    ["Reserve the puppy", "Deposit and agreement to secure your puppy."],
-    ["Collect or arrange transport", "Meet in person, or arrange safe transport."],
+    [
+      "Submit a transport or dog request",
+      "Tell us what you need — transport, a puppy, or an adoption.",
+    ],
+    ["We review the information", "Documents, animal fitness and compliance are checked."],
+    ["Get a quotation", "Final service type and price are confirmed after review."],
+    ["Schedule pickup", "Route, vehicle and driver are assigned."],
+    ["Track to handover", "Status updates through collection, transit and delivery."],
   ];
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">
       <div className="container-page">
-        <SectionHeader eyebrow="How it works" title="A calm, five-step process" cta={{ label: "Learn more", to: "/how-it-works" }} />
+        <SectionHeader
+          eyebrow="How it works"
+          title="A calm, professional process"
+          cta={{ label: "Learn more", to: "/how-it-works" }}
+        />
         <ol className="grid gap-4 md:grid-cols-5">
           {steps.map(([t, d], i) => (
             <li key={t} className="rounded-2xl border border-border/70 bg-card p-5">
@@ -340,34 +472,34 @@ function FinalCTA() {
   return (
     <section className="container-page py-20">
       <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col justify-between rounded-3xl border border-border/70 bg-primary p-10 text-primary-foreground">
+          <div>
+            <div className="grid size-12 place-items-center rounded-2xl bg-primary-foreground/15">
+              <Truck className="size-6" />
+            </div>
+            <h3 className="mt-5 font-display text-3xl font-medium">Need to transport a dog?</h3>
+            <p className="mt-2 text-primary-foreground/80">
+              Submit a transport request — we review the details and confirm the best shared,
+              individual, express or VIP option.
+            </p>
+          </div>
+          <Button asChild size="lg" variant="secondary" className="mt-8 w-fit">
+            <Link to="/transport/request">Request transport</Link>
+          </Button>
+        </div>
         <div className="flex flex-col justify-between rounded-3xl border border-border/70 bg-card p-10">
           <div>
             <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
               <Users className="size-6" />
             </div>
-            <h3 className="mt-5 font-display text-3xl font-medium">I am looking for a dog</h3>
+            <h3 className="mt-5 font-display text-3xl font-medium">Breeder or foundation?</h3>
             <p className="mt-2 text-muted-foreground">
-              Browse verified breeders, apply for a puppy that fits your home, and get help
-              with reservations and transport.
+              Publish your litters or adoption listings once verified, and connect directly with our
+              transport network.
             </p>
           </div>
-          <Button asChild size="lg" className="mt-8 w-fit">
-            <Link to="/find-a-dog">Find your dog</Link>
-          </Button>
-        </div>
-        <div className="flex flex-col justify-between rounded-3xl border border-border/70 bg-primary p-10 text-primary-foreground">
-          <div>
-            <div className="grid size-12 place-items-center rounded-2xl bg-primary-foreground/15">
-              <PawPrint className="size-6" />
-            </div>
-            <h3 className="mt-5 font-display text-3xl font-medium">I am a breeder</h3>
-            <p className="mt-2 text-primary-foreground/80">
-              Publish your litters, review applications in one place, and reach responsible
-              families across Europe.
-            </p>
-          </div>
-          <Button asChild size="lg" variant="secondary" className="mt-8 w-fit">
-            <Link to="/create-breeder">Create breeder profile</Link>
+          <Button asChild size="lg" variant="outline" className="mt-8 w-fit">
+            <Link to="/create-breeder">Apply for verification</Link>
           </Button>
         </div>
       </div>

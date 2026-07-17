@@ -1,56 +1,96 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { listMyConversations, type ConversationListRow } from "@/lib/queries/messaging";
+import { ChatThread } from "@/components/chat-thread";
 
 export const Route = createFileRoute("/dashboard/buyer/messages")({
+  validateSearch: (search: Record<string, unknown>): { conversation?: string } => ({
+    conversation: typeof search.conversation === "string" ? search.conversation : undefined,
+  }),
   component: BuyerMessages,
 });
 
-const threads = [
-  { name: "Anna Kowalska", kennel: "Cichy Las Kennel", preview: "Happy to schedule a call this week — Thursday?", time: "3h" },
-  { name: "Katarzyna Wiśniewska", kennel: "Srebrna Rzeka", preview: "Great news — your application is approved.", time: "1d" },
-  { name: "Tomasz Nowak", kennel: "Wolna Dolina", preview: "You're on the waiting list for the S litter.", time: "2d" },
-];
+function threadLabel(c: NonNullable<ConversationListRow["conversations"]>, currentUserId: string) {
+  if (c.conversation_type === "transport") {
+    return {
+      title: c.transport_requests?.request_number ?? "Transport",
+      subtitle: "Havenpaw operations",
+    };
+  }
+  const other = c.conversation_participants.find((p) => p.profile_id !== currentUserId);
+  return {
+    title: other?.profiles?.display_name ?? "Breeder",
+    subtitle: c.animals?.organisations?.name ?? c.animals?.name ?? "",
+  };
+}
 
 function BuyerMessages() {
+  const { userId } = useAuth();
+  const search = Route.useSearch();
+  const [activeId, setActiveId] = useState<string | undefined>(search.conversation);
+
+  const query = useQuery({
+    queryKey: ["my-conversations", userId],
+    enabled: !!userId,
+    queryFn: () => listMyConversations(userId!),
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    if (!activeId && query.data?.length) setActiveId(query.data[0].id);
+  }, [query.data, activeId]);
+
+  const active = query.data?.find((c) => c.id === activeId);
+
   return (
     <div>
-      <header className="mb-6"><h1 className="font-display text-3xl font-medium">Messages</h1></header>
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <div className="rounded-2xl border border-border/70 bg-card">
-          <ul className="divide-y divide-border/60">
-            {threads.map((t, i) => (
-              <li key={t.name} className={`cursor-pointer p-4 hover:bg-secondary/40 ${i === 0 ? "bg-secondary/40" : ""}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{t.name}</span>
-                  <span className="text-xs text-muted-foreground">{t.time}</span>
+      <header className="mb-6">
+        <h1 className="font-display text-3xl font-medium">Messages</h1>
+      </header>
+      {query.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : !query.data?.length ? (
+        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
+          <p className="font-medium">No conversations yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Once you apply for a puppy, you can message the breeder here.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+          <div className="rounded-2xl border border-border/70 bg-card">
+            <ul className="divide-y divide-border/60">
+              {query.data.map((c) => {
+                const label = threadLabel(c, userId!);
+                return (
+                  <li
+                    key={c.id}
+                    onClick={() => setActiveId(c.id)}
+                    className={`cursor-pointer p-4 hover:bg-secondary/40 ${activeId === c.id ? "bg-secondary/40" : ""}`}
+                  >
+                    <div className="font-medium">{label.title}</div>
+                    <div className="text-xs text-muted-foreground">{label.subtitle}</div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-card p-5">
+            {active ? (
+              <>
+                <div className="mb-4 font-display text-lg font-semibold">
+                  {threadLabel(active, userId!).title}
                 </div>
-                <div className="text-xs text-muted-foreground">{t.kennel}</div>
-                <div className="mt-1 line-clamp-1 text-sm text-muted-foreground">{t.preview}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-border/70 bg-card p-5">
-          <div className="mb-4 font-display text-lg font-semibold">Anna Kowalska — Cichy Las Kennel</div>
-          <div className="mb-4 h-96 space-y-3 overflow-y-auto rounded-xl border border-border/70 bg-secondary/30 p-4 text-sm">
-            <Bubble side="them">Hi Julia! Thanks for your application — I have a few questions.</Bubble>
-            <Bubble side="you">Of course, happy to answer anything.</Bubble>
-            <Bubble side="them">Happy to schedule a call this week — Thursday?</Bubble>
-          </div>
-          <div className="flex gap-2">
-            <Textarea placeholder="Write a reply…" rows={2} className="flex-1" />
-            <Button>Send</Button>
+                <ChatThread conversationId={active.id} currentUserId={userId!} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Select a conversation.</p>
+            )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-function Bubble({ side, children }: { side: "you" | "them"; children: React.ReactNode }) {
-  return (
-    <div className={`flex ${side === "you" ? "justify-end" : ""}`}>
-      <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${side === "you" ? "bg-primary text-primary-foreground" : "bg-background border border-border/70"}`}>{children}</div>
+      )}
     </div>
   );
 }
