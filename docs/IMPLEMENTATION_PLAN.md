@@ -38,6 +38,20 @@ document previously and incorrectly said it didn't exist yet — but no UI or qu
 The real remaining work is wiring the 7-step form and ops tooling to it, not building it. Draft
 save/resume/edit/delete before submission is **not implemented**.
 
+**Fast, no-account entry point — already existed, connection gap fixed 2026-07-22.**
+`/estimate` (`_public.estimate.tsx`) already covered most of "fast standalone transport post":
+pickup/destination country, animal size, service type, no sign-up, shows an approximate price range
+plus a real "a planned shared route already heads that way" match (`findLikelyRouteMatch`) — all in
+4 fields, well under a minute. The real gap: "Continue with full request" linked to
+`/transport/request` with **no data carried over**, discarding everything just entered. Fixed by
+passing pickup/destination/size/service as URL search params and reading them in a new, unconditional
+(not gated on sign-in) `useEffect` in `_public.transport.request.tsx`, mirroring the existing
+`?animalId=` prefill pattern. Not independently visually verified in a live browser (client-side
+hydration state, same sandbox limitation as `docs/E2E_TESTING.md`) — code-reviewed against the
+already-working `animalId` prefill pattern it mirrors, `tsc`/`eslint` clean. **Still not built**:
+exact date/flexible-dates fields on `/estimate` itself (only country/size/service), and animal
+type beyond dog (tracks the multi-species backlog, phase 15).
+
 ## 5. Transport operations
 **Working end to end.** Ops/admin dispatch dashboard (`dashboard.operations.dispatch.tsx`), request
 detail page with documents/compliance/quotations/status history/route assignment/messages/internal

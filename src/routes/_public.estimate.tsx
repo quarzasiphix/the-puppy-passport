@@ -161,7 +161,17 @@ function EstimatePage() {
             </ul>
             <div className="mt-5 flex gap-2">
               <Button asChild>
-                <Link to="/transport/request">Continue with full request</Link>
+                <Link
+                  to="/transport/request"
+                  search={{
+                    pickupCountry: form.getValues("pickupCountry"),
+                    destinationCountry: form.getValues("destinationCountry"),
+                    sizeCategory: form.getValues("sizeCategory"),
+                    serviceType: form.getValues("serviceType"),
+                  }}
+                >
+                  Continue with full request
+                </Link>
               </Button>
               {!isSignedIn && (
                 <Button asChild variant="outline">

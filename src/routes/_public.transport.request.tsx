@@ -404,6 +404,23 @@ function TransportRequestPage() {
     },
   });
 
+  // Coming from the no-account-needed /estimate page (?pickupCountry=...&destinationCountry=...
+  // &sizeCategory=...&serviceType=...): reuse exactly what was already entered there instead of
+  // making the visitor retype it — deliberately NOT gated on userId, since /estimate is usable
+  // signed out and "Continue with full request" can be the very next click.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pickupCountry = params.get("pickupCountry");
+    const destinationCountry = params.get("destinationCountry");
+    const sizeCategory = params.get("sizeCategory");
+    const serviceType = params.get("serviceType");
+    if (pickupCountry) form.setValue("pickupCountry", pickupCountry);
+    if (destinationCountry) form.setValue("destinationCountry", destinationCountry);
+    if (sizeCategory) form.setValue("sizeCategory", sizeCategory as FormValues["sizeCategory"]);
+    if (serviceType)
+      form.setValue("requestedServiceType", serviceType as FormValues["requestedServiceType"]);
+  }, []);
+
   // Sensible defaults: prefill from context so the customer doesn't re-type what we already know.
   // Coming from a puppy listing (/transport/request?animalId=...): the animal, purpose and pickup
   // location (the breeder's location) come from the listing; the customer's own profile fills in
