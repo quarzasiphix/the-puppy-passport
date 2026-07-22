@@ -19,6 +19,19 @@ afterwards. Treat this file as a living document that can itself drift from the 
 doubt, grep for `mock-data` imports and `NotImplemented`/`Construction` usage to see the real
 current state rather than trusting any prose summary, including this one.
 
+**Correction, 2026-07-22**: this document's "verified end-to-end" claims below for `/breeders/$slug`
+(breeder profile), `/adoptions/$id` (adoption detail) and `/transport/request` (the 7-step form)
+were true for the *data layer* (real Supabase queries, correct RLS) but **not for the actual
+rendered page** — a routing bug (a bare `_public.breeders.tsx`/`_public.adoptions.tsx`/
+`_public.transport.tsx` coexisting with its nested route without an `<Outlet/>`) meant these three
+pages' real components never mounted at all; visiting them showed the *list/overview* page's
+content instead, silently. Confirmed via direct HTML inspection, not assumed — this is exactly the
+kind of gap this document's own note above warns about: verified data ≠ verified rendered page.
+Fixed the same day (see `docs/DECISIONS.md`, "Application architecture" — layout+index route
+split), verified again after the fix. Treat every "verified end-to-end" claim in this document as
+covering the API/data layer specifically, not a guarantee that a page's visual component tree was
+checked past its `<title>`.
+
 ## 1. What's verified end-to-end against a real local Supabase instance
 
 Everything below was tested by directly signing in as a seeded demo account (see

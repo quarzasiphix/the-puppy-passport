@@ -80,6 +80,26 @@ whole thing before making a conflicting choice.
 
 ## Application architecture
 
+- **A bare `_public.X.tsx` (or `dashboard.Y.X.tsx`) must never coexist with `X.$param.tsx`/`X.Y.tsx`
+  unless the bare file is a pure layout that renders `<Outlet/>`.** Found 2026-07-22 while building
+  the groups feature: `_public.breeders.tsx`, `_public.adoptions.tsx`, `_public.transport.tsx`,
+  `_public.community.tsx`, `dashboard.breeder.litters.tsx` and `dashboard.operations.routes.tsx` had
+  all been written as full standalone list/overview pages with real content — but each had a
+  sibling nested route file (`$slug`/`$id`/`request`/`groups`), and TanStack Router's file-based
+  routing *always* treats that sibling as a **child** route regardless of intent. Without an
+  `<Outlet/>` in the parent, the child route matches correctly (confirmed by its real `<title>`
+  reaching the page) but its component **never mounts anywhere** — only the parent's own content
+  renders. This is not a rendering glitch or a stale-server artifact (verified with a from-scratch
+  dev server restart); it silently affected `/breeders/$slug`, `/adoptions/$id` and
+  `/transport/request` — all previously documented as "working end-to-end" in
+  `docs/MVP_TEST_REPORT.md` based on real Supabase data checks, but nobody had actually looked past
+  the page title at the *rendered body* for these specific nested routes. Fixed for all six pairs
+  by moving each parent's real content into a sibling `X.index.tsx` (`createFileRoute("/.../X/")`,
+  trailing slash — matching the pattern already used correctly by every dashboard shell's own
+  `dashboard.<role>.index.tsx`) and replacing the original file with a two-line
+  `component: () => <Outlet />` layout. **Any future route file named exactly like an existing
+  route's prefix must follow this same layout+index split from the start** — check
+  `docs/DECISIONS.md` before assuming a "list page" file with a `$param` sibling is safe as-is.
 - **Two Supabase clients, one job each.** `src/lib/supabase/browser.ts` (isomorphic, used for
   every data query — loaders and client components alike) and `src/lib/supabase/server.ts`
   (cookie-aware via `@tanstack/react-start/server`, used *only* inside `createServerFn` for
