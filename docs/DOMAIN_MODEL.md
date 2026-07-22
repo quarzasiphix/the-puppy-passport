@@ -137,6 +137,18 @@ Verified-organisation fundraising (hierarchy pillar 7 in `docs/PRODUCT_VISION.md
 Kept disabled by default via `src/lib/fundraising-flag.ts` (`VITE_FUNDRAISING_ENABLED`, unset in
 production) until a real payment provider, refund rules and legal texts are approved.
 
+## Product/service categories (schema-only, entirely disabled — built 2026-07-22)
+
+`product_service_categories` (hierarchy pillar 8 in `docs/PRODUCT_VISION.md`,
+`20260101005700_product_service_categories.sql`) — 14 real, fixed, deliberately-scoped rows (animal
+food, accessories, carriers/crates, kennel equipment, aquariums/terrariums, equestrian equipment,
+transport trailers, veterinary services, trainers, behaviourists, groomers, pet hotels,
+photographers, exhibitions/events), all `enabled = false`. A `config jsonb` column holds the
+eventual per-category rules (listing fields, seller eligibility, moderation level, legal
+requirements, transaction actions, delivery options) — one flexible column rather than five real
+tables, since nothing reads or writes them yet. No listing table, query layer, or UI exists for any
+category — this is architecture preparation only, not a feature.
+
 ## Cross-cutting patterns worth knowing before extending this schema
 
 - **RLS is universal.** Every table enables RLS in the same migration that creates it. Public

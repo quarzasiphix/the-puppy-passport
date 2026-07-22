@@ -231,12 +231,28 @@ deliberate scope decision for this pass: a full multi-species UI buildout is a s
 multi-part effort that deserves its own dedicated pass per species rather than being rushed
 alongside everything else queued this session — see the prioritised backlog.
 
-## 16. Future integrations
+## 16. Animal-related products/services architecture
+**Schema-only, entirely disabled, built 2026-07-22.** A `product_service_categories` reference
+table (`20260101005700_product_service_categories.sql`) with 14 real but `enabled = false` rows
+(animal food, accessories, carriers/crates, kennel equipment, aquariums/terrariums, equestrian
+equipment, transport trailers, veterinary services, trainers, behaviourists, groomers, pet hotels,
+photographers, exhibitions/events) — a fixed, deliberately-scoped list; cars/electronics/furniture/
+tools are never acceptable additions here (see `docs/PRODUCT_VISION.md` "It is not: a general
+marketplace"). Each row has a `config jsonb` column for the eventual per-category
+listing-fields/seller-eligibility/moderation-level/legal-requirements/transaction-actions/delivery-
+options shape — deliberately a single flexible column rather than five real normalised tables,
+since nothing currently reads or writes them and building real tables for a feature with zero
+consumers would be premature abstraction (see CLAUDE.md). Confirmed anon sees zero rows (all
+disabled) and admin sees all 14. **Not built, and not started until the animal marketplace itself
+is stable per this phase's own brief**: any listing table, query layer, or UI for any category —
+this is architecture preparation only, matching hierarchy pillar 8's framing as a real but
+not-yet-committed differentiator.
+
+## 17. Future integrations
 Explicitly out of scope until the above phases are further along: AI-assisted matching/pricing/
-translation/fraud-detection, insurance, instalment credit, escrow payments, a food/accessories
-marketplace, vet/groomer/hotel directories, online training, an exhibition calendar, a
-behaviourist/trainer/photographer service marketplace, a European market/locale registry. Kept on
-the list (`PRODUCT_VISION.md`), not committed.
+translation/fraud-detection, insurance, instalment credit, escrow payments, online training, an
+exhibition calendar, a European market/locale registry. Kept on the list (`PRODUCT_VISION.md`), not
+committed.
 
 ---
 
