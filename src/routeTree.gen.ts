@@ -107,13 +107,16 @@ import { Route as DashboardAdminAchievementVerificationRouteImport } from './rou
 import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
 import { Route as PublicProfileProfileIdRouteImport } from './routes/_public.profile.$profileId'
+import { Route as PublicCommunityGroupsRouteImport } from './routes/_public.community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public.adoptions.$id'
 import { Route as DashboardOperationsRoutesIndexRouteImport } from './routes/dashboard.operations.routes.index'
 import { Route as DashboardBreederLittersIndexRouteImport } from './routes/dashboard.breeder.litters.index'
+import { Route as PublicCommunityGroupsIndexRouteImport } from './routes/_public.community.groups.index'
 import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard.operations.routes.$id'
 import { Route as DashboardOperationsRequestsIdRouteImport } from './routes/dashboard.operations.requests.$id'
 import { Route as DashboardBreederLittersIdRouteImport } from './routes/dashboard.breeder.litters.$id'
+import { Route as PublicCommunityGroupsSlugRouteImport } from './routes/_public.community.groups.$slug'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
@@ -646,6 +649,11 @@ const PublicProfileProfileIdRoute = PublicProfileProfileIdRouteImport.update({
   path: '/profile/$profileId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicCommunityGroupsRoute = PublicCommunityGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => PublicCommunityRoute,
+} as any)
 const PublicBreedersSlugRoute = PublicBreedersSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -668,6 +676,12 @@ const DashboardBreederLittersIndexRoute =
     path: '/',
     getParentRoute: () => DashboardBreederLittersRoute,
   } as any)
+const PublicCommunityGroupsIndexRoute =
+  PublicCommunityGroupsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => PublicCommunityGroupsRoute,
+  } as any)
 const DashboardOperationsRoutesIdRoute =
   DashboardOperationsRoutesIdRouteImport.update({
     id: '/$id',
@@ -685,6 +699,12 @@ const DashboardBreederLittersIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => DashboardBreederLittersRoute,
+  } as any)
+const PublicCommunityGroupsSlugRoute =
+  PublicCommunityGroupsSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => PublicCommunityGroupsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -718,6 +738,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations': typeof DashboardOperationsRouteWithChildren
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/community/groups': typeof PublicCommunityGroupsRouteWithChildren
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -787,9 +808,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/driver/': typeof DashboardDriverIndexRoute
   '/dashboard/foundation/': typeof DashboardFoundationIndexRoute
   '/dashboard/operations/': typeof DashboardOperationsIndexRoute
+  '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
@@ -881,9 +904,11 @@ export interface FileRoutesByTo {
   '/dashboard/driver': typeof DashboardDriverIndexRoute
   '/dashboard/foundation': typeof DashboardFoundationIndexRoute
   '/dashboard/operations': typeof DashboardOperationsIndexRoute
+  '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/community/groups': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersIndexRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesIndexRoute
 }
@@ -920,6 +945,7 @@ export interface FileRoutesById {
   '/_public/': typeof PublicIndexRoute
   '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/_public/community/groups': typeof PublicCommunityGroupsRouteWithChildren
   '/_public/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
@@ -989,9 +1015,11 @@ export interface FileRoutesById {
   '/dashboard/driver/': typeof DashboardDriverIndexRoute
   '/dashboard/foundation/': typeof DashboardFoundationIndexRoute
   '/dashboard/operations/': typeof DashboardOperationsIndexRoute
+  '/_public/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/_public/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
@@ -1028,6 +1056,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/community/groups'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1097,9 +1126,11 @@ export interface FileRouteTypes {
     | '/dashboard/driver/'
     | '/dashboard/foundation/'
     | '/dashboard/operations/'
+    | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/operations/routes/'
   fileRoutesByTo: FileRoutesByTo
@@ -1191,9 +1222,11 @@ export interface FileRouteTypes {
     | '/dashboard/driver'
     | '/dashboard/foundation'
     | '/dashboard/operations'
+    | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/community/groups'
     | '/dashboard/breeder/litters'
     | '/dashboard/operations/routes'
   id:
@@ -1229,6 +1262,7 @@ export interface FileRouteTypes {
     | '/_public/'
     | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
+    | '/_public/community/groups'
     | '/_public/profile/$profileId'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
@@ -1298,9 +1332,11 @@ export interface FileRouteTypes {
     | '/dashboard/driver/'
     | '/dashboard/foundation/'
     | '/dashboard/operations/'
+    | '/_public/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/_public/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/operations/routes/'
   fileRoutesById: FileRoutesById
@@ -2003,6 +2039,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProfileProfileIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/community/groups': {
+      id: '/_public/community/groups'
+      path: '/groups'
+      fullPath: '/community/groups'
+      preLoaderRoute: typeof PublicCommunityGroupsRouteImport
+      parentRoute: typeof PublicCommunityRoute
+    }
     '/_public/breeders/$slug': {
       id: '/_public/breeders/$slug'
       path: '/$slug'
@@ -2031,6 +2074,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederLittersIndexRouteImport
       parentRoute: typeof DashboardBreederLittersRoute
     }
+    '/_public/community/groups/': {
+      id: '/_public/community/groups/'
+      path: '/'
+      fullPath: '/community/groups/'
+      preLoaderRoute: typeof PublicCommunityGroupsIndexRouteImport
+      parentRoute: typeof PublicCommunityGroupsRoute
+    }
     '/dashboard/operations/routes/$id': {
       id: '/dashboard/operations/routes/$id'
       path: '/$id'
@@ -2051,6 +2101,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/breeder/litters/$id'
       preLoaderRoute: typeof DashboardBreederLittersIdRouteImport
       parentRoute: typeof DashboardBreederLittersRoute
+    }
+    '/_public/community/groups/$slug': {
+      id: '/_public/community/groups/$slug'
+      path: '/$slug'
+      fullPath: '/community/groups/$slug'
+      preLoaderRoute: typeof PublicCommunityGroupsSlugRouteImport
+      parentRoute: typeof PublicCommunityGroupsRoute
     }
   }
 }
@@ -2083,11 +2140,28 @@ const PublicBreedersRouteWithChildren = PublicBreedersRoute._addFileChildren(
   PublicBreedersRouteChildren,
 )
 
+interface PublicCommunityGroupsRouteChildren {
+  PublicCommunityGroupsSlugRoute: typeof PublicCommunityGroupsSlugRoute
+  PublicCommunityGroupsIndexRoute: typeof PublicCommunityGroupsIndexRoute
+}
+
+const PublicCommunityGroupsRouteChildren: PublicCommunityGroupsRouteChildren = {
+  PublicCommunityGroupsSlugRoute: PublicCommunityGroupsSlugRoute,
+  PublicCommunityGroupsIndexRoute: PublicCommunityGroupsIndexRoute,
+}
+
+const PublicCommunityGroupsRouteWithChildren =
+  PublicCommunityGroupsRoute._addFileChildren(
+    PublicCommunityGroupsRouteChildren,
+  )
+
 interface PublicCommunityRouteChildren {
+  PublicCommunityGroupsRoute: typeof PublicCommunityGroupsRouteWithChildren
   PublicCommunityIndexRoute: typeof PublicCommunityIndexRoute
 }
 
 const PublicCommunityRouteChildren: PublicCommunityRouteChildren = {
+  PublicCommunityGroupsRoute: PublicCommunityGroupsRouteWithChildren,
   PublicCommunityIndexRoute: PublicCommunityIndexRoute,
 }
 

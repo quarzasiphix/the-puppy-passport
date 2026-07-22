@@ -688,6 +688,37 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["drivers"]["Row"]>;
         Relationships: [];
       };
+      groups: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          group_type: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["groups"]["Row"]> & {
+          name: string;
+          slug: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["groups"]["Row"]>;
+        Relationships: [];
+      };
+      group_members: {
+        Row: {
+          id: string;
+          group_id: string;
+          profile_id: string;
+          role: "member" | "moderator";
+          joined_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["group_members"]["Row"]> & {
+          group_id: string;
+          profile_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["group_members"]["Row"]>;
+        Relationships: [];
+      };
       posts: {
         Row: {
           id: string;

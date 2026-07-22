@@ -95,9 +95,13 @@ shape and *why*, not every field.
 - **`reports`**, **`moderation_cases`** — user-filed reports and the resulting moderation
   workflow; `decision_explanation` is never public.
 - **`posts`, `comments`, `reactions`, `follows`, `saved_posts`** — community layer; the public post
-  feed, likes and comments are real, working UI (`_public.community.tsx`), not schema-only. **
-  `groups`, `group_members`** remain schema-only — no join/leave, no group-scoped posts, no UI at
-  all yet (confirmed by grep — zero references outside migrations).
+  feed, likes and comments are real, working UI (`_public.community.index.tsx`), not schema-only.
+- **`groups`, `group_members`** — real, working UI as of 2026-07-22
+  (`_public.community.groups.index.tsx`, `_public.community.groups.$slug.tsx`): join/leave,
+  group-scoped posting (`posts.visibility = 'group'` + `group_id`), reporting. 11 default groups
+  seeded via `20260101005400_groups.sql`. `is_group_member()` (added the same migration) gates
+  SELECT on group-scoped posts/comments — the original schema had no such policy at all, so a
+  fellow member could never have read another member's group post; see `docs/DECISIONS.md`.
 - **`conversations`, `conversation_participants`, `messages`** — messaging, including one
   conversation per transport request; `is_internal` messages are never customer-visible.
 - **`notifications`**, **`audit_logs`** — platform plumbing.

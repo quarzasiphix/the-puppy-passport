@@ -116,10 +116,23 @@ transport_requests safely for a public feed needs its own deliberate design, not
 interest/topic preferences (species, breeds, exhibitions, transport, local, etc.) and any signal
 beyond "who you follow" (location, saved searches, viewed/saved animals, joined groups) — no schema
 or settings UI exists for these.
-Community groups — `groups`/`group_members` exist in the schema but
-are unused by any UI (confirmed by grep — zero references outside migrations); no join/leave, no
-group-scoped posts, no route-group or breed-group structure. Deliberately scheduled after the
-transport workflow per the original brief; still true that a full social layer isn't required yet.
+**Community groups — built 2026-07-22.** `/community/groups` (list, join/leave) and
+`/community/groups/$slug` (detail, group-scoped posting, reporting) are real, working pages.
+11 default groups seeded via migration (breed communities, breeders, foundations & rescue,
+adoption, Poland↔Netherlands transport, Poland↔Germany transport, shared transport, exhibitions,
+rabbits/small mammals, cats/catteries — `20260101005400_groups.sql`). Fixed two real bugs found
+while building this: (1) `posts`/`comments` had no SELECT policy at all for `visibility = 'group'`
+rows beyond the author themselves — a fellow group member could never read another member's post;
+added `is_group_member()`-gated policies. (2) `group_members` had no anon grant/policy, so the
+group detail page's member count crashed anonymous visitors with a 401 — added anon read access,
+matching the already-public `groups` table. Verified end-to-end: join (201), a group-only post
+correctly invisible to a non-member (empty result) and correctly visible after joining, exactly as
+RLS intends. Transport-route-type groups get a "Request transport for this route" button plus copy
+steering users to submit a real transport request instead of leaving a need as unsearchable text —
+deliberately a manual CTA, not AI-parsed text-to-structured-data extraction (out of scope/unsafe to
+rush). **Not built**: group roles beyond member/moderator (no promote/demote UI), pinned
+posts/group-specific rules text, moderation queue specifically for group content (reuses the
+existing generic report → moderation_cases flow, which works but isn't group-aware).
 
 ## 13. Verified-organisation fundraising
 **Policy defined 2026-07-22, not yet built** — see `docs/FUNDRAISING_POLICY.md` for the complete,

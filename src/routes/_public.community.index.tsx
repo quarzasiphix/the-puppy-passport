@@ -107,7 +107,12 @@ function CommunityPage() {
     <div className="container-page max-w-2xl py-10">
       <header className="mb-6">
         <p className="text-xs font-medium uppercase tracking-wider text-accent">Community</p>
-        <h1 className="font-display text-3xl font-medium">Community</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-3xl font-medium">Community</h1>
+          <Link to="/community/groups" className="text-sm font-medium text-primary hover:underline">
+            Browse groups →
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Updates, questions and stories from breeders, foundations and fellow dog people.
         </p>
