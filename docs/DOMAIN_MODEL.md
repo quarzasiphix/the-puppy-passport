@@ -149,6 +149,19 @@ requirements, transaction actions, delivery options) — one flexible column rat
 tables, since nothing reads or writes them yet. No listing table, query layer, or UI exists for any
 category — this is architecture preparation only, not a feature.
 
+## Markets (built 2026-07-22)
+
+`markets` (`docs/PRODUCT_VISION.md` "Geographic direction", `20260101005800_markets.sql`) — one row
+per country (`country_code`, ISO 3166-1 alpha-2), `supported_locales` as a text array (never
+assumes one language per country — Belgium has `nl-BE`/`fr-BE`/`en`), and one `market_state` enum
+column per capability (`marketplace_state`/`breeder_verification_state`/`adoption_state`/
+`transport_post_state`/`transport_full_state`/`fundraising_state`) so a market's readiness is
+honest per-feature rather than a single all-or-nothing flag. States range `unavailable` →
+`discovery_only` → `listings_available`/`adoption_available`/`transport_requests_available` →
+`partner_transport` → `full_havenpaw_service`. Seeded: Poland, Germany, Netherlands, Belgium —
+deliberately no market is `full_havenpaw_service` yet, since the app itself isn't fully translated
+(see `docs/IMPLEMENTATION_PLAN.md` phase 14).
+
 ## Cross-cutting patterns worth knowing before extending this schema
 
 - **RLS is universal.** Every table enables RLS in the same migration that creates it. Public

@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "findADog": "Find a dog",
+    "breederMap": "Breeder map",
+    "breeders": "Breeders",
+    "adoptions": "Adoptions",
+    "community": "Community",
+    "transport": "Transport",
+    "plannedRoutes": "Planned routes",
+    "howItWorks": "How it works",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "dashboard": "Dashboard",
+    "openMenu": "Open menu"
+  },
+  "home": {
+    "heroEyebrow": "Verified breeders, foundations & safe transport",
+    "heroTitlePrefix": "Find your next",
+    "heroTitleHighlight": "dog",
+    "heroTitleSuffix": ", the right way.",
+    "heroSubtitle": "Search verified breeders and foundations across Europe, apply with confidence, and — when it's time — arrange trusted transport from pickup to handover.",
+    "findADog": "Find a dog",
+    "meetBreeders": "Meet verified breeders",
+    "dogsForAdoption": "Dogs for adoption",
+    "foundationsRescues": "Foundations & rescues",
+    "requestTransport": "Request transport",
+    "plannedRoutes": "Planned routes"
+  },
+  "footer": {
+    "tagline": "A dedicated European animal ecosystem — verified breeders, foundation adoptions and a trusted community, with safe transport available every step of the way.",
+    "discover": "Discover",
+    "transportSection": "Transport",
+    "account": "Account",
+    "rightsReserved": "All rights reserved.",
+    "welfareDisclaimer": "Havenpaw does not guarantee the health or behaviour of any animal, nor a fixed transport delivery time before review."
+  },
+  "language": {
+    "switchLabel": "Language"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "findADog": "Znajdź psa",
+    "breederMap": "Mapa hodowców",
+    "breeders": "Hodowcy",
+    "adoptions": "Adopcje",
+    "community": "Społeczność",
+    "transport": "Transport",
+    "plannedRoutes": "Planowane trasy",
+    "howItWorks": "Jak to działa",
+    "signIn": "Zaloguj się",
+    "signOut": "Wyloguj się",
+    "dashboard": "Panel",
+    "openMenu": "Otwórz menu"
+  },
+  "home": {
+    "heroEyebrow": "Zweryfikowani hodowcy, fundacje i bezpieczny transport",
+    "heroTitlePrefix": "Znajdź swojego",
+    "heroTitleHighlight": "psa",
+    "heroTitleSuffix": " we właściwy sposób.",
+    "heroSubtitle": "Przeszukaj zweryfikowanych hodowców i fundacje w całej Europie, aplikuj z pewnością, a gdy nadejdzie czas — zorganizuj bezpieczny transport od odbioru po przekazanie.",
+    "findADog": "Znajdź psa",
+    "meetBreeders": "Poznaj zweryfikowanych hodowców",
+    "dogsForAdoption": "Psy do adopcji",
+    "foundationsRescues": "Fundacje i schroniska",
+    "requestTransport": "Zamów transport",
+    "plannedRoutes": "Planowane trasy"
+  },
+  "footer": {
+    "tagline": "Dedykowany europejski ekosystem dla zwierząt — zweryfikowani hodowcy, adopcje z fundacji i zaufana społeczność, z bezpiecznym transportem dostępnym na każdym etapie.",
+    "discover": "Odkrywaj",
+    "transportSection": "Transport",
+    "account": "Konto",
+    "rightsReserved": "Wszelkie prawa zastrzeżone.",
+    "welfareDisclaimer": "Havenpaw nie gwarantuje stanu zdrowia ani zachowania żadnego zwierzęcia, ani stałego terminu dostawy transportu przed weryfikacją."
+  },
+  "language": {
+    "switchLabel": "Język"
+  }
+}

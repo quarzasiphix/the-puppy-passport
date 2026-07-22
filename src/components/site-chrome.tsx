@@ -1,27 +1,58 @@
 import { useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { PawPrint, Menu, Search, LogOut, LayoutDashboard } from "lucide-react";
+import { PawPrint, Menu, Search, LogOut, LayoutDashboard, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth/actions";
 import { NotificationBell } from "@/components/notification-bell";
+import { useTranslation, SUPPORTED_LOCALES, LOCALE_DISPLAY_NAMES } from "@/lib/i18n";
 
 // Animal discovery leads the navigation — Havenpaw is a dedicated animal ecosystem, not a
 // transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
 // prominent, real feature, just not the first thing a visitor sees.
 const nav = [
-  { to: "/find-a-dog", label: "Find a dog" },
-  { to: "/breeder-map", label: "Breeder map" },
-  { to: "/breeders", label: "Breeders" },
-  { to: "/adoptions", label: "Adoptions" },
-  { to: "/community", label: "Community" },
-  { to: "/transport", label: "Transport" },
-  { to: "/planned-routes", label: "Planned routes" },
-  { to: "/how-it-works", label: "How it works" },
+  { to: "/find-a-dog", labelKey: "nav.findADog" },
+  { to: "/breeder-map", labelKey: "nav.breederMap" },
+  { to: "/breeders", labelKey: "nav.breeders" },
+  { to: "/adoptions", labelKey: "nav.adoptions" },
+  { to: "/community", labelKey: "nav.community" },
+  { to: "/transport", labelKey: "nav.transport" },
+  { to: "/planned-routes", labelKey: "nav.plannedRoutes" },
+  { to: "/how-it-works", labelKey: "nav.howItWorks" },
 ] as const;
+
+function LanguageSwitcher() {
+  const { locale, setLocale } = useTranslation();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Language">
+          <Languages className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {SUPPORTED_LOCALES.map((code) => (
+          <DropdownMenuItem
+            key={code}
+            onClick={() => setLocale(code)}
+            className={code === locale ? "font-semibold" : undefined}
+          >
+            {LOCALE_DISPLAY_NAMES[code]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -29,6 +60,7 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   async function handleSignOut() {
     await signOut();
@@ -56,7 +88,7 @@ export function SiteHeader() {
               className="rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               activeProps={{ className: "text-foreground bg-secondary" }}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
         </nav>
@@ -85,12 +117,13 @@ export function SiteHeader() {
               to="/signin"
               className="hidden rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
             >
-              Sign in
+              {t("nav.signIn")}
             </Link>
           )}
+          <LanguageSwitcher />
           <Button asChild className="hidden md:inline-flex">
             <Link to="/find-a-dog">
-              <Search className="mr-1 size-4" /> Find a dog
+              <Search className="mr-1 size-4" /> {t("nav.findADog")}
             </Link>
           </Button>
           <Button
@@ -98,7 +131,7 @@ export function SiteHeader() {
             size="icon"
             className="xl:hidden"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            aria-label={t("nav.openMenu")}
           >
             <Menu className="size-5" />
           </Button>
@@ -118,7 +151,7 @@ export function SiteHeader() {
                 onClick={() => setMobileOpen(false)}
                 className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
             <div className="my-2 border-t border-border/60" />
@@ -129,7 +162,7 @@ export function SiteHeader() {
                   onClick={() => setMobileOpen(false)}
                   className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-secondary"
                 >
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Link>
                 <button
                   onClick={() => {
@@ -138,7 +171,7 @@ export function SiteHeader() {
                   }}
                   className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-secondary"
                 >
-                  Sign out
+                  {t("nav.signOut")}
                 </button>
               </>
             ) : (
@@ -147,12 +180,12 @@ export function SiteHeader() {
                 onClick={() => setMobileOpen(false)}
                 className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-secondary"
               >
-                Sign in
+                {t("nav.signIn")}
               </Link>
             )}
             <Button asChild className="mt-3">
               <Link to="/find-a-dog" onClick={() => setMobileOpen(false)}>
-                <Search className="mr-1 size-4" /> Find a dog
+                <Search className="mr-1 size-4" /> {t("nav.findADog")}
               </Link>
             </Button>
           </nav>
@@ -163,6 +196,7 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="mt-24 border-t border-border/60 bg-secondary/40">
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
@@ -173,13 +207,10 @@ export function SiteFooter() {
             </span>
             <span className="font-display text-lg font-semibold">Havenpaw</span>
           </div>
-          <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-            A dedicated European animal ecosystem — verified breeders, foundation adoptions and a
-            trusted community, with safe transport available every step of the way.
-          </p>
+          <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("footer.tagline")}</p>
         </div>
         <FooterCol
-          title="Discover"
+          title={t("footer.discover")}
           items={[
             ["Marketplace", "/find-a-dog"],
             ["Find your ideal dog", "/find-your-dog"],
@@ -190,7 +221,7 @@ export function SiteFooter() {
           ]}
         />
         <FooterCol
-          title="Transport"
+          title={t("footer.transportSection")}
           items={[
             ["Request transport", "/transport/request"],
             ["Service categories", "/transport"],
@@ -198,7 +229,7 @@ export function SiteFooter() {
           ]}
         />
         <FooterCol
-          title="Account"
+          title={t("footer.account")}
           items={[
             ["How it works", "/how-it-works"],
             ["Create an account", "/signup"],
@@ -209,7 +240,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-5 text-xs text-muted-foreground">
-          <span>© 2026 Havenpaw. All rights reserved.</span>
+          <span>© 2026 Havenpaw. {t("footer.rightsReserved")}</span>
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link to="/terms" className="hover:text-foreground hover:underline">
               Terms
@@ -221,10 +252,7 @@ export function SiteFooter() {
               Cookies
             </Link>
           </span>
-          <span>
-            Havenpaw does not guarantee the health or behaviour of any animal, nor a fixed transport
-            delivery time before review.
-          </span>
+          <span>{t("footer.welfareDisclaimer")}</span>
         </div>
       </div>
     </footer>

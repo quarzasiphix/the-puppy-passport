@@ -22,6 +22,7 @@ import {
   listApprovedKennels,
 } from "@/lib/queries/marketplace";
 import { ActionLauncher } from "@/components/action-launcher";
+import { useTranslation } from "@/lib/i18n";
 import hero from "@/assets/hero-breeder.jpg";
 import transportImg from "@/assets/transport.jpg";
 
@@ -84,40 +85,40 @@ function Home() {
 
 function Hero() {
   const { verifiedOrgs, availableAnimals, plannedLitters: plannedCount } = Route.useLoaderData();
+  const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden border-b border-border/60 bg-secondary/40">
       <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
         <div className="flex flex-col justify-center">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-            <HeartHandshake className="size-3.5" /> Verified breeders, foundations & safe transport
+            <HeartHandshake className="size-3.5" /> {t("home.heroEyebrow")}
           </span>
           <h1 className="mt-4 font-display text-5xl font-medium leading-[1.05] tracking-tight text-foreground md:text-6xl">
-            Find your next <span className="italic text-primary">dog</span>, the right way.
+            {t("home.heroTitlePrefix")}{" "}
+            <span className="italic text-primary">{t("home.heroTitleHighlight")}</span>
+            {t("home.heroTitleSuffix")}
           </h1>
-          <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-            Search verified breeders and foundations across Europe, apply with confidence, and —
-            when it's time — arrange trusted transport from pickup to handover.
-          </p>
+          <p className="mt-5 max-w-xl text-lg text-muted-foreground">{t("home.heroSubtitle")}</p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" className="h-12 gap-1">
               <Link to="/find-a-dog">
-                Find a dog <ChevronRight className="size-4" />
+                {t("home.findADog")} <ChevronRight className="size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 gap-1">
               <Link to="/breeders">
-                Meet verified breeders <Users className="size-4" />
+                {t("home.meetBreeders")} <Users className="size-4" />
               </Link>
             </Button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              ["Dogs for adoption", "/adoptions"],
-              ["Foundations & rescues", "/foundations"],
-              ["Request transport", "/transport/request"],
-              ["Planned routes", "/planned-routes"],
+              [t("home.dogsForAdoption"), "/adoptions"],
+              [t("home.foundationsRescues"), "/foundations"],
+              [t("home.requestTransport"), "/transport/request"],
+              [t("home.plannedRoutes"), "/planned-routes"],
             ].map(([label, href]) => (
               <Link
                 key={label}

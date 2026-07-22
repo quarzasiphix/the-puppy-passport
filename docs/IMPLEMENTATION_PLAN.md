@@ -206,12 +206,42 @@ excess-funds/refund/dispute states beyond the schema supporting them, and email 
 a campaign changes state.
 
 ## 14. Internationalisation
-**Not started beyond schema readiness** — confirmed by code inspection, no localisation library
-(i18next, react-intl, etc.) or locale-resource files exist anywhere in `src/`.
-`profiles.preferred_language`/`preferred_currency` exist as columns; `country`/`currency` are plain
-text fields everywhere rather than hardcoded enums specifically so this doesn't require a schema
-rewrite later. All customer-facing copy today is English only. Initial operational focus stays
-Poland/Germany/Netherlands/Belgium, Polish/English, PLN/EUR — see `PRODUCT_VISION.md`.
+**Real infrastructure + a market registry built 2026-07-22 — full-app translation coverage
+explicitly NOT done.** Be precise about what this means: the honest, tested foundation exists;
+"complete Polish and English translations across the whole app" does not, and attempting to fake
+that would violate this project's own no-fabrication rule. What's real:
+
+- **`src/lib/i18n/`** — a small, hand-rolled (not i18next/react-intl — not worth the dependency
+  weight for the current scope) `I18nProvider` + `useTranslation()` hook, `en.json`/`pl.json`
+  resource files (30 keys each, verified to match exactly — zero missing/extra keys either
+  direction), a language switcher in the header, and `checkTranslationCompleteness()` (compares
+  every leaf key path in English against each other locale — the "detect missing keys, report
+  locale completeness" requirement, real and callable, not a stub).
+- **Translated so far**: the site header nav, footer, and homepage hero — a real, demonstrated,
+  end-to-end slice (verified: SSR-rendered English by default, Polish resource values checked
+  directly). **Not translated**: everywhere else — every dashboard, every form, every marketplace/
+  transport/adoption/fundraising page, every error/success message. This is the overwhelming
+  majority of the app's copy. Translating it all is a large, separate, multi-session effort that
+  deserves dedicated attention per feature area, not a rushed pass alongside 10+ other phases.
+- **Known infrastructure gap**: locale is client-side only (`localStorage`), not SSR-aware via a
+  cookie — a visitor's very first server-rendered paint is always English, then re-renders in
+  their saved language after hydration. Fixing this needs a locale cookie read in the SSR request
+  handler, not attempted this pass.
+- **Market registry** — `markets` table (`20260101005800_markets.sql`): Poland/Germany/Netherlands/
+  Belgium seeded, honest per-market state (`marketplace_state`, `adoption_state`,
+  `transport_post_state`, `transport_full_state`, `fundraising_state`, each one of `unavailable` /
+  `discovery_only` / `listings_available` / `adoption_available` / `transport_requests_available`
+  / `partner_transport` / `full_havenpaw_service`), `supported_locales` as an array (never assumes
+  one language per country — Belgium has `nl-BE`/`fr-BE`/`en`), `legal_content_ready` boolean.
+  **Deliberately no market is marked `full_havenpaw_service`** — the app itself isn't fully
+  translated yet, so claiming full service readiness would overclaim what this migration alone
+  delivered. `profiles.preferred_language`/`preferred_currency` already existed as columns.
+- **Not built**: locale-aware URLs, currency/date/unit formatting beyond native `Intl` already used
+  ad hoc, user-content translation (listings/posts/messages keeping their original language plus an
+  optional machine translation), legal-document versioning by locale/jurisdiction, an admin
+  translation dashboard, and locales beyond English/Polish (French/German/Dutch etc. for Germany/
+  Netherlands/Belgium are named in the market registry's `supported_locales` but have no resource
+  files yet).
 
 ## 15. Multi-species support
 **Schema foundation done (2026-07-22), everything else not started.** A `species` reference table
