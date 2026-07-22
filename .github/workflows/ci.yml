@@ -39,3 +39,38 @@ jobs:
           # without them. Left unset deliberately: CI has no local Supabase stack to point at, and
           # a real project's anon key is not a secret worth wiring into every PR build.
           CI: true
+
+  # Separate, independent job — this one needs Docker (for the local Supabase stack) and takes
+  # longer, so it must never block or fail the basic install/typecheck/lint/build job above if
+  # Docker/Supabase isn't available in a given runner. See docs/DATABASE_TESTING.md.
+  #
+  # This job is EXPECTED to go red until the open findings documented in
+  # docs/DATABASE_TESTING.md are fixed — several tests in tests/db/ deliberately assert the
+  # *correct* behaviour for currently-real bugs so they stay visible instead of being silently
+  # tolerated. A red check here is the suite doing its job, not a broken pipeline.
+  database-tests:
+    name: Database/API regression suite (requires Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase (runs every migration, then supabase/seed.sql)
+        run: supabase start
+
+      - name: Export local Supabase URL/anon key for the test suite
+        run: supabase status -o env | grep -E '^(API_URL|ANON_KEY)=' | sed 's/^API_URL=/SUPABASE_URL=/; s/^ANON_KEY=/SUPABASE_ANON_KEY=/' >> "$GITHUB_ENV"
+
+      - name: Run the database/API regression suite
+        run: npm run test:db
