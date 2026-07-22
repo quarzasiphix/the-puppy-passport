@@ -62,16 +62,20 @@ export const Route = createFileRoute("/_public/")({
 });
 
 function Home() {
+  // Animal discovery and the marketplace come first — Havenpaw is a dedicated animal ecosystem,
+  // not a transport company with a marketplace bolted on (see docs/PRODUCT_VISION.md). Transport
+  // is a major advantage of the platform, not its primary identity, so its sections appear after
+  // the animal-discovery content, not before it.
   return (
     <div>
       <Hero />
       <ActionLauncher variant="homepage" />
-      <ServiceCategories />
       <Trust />
-      <TransportSection />
       <FeaturedPuppies />
       <UpcomingLitters />
       <VerifiedBreeders />
+      <ServiceCategories />
+      <TransportSection />
       <HowItWorksStrip />
       <FinalCTA />
     </div>
@@ -85,36 +89,35 @@ function Hero() {
       <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
         <div className="flex flex-col justify-center">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-            <Truck className="size-3.5" /> Professional animal transport
+            <HeartHandshake className="size-3.5" /> Verified breeders, foundations & safe transport
           </span>
           <h1 className="mt-4 font-display text-5xl font-medium leading-[1.05] tracking-tight text-foreground md:text-6xl">
-            Professional animal <span className="italic text-primary">transport</span> across
-            Europe.
+            Find your next <span className="italic text-primary">dog</span>, the right way.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-            Request individual, express, VIP or shared transport for a dog. We verify the required
-            information, plan the journey and handle transport from pickup to handover.
+            Search verified breeders and foundations across Europe, apply with confidence, and —
+            when it's time — arrange trusted transport from pickup to handover.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" className="h-12 gap-1">
-              <Link to="/transport/request">
-                Request transport <Truck className="size-4" />
+              <Link to="/find-a-dog">
+                Find a dog <ChevronRight className="size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 gap-1">
-              <Link to="/planned-routes">
-                View planned routes <RouteIcon className="size-4" />
+              <Link to="/breeders">
+                Meet verified breeders <Users className="size-4" />
               </Link>
             </Button>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              ["Available puppies", "/find-a-dog"],
               ["Dogs for adoption", "/adoptions"],
-              ["Verified breeders", "/breeders"],
               ["Foundations & rescues", "/foundations"],
+              ["Request transport", "/transport/request"],
+              ["Planned routes", "/planned-routes"],
             ].map(([label, href]) => (
               <Link
                 key={label}

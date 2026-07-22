@@ -84,11 +84,25 @@ shape and *why*, not every field.
 
 - **`reports`**, **`moderation_cases`** — user-filed reports and the resulting moderation
   workflow; `decision_explanation` is never public.
-- **`posts`, `comments`, `reactions`, `follows`, `saved_posts`, `groups`, `group_members`** —
-  community layer (schema exists; UI not built yet).
+- **`posts`, `comments`, `reactions`, `follows`, `saved_posts`** — community layer; the public post
+  feed, likes and comments are real, working UI (`_public.community.tsx`), not schema-only. **
+  `groups`, `group_members`** remain schema-only — no join/leave, no group-scoped posts, no UI at
+  all yet (confirmed by grep — zero references outside migrations).
 - **`conversations`, `conversation_participants`, `messages`** — messaging, including one
   conversation per transport request; `is_internal` messages are never customer-visible.
 - **`notifications`**, **`audit_logs`** — platform plumbing.
+
+## Fundraising (planned — no schema yet)
+
+Verified-organisation fundraising (hierarchy pillar 7 in `docs/PRODUCT_VISION.md`) is policy-defined
+in `docs/FUNDRAISING_POLICY.md` but **has no tables, RLS, or UI yet** — that's deliberate (see
+`docs/IMPLEMENTATION_PLAN.md` phase 13). When it's built, expect roughly: a `fundraising_campaigns`
+table (organisation, animal/adoption application, transport request, quotation, target amount,
+state) and a `fundraising_contributions` table (amount, optional public message, anonymity flag,
+payment-provider reference) — but don't treat this paragraph as a spec; the real column-level design
+happens when that phase starts, against whatever payment provider is chosen by then. This entry
+exists only so a future schema change doesn't have to rediscover that fundraising was deliberately
+deferred rather than forgotten.
 
 ## Cross-cutting patterns worth knowing before extending this schema
 

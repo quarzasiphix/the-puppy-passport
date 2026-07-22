@@ -1,12 +1,15 @@
 # Havenpaw — project context for Claude
 
-Havenpaw is a professional European animal marketplace, breeder network, community and animal
-transport logistics platform, being rebuilt from a static TanStack Start visual prototype into a
+Havenpaw is a **dedicated European animal ecosystem** — animal discovery/marketplace, breeder and
+foundation profiles, community, adoption/handover, and (once a purchase or adoption is agreed)
+professional animal transport — being rebuilt from a static TanStack Start visual prototype into a
 real application on a **local Supabase** database.
 
 It is **not**: a generic OLX/classifieds clone, a pet shop, a childish dog website, an unmoderated
-Facebook group, or an open marketplace where random transporters can accept jobs. Read
-`docs/PRODUCT_VISION.md` before touching product scope.
+Facebook group, an open marketplace where random transporters can accept jobs, or — permanently —
+**a general marketplace for unrelated categories** (cars, electronics, furniture, tools, etc.).
+Transport is a major advantage of the platform, not its primary identity — see the corrected
+hierarchy in `docs/PRODUCT_VISION.md`, which you must read before touching product scope.
 
 ## Repo orientation
 
@@ -131,7 +134,11 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
 
 ## Where to look next
 
-- `docs/PRODUCT_VISION.md` — what Havenpaw is and the staged roadmap.
+- `docs/PRODUCT_VISION.md` — what Havenpaw is, the permanent priority hierarchy, and the staged
+  roadmap. Read this before touching product scope — Havenpaw is a dedicated animal ecosystem, not
+  a transport company or a general marketplace.
+- `docs/FUNDRAISING_POLICY.md` — the authoritative fundraising policy (eligibility, campaign
+  requirements, financial rules); no fundraising code exists yet.
 - `docs/DOMAIN_MODEL.md` — entities and relationships (identity, animals, transport, routes/fleet,
   moderation, community).
 - `docs/IMPLEMENTATION_PLAN.md` — phased build order.
@@ -147,4 +154,7 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
   explicitly approved; not yet done.
 - `docs/E2E_TESTING.md` — how to run the Playwright suite locally, and the sandbox gap that
   currently blocks running it here.
+- `docs/DATABASE_TESTING.md` — how to run the Node-based database/API regression suite
+  (`npm run test:db`), and the real, currently-open bugs it found (read before assuming an RLS
+  policy "works" just because it reads correctly).
 - `docs/LOCAL_SETUP.md` — how to run the local Supabase stack and demo logins.

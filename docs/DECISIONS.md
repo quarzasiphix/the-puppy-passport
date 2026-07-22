@@ -6,11 +6,31 @@ whole thing before making a conflicting choice.
 
 ## Product direction
 
-- **Transport is the primary commercial service; marketplace/adoption/community are supporting
-  pillars.** This superseded an earlier "puppy marketplace first" framing and a separate
-  "breeder map + achievements" request — both of the latter are real, kept in
-  `PRODUCT_VISION.md`/`IMPLEMENTATION_PLAN.md`, but scheduled after the transport foundation, not
-  before it.
+- **Scope correction, 2026-07-22: Havenpaw is a dedicated animal ecosystem; transport is a major
+  advantage, not the primary identity.** This explicitly **reverses** the earlier decision directly
+  below ("transport is the primary commercial service"). That framing drove a transport-first
+  homepage hero, nav order, and header CTA, which have now all been corrected back toward
+  animal-discovery-first (see `src/routes/_public.index.tsx`, `src/components/site-chrome.tsx`).
+  The permanent priority order is now: (1) animal discovery/marketplace, (2) breeder/foundation/
+  public profiles, (3) social feed/communication/community, (4) applications/reservations/adoption/
+  handover, (5) integrated Havenpaw transport after a purchase or adoption, (6) standalone transport
+  requests, (7) verified-organisation fundraising (see `docs/FUNDRAISING_POLICY.md`), (8)
+  animal-related services/products/events/education. See `docs/PRODUCT_VISION.md` for the full
+  hierarchy and the main customer journey. **Havenpaw must never expand into unrelated
+  general-marketplace categories** (cars, electronics, furniture, tools, etc.) — every feature must
+  trace back to this hierarchy.
+- ~~Transport is the primary commercial service; marketplace/adoption/community are supporting
+  pillars.~~ **Superseded by the correction above.** This had itself superseded an earlier "puppy
+  marketplace first" framing and a separate "breeder map + achievements" request — kept here as a
+  historical record of how the framing has moved over time, not as current guidance.
+- **Fundraising is verified-organisation-only, transport/welfare-only, never a Havenpaw wallet.**
+  See `docs/FUNDRAISING_POLICY.md` for the complete policy, decided 2026-07-22 ahead of any
+  implementation. Key points worth restating here so they can't be quietly relaxed by a later
+  feature request: only approved organisations (never private users/buyers/adopters) may create a
+  campaign; a campaign never funds the purchase/adoption fee of an animal, only transport and
+  related welfare costs; collected funds go directly to the connected Havenpaw transport balance,
+  never to a freely-withdrawable personal balance; and no payment provider is integrated until one
+  is explicitly approved — until then this stays behind a feature flag.
 - **VIP transport is privacy/scheduling/communication, never a higher minimum welfare standard.**
   Every UI surface describing transport tiers must say this explicitly — it's a legal/ethical
   claim, not just marketing copy, and has been called out in every relevant spec this project has

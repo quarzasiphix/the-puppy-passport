@@ -95,7 +95,16 @@ are unused by any UI (confirmed by grep — zero references outside migrations);
 group-scoped posts, no route-group or breed-group structure. Deliberately scheduled after the
 transport workflow per the original brief; still true that a full social layer isn't required yet.
 
-## 13. Internationalisation
+## 13. Verified-organisation fundraising
+**Policy defined 2026-07-22, not yet built** — see `docs/FUNDRAISING_POLICY.md` for the complete,
+authoritative policy (eligibility, campaign requirements, financial rules, states, auditable
+situations). Corresponds to hierarchy pillar 7 in `docs/PRODUCT_VISION.md`. Must stay behind a
+feature flag, disabled by default, until a real payment provider, refund rules and legal texts are
+approved. No schema, RLS, or UI exists yet — this phase is intentionally policy-first so the
+eventual implementation has a fixed set of rules to build against instead of improvising them
+alongside the code.
+
+## 14. Internationalisation
 **Not started beyond schema readiness** — confirmed by code inspection, no localisation library
 (i18next, react-intl, etc.) or locale-resource files exist anywhere in `src/`.
 `profiles.preferred_language`/`preferred_currency` exist as columns; `country`/`currency` are plain
@@ -103,13 +112,13 @@ text fields everywhere rather than hardcoded enums specifically so this doesn't 
 rewrite later. All customer-facing copy today is English only. Initial operational focus stays
 Poland/Germany/Netherlands/Belgium, Polish/English, PLN/EUR — see `PRODUCT_VISION.md`.
 
-## 14. Multi-species support
+## 15. Multi-species support
 **Not started** — confirmed by code inspection, no "species" concept exists anywhere in the schema
 or UI; every animal-facing flow is dog-specific (kennel/puppy/litter language, dog-specific health
 fields). Not part of the original brief until requested separately; kept out of this document's
 phase order until a decision is made on the configurable-species model question (see backlog).
 
-## 15. Future integrations
+## 16. Future integrations
 Explicitly out of scope until the above phases are further along: AI-assisted matching/pricing/
 translation/fraud-detection, insurance, instalment credit, escrow payments, a food/accessories
 marketplace, vet/groomer/hotel directories, online training, an exhibition calendar, a

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { PawPrint, Menu, Truck, LogOut, LayoutDashboard } from "lucide-react";
+import { PawPrint, Menu, Search, LogOut, LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -9,14 +9,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth/actions";
 import { NotificationBell } from "@/components/notification-bell";
 
+// Animal discovery leads the navigation — Havenpaw is a dedicated animal ecosystem, not a
+// transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
+// prominent, real feature, just not the first thing a visitor sees.
 const nav = [
-  { to: "/transport", label: "Transport" },
-  { to: "/planned-routes", label: "Planned routes" },
   { to: "/find-a-dog", label: "Find a dog" },
   { to: "/breeder-map", label: "Breeder map" },
   { to: "/breeders", label: "Breeders" },
   { to: "/adoptions", label: "Adoptions" },
   { to: "/community", label: "Community" },
+  { to: "/transport", label: "Transport" },
+  { to: "/planned-routes", label: "Planned routes" },
   { to: "/how-it-works", label: "How it works" },
 ] as const;
 
@@ -86,8 +89,8 @@ export function SiteHeader() {
             </Link>
           )}
           <Button asChild className="hidden md:inline-flex">
-            <Link to="/transport/request">
-              <Truck className="mr-1 size-4" /> Request transport
+            <Link to="/find-a-dog">
+              <Search className="mr-1 size-4" /> Find a dog
             </Link>
           </Button>
           <Button
@@ -148,8 +151,8 @@ export function SiteHeader() {
               </Link>
             )}
             <Button asChild className="mt-3">
-              <Link to="/transport/request" onClick={() => setMobileOpen(false)}>
-                <Truck className="mr-1 size-4" /> Request transport
+              <Link to="/find-a-dog" onClick={() => setMobileOpen(false)}>
+                <Search className="mr-1 size-4" /> Find a dog
               </Link>
             </Button>
           </nav>
@@ -171,18 +174,10 @@ export function SiteFooter() {
             <span className="font-display text-lg font-semibold">Havenpaw</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-            A professional animal transport and logistics platform for Poland and Europe — combined
-            with verified breeders, foundation adoption listings and a trusted community.
+            A dedicated European animal ecosystem — verified breeders, foundation adoptions and a
+            trusted community, with safe transport available every step of the way.
           </p>
         </div>
-        <FooterCol
-          title="Transport"
-          items={[
-            ["Request transport", "/transport/request"],
-            ["Service categories", "/transport"],
-            ["Planned routes", "/planned-routes"],
-          ]}
-        />
         <FooterCol
           title="Discover"
           items={[
@@ -192,6 +187,14 @@ export function SiteFooter() {
             ["Foundations", "/foundations"],
             ["Adoptions", "/adoptions"],
             ["Rehome your dog", "/rehome"],
+          ]}
+        />
+        <FooterCol
+          title="Transport"
+          items={[
+            ["Request transport", "/transport/request"],
+            ["Service categories", "/transport"],
+            ["Planned routes", "/planned-routes"],
           ]}
         />
         <FooterCol
