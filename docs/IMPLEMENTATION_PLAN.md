@@ -107,8 +107,11 @@ exist with RLS/access-policy verified directly against the storage API (see
 UI exists yet for breeder/buyer/foundation/operations
 (`dashboard.{breeder,buyer,foundation,operations}.documents.tsx` are all honest `NotImplemented`
 pages) — the storage layer those would sit on top of is real, but nothing has been uploaded through
-the app itself yet. A `legal_requirements` table is deliberately not built — see `DECISIONS.md` on
-never inventing a legal database without a source URL + review date.
+the app itself yet. **Correction 2026-07-22**: this section previously said "a `legal_requirements`
+table is deliberately not built" — that was wrong, the table already existed
+(`20260101003500_legal_requirements.sql`) with exactly the intended discipline (never populated
+without a source URL + review date, a CHECK constraint enforcing a real `http(s)://` source). See
+phase 18 below for what was extended this pass.
 
 ## 11. Foundations
 **Working end to end.** Foundation dashboard (adoption listings, transport requests, applications
@@ -278,11 +281,31 @@ is stable per this phase's own brief**: any listing table, query layer, or UI fo
 this is architecture preparation only, matching hierarchy pillar 8's framing as a real but
 not-yet-committed differentiator.
 
-## 17. Future integrations
+## 18. Legal and trust readiness
+**Reviewed 2026-07-22 — most of this phase's brief was already real** (found by reading the actual
+schema, not assumed): professional seller identification, breeder/organisation verification
+(`user_verifications`, `approve_user_verification()`), listing reports including "suspected illegal
+breeding" as a real `report_reason` option, moderation cases with a decision + `decision_explanation`
+that's never public, and audit logs — all already working end to end (see `MVP_TEST_REPORT.md`).
+`legal_requirements` also already existed (corrected in phase 10 above — a prior version of this
+document wrongly said it wasn't built). **Extended this pass**
+(`20260101005900_legal_requirements_species_and_review.sql`, purely additive, no rows seeded — same
+"never invent a rule" discipline as the original table): added `species_id` (null = applies to all
+species), `effective_date` (distinct from `last_reviewed_at`, which tracks when staff last checked
+the source), `reviewer_id` (distinct from `created_by`), and `enforcement_level`
+(`advisory`/`blocking`) — the exact "jurisdiction, species/category, source, effective date, review
+date, reviewer, blocking/advisory status" shape this phase asked for. **Not built**: `appeal_status`
+already exists on `moderation_cases` as an enum, but there is no user-facing way to actually request
+an appeal — moderation decisions aren't visible to the affected user at all yet, only to staff; any
+real "prohibited species" *enforcement* (e.g. actually blocking a listing at publish time based on
+species + country) — the schema can now represent such a rule, but nothing reads
+`legal_requirements` to enforce anything yet, matching the existing, deliberate "routing label, not
+an automated legal decision" stance for `compliance_review_result` (see `DECISIONS.md`).
+
+## 19. Future integrations
 Explicitly out of scope until the above phases are further along: AI-assisted matching/pricing/
 translation/fraud-detection, insurance, instalment credit, escrow payments, online training, an
-exhibition calendar, a European market/locale registry. Kept on the list (`PRODUCT_VISION.md`), not
-committed.
+exhibition calendar. Kept on the list (`PRODUCT_VISION.md`), not committed.
 
 ---
 

@@ -93,7 +93,13 @@ shape and *why*, not every field.
 ## Trust, community, messaging, platform
 
 - **`reports`**, **`moderation_cases`** — user-filed reports and the resulting moderation
-  workflow; `decision_explanation` is never public.
+  workflow; `decision_explanation` is never public. `moderation_cases.appeal_status` exists
+  (`none`/`requested`/`reviewed`) but no UI lets a user actually request one yet.
+- **`legal_requirements`** — never populated without a real `source_url` (CHECK-constrained to
+  `http(s)://`) and `last_reviewed_at`; a routing/checklist input, never a substitute legal opinion
+  or an automated compliance decision (same stance as `transport_requests.compliance_review_result`
+  — see `DECISIONS.md`). Extended 2026-07-22 with `species_id` (null = all species),
+  `effective_date`, `reviewer_id`, and `enforcement_level` (`advisory`/`blocking`).
 - **`posts`, `comments`, `reactions`, `follows`, `saved_posts`** — community layer; the public post
   feed, likes and comments are real, working UI (`_public.community.index.tsx`), not schema-only.
 - **`groups`, `group_members`** — real, working UI as of 2026-07-22
