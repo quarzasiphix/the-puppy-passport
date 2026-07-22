@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -75,8 +75,8 @@ function PuppiesPage() {
               trigger={<Button>Add puppy</Button>}
             />
           ) : (
-            <Button variant="outline" disabled title="Add a litter first">
-              Add puppy — add a litter first
+            <Button asChild variant="outline">
+              <Link to="/dashboard/breeder/litters">Add a litter first</Link>
             </Button>
           ))}
       </header>
@@ -86,8 +86,15 @@ function PuppiesPage() {
       ) : !puppies?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No puppies yet. Add a litter first, then add puppies from the litter page or here.
+            {litterOptions.length
+              ? "No puppies yet. Add your first one above."
+              : "No puppies yet — a litter comes first (parents, breed, birth date), then puppies."}
           </p>
+          {!litterOptions.length && (
+            <Button asChild className="mt-4" size="sm">
+              <Link to="/dashboard/breeder/litters">Add a litter</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

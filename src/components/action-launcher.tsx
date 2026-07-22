@@ -1,13 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Truck,
-  Search,
-  Dog,
-  HeartHandshake,
-  Users,
-  Route as RouteIcon,
-  ArrowRight,
-} from "lucide-react";
+import { Truck, Search, Dog, HeartHandshake, Users, Home, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 // The single "what can I do here" launcher, shown on the homepage and the customer dashboard.
@@ -49,10 +41,10 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
       desc: "Search verified kennels by breed and location.",
     },
     {
-      to: "/planned-routes",
-      icon: RouteIcon,
-      title: "View planned routes",
-      desc: "See upcoming shared transport routes.",
+      to: "/rehome",
+      icon: Home,
+      title: "Find a new home for my dog",
+      desc: "Submit your dog for review before it's shown to anyone.",
     },
   ] as const;
 
