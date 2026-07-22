@@ -33,9 +33,19 @@ shape and *why*, not every field.
 - **`private_addresses`** — exact addresses for a user or an organisation, never publicly
   selectable. `latitude`/`longitude` exist for a future map phase but aren't populated or used yet.
 
+## Species (schema foundation only — added 2026-07-22)
+
+- **`species`** — fixed-id reference table (dog/cat/rabbit/guinea_pig/other_small_mammal enabled;
+  bird/reptile_amphibian/fish/exotic/horse real rows but `enabled = false`, never publicly
+  selectable until a dedicated workflow exists). `breeds.species_id` and `animals.species_id` both
+  reference it and both default to the fixed 'dog' row id, so every existing insert path continues
+  to work unchanged. **Nothing reads `species_id` yet** — no UI, no per-species field/document/
+  eligibility rules, no cat/rabbit/guinea-pig-specific data model. See `docs/IMPLEMENTATION_PLAN.md`
+  phase 15 for what's actually built vs. deferred.
+
 ## Animal directory & marketplace
 
-- **`breeds`** — public reference directory (name, slug, size category).
+- **`breeds`** — public reference directory (name, slug, size category, species).
 - **`parent_dogs`** — a kennel's breeding dogs. Reusable across litters (a dog isn't duplicated per
   litter or per achievement — see `DECISIONS.md`).
 - **`litters`** — belongs to a kennel + breed, references `mother_id`/`father_id` in

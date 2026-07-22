@@ -29,12 +29,14 @@ session-expiry handling, a dedicated multi-step onboarding flow, an account-stat
 ## 4. Transport requests
 **Working end to end.** The 7-step public request form writes a real `transport_requests` row +
 `transport_status_history`; customer dashboards show real request lists with plain-language status.
-**Partially implemented / architectural decision pending**: animal and party data on a transport
-request is currently an inline snapshot on `transport_requests` rather than a dedicated reusable
-`animals` link + a `transport_parties` table separating legal-owner/sender/recipient/payer/pickup/
-delivery contact (including non-Havenpaw external contacts). No decision has been made yet on
-whether/how to change this — see the "Prioritised backlog" below. Draft save/resume/edit/delete
-before submission is **not implemented**.
+**Partially implemented**: animal and party data on a transport request is currently an inline
+snapshot on `transport_requests`. A dedicated `public.transport_parties` table (legal_owner/
+requester/sender/recipient/payer/pickup_contact/delivery_contact, including non-Havenpaw external
+contacts) **already exists in the schema with real RLS**
+(`20260101002400_animals_transport_fields.sql`) — confirmed by reading the migration directly, this
+document previously and incorrectly said it didn't exist yet — but no UI or query layer uses it.
+The real remaining work is wiring the 7-step form and ops tooling to it, not building it. Draft
+save/resume/edit/delete before submission is **not implemented**.
 
 ## 5. Transport operations
 **Working end to end.** Ops/admin dispatch dashboard (`dashboard.operations.dispatch.tsx`), request
@@ -113,10 +115,22 @@ rewrite later. All customer-facing copy today is English only. Initial operation
 Poland/Germany/Netherlands/Belgium, Polish/English, PLN/EUR — see `PRODUCT_VISION.md`.
 
 ## 15. Multi-species support
-**Not started** — confirmed by code inspection, no "species" concept exists anywhere in the schema
-or UI; every animal-facing flow is dog-specific (kennel/puppy/litter language, dog-specific health
-fields). Not part of the original brief until requested separately; kept out of this document's
-phase order until a decision is made on the configurable-species model question (see backlog).
+**Schema foundation done (2026-07-22), everything else not started.** A `species` reference table
+(`20260101005300_species.sql`) with 5 enabled species (dog, cat, rabbit, guinea pig, other small
+companion mammal) and 5 deliberately disabled future ones (bird, reptile/amphibian, fish, exotic,
+horse — real rows, never publicly selectable until a dedicated workflow exists), plus `species_id`
+on `breeds` and `animals`, both defaulting to 'dog' via a fixed row id so every existing insert path
+(puppy/litter forms, rehoming, transport's inline snapshot) needed zero changes and keeps working
+exactly as before — verified with a full `supabase db reset` and the complete `test:db` suite,
+both clean. **Not built**: every animal-facing flow is still dog-specific in its UI (kennel/puppy/
+litter language, dog-specific health fields, no species picker anywhere); no cattery/cat-litter/
+kitten model exists yet (a real cat "parent"/litter model needs its own tables — `parent_dogs` stays
+dog-only, not repurposed); no rabbit/guinea-pig-specific fields (size/weight, social needs, housing,
+diet, behaviour, transport sensitivity) exist; no configurable per-species field/document/
+eligibility model exists — `species_id` is currently just a tag, nothing reads it yet. This was a
+deliberate scope decision for this pass: a full multi-species UI buildout is a substantial,
+multi-part effort that deserves its own dedicated pass per species rather than being rushed
+alongside everything else queued this session — see the prioritised backlog.
 
 ## 16. Future integrations
 Explicitly out of scope until the above phases are further along: AI-assisted matching/pricing/
@@ -129,33 +143,49 @@ the list (`PRODUCT_VISION.md`), not committed.
 
 ## Prioritised backlog (real missing functionality, ordered by launch risk / dependency)
 
-1. **Automated tests** — no automated test suite existed at all until 2026-07-22's first Playwright
-   auth spec; everything else is still manually verified only (see `docs/MVP_TEST_REPORT.md` §5,
-   `docs/E2E_TESTING.md`).
-2. **Production Supabase project + production Cloudflare deployment** — business/account steps, not
+1. **Fix the four open findings in `docs/DATABASE_TESTING.md`** — real, currently-open bugs (a
+   customer can change their own transport request's operational status; suspending a breeder's
+   role doesn't revoke org-management access; the org-owner-notify-applicant path fails outright;
+   a column-shadowing bug blocks assigned drivers from their own job's documents in Storage). Each
+   has a deliberately-failing regression test already written — fixing the bug flips the test, not
+   the other way around.
+2. **Automated tests** — a Playwright auth spec and a Node-based DB/API regression suite
+   (`tests/db/`, `npm run test:db`) exist as of 2026-07-22; everything else is still manually
+   verified only (see `docs/MVP_TEST_REPORT.md` §5, `docs/E2E_TESTING.md`, `docs/DATABASE_TESTING.md`).
+3. **Production Supabase project + production Cloudflare deployment** — business/account steps, not
    code; procedures documented in `docs/PRODUCTION_SETUP.md`/`docs/DEPLOYMENT_CHECKLIST.md` but not
    yet executed.
-3. **Legal text finalisation** (`/terms`, `/privacy`, `/cookies`) — needs a real registered business
+4. **Legal text finalisation** (`/terms`, `/privacy`, `/cookies`) — needs a real registered business
    entity and lawyer review before further code work there is useful.
-4. **Transport data-model decision**: snapshot vs. dedicated `transport_parties`/reusable `animals`
-   link (phase 4 above) — a real architectural choice affecting privacy, historical accuracy,
-   repeat-customer UX and external non-account contacts; needs to be decided deliberately before
-   more transport features are layered on top, per `DECISIONS.md`'s migration-discipline note.
-5. **Operations calendar** (phase 5) — day/week/route views over already-real route/vehicle/driver/
+5. **Transport data-model decision**: the snapshot-on-`transport_requests` vs. dedicated
+   `transport_parties` question (phase 4 above) is **less open than earlier versions of this
+   document claimed** — `public.transport_parties` (legal_owner/requester/sender/recipient/payer/
+   pickup_contact/delivery_contact, including external non-Havenpaw contacts) already exists in the
+   schema with real RLS (`20260101002400_animals_transport_fields.sql`), just entirely unused by any
+   UI. The remaining decision is narrower: wire the 7-step transport form and ops tooling to actually
+   use this table instead of (or alongside) the inline snapshot fields — not whether to build it.
+6. **Operations calendar** (phase 5) — day/week/route views over already-real route/vehicle/driver/
    matching data.
-6. **Document library / upload UI** (phase 10) — the storage layer is verified and ready; no
+7. **Document library / upload UI** (phase 10) — the storage layer is verified and ready; no
    customer-facing or ops-facing UI exists yet.
-7. **Notification preferences** — currently all-or-nothing; only a "coming soon" placeholder exists
+8. **Notification preferences** — currently all-or-nothing; only a "coming soon" placeholder exists
    on breeder/foundation settings pages.
-8. **Foundation welfare-urgent flow and team/volunteer management** (phase 11) — both honest
+9. **Foundation welfare-urgent flow and team/volunteer management** (phase 11) — both honest
    placeholders today.
-9. **Full adoption/rehoming application questionnaire** — currently simplified to a first-contact
-   message; puppy-purchase applications already have the full multi-step questionnaire as the
-   template to extend from.
-10. **Community groups** (phase 12) — schema exists, zero UI.
-11. **Internationalisation and multi-species support** (phases 13–14) — both genuinely not started;
-    each is a significant, deliberate architectural effort (locale/translation infrastructure;
-    configurable per-species field/document/eligibility model) that should get its own design pass
-    rather than being bolted on ad hoc.
-12. **Accessibility and mobile-usability audits** — not yet done as a dedicated pass (see
+10. **Full adoption/rehoming application questionnaire** — currently simplified to a first-contact
+    message; puppy-purchase applications already have the full multi-step questionnaire as the
+    template to extend from.
+11. **Community groups** (phase 12) — schema exists, zero UI.
+12. **Multi-species UI buildout** (phase 15) — the `species` reference table + `species_id` schema
+    foundation landed 2026-07-22 (see phase 15 above), but no UI, no cattery/cat-litter/kitten
+    model, no rabbit/guinea-pig-specific fields, and no configurable per-species field/document/
+    eligibility model exist yet — each species deserves its own dedicated design pass rather than
+    one universal animal form.
+13. **Internationalisation** (phase 14) — genuinely not started beyond schema readiness; a
+    significant, deliberate architectural effort (locale/translation infrastructure) that should get
+    its own design pass rather than being bolted on ad hoc.
+14. **Verified-organisation fundraising module** (phase 13) — policy is fully defined
+    (`docs/FUNDRAISING_POLICY.md`), no schema/RLS/UI exists yet; stays behind a feature flag until a
+    payment provider, refund rules and legal texts are approved.
+15. **Accessibility and mobile-usability audits** — not yet done as a dedicated pass (see
     `PRODUCTION_READINESS_REPORT.md`).
