@@ -1023,6 +1023,71 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["messages"]["Row"]>;
         Relationships: [];
       };
+      fundraising_campaigns: {
+        Row: {
+          id: string;
+          organisation_id: string;
+          animal_id: string;
+          buyer_application_id: string;
+          transport_request_id: string;
+          quotation_id: string;
+          title: string;
+          description: string | null;
+          target_amount: number;
+          currency: string;
+          deadline: string | null;
+          status:
+            | "draft"
+            | "organisation_review"
+            | "approved"
+            | "active"
+            | "target_reached"
+            | "partially_funded"
+            | "expired"
+            | "transport_cancelled"
+            | "suspended"
+            | "completed"
+            | "refund_review";
+          excess_funds_policy: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["fundraising_campaigns"]["Row"]> & {
+          organisation_id: string;
+          animal_id: string;
+          buyer_application_id: string;
+          transport_request_id: string;
+          quotation_id: string;
+          title: string;
+          target_amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["fundraising_campaigns"]["Row"]>;
+        Relationships: [];
+      };
+      fundraising_contributions: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          supporter_profile_id: string;
+          amount: number;
+          currency: string;
+          display_publicly: boolean;
+          public_message: string | null;
+          payment_status: "pending" | "completed" | "failed" | "refunded";
+          is_simulated: boolean;
+          payment_provider_reference: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["fundraising_contributions"]["Row"]> & {
+          campaign_id: string;
+          supporter_profile_id: string;
+          amount: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["fundraising_contributions"]["Row"]>;
+        Relationships: [];
+      };
       // Every other table exists in the database (see supabase/migrations) but doesn't have a
       // hand-written type yet — `npm run db:types` replaces this whole file once Docker is
       // running locally. (Deliberately no catch-all index signature here: mixing one in with the
@@ -1069,6 +1134,24 @@ export interface Database {
         Row: {
           average_rating: number | null;
           review_count: number;
+        };
+        Relationships: [];
+      };
+      public_fundraising_contributions: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          amount: number;
+          currency: string;
+          public_message: string | null;
+          created_at: string;
+        };
+        Relationships: [];
+      };
+      public_fundraising_totals: {
+        Row: {
+          campaign_id: string;
+          total_collected: number;
         };
         Relationships: [];
       };

@@ -162,13 +162,48 @@ posts/group-specific rules text, moderation queue specifically for group content
 existing generic report → moderation_cases flow, which works but isn't group-aware).
 
 ## 13. Verified-organisation fundraising
-**Policy defined 2026-07-22, not yet built** — see `docs/FUNDRAISING_POLICY.md` for the complete,
-authoritative policy (eligibility, campaign requirements, financial rules, states, auditable
-situations). Corresponds to hierarchy pillar 7 in `docs/PRODUCT_VISION.md`. Must stay behind a
-feature flag, disabled by default, until a real payment provider, refund rules and legal texts are
-approved. No schema, RLS, or UI exists yet — this phase is intentionally policy-first so the
-eventual implementation has a fixed set of rules to build against instead of improvising them
-alongside the code.
+**Built 2026-07-22** — schema, RLS, query layer, org/admin/public UI, all real and tested, kept
+**disabled by default behind `VITE_FUNDRAISING_ENABLED`** (`src/lib/fundraising-flag.ts`) until a
+real payment provider, refund rules and legal texts are approved — see `docs/FUNDRAISING_POLICY.md`
+for the full policy this implementation follows, and `docs/DATABASE_TESTING.md` /
+`tests/db/fundraising.test.ts` for the security test coverage. Corresponds to hierarchy pillar 7 in
+`docs/PRODUCT_VISION.md`.
+
+**What's real**: `fundraising_campaigns` + `fundraising_contributions` tables
+(`20260101005600_fundraising.sql`), gated to `org_type in ('foundation','shelter','rescue')` +
+`verification_status = 'approved'` only (never kennels); a campaign requires a real animal owned
+by that org, a real adoption/rehoming application (never `purchase`), a real transport request and
+an *accepted* quotation, enforced by a shared `fundraising_campaign_links_are_valid()` function used
+identically on insert and update (not just at creation time); one non-terminal campaign per
+quotation (unique index); the campaign's animal/transport/quotation/organisation is locked by a
+trigger once a completed contribution exists; only `is_simulated = true` contributions can be
+created at all (no real payment path exists); anonymity (`display_publicly = false`) hides a
+contribution's attribution from the public per-row view but **not** from the campaign total — a
+separate `public_fundraising_totals` aggregate view exists specifically so an anonymous
+contribution still counts toward "target reached" (found and fixed during this build: the naive
+approach of computing the total from the same privacy-filtered view undercounted anonymous
+contributions). Org self-service is deliberately narrow: an org can move their own campaign through
+draft/organisation_review/active/expired/transport_cancelled, but only admin can set
+approved/suspended/refund_review/completed, and **organisations have no DELETE policy on
+campaigns at all** — a campaign moves through states, it never just disappears (found while writing
+the tests: attempting to delete as the org silently affects zero rows, not an error).
+
+**UI**: `dashboard.foundation.fundraising` (org: create from an eligible accepted-quotation
+picker, submit for review, view contributions), `dashboard.admin.fundraising` (approve/activate/
+suspend), `/fundraising` (public list + detail with a development-only simulated-contribution
+form, clearly labelled, never available in production). Two real bugs found and fixed while
+building this against the real local API (not assumed from reading SQL): (1) the public
+campaign query originally embedded `transport_requests` directly for route display — anon has no
+grant on that table at all, so this failed with a real "permission denied" the first time an
+anonymous visitor loaded the page; fixed by querying the existing `public_transport_requests` view
+separately instead. (2) the amount-collected aggregation originally read
+`fundraising_contributions` directly — same anon-grant problem, plus it would have silently
+undercounted anonymous contributions even for authenticated readers; fixed with the dedicated
+`public_fundraising_totals` view described above.
+
+**Not built**: real payment provider integration (by design, this phase), a UI for the
+excess-funds/refund/dispute states beyond the schema supporting them, and email notifications when
+a campaign changes state.
 
 ## 14. Internationalisation
 **Not started beyond schema readiness** — confirmed by code inspection, no localisation library

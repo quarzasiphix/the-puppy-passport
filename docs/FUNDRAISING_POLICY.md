@@ -1,10 +1,13 @@
 # Havenpaw — Fundraising Policy
 
-Written 2026-07-22, as a product/policy decision ahead of building the fundraising module itself
-(see `docs/IMPLEMENTATION_PLAN.md` phase 10). This document is the authoritative statement of
-**what fundraising on Havenpaw is and is not allowed to do** — the technical architecture (schema,
-RLS, UI) that implements it is a separate, later piece of work and must conform to this policy, not
-the other way around. No payment provider integration, wallet, or fundraising UI exists yet.
+Written 2026-07-22 as a product/policy decision, **implemented the same day** (see
+`docs/IMPLEMENTATION_PLAN.md` phase 13 for the full build detail, `docs/DOMAIN_MODEL.md` for the
+schema, `tests/db/fundraising.test.ts` for the security test coverage). This document remains the
+authoritative statement of **what fundraising on Havenpaw is and is not allowed to do** — the
+implementation must conform to this policy, not the other way around. There is still no real
+payment provider integration or wallet, and the whole feature stays disabled by default behind
+`VITE_FUNDRAISING_ENABLED` (`src/lib/fundraising-flag.ts`) until one is approved along with refund
+rules and legal texts.
 
 ## Why fundraising exists on Havenpaw at all
 
@@ -111,8 +114,10 @@ or to an organisation's broader work.
 
 ## Implementation status
 
-**Not yet built.** This is a policy document only. When the fundraising module is implemented, it
-must stay behind a feature flag, disabled by default, until a real payment provider, refund rules,
-and legal texts (see `docs/PRODUCTION_READINESS_REPORT.md`'s "Requires legal review" section) are
-explicitly approved. A development-only, clearly-labelled payment simulation (never available in
-production) is the expected first implementation step.
+**Built 2026-07-22** — schema, RLS, org/admin/public UI and a development-only simulated-payment
+flow all exist and are tested (`docs/IMPLEMENTATION_PLAN.md` phase 13,
+`tests/db/fundraising.test.ts`). Still gated behind `VITE_FUNDRAISING_ENABLED`, unset (disabled) by
+default, until a real payment provider, refund rules, and legal texts (see
+`docs/PRODUCTION_READINESS_REPORT.md`'s "Requires legal review" section) are explicitly approved.
+Not built: real payment provider integration, and dedicated UI for the excess-funds/refund/dispute
+states beyond the schema already supporting them.

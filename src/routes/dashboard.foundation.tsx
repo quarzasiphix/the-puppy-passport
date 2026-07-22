@@ -11,6 +11,7 @@ import {
   Users,
   MessageSquare,
   Settings,
+  HeartHandshake,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +30,7 @@ const items: DashboardNavItem[] = [
   { to: "/dashboard/foundation/animals", label: "Animals", icon: PawPrint },
   { to: "/dashboard/foundation/applications", label: "Adoption applications", icon: Inbox },
   { to: "/dashboard/foundation/transport", label: "Transport requests", icon: Truck },
+  { to: "/dashboard/foundation/fundraising", label: "Fundraising", icon: HeartHandshake },
   { to: "/dashboard/foundation/urgent", label: "Urgent cases", icon: AlertTriangle },
   { to: "/dashboard/foundation/documents", label: "Documents", icon: FileText },
   { to: "/dashboard/foundation/team", label: "Team", icon: Users },

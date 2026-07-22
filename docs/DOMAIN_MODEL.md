@@ -106,17 +106,36 @@ shape and *why*, not every field.
   conversation per transport request; `is_internal` messages are never customer-visible.
 - **`notifications`**, **`audit_logs`** — platform plumbing.
 
-## Fundraising (planned — no schema yet)
+## Fundraising (built 2026-07-22 — disabled behind a feature flag)
 
-Verified-organisation fundraising (hierarchy pillar 7 in `docs/PRODUCT_VISION.md`) is policy-defined
-in `docs/FUNDRAISING_POLICY.md` but **has no tables, RLS, or UI yet** — that's deliberate (see
-`docs/IMPLEMENTATION_PLAN.md` phase 13). When it's built, expect roughly: a `fundraising_campaigns`
-table (organisation, animal/adoption application, transport request, quotation, target amount,
-state) and a `fundraising_contributions` table (amount, optional public message, anonymity flag,
-payment-provider reference) — but don't treat this paragraph as a spec; the real column-level design
-happens when that phase starts, against whatever payment provider is chosen by then. This entry
-exists only so a future schema change doesn't have to rediscover that fundraising was deliberately
-deferred rather than forgotten.
+Verified-organisation fundraising (hierarchy pillar 7 in `docs/PRODUCT_VISION.md`), policy in
+`docs/FUNDRAISING_POLICY.md`, real schema in `20260101005600_fundraising.sql`. See
+`docs/IMPLEMENTATION_PLAN.md` phase 13 for the full build detail; summary here:
+
+- **`fundraising_campaigns`** — organisation, animal, buyer_application, transport_request and
+  quotation are all `not null` FKs (a campaign is never standalone) plus target_amount/currency/
+  deadline/status. `fundraising_campaign_links_are_valid()` (SECURITY DEFINER) is the single shared
+  check both the INSERT and UPDATE policies call, so the required shape (real animal owned by the
+  org, real adoption/rehoming application, real transport request, an *accepted* quotation) can't
+  drift between the two policies. `is_eligible_fundraising_org()` gates creation to
+  `org_type in ('foundation','shelter','rescue')` + `verification_status = 'approved'` — never
+  kennels. A `BEFORE UPDATE` trigger blocks changing the animal/transport/quotation/organisation
+  once a completed contribution exists. A partial unique index enforces one non-terminal campaign
+  per quotation.
+- **`fundraising_contributions`** — `is_simulated` defaults to `true` and the only INSERT policy
+  requires it stay `true` (no real payment provider integrated); `display_publicly` controls
+  whether a contribution appears in the public per-row view, never whether it counts toward the
+  total (see below).
+- **`public_fundraising_contributions`** (view) — public per-row list, `display_publicly = true`
+  and `payment_status = 'completed'` only, never `supporter_profile_id`.
+- **`public_fundraising_totals`** (view) — a *separate* aggregate view, sums every completed
+  contribution regardless of `display_publicly`. Needed because "remain anonymous publicly" means
+  hiding attribution, not excluding the money from "target reached" — found as a real bug while
+  building this (the naive approach reused the per-row view for the total and silently undercounted
+  anonymous contributions).
+
+Kept disabled by default via `src/lib/fundraising-flag.ts` (`VITE_FUNDRAISING_ENABLED`, unset in
+production) until a real payment provider, refund rules and legal texts are approved.
 
 ## Cross-cutting patterns worth knowing before extending this schema
 

@@ -27,6 +27,7 @@ import { Route as PublicPrivacyRouteImport } from './routes/_public.privacy'
 import { Route as PublicPlannedRoutesRouteImport } from './routes/_public.planned-routes'
 import { Route as PublicPlannedLittersRouteImport } from './routes/_public.planned-litters'
 import { Route as PublicHowItWorksRouteImport } from './routes/_public.how-it-works'
+import { Route as PublicFundraisingRouteImport } from './routes/_public.fundraising'
 import { Route as PublicFoundationsRouteImport } from './routes/_public.foundations'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
 import { Route as PublicFindYourDogRouteImport } from './routes/_public.find-your-dog'
@@ -45,6 +46,7 @@ import { Route as DashboardBuyerIndexRouteImport } from './routes/dashboard.buye
 import { Route as DashboardBreederIndexRouteImport } from './routes/dashboard.breeder.index'
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as PublicTransportIndexRouteImport } from './routes/_public.transport.index'
+import { Route as PublicFundraisingIndexRouteImport } from './routes/_public.fundraising.index'
 import { Route as PublicCommunityIndexRouteImport } from './routes/_public.community.index'
 import { Route as PublicBreedersIndexRouteImport } from './routes/_public.breeders.index'
 import { Route as PublicAdoptionsIndexRouteImport } from './routes/_public.adoptions.index'
@@ -69,6 +71,7 @@ import { Route as DashboardFoundationTeamRouteImport } from './routes/dashboard.
 import { Route as DashboardFoundationSettingsRouteImport } from './routes/dashboard.foundation.settings'
 import { Route as DashboardFoundationProfileRouteImport } from './routes/dashboard.foundation.profile'
 import { Route as DashboardFoundationMessagesRouteImport } from './routes/dashboard.foundation.messages'
+import { Route as DashboardFoundationFundraisingRouteImport } from './routes/dashboard.foundation.fundraising'
 import { Route as DashboardFoundationDocumentsRouteImport } from './routes/dashboard.foundation.documents'
 import { Route as DashboardFoundationApplicationsRouteImport } from './routes/dashboard.foundation.applications'
 import { Route as DashboardFoundationAnimalsRouteImport } from './routes/dashboard.foundation.animals'
@@ -100,6 +103,7 @@ import { Route as DashboardAdminReportsRouteImport } from './routes/dashboard.ad
 import { Route as DashboardAdminOrganisationsRouteImport } from './routes/dashboard.admin.organisations'
 import { Route as DashboardAdminModerationRouteImport } from './routes/dashboard.admin.moderation'
 import { Route as DashboardAdminListingsRouteImport } from './routes/dashboard.admin.listings'
+import { Route as DashboardAdminFundraisingRouteImport } from './routes/dashboard.admin.fundraising'
 import { Route as DashboardAdminFoundationVerificationRouteImport } from './routes/dashboard.admin.foundation-verification'
 import { Route as DashboardAdminBreederVerificationRouteImport } from './routes/dashboard.admin.breeder-verification'
 import { Route as DashboardAdminAuditLogsRouteImport } from './routes/dashboard.admin.audit-logs'
@@ -107,14 +111,17 @@ import { Route as DashboardAdminAchievementVerificationRouteImport } from './rou
 import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
 import { Route as PublicProfileProfileIdRouteImport } from './routes/_public.profile.$profileId'
+import { Route as PublicFundraisingIdRouteImport } from './routes/_public.fundraising.$id'
 import { Route as PublicCommunityGroupsRouteImport } from './routes/_public.community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public.adoptions.$id'
 import { Route as DashboardOperationsRoutesIndexRouteImport } from './routes/dashboard.operations.routes.index'
+import { Route as DashboardFoundationFundraisingIndexRouteImport } from './routes/dashboard.foundation.fundraising.index'
 import { Route as DashboardBreederLittersIndexRouteImport } from './routes/dashboard.breeder.litters.index'
 import { Route as PublicCommunityGroupsIndexRouteImport } from './routes/_public.community.groups.index'
 import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard.operations.routes.$id'
 import { Route as DashboardOperationsRequestsIdRouteImport } from './routes/dashboard.operations.requests.$id'
+import { Route as DashboardFoundationFundraisingIdRouteImport } from './routes/dashboard.foundation.fundraising.$id'
 import { Route as DashboardBreederLittersIdRouteImport } from './routes/dashboard.breeder.litters.$id'
 import { Route as PublicCommunityGroupsSlugRouteImport } from './routes/_public.community.groups.$slug'
 
@@ -205,6 +212,11 @@ const PublicPlannedLittersRoute = PublicPlannedLittersRouteImport.update({
 const PublicHowItWorksRoute = PublicHowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicFundraisingRoute = PublicFundraisingRouteImport.update({
+  id: '/fundraising',
+  path: '/fundraising',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicFoundationsRoute = PublicFoundationsRouteImport.update({
@@ -298,6 +310,11 @@ const PublicTransportIndexRoute = PublicTransportIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicTransportRoute,
+} as any)
+const PublicFundraisingIndexRoute = PublicFundraisingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicFundraisingRoute,
 } as any)
 const PublicCommunityIndexRoute = PublicCommunityIndexRouteImport.update({
   id: '/',
@@ -437,6 +454,12 @@ const DashboardFoundationMessagesRoute =
   DashboardFoundationMessagesRouteImport.update({
     id: '/messages',
     path: '/messages',
+    getParentRoute: () => DashboardFoundationRoute,
+  } as any)
+const DashboardFoundationFundraisingRoute =
+  DashboardFoundationFundraisingRouteImport.update({
+    id: '/fundraising',
+    path: '/fundraising',
     getParentRoute: () => DashboardFoundationRoute,
   } as any)
 const DashboardFoundationDocumentsRoute =
@@ -611,6 +634,12 @@ const DashboardAdminListingsRoute = DashboardAdminListingsRouteImport.update({
   path: '/listings',
   getParentRoute: () => DashboardAdminRoute,
 } as any)
+const DashboardAdminFundraisingRoute =
+  DashboardAdminFundraisingRouteImport.update({
+    id: '/fundraising',
+    path: '/fundraising',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 const DashboardAdminFoundationVerificationRoute =
   DashboardAdminFoundationVerificationRouteImport.update({
     id: '/foundation-verification',
@@ -649,6 +678,11 @@ const PublicProfileProfileIdRoute = PublicProfileProfileIdRouteImport.update({
   path: '/profile/$profileId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicFundraisingIdRoute = PublicFundraisingIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PublicFundraisingRoute,
+} as any)
 const PublicCommunityGroupsRoute = PublicCommunityGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
@@ -669,6 +703,12 @@ const DashboardOperationsRoutesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => DashboardOperationsRoutesRoute,
+  } as any)
+const DashboardFoundationFundraisingIndexRoute =
+  DashboardFoundationFundraisingIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardFoundationFundraisingRoute,
   } as any)
 const DashboardBreederLittersIndexRoute =
   DashboardBreederLittersIndexRouteImport.update({
@@ -693,6 +733,12 @@ const DashboardOperationsRequestsIdRoute =
     id: '/requests/$id',
     path: '/requests/$id',
     getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardFoundationFundraisingIdRoute =
+  DashboardFoundationFundraisingIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardFoundationFundraisingRoute,
   } as any)
 const DashboardBreederLittersIdRoute =
   DashboardBreederLittersIdRouteImport.update({
@@ -720,6 +766,7 @@ export interface FileRoutesByFullPath {
   '/find-your-dog': typeof PublicFindYourDogRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/foundations': typeof PublicFoundationsRoute
+  '/fundraising': typeof PublicFundraisingRouteWithChildren
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
   '/planned-routes': typeof PublicPlannedRoutesRoute
@@ -739,6 +786,7 @@ export interface FileRoutesByFullPath {
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -746,6 +794,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
   '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
   '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/fundraising': typeof DashboardAdminFundraisingRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
   '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
@@ -777,6 +826,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/foundation/animals': typeof DashboardFoundationAnimalsRoute
   '/dashboard/foundation/applications': typeof DashboardFoundationApplicationsRoute
   '/dashboard/foundation/documents': typeof DashboardFoundationDocumentsRoute
+  '/dashboard/foundation/fundraising': typeof DashboardFoundationFundraisingRouteWithChildren
   '/dashboard/foundation/messages': typeof DashboardFoundationMessagesRoute
   '/dashboard/foundation/profile': typeof DashboardFoundationProfileRoute
   '/dashboard/foundation/settings': typeof DashboardFoundationSettingsRoute
@@ -801,6 +851,7 @@ export interface FileRoutesByFullPath {
   '/adoptions/': typeof PublicAdoptionsIndexRoute
   '/breeders/': typeof PublicBreedersIndexRoute
   '/community/': typeof PublicCommunityIndexRoute
+  '/fundraising/': typeof PublicFundraisingIndexRoute
   '/transport/': typeof PublicTransportIndexRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
@@ -810,10 +861,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/': typeof DashboardOperationsIndexRoute
   '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
   '/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
+  '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -837,6 +890,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -844,6 +898,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
   '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
   '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/fundraising': typeof DashboardAdminFundraisingRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
   '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
@@ -897,6 +952,7 @@ export interface FileRoutesByTo {
   '/adoptions': typeof PublicAdoptionsIndexRoute
   '/breeders': typeof PublicBreedersIndexRoute
   '/community': typeof PublicCommunityIndexRoute
+  '/fundraising': typeof PublicFundraisingIndexRoute
   '/transport': typeof PublicTransportIndexRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
   '/dashboard/breeder': typeof DashboardBreederIndexRoute
@@ -906,10 +962,12 @@ export interface FileRoutesByTo {
   '/dashboard/operations': typeof DashboardOperationsIndexRoute
   '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
   '/community/groups': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersIndexRoute
+  '/dashboard/foundation/fundraising': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesIndexRoute
 }
 export interface FileRoutesById {
@@ -926,6 +984,7 @@ export interface FileRoutesById {
   '/_public/find-your-dog': typeof PublicFindYourDogRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/foundations': typeof PublicFoundationsRoute
+  '/_public/fundraising': typeof PublicFundraisingRouteWithChildren
   '/_public/how-it-works': typeof PublicHowItWorksRoute
   '/_public/planned-litters': typeof PublicPlannedLittersRoute
   '/_public/planned-routes': typeof PublicPlannedRoutesRoute
@@ -946,6 +1005,7 @@ export interface FileRoutesById {
   '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/_public/fundraising/$id': typeof PublicFundraisingIdRoute
   '/_public/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
@@ -953,6 +1013,7 @@ export interface FileRoutesById {
   '/dashboard/admin/audit-logs': typeof DashboardAdminAuditLogsRoute
   '/dashboard/admin/breeder-verification': typeof DashboardAdminBreederVerificationRoute
   '/dashboard/admin/foundation-verification': typeof DashboardAdminFoundationVerificationRoute
+  '/dashboard/admin/fundraising': typeof DashboardAdminFundraisingRoute
   '/dashboard/admin/listings': typeof DashboardAdminListingsRoute
   '/dashboard/admin/moderation': typeof DashboardAdminModerationRoute
   '/dashboard/admin/organisations': typeof DashboardAdminOrganisationsRoute
@@ -984,6 +1045,7 @@ export interface FileRoutesById {
   '/dashboard/foundation/animals': typeof DashboardFoundationAnimalsRoute
   '/dashboard/foundation/applications': typeof DashboardFoundationApplicationsRoute
   '/dashboard/foundation/documents': typeof DashboardFoundationDocumentsRoute
+  '/dashboard/foundation/fundraising': typeof DashboardFoundationFundraisingRouteWithChildren
   '/dashboard/foundation/messages': typeof DashboardFoundationMessagesRoute
   '/dashboard/foundation/profile': typeof DashboardFoundationProfileRoute
   '/dashboard/foundation/settings': typeof DashboardFoundationSettingsRoute
@@ -1008,6 +1070,7 @@ export interface FileRoutesById {
   '/_public/adoptions/': typeof PublicAdoptionsIndexRoute
   '/_public/breeders/': typeof PublicBreedersIndexRoute
   '/_public/community/': typeof PublicCommunityIndexRoute
+  '/_public/fundraising/': typeof PublicFundraisingIndexRoute
   '/_public/transport/': typeof PublicTransportIndexRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
   '/dashboard/breeder/': typeof DashboardBreederIndexRoute
@@ -1017,10 +1080,12 @@ export interface FileRoutesById {
   '/dashboard/operations/': typeof DashboardOperationsIndexRoute
   '/_public/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
+  '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
   '/_public/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
+  '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
 export interface FileRouteTypes {
@@ -1038,6 +1103,7 @@ export interface FileRouteTypes {
     | '/find-your-dog'
     | '/forgot-password'
     | '/foundations'
+    | '/fundraising'
     | '/how-it-works'
     | '/planned-litters'
     | '/planned-routes'
@@ -1057,6 +1123,7 @@ export interface FileRouteTypes {
     | '/adoptions/$id'
     | '/breeders/$slug'
     | '/community/groups'
+    | '/fundraising/$id'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1064,6 +1131,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/audit-logs'
     | '/dashboard/admin/breeder-verification'
     | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/fundraising'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/moderation'
     | '/dashboard/admin/organisations'
@@ -1095,6 +1163,7 @@ export interface FileRouteTypes {
     | '/dashboard/foundation/animals'
     | '/dashboard/foundation/applications'
     | '/dashboard/foundation/documents'
+    | '/dashboard/foundation/fundraising'
     | '/dashboard/foundation/messages'
     | '/dashboard/foundation/profile'
     | '/dashboard/foundation/settings'
@@ -1119,6 +1188,7 @@ export interface FileRouteTypes {
     | '/adoptions/'
     | '/breeders/'
     | '/community/'
+    | '/fundraising/'
     | '/transport/'
     | '/dashboard/admin/'
     | '/dashboard/breeder/'
@@ -1128,10 +1198,12 @@ export interface FileRouteTypes {
     | '/dashboard/operations/'
     | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
     | '/community/groups/'
     | '/dashboard/breeder/litters/'
+    | '/dashboard/foundation/fundraising/'
     | '/dashboard/operations/routes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1155,6 +1227,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/fundraising/$id'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1162,6 +1235,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/audit-logs'
     | '/dashboard/admin/breeder-verification'
     | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/fundraising'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/moderation'
     | '/dashboard/admin/organisations'
@@ -1215,6 +1289,7 @@ export interface FileRouteTypes {
     | '/adoptions'
     | '/breeders'
     | '/community'
+    | '/fundraising'
     | '/transport'
     | '/dashboard/admin'
     | '/dashboard/breeder'
@@ -1224,10 +1299,12 @@ export interface FileRouteTypes {
     | '/dashboard/operations'
     | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
     | '/community/groups'
     | '/dashboard/breeder/litters'
+    | '/dashboard/foundation/fundraising'
     | '/dashboard/operations/routes'
   id:
     | '__root__'
@@ -1243,6 +1320,7 @@ export interface FileRouteTypes {
     | '/_public/find-your-dog'
     | '/_public/forgot-password'
     | '/_public/foundations'
+    | '/_public/fundraising'
     | '/_public/how-it-works'
     | '/_public/planned-litters'
     | '/_public/planned-routes'
@@ -1263,6 +1341,7 @@ export interface FileRouteTypes {
     | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
     | '/_public/community/groups'
+    | '/_public/fundraising/$id'
     | '/_public/profile/$profileId'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
@@ -1270,6 +1349,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/audit-logs'
     | '/dashboard/admin/breeder-verification'
     | '/dashboard/admin/foundation-verification'
+    | '/dashboard/admin/fundraising'
     | '/dashboard/admin/listings'
     | '/dashboard/admin/moderation'
     | '/dashboard/admin/organisations'
@@ -1301,6 +1381,7 @@ export interface FileRouteTypes {
     | '/dashboard/foundation/animals'
     | '/dashboard/foundation/applications'
     | '/dashboard/foundation/documents'
+    | '/dashboard/foundation/fundraising'
     | '/dashboard/foundation/messages'
     | '/dashboard/foundation/profile'
     | '/dashboard/foundation/settings'
@@ -1325,6 +1406,7 @@ export interface FileRouteTypes {
     | '/_public/adoptions/'
     | '/_public/breeders/'
     | '/_public/community/'
+    | '/_public/fundraising/'
     | '/_public/transport/'
     | '/dashboard/admin/'
     | '/dashboard/breeder/'
@@ -1334,10 +1416,12 @@ export interface FileRouteTypes {
     | '/dashboard/operations/'
     | '/_public/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
+    | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
     | '/_public/community/groups/'
     | '/dashboard/breeder/litters/'
+    | '/dashboard/foundation/fundraising/'
     | '/dashboard/operations/routes/'
   fileRoutesById: FileRoutesById
 }
@@ -1479,6 +1563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicHowItWorksRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/fundraising': {
+      id: '/_public/fundraising'
+      path: '/fundraising'
+      fullPath: '/fundraising'
+      preLoaderRoute: typeof PublicFundraisingRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/foundations': {
       id: '/_public/foundations'
       path: '/foundations'
@@ -1604,6 +1695,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/transport/'
       preLoaderRoute: typeof PublicTransportIndexRouteImport
       parentRoute: typeof PublicTransportRoute
+    }
+    '/_public/fundraising/': {
+      id: '/_public/fundraising/'
+      path: '/'
+      fullPath: '/fundraising/'
+      preLoaderRoute: typeof PublicFundraisingIndexRouteImport
+      parentRoute: typeof PublicFundraisingRoute
     }
     '/_public/community/': {
       id: '/_public/community/'
@@ -1771,6 +1869,13 @@ declare module '@tanstack/react-router' {
       path: '/messages'
       fullPath: '/dashboard/foundation/messages'
       preLoaderRoute: typeof DashboardFoundationMessagesRouteImport
+      parentRoute: typeof DashboardFoundationRoute
+    }
+    '/dashboard/foundation/fundraising': {
+      id: '/dashboard/foundation/fundraising'
+      path: '/fundraising'
+      fullPath: '/dashboard/foundation/fundraising'
+      preLoaderRoute: typeof DashboardFoundationFundraisingRouteImport
       parentRoute: typeof DashboardFoundationRoute
     }
     '/dashboard/foundation/documents': {
@@ -1990,6 +2095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminListingsRouteImport
       parentRoute: typeof DashboardAdminRoute
     }
+    '/dashboard/admin/fundraising': {
+      id: '/dashboard/admin/fundraising'
+      path: '/fundraising'
+      fullPath: '/dashboard/admin/fundraising'
+      preLoaderRoute: typeof DashboardAdminFundraisingRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
     '/dashboard/admin/foundation-verification': {
       id: '/dashboard/admin/foundation-verification'
       path: '/foundation-verification'
@@ -2039,6 +2151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProfileProfileIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/fundraising/$id': {
+      id: '/_public/fundraising/$id'
+      path: '/$id'
+      fullPath: '/fundraising/$id'
+      preLoaderRoute: typeof PublicFundraisingIdRouteImport
+      parentRoute: typeof PublicFundraisingRoute
+    }
     '/_public/community/groups': {
       id: '/_public/community/groups'
       path: '/groups'
@@ -2067,6 +2186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardOperationsRoutesIndexRouteImport
       parentRoute: typeof DashboardOperationsRoutesRoute
     }
+    '/dashboard/foundation/fundraising/': {
+      id: '/dashboard/foundation/fundraising/'
+      path: '/'
+      fullPath: '/dashboard/foundation/fundraising/'
+      preLoaderRoute: typeof DashboardFoundationFundraisingIndexRouteImport
+      parentRoute: typeof DashboardFoundationFundraisingRoute
+    }
     '/dashboard/breeder/litters/': {
       id: '/dashboard/breeder/litters/'
       path: '/'
@@ -2094,6 +2220,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/operations/requests/$id'
       preLoaderRoute: typeof DashboardOperationsRequestsIdRouteImport
       parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/foundation/fundraising/$id': {
+      id: '/dashboard/foundation/fundraising/$id'
+      path: '/$id'
+      fullPath: '/dashboard/foundation/fundraising/$id'
+      preLoaderRoute: typeof DashboardFoundationFundraisingIdRouteImport
+      parentRoute: typeof DashboardFoundationFundraisingRoute
     }
     '/dashboard/breeder/litters/$id': {
       id: '/dashboard/breeder/litters/$id'
@@ -2169,6 +2302,19 @@ const PublicCommunityRouteWithChildren = PublicCommunityRoute._addFileChildren(
   PublicCommunityRouteChildren,
 )
 
+interface PublicFundraisingRouteChildren {
+  PublicFundraisingIdRoute: typeof PublicFundraisingIdRoute
+  PublicFundraisingIndexRoute: typeof PublicFundraisingIndexRoute
+}
+
+const PublicFundraisingRouteChildren: PublicFundraisingRouteChildren = {
+  PublicFundraisingIdRoute: PublicFundraisingIdRoute,
+  PublicFundraisingIndexRoute: PublicFundraisingIndexRoute,
+}
+
+const PublicFundraisingRouteWithChildren =
+  PublicFundraisingRoute._addFileChildren(PublicFundraisingRouteChildren)
+
 interface PublicTransportRouteChildren {
   PublicTransportRequestRoute: typeof PublicTransportRequestRoute
   PublicTransportIndexRoute: typeof PublicTransportIndexRoute
@@ -2195,6 +2341,7 @@ interface PublicRouteChildren {
   PublicFindYourDogRoute: typeof PublicFindYourDogRoute
   PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
   PublicFoundationsRoute: typeof PublicFoundationsRoute
+  PublicFundraisingRoute: typeof PublicFundraisingRouteWithChildren
   PublicHowItWorksRoute: typeof PublicHowItWorksRoute
   PublicPlannedLittersRoute: typeof PublicPlannedLittersRoute
   PublicPlannedRoutesRoute: typeof PublicPlannedRoutesRoute
@@ -2222,6 +2369,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicFindYourDogRoute: PublicFindYourDogRoute,
   PublicForgotPasswordRoute: PublicForgotPasswordRoute,
   PublicFoundationsRoute: PublicFoundationsRoute,
+  PublicFundraisingRoute: PublicFundraisingRouteWithChildren,
   PublicHowItWorksRoute: PublicHowItWorksRoute,
   PublicPlannedLittersRoute: PublicPlannedLittersRoute,
   PublicPlannedRoutesRoute: PublicPlannedRoutesRoute,
@@ -2245,6 +2393,7 @@ interface DashboardAdminRouteChildren {
   DashboardAdminAuditLogsRoute: typeof DashboardAdminAuditLogsRoute
   DashboardAdminBreederVerificationRoute: typeof DashboardAdminBreederVerificationRoute
   DashboardAdminFoundationVerificationRoute: typeof DashboardAdminFoundationVerificationRoute
+  DashboardAdminFundraisingRoute: typeof DashboardAdminFundraisingRoute
   DashboardAdminListingsRoute: typeof DashboardAdminListingsRoute
   DashboardAdminModerationRoute: typeof DashboardAdminModerationRoute
   DashboardAdminOrganisationsRoute: typeof DashboardAdminOrganisationsRoute
@@ -2262,6 +2411,7 @@ const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
     DashboardAdminBreederVerificationRoute,
   DashboardAdminFoundationVerificationRoute:
     DashboardAdminFoundationVerificationRoute,
+  DashboardAdminFundraisingRoute: DashboardAdminFundraisingRoute,
   DashboardAdminListingsRoute: DashboardAdminListingsRoute,
   DashboardAdminModerationRoute: DashboardAdminModerationRoute,
   DashboardAdminOrganisationsRoute: DashboardAdminOrganisationsRoute,
@@ -2370,10 +2520,29 @@ const DashboardDriverRouteWithChildren = DashboardDriverRoute._addFileChildren(
   DashboardDriverRouteChildren,
 )
 
+interface DashboardFoundationFundraisingRouteChildren {
+  DashboardFoundationFundraisingIdRoute: typeof DashboardFoundationFundraisingIdRoute
+  DashboardFoundationFundraisingIndexRoute: typeof DashboardFoundationFundraisingIndexRoute
+}
+
+const DashboardFoundationFundraisingRouteChildren: DashboardFoundationFundraisingRouteChildren =
+  {
+    DashboardFoundationFundraisingIdRoute:
+      DashboardFoundationFundraisingIdRoute,
+    DashboardFoundationFundraisingIndexRoute:
+      DashboardFoundationFundraisingIndexRoute,
+  }
+
+const DashboardFoundationFundraisingRouteWithChildren =
+  DashboardFoundationFundraisingRoute._addFileChildren(
+    DashboardFoundationFundraisingRouteChildren,
+  )
+
 interface DashboardFoundationRouteChildren {
   DashboardFoundationAnimalsRoute: typeof DashboardFoundationAnimalsRoute
   DashboardFoundationApplicationsRoute: typeof DashboardFoundationApplicationsRoute
   DashboardFoundationDocumentsRoute: typeof DashboardFoundationDocumentsRoute
+  DashboardFoundationFundraisingRoute: typeof DashboardFoundationFundraisingRouteWithChildren
   DashboardFoundationMessagesRoute: typeof DashboardFoundationMessagesRoute
   DashboardFoundationProfileRoute: typeof DashboardFoundationProfileRoute
   DashboardFoundationSettingsRoute: typeof DashboardFoundationSettingsRoute
@@ -2387,6 +2556,8 @@ const DashboardFoundationRouteChildren: DashboardFoundationRouteChildren = {
   DashboardFoundationAnimalsRoute: DashboardFoundationAnimalsRoute,
   DashboardFoundationApplicationsRoute: DashboardFoundationApplicationsRoute,
   DashboardFoundationDocumentsRoute: DashboardFoundationDocumentsRoute,
+  DashboardFoundationFundraisingRoute:
+    DashboardFoundationFundraisingRouteWithChildren,
   DashboardFoundationMessagesRoute: DashboardFoundationMessagesRoute,
   DashboardFoundationProfileRoute: DashboardFoundationProfileRoute,
   DashboardFoundationSettingsRoute: DashboardFoundationSettingsRoute,

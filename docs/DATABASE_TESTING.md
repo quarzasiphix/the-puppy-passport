@@ -69,6 +69,21 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   customer can't see it; a driver only sees work once actually assigned; reporting an organisation
   creates a moderation case; and a role-suspension test that shows the difference between
   role-gated access (correctly revoked) and ownership-gated access (see open findings).
+- **`tests/db/fundraising.test.ts`** — verified-organisation fundraising
+  (`docs/FUNDRAISING_POLICY.md`, `20260101005600_fundraising.sql`): only an approved foundation/
+  shelter/rescue can create a campaign (a kennel is rejected); a campaign can't be backed by a
+  purchase-type application, an unaccepted quotation, or a duplicate quotation already in use;
+  draft campaigns are invisible to anon and to other orgs; an org can't self-approve/activate/
+  complete their own campaign; once admin activates it, it's publicly visible; only a real
+  `is_simulated = true` contribution to an active campaign is accepted; an anonymous contribution
+  is excluded from the public per-row list but still counts toward the public total; and the
+  campaign's animal/transport/quotation/organisation is locked once a completed contribution
+  exists. Two real bugs surfaced while writing these tests, both fixed the same session (see
+  `docs/IMPLEMENTATION_PLAN.md` phase 13): the public campaign query originally failed outright for
+  anonymous visitors (`permission denied for table transport_requests` / `fundraising_contributions`
+  — reproduced against the real API before fixing), and organisations turned out to have no DELETE
+  policy on their own campaigns at all (by design, but the test fixtures had to be updated to clean
+  up via admin instead of the org account).
 
 ## Open findings (real, currently-unfixed issues this suite discovered)
 

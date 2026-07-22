@@ -12,6 +12,7 @@ import {
   Truck,
   ScrollText,
   Settings,
+  Coins,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { DashboardShell, type DashboardNavItem } from "@/components/dashboard-shell";
@@ -39,6 +40,7 @@ const items: DashboardNavItem[] = [
   },
   { to: "/dashboard/admin/reports", label: "Reports", icon: Flag },
   { to: "/dashboard/admin/moderation", label: "Moderation", icon: ShieldAlert },
+  { to: "/dashboard/admin/fundraising", label: "Fundraising", icon: Coins },
   { to: "/dashboard/operations", label: "Transport operations", icon: Truck },
   { to: "/dashboard/admin/audit-logs", label: "Audit logs", icon: ScrollText },
   { to: "/dashboard/admin/settings", label: "Settings", icon: Settings },

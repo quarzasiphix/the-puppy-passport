@@ -48,6 +48,7 @@ export const ids = {
   transportWarsawAmsterdam: "a0000000-0000-0000-0000-000000000001", // customer, driver-assigned
   transportKrakow: "a0000000-0000-0000-0000-000000000002", // buyer's own
   transportBerlin: "a0000000-0000-0000-0000-000000000003", // customer's own, no driver assigned
+  transportReksio: "a0000000-0000-0000-0000-000000000005", // foundation1, Reksio's rescue transport
 
   routeWarsawAmsterdam: "b0000000-0000-0000-0000-000000000001", // driver's assigned route
 } as const;
