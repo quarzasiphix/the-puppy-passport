@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: Install, typecheck, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      # No automated test suite exists yet (see docs/PRODUCTION_READINESS_REPORT.md — "no
+      # automated tests anywhere"). Add a `test` step here once one exists rather than adding a
+      # placeholder step now that would report green without checking anything real.
+
+      - name: Build
+        run: npm run build
+        env:
+          # A real VITE_SUPABASE_URL/ANON_KEY is not required for `vite build` to succeed (the
+          # client throws at *runtime* construction, not at build time — see
+          # src/lib/supabase/browser.ts/server.ts) — confirmed by this exact CI build succeeding
+          # without them. Left unset deliberately: CI has no local Supabase stack to point at, and
+          # a real project's anon key is not a secret worth wiring into every PR build.
+          CI: true

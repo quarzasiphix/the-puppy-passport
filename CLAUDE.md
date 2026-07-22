@@ -135,6 +135,14 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
 - `docs/IMPLEMENTATION_PLAN.md` — phased build order.
 - `docs/DECISIONS.md` — architectural/product decisions already made, so later work doesn't
   contradict earlier work.
-- `docs/CURRENT_STATE_AUDIT.md` — snapshot of what's real vs. mocked, and the recommended next
-  task.
+- `docs/CURRENT_STATE_AUDIT.md` — historical snapshot of what's real vs. mocked, mid-build.
+- `docs/MVP_TEST_REPORT.md` — current "what actually works today," verified against real API calls.
+- `docs/PRODUCTION_READINESS_REPORT.md` — ready / partial / blocks-launch / business / legal /
+  post-launch breakdown, the authoritative "can we launch" answer.
+- `docs/DEPLOYMENT_CHECKLIST.md` — how the Cloudflare Worker build/deploy actually works, confirmed
+  against a real `npm run build`.
+- `docs/PRODUCTION_SETUP.md` — how to stand up a real production Supabase project when that's
+  explicitly approved; not yet done.
+- `docs/E2E_TESTING.md` — how to run the Playwright suite locally, and the sandbox gap that
+  currently blocks running it here.
 - `docs/LOCAL_SETUP.md` — how to run the local Supabase stack and demo logins.
