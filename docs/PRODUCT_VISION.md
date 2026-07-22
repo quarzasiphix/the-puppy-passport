@@ -92,22 +92,36 @@ transport customers.
 Avoid: excessive paw graphics, cartoon dogs, childish copy, generic pet-shop design, excessive
 gold/trophy decoration, "add to cart" language, unsupported legal guarantees, inflated statistics.
 
-## Staged roadmap (high level — see IMPLEMENTATION_PLAN.md for the working phase order)
+## Staged roadmap (high level — see IMPLEMENTATION_PLAN.md for the working phase order and current,
+verified per-phase status)
+
+**Status current as of 2026-07-22 — see `docs/IMPLEMENTATION_PLAN.md` for the detailed, per-phase
+breakdown and `docs/MVP_TEST_REPORT.md` for the verification evidence behind each "done" below.**
 
 1. **Foundation** — schema, auth/roles, local Supabase, transport-first homepage/nav, core
-   transport request flow. *(Largely complete — see `CURRENT_STATE_AUDIT.md`.)*
-2. **Transport operations** — ops dashboard, document/status workflow, quotations.
+   transport request flow. **Done.**
+2. **Transport operations** — ops dashboard, document/status workflow, quotations. **Done**
+   end-to-end; document *library UI* (as opposed to the operational document/status workflow) is
+   still a placeholder — see phase 10 below.
 3. **Route planning & fleet** — planned routes, shared-transport capacity, vehicles, drivers.
+   **Done.** The dedicated operations calendar/timeline view over this data is still a placeholder.
 4. **Marketplace on real data** — puppies/litters/breeders off Supabase instead of mock data,
-   publication-category restrictions (breeder vs adoption vs private rehoming).
-5. **Foundations & adoption workflows**, **private rehoming** review.
-6. **Trust & moderation** — reporting, moderation cases.
-7. **Community & messaging**.
-8. **Discovery upgrades** — breeder map, guided "find your ideal dog" search.
-9. **Breeder achievement & champion-dog profiles**.
+   publication-category restrictions (breeder vs adoption vs private rehoming). **Done** — confirmed
+   by code inspection, zero `mock-data.ts` data imports remain in any marketplace page.
+5. **Foundations & adoption workflows**, **private rehoming** review. **Done**, except the
+   foundation welfare-urgent flag/intake flow and foundation team/volunteer management, both still
+   placeholders.
+6. **Trust & moderation** — reporting, moderation cases. **Done.**
+7. **Community & messaging**. **Messaging done** (real conversations gated by relationship-checking
+   RPCs). **Community partially done** — a real public post/like/comment feed exists; groups
+   (`groups`/`group_members`) remain schema-only, no UI.
+8. **Discovery upgrades** — breeder map, guided "find your ideal dog" search. **Done.**
+9. **Breeder achievement & champion-dog profiles**. **Done.**
 10. **Internationalisation** — additional countries/languages/currencies, legal knowledge base.
+    **Not started** beyond schema readiness (`preferred_language`/`preferred_currency` columns
+    exist; no translation infrastructure or additional-locale copy exists yet).
 11. **Later / explicitly out of scope for now** — AI matching/pricing/translation/fraud-detection,
     insurance, instalment credit, escrow payments, food/accessories marketplace, vet/groomer/hotel
     directories, online training, exhibition calendar, service marketplace (behaviourists,
-    trainers, photographers). These are real ideas worth keeping on the list, not commitments for
-    the near-term build.
+    trainers, photographers), multi-species support, a European market/locale registry. These are
+    real ideas worth keeping on the list, not commitments for the near-term build.

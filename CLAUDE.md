@@ -37,9 +37,11 @@ Facebook group, or an open marketplace where random transporters can accept jobs
   `beforeLoad` into `context.auth`) and `src/lib/auth/actions.ts` (`signUp`/`signIn`/`signOut`).
   Client-side reactive auth state: `src/hooks/use-auth.ts`. Roles are additive
   (`public.user_roles`), not a single account type — see `docs/DOMAIN_MODEL.md`.
-- **Mock data**: `src/lib/mock-data.ts` still backs most marketplace pages (puppies, litters,
-  breeders, applications, reservations, transport — the old shape). It is being retired
-  table-by-table as pages get wired to Supabase; do not add new mock arrays.
+- **Mock data**: `src/lib/mock-data.ts` is effectively retired — confirmed by grep 2026-07-22, it's
+  imported by exactly one file (`src/components/cards.tsx`), and only for **type definitions**
+  (`Puppy`/`Litter`/`Breeder`), not rendered data. Every marketplace/dashboard page queries Supabase
+  directly now. Do not add new mock arrays, and don't trust older docs/comments claiming pages are
+  "still mocked" without re-checking — grep for `mock-data` imports to see the real current state.
 
 ## Engineering workflow (apply to every task)
 
