@@ -145,6 +145,29 @@ export async function findActiveTransportRequestForAnimal(userId: string, animal
   return data;
 }
 
+// Same lookup as findActiveTransportRequestForAnimal, batched for a list of animals — used by the
+// reservations page so a buyer who already submitted a transport request sees its real status
+// instead of the "Request transport" button appearing to have done nothing.
+export async function findActiveTransportRequestsForAnimals(
+  userId: string,
+  animalIds: string[],
+): Promise<Map<string, { id: string; request_number: string | null; status: string }>> {
+  if (!animalIds.length) return new Map();
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_requests")
+    .select("id, request_number, status, animal_id")
+    .eq("requester_profile_id", userId)
+    .in("animal_id", animalIds)
+    .not("status", "in", "(rejected,cancelled_by_customer,cancelled_by_operations,draft)");
+  if (error) throw error;
+  const byAnimal = new Map<string, { id: string; request_number: string | null; status: string }>();
+  for (const row of data ?? []) {
+    if (row.animal_id) byAnimal.set(row.animal_id, row);
+  }
+  return byAnimal;
+}
+
 // Transport requests linked (via animal_id) to puppies from this kennel — lets a breeder see
 // scheduled pickups and missing documents for animals they've sold, regardless of who submitted
 // the request (buyer or breeder).

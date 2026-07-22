@@ -72,6 +72,19 @@ verified-champion-dog profiles.
 source; the card components themselves render real query results.) Publication-category
 restrictions are enforced by RLS, not just UI filtering.
 
+**Purchase→transport journey fix, 2026-07-22**: the buyer reservations page
+(`dashboard.buyer.reservations.tsx`) already linked "Request transport" with the animal pre-filled
+(`/transport/request?animalId=...` — reuse of known data was already correct), but had a real gap:
+once submitted, the page kept showing the same "Request transport" button forever, with no
+acknowledgement a request already existed. `findActiveTransportRequestForAnimal` existed in
+`src/lib/queries/transport.ts` but was only ever used inside the request form itself, never on this
+page. Added a batched version (`findActiveTransportRequestsForAnimals`) and wired it in: a
+confirmed reservation with an existing transport request now shows its real plain-language
+milestone (reusing `transportMilestones`/`nextActionForStatus`, not raw status codes) and a link to
+`/dashboard/buyer/transport`, instead of a button that looks like nothing happened. Verified against
+the real API (created a real transport request for a seeded reservation's animal, confirmed the
+exact query the page uses finds it, cleaned up).
+
 ## 10. Compliance and documents
 **Partially implemented.** `transport_documents` and `compliance_reviews` exist and are used by the
 ops request-detail page; two storage buckets (`kennel-media` public, `transport-documents` private)
