@@ -102,6 +102,7 @@ import { Route as DashboardAdminAuditLogsRouteImport } from './routes/dashboard.
 import { Route as DashboardAdminAchievementVerificationRouteImport } from './routes/dashboard.admin.achievement-verification'
 import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
+import { Route as PublicProfileProfileIdRouteImport } from './routes/_public.profile.$profileId'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public.adoptions.$id'
 import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard.operations.routes.$id'
@@ -614,6 +615,11 @@ const PublicPuppiesIdRoute = PublicPuppiesIdRouteImport.update({
   path: '/puppies/$id',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicProfileProfileIdRoute = PublicProfileProfileIdRouteImport.update({
+  id: '/profile/$profileId',
+  path: '/profile/$profileId',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicBreedersSlugRoute = PublicBreedersSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -674,6 +680,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations': typeof DashboardOperationsRouteWithChildren
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
   '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
@@ -767,6 +774,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
   '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
@@ -868,6 +876,7 @@ export interface FileRoutesById {
   '/_public/': typeof PublicIndexRoute
   '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/_public/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
   '/dashboard/admin/achievement-verification': typeof DashboardAdminAchievementVerificationRoute
@@ -969,6 +978,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
     | '/dashboard/admin/achievement-verification'
@@ -1062,6 +1072,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
     | '/dashboard/admin/achievement-verification'
@@ -1162,6 +1173,7 @@ export interface FileRouteTypes {
     | '/_public/'
     | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
+    | '/_public/profile/$profileId'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
     | '/dashboard/admin/achievement-verification'
@@ -1894,6 +1906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicPuppiesIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/profile/$profileId': {
+      id: '/_public/profile/$profileId'
+      path: '/profile/$profileId'
+      fullPath: '/profile/$profileId'
+      preLoaderRoute: typeof PublicProfileProfileIdRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/breeders/$slug': {
       id: '/_public/breeders/$slug'
       path: '/$slug'
@@ -1991,6 +2010,7 @@ interface PublicRouteChildren {
   PublicTermsRoute: typeof PublicTermsRoute
   PublicTransportRoute: typeof PublicTransportRouteWithChildren
   PublicIndexRoute: typeof PublicIndexRoute
+  PublicProfileProfileIdRoute: typeof PublicProfileProfileIdRoute
   PublicPuppiesIdRoute: typeof PublicPuppiesIdRoute
 }
 
@@ -2017,6 +2037,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicTermsRoute: PublicTermsRoute,
   PublicTransportRoute: PublicTransportRouteWithChildren,
   PublicIndexRoute: PublicIndexRoute,
+  PublicProfileProfileIdRoute: PublicProfileProfileIdRoute,
   PublicPuppiesIdRoute: PublicPuppiesIdRoute,
 }
 

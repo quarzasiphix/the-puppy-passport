@@ -92,7 +92,19 @@ rehoming (`/rehome`) with an admin approval queue and RLS-enforced invisibility 
 
 ## 12. Community
 **Partially implemented.** Public post feed, like, comment are real data (`_public.community.tsx`),
-not mocked. **Not implemented**: community groups — `groups`/`group_members` exist in the schema but
+not mocked. **Added 2026-07-22**: a public profile page (`/profile/$profileId`,
+`src/routes/_public.profile.$profileId.tsx`) for any individual user — avatar, display name, city/
+country (only the columns anon/authenticated are actually granted, never email/phone), their public
+posts, a link into their kennel's full profile if they own one, and a follow/unfollow button using
+`follows.followed_profile_id` (previously fully supported in the schema but with zero UI — only
+org-following existed before). Community post/comment author names now link there. **Still not
+implemented**: general user-to-user messaging outside the existing relationship-gated RPCs
+(`start_application_conversation`/`start_transport_conversation`) — no message requests, accept/
+decline, block, or mute exist; a richer profile portfolio (animals, achievements, reviews) beyond
+posts; a public detail page for foundations (`getKennelBySlug` is kennel-only — `/foundations` has
+no equivalent to `/breeders/$slug`). These were deliberately deferred rather than rushed — general
+messaging in particular needs real spam/harassment safeguards designed on purpose, not bolted on.
+Community groups — `groups`/`group_members` exist in the schema but
 are unused by any UI (confirmed by grep — zero references outside migrations); no join/leave, no
 group-scoped posts, no route-group or breed-group structure. Deliberately scheduled after the
 transport workflow per the original brief; still true that a full social layer isn't required yet.
@@ -176,6 +188,10 @@ the list (`PRODUCT_VISION.md`), not committed.
     message; puppy-purchase applications already have the full multi-step questionnaire as the
     template to extend from.
 11. **Community groups** (phase 12) — schema exists, zero UI.
+11a. **General user-to-user messaging** (phase 12) — message requests/accept/decline/block/mute
+    beyond the existing relationship-gated conversation RPCs; needs deliberate spam/harassment
+    safeguards designed up front, not bolted on. **Foundation public detail page** — `/foundations`
+    has no equivalent to `/breeders/$slug`.
 12. **Multi-species UI buildout** (phase 15) — the `species` reference table + `species_id` schema
     foundation landed 2026-07-22 (see phase 15 above), but no UI, no cattery/cat-litter/kitten
     model, no rabbit/guinea-pig-specific fields, and no configurable per-species field/document/

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Users, Heart, MessageCircle, Send } from "lucide-react";
@@ -177,7 +177,19 @@ function PostCard({
           <AvatarFallback>{authorName(post).charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-medium">{authorName(post)}</div>
+          <div className="font-medium">
+            {!post.author_organization_id && post.author_profile_id ? (
+              <Link
+                to="/profile/$profileId"
+                params={{ profileId: post.author_profile_id }}
+                className="hover:underline"
+              >
+                {authorName(post)}
+              </Link>
+            ) : (
+              authorName(post)
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">
             {new Date(post.created_at).toLocaleDateString("en-GB", {
               day: "numeric",
@@ -217,7 +229,13 @@ function PostCard({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <span className="font-medium">{c.profiles?.display_name ?? "Member"}</span>{" "}
+                <Link
+                  to="/profile/$profileId"
+                  params={{ profileId: c.author_profile_id }}
+                  className="font-medium hover:underline"
+                >
+                  {c.profiles?.display_name ?? "Member"}
+                </Link>{" "}
                 <span className="text-muted-foreground">{c.content}</span>
               </div>
             </div>
