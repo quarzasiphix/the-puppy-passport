@@ -61,6 +61,17 @@ export async function getPublicKennelSlugForOwner(profileId: string): Promise<st
   return data?.slug ?? null;
 }
 
+export async function listFollowedProfileIds(followerId: string): Promise<string[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("follows")
+    .select("followed_profile_id")
+    .eq("follower_profile_id", followerId)
+    .not("followed_profile_id", "is", null);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.followed_profile_id!).filter(Boolean);
+}
+
 export async function isFollowingProfile(followerId: string, profileId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase

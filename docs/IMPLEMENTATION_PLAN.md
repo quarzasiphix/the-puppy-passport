@@ -104,6 +104,18 @@ decline, block, or mute exist; a richer profile portfolio (animals, achievements
 posts; a public detail page for foundations (`getKennelBySlug` is kennel-only — `/foundations` has
 no equivalent to `/breeders/$slug`). These were deliberately deferred rather than rushed — general
 messaging in particular needs real spam/harassment safeguards designed on purpose, not bolted on.
+**Added 2026-07-22 (feed quality pass)**: post-type badges (litter announcement, adoption,
+achievement, transport update, planned route — `post_type` already existed in the schema but the
+feed only ever rendered/created `'general'` posts before) and a real, honest first pass at
+recommendation — posts from profiles/kennels you follow now surface in their own "From people and
+kennels you follow" section above the rest, using real `follows` data, clearly labelled as such
+rather than presented as a sophisticated algorithm. **Still not built**: linked-content previews
+(a post with `linked_animal_id`/`linked_transport_request_id`/`linked_route_id` set doesn't render
+any preview of that animal/transport/route — no seed data exercises this yet, and joining
+transport_requests safely for a public feed needs its own deliberate design, not an ad-hoc join);
+interest/topic preferences (species, breeds, exhibitions, transport, local, etc.) and any signal
+beyond "who you follow" (location, saved searches, viewed/saved animals, joined groups) — no schema
+or settings UI exists for these.
 Community groups — `groups`/`group_members` exist in the schema but
 are unused by any UI (confirmed by grep — zero references outside migrations); no join/leave, no
 group-scoped posts, no route-group or breed-group structure. Deliberately scheduled after the

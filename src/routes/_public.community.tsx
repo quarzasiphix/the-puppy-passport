@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Users, Heart, MessageCircle, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +19,22 @@ import {
   toggleLike,
   type PostRow,
 } from "@/lib/queries/community";
+import { listFollowedOrgIds } from "@/lib/queries/buyer-activity";
+import { listFollowedProfileIds } from "@/lib/queries/profile";
+
+// Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
+// hierarchy pillar 3), not a generic feed. No linked-content preview (animal/transport/route) yet
+// — seed data has no posts using those fields, and building an unverified preview against private-
+// adjacent tables (transport_requests) wasn't worth the risk this pass; see
+// docs/IMPLEMENTATION_PLAN.md phase 12.
+const POST_TYPE_LABELS: Record<string, string> = {
+  general: "General",
+  transport_update: "Transport update",
+  route_announcement: "Planned route",
+  litter_announcement: "Litter announcement",
+  adoption_post: "Adoption",
+  achievement: "Achievement",
+};
 
 export const Route = createFileRoute("/_public/community")({
   head: () => ({ meta: [{ title: "Community — Havenpaw" }] }),
@@ -52,6 +69,29 @@ function CommunityPage() {
     queryFn: () => listMyReactedPostIds(userId!, postIds),
     enabled: !!userId && postIds.length > 0,
   });
+
+  // A real, honest first pass at "recommendations should consider followed profiles" (see
+  // docs/PRODUCT_VISION.md pillar 3) — posts from people/kennels you follow surface first, clearly
+  // labelled as such, rather than a fake engagement-optimised ranking. Location/interests/saved-
+  // searches/joined-groups signals are explicitly not built yet (see docs/IMPLEMENTATION_PLAN.md
+  // phase 12) — no schema or settings UI exists for them.
+  const followedProfileIdsQuery = useQuery({
+    queryKey: ["followed-profile-ids", userId],
+    queryFn: () => listFollowedProfileIds(userId!),
+    enabled: !!userId,
+  });
+  const followedOrgIdsQuery = useQuery({
+    queryKey: ["followed-org-ids", userId],
+    queryFn: () => listFollowedOrgIds(userId!),
+    enabled: !!userId,
+  });
+  const followedProfileIds = new Set(followedProfileIdsQuery.data ?? []);
+  const followedOrgIds = new Set(followedOrgIdsQuery.data ?? []);
+  const isFromFollowed = (p: PostRow) =>
+    (!!p.author_profile_id && followedProfileIds.has(p.author_profile_id)) ||
+    (!!p.author_organization_id && followedOrgIds.has(p.author_organization_id));
+  const followedPosts = posts.filter(isFromFollowed);
+  const otherPosts = posts.filter((p) => !isFromFollowed(p));
 
   const createPostMutation = useMutation({
     mutationFn: () => createPost({ authorProfileId: userId!, content: newPost.trim() }),
@@ -108,17 +148,45 @@ function CommunityPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              likeCount={reactionCountsQuery.data?.get(post.id) ?? 0}
-              commentCount={commentCountsQuery.data?.get(post.id) ?? 0}
-              liked={myReactionsQuery.data?.has(post.id) ?? false}
-              userId={userId}
-            />
-          ))}
+        <div className="space-y-8">
+          {followedPosts.length > 0 && (
+            <div>
+              <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-accent">
+                From people and kennels you follow
+              </h2>
+              <div className="space-y-4">
+                {followedPosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    likeCount={reactionCountsQuery.data?.get(post.id) ?? 0}
+                    commentCount={commentCountsQuery.data?.get(post.id) ?? 0}
+                    liked={myReactionsQuery.data?.has(post.id) ?? false}
+                    userId={userId}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            {followedPosts.length > 0 && (
+              <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                More from the community
+              </h2>
+            )}
+            <div className="space-y-4">
+              {otherPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  likeCount={reactionCountsQuery.data?.get(post.id) ?? 0}
+                  commentCount={commentCountsQuery.data?.get(post.id) ?? 0}
+                  liked={myReactionsQuery.data?.has(post.id) ?? false}
+                  userId={userId}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -177,7 +245,7 @@ function PostCard({
           <AvatarFallback>{authorName(post).charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-medium">
+          <div className="flex items-center gap-2 font-medium">
             {!post.author_organization_id && post.author_profile_id ? (
               <Link
                 to="/profile/$profileId"
@@ -188,6 +256,11 @@ function PostCard({
               </Link>
             ) : (
               authorName(post)
+            )}
+            {post.post_type !== "general" && (
+              <Badge variant="outline" className="text-xs font-normal">
+                {POST_TYPE_LABELS[post.post_type] ?? post.post_type}
+              </Badge>
             )}
           </div>
           <div className="text-xs text-muted-foreground">
