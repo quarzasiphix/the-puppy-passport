@@ -22,6 +22,8 @@ import {
   listMyQuotations,
   respondToQuotation,
 } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -38,6 +40,7 @@ const statusStyles: Record<string, string> = {
 
 function BuyerQuotationsPage() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["my-quotations", userId],
@@ -94,14 +97,14 @@ function BuyerQuotationsPage() {
                     {q.expiry_date && (
                       <p
                         className={
-                          documentExpiryWarning(q.expiry_date) === "expired"
+                          isExpired
                             ? "text-xs font-medium text-destructive"
                             : "text-xs text-muted-foreground"
                         }
                       >
-                        {documentExpiryWarning(q.expiry_date) === "expired"
-                          ? `This quote expired on ${new Date(q.expiry_date).toLocaleDateString("en-GB")} — ask us for an updated price.`
-                          : `Valid until ${new Date(q.expiry_date).toLocaleDateString("en-GB")}`}
+                        {isExpired
+                          ? `This quote expired on ${formatDate(q.expiry_date, locale)} — ask us for an updated price.`
+                          : `Valid until ${formatDate(q.expiry_date, locale)}`}
                       </p>
                     )}
                     {q.assumptions && (

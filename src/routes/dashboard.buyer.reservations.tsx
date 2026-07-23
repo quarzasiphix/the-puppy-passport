@@ -10,6 +10,8 @@ import {
   transportMilestones,
   milestoneIndexForStatus,
 } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/reservations")({
   component: BuyerReservations,
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/dashboard/buyer/reservations")({
 
 function BuyerReservations() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const { data: reservations, isLoading } = useQuery({
     queryKey: ["my-reservations", userId],
     enabled: !!userId,
@@ -57,7 +60,7 @@ function BuyerReservations() {
                   <div className="text-sm text-muted-foreground">
                     {r.kennelName}
                     {r.plannedCollectionDate &&
-                      ` · Collection ${new Date(r.plannedCollectionDate).toLocaleDateString("en-GB")}`}
+                      ` · Collection ${formatDate(r.plannedCollectionDate, locale)}`}
                   </div>
                 </div>
                 <Badge variant="secondary" className="capitalize">

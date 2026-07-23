@@ -16,6 +16,8 @@ import {
 } from "@/lib/queries/profile";
 import { orgProfileRoute } from "@/lib/org-routing";
 import { ReportDialog } from "@/components/report-dialog";
+import { formatDate } from "@/lib/presentation/date";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_public/profile/$profileId")({
   loader: async ({ params }) => {
@@ -41,6 +43,7 @@ export const Route = createFileRoute("/_public/profile/$profileId")({
 
 function ProfilePage() {
   const { profile, posts, orgLink } = Route.useLoaderData();
+  const { locale } = useTranslation();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const isOwnProfile = userId === profile.id;
@@ -142,7 +145,7 @@ function ProfilePage() {
               <article key={post.id} className="rounded-2xl border border-border/70 bg-card p-4">
                 <p className="text-sm">{post.content}</p>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  {new Date(post.created_at).toLocaleDateString("en-GB", {
+                  {formatDate(post.created_at, locale, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",

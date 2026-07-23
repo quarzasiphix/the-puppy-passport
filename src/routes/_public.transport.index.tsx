@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { getPublicTransportRating } from "@/lib/queries/transport";
 import transportImg from "@/assets/transport.jpg";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/transport/")({
   head: () => ({ meta: [{ title: "Transport services — Havenpaw" }] }),
@@ -80,6 +82,7 @@ const categories = [
 
 function TransportPage() {
   const { publicRequests, rating } = Route.useLoaderData();
+  const { locale } = useTranslation();
   return (
     <div>
       <section className="border-b border-border/60 bg-secondary/40">
@@ -189,7 +192,7 @@ function TransportPage() {
                   </div>
                   <div className="mt-3 text-xs text-muted-foreground">
                     {t.earliest_date
-                      ? `From ${new Date(t.earliest_date).toLocaleDateString("en-GB")}`
+                      ? `From ${formatDate(t.earliest_date, locale)}`
                       : "Flexible date"}
                     {t.flexible_dates ? " · flexible" : ""}
                   </div>

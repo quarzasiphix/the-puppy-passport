@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "@/lib/queries/buyer-activity";
 import { pluralCategory, useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 // Shared across every card on a page — react-query dedupes identical keys, so this is one query
 // per page, not one per card.
@@ -76,6 +77,10 @@ export const statusLabel: Record<Puppy["status"], string> = {
 };
 
 export function PuppyCard({ p }: { p: Puppy }) {
+  // Only the date-format locale is read here, not translated copy — the rest of this card stays
+  // hardcoded English, consistent with Phase 12's "date-format locale is a different concern from
+  // content translation" rule.
+  const { locale } = useTranslation();
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
@@ -129,7 +134,7 @@ export function PuppyCard({ p }: { p: Puppy }) {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="size-3.5" /> Ready{" "}
-            {new Date(p.readyDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            {formatDate(p.readyDate, locale, { day: "numeric", month: "short" })}
           </span>
         </div>
         <p className="text-sm text-muted-foreground">{p.kennel}</p>
@@ -222,6 +227,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
 }
 
 export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolean }) {
+  const { locale } = useTranslation();
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
@@ -243,7 +249,7 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <Meta
             label={planned ? "Expected birth" : "Born"}
-            value={new Date(l.birthDate).toLocaleDateString("en-GB", {
+            value={formatDate(l.birthDate, locale, {
               day: "numeric",
               month: "short",
               year: "numeric",
@@ -251,7 +257,7 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
           />
           <Meta
             label="Collection ready"
-            value={new Date(l.readyDate).toLocaleDateString("en-GB", {
+            value={formatDate(l.readyDate, locale, {
               day: "numeric",
               month: "short",
               year: "numeric",

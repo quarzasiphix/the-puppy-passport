@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
 import { listPublicPostsByOrg } from "@/lib/queries/profile";
 import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/foundations/$slug")({
   loader: async ({ params }) => {
@@ -45,7 +46,7 @@ function FoundationProfile() {
   const { f, animals, posts } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [tab, setTab] = useState("about");
   const orgTypeLabel = {
     foundation: t("foundations.orgTypeFoundation"),
@@ -194,7 +195,7 @@ function FoundationProfile() {
                     dateTime={post.created_at}
                     className="mt-2 block text-xs text-muted-foreground"
                   >
-                    {new Date(post.created_at).toLocaleDateString("en-GB", {
+                    {formatDate(post.created_at, locale, {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
