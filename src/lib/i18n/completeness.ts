@@ -47,3 +47,21 @@ export function checkTranslationCompleteness(): Record<Locale, { missingKeys: st
   }
   return result;
 }
+
+export type PluralCategory = "one" | "few" | "many";
+
+/**
+ * Polish has three plural forms (1; 2–4 except 12–14; everything else), not the two English has —
+ * a naive `n === 1 ? singular : plural` composition (as the original foundations count sentence
+ * used) reads as ungrammatical Polish for counts like 2–4. English only has "one"/"other", so it
+ * always resolves to "many" for anything but 1 — callers should give English's "few" key the same
+ * value as its "many" key.
+ */
+export function pluralCategory(locale: Locale, n: number): PluralCategory {
+  if (locale !== "pl") return n === 1 ? "one" : "many";
+  if (n === 1) return "one";
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "few";
+  return "many";
+}

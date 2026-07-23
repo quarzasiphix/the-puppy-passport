@@ -1,6 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Puppy, Litter, Breeder, PuppyStatus } from "@/lib/mock-data";
 import placeholderImg from "@/assets/puppy-1.jpg";
+import {
+  FOUNDATION_ORG_TYPES,
+  toFoundationOrgType,
+  type FoundationOrgType,
+} from "@/lib/org-routing";
 
 // Maps real Supabase rows onto the existing mock-data.ts shapes so the already-built
 // PuppyCard/LitterCard/BreederCard components and page JSX don't need to change — only the data
@@ -348,8 +353,10 @@ export async function getKennelBySlug(slug: string) {
 // Foundations/shelters/rescues share the `organisations` table with kennels (see `org_type`), but
 // are presented with adoption-oriented framing (mission, "dogs available for adoption") rather than
 // the breeder framing of Breeder/mapOrgToBreeder — hence a separate shape instead of overloading it.
-const FOUNDATION_ORG_TYPES = ["foundation", "shelter", "rescue"] as const;
-export type FoundationOrgType = (typeof FOUNDATION_ORG_TYPES)[number];
+// FOUNDATION_ORG_TYPES/FoundationOrgType/toFoundationOrgType live in org-routing.ts (imported
+// above) so they're pure, unit-tested, and shared with buyer-activity.ts instead of each declaring
+// an identical local copy.
+export type { FoundationOrgType };
 
 export type Foundation = {
   id: string;
@@ -367,12 +374,6 @@ export type Foundation = {
   availableForAdoption: number;
   responseTime: string;
 };
-
-export function toFoundationOrgType(orgType: string): FoundationOrgType {
-  return (FOUNDATION_ORG_TYPES as readonly string[]).includes(orgType)
-    ? (orgType as FoundationOrgType)
-    : "foundation";
-}
 
 // Batched count for one or many orgs in a single query — avoids the N+1 pattern of firing one
 // count query per organisation when mapping a whole directory page. A genuinely open adoption

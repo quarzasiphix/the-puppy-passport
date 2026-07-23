@@ -4,7 +4,11 @@
 // kennel can never resolve to /foundations/$slug or vice versa.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { orgProfileRoute } from "../../src/lib/org-routing.ts";
+import {
+  isFoundationOrgType,
+  orgProfileRoute,
+  toFoundationOrgType,
+} from "../../src/lib/org-routing.ts";
 
 test("orgProfileRoute", async (t) => {
   await t.test("kennel routes to the breeder profile", () => {
@@ -31,4 +35,36 @@ test("orgProfileRoute", async (t) => {
       assert.equal(orgProfileRoute("transport_company"), "/foundations/$slug");
     },
   );
+});
+
+test("isFoundationOrgType", async (t) => {
+  await t.test("foundation, shelter and rescue are foundation org types", () => {
+    assert.equal(isFoundationOrgType("foundation"), true);
+    assert.equal(isFoundationOrgType("shelter"), true);
+    assert.equal(isFoundationOrgType("rescue"), true);
+  });
+
+  await t.test("kennel is not a foundation org type", () => {
+    assert.equal(isFoundationOrgType("kennel"), false);
+  });
+
+  await t.test("an unknown org_type is not a foundation org type", () => {
+    assert.equal(isFoundationOrgType("transport_company"), false);
+  });
+});
+
+test("toFoundationOrgType", async (t) => {
+  await t.test("passes through each real foundation org type unchanged", () => {
+    assert.equal(toFoundationOrgType("foundation"), "foundation");
+    assert.equal(toFoundationOrgType("shelter"), "shelter");
+    assert.equal(toFoundationOrgType("rescue"), "rescue");
+  });
+
+  await t.test("an unexpected org_type defensively falls back to 'foundation'", () => {
+    // mapOrgToFoundation only ever calls this for rows already filtered to org_type in
+    // (foundation, shelter, rescue), so this branch shouldn't be reachable today — but the
+    // function takes a plain string, so it must resolve to a valid value, not throw.
+    assert.equal(toFoundationOrgType("kennel"), "foundation");
+    assert.equal(toFoundationOrgType("something_new"), "foundation");
+  });
 });

@@ -10,6 +10,7 @@ import {
   type OrgRow,
 } from "@/lib/queries/marketplace";
 import { classifySavedAnimalKind } from "@/lib/saved-animal-classification";
+import { isFoundationOrgType } from "@/lib/org-routing";
 
 // Superset of animalSelect (adds listing_category, approximate_age and the owner-profile join) so a
 // single query can tell a saved breeder puppy apart from a saved adoption/rehoming animal and map
@@ -102,8 +103,6 @@ export async function unfollowOrg(buyerId: string, orgId: string) {
   if (error) throw error;
 }
 
-const FOUNDATION_ORG_TYPES = ["foundation", "shelter", "rescue"] as const;
-
 async function listFollowedOrgRows(buyerId: string): Promise<OrgRow[]> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -132,9 +131,7 @@ export async function listFollowedBreeders(buyerId: string) {
 
 export async function listFollowedFoundations(buyerId: string) {
   const orgs = await listFollowedOrgRows(buyerId);
-  const foundations = orgs.filter((o) =>
-    (FOUNDATION_ORG_TYPES as readonly string[]).includes(o.org_type),
-  );
+  const foundations = orgs.filter((o) => isFoundationOrgType(o.org_type));
   const counts = await orgAvailableAdoptionCounts(foundations.map((o) => o.id));
   return foundations.map((o) => mapOrgToFoundation(o, counts.get(o.id) ?? 0));
 }
