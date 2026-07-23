@@ -45,6 +45,7 @@ function BreedersList() {
           <Input
             className="pl-9"
             placeholder="Search kennel, breeder or breed"
+            aria-label="Search kennel, breeder or breed"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

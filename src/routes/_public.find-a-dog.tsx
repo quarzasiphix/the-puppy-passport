@@ -150,6 +150,7 @@ function FindADog() {
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search breed, kennel, city…"
+              aria-label="Search breed, kennel, city"
               className="pl-9"
               value={f.search}
               onChange={(e) => update("search", e.target.value)}
@@ -359,7 +360,7 @@ function FilterControls({
 
       <FilterGroup title="Breed">
         <Select value={f.breed} onValueChange={(v) => update("breed", v)}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Breed">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -375,7 +376,7 @@ function FilterControls({
 
       <FilterGroup title="Country">
         <Select value={f.country} onValueChange={(v) => update("country", v)}>
-          <SelectTrigger>
+          <SelectTrigger aria-label="Country">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -429,12 +430,14 @@ function FilterControls({
           max={priceBounds[1]}
           step={100}
           disabled={priceBounds[0] === priceBounds[1]}
+          aria-label="Price range in PLN"
         />
       </FilterGroup>
 
       <FilterGroup title="Collection-ready from">
         <Input
           type="date"
+          aria-label="Collection-ready from"
           value={f.readyFrom}
           onChange={(e) => update("readyFrom", e.target.value)}
         />

@@ -217,7 +217,7 @@ function BreederProfile() {
                       <div className="text-xs uppercase tracking-wide text-accent">
                         {p.sex === "female" ? "Female" : "Male"}
                       </div>
-                      <h4 className="mt-1 font-display text-lg font-semibold">{p.name}</h4>
+                      <h3 className="mt-1 font-display text-lg font-semibold">{p.name}</h3>
                       {p.pedigree && <p className="text-xs text-muted-foreground">{p.pedigree}</p>}
                       {p.description && (
                         <p className="mt-2 text-sm text-muted-foreground">{p.description}</p>
@@ -239,7 +239,7 @@ function BreederProfile() {
                 <Card key={c.dogName}>
                   <div className="flex items-center gap-2">
                     <Trophy className="size-4 text-accent" />
-                    <h4 className="font-display text-lg font-semibold">{c.dogName}</h4>
+                    <h3 className="font-display text-lg font-semibold">{c.dogName}</h3>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {c.titles.map((t) => (

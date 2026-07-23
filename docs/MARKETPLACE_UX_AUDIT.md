@@ -873,3 +873,56 @@ feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, and this localisation-audit pass.
+
+## Phase 13 — Accessibility pass
+
+Systematically reviewed every one of the 18 route/component files touched across this branch (an
+Explore agent pass covering icon-only buttons without accessible names, non-decorative images with
+empty alt text, unlabelled form controls, fake-interactive `<div>`/`<span onClick>`, heading-order
+skips, and dialog/sheet title presence), then fixed everything it found real.
+
+### Findings
+
+- **Five search/composer inputs relied on `placeholder` as their only accessible name**: the
+  adoption-interest `<Textarea>` (label present but not programmatically linked via `htmlFor`/`id`),
+  `/breeders`' new search `<Input>`, `/find-a-dog`'s search `<Input>`, and two community composers
+  (main feed post box, per-post comment box).
+- **`find-a-dog.tsx`'s Breed/Country `<Select>`, Price `<Slider>` and Collection-ready-from
+  `<Input>`** each sit under a visible `<Label>` (via the shared `FilterGroup`) that isn't
+  programmatically associated with the control it labels — a sighted user sees "Breed" next to a
+  dropdown, a screen reader user hears only "combobox."
+- **The community feed's send-comment button was icon-only** (`<Send>`) with no `aria-label`,
+  inconsistent with the like/comment-toggle buttons in the same file which already had one.
+- **`breeders.$slug.tsx` skipped from `<h1>` straight to `<h4>`** in the Parent Dogs and Champions
+  tab panels — every other tab on the same page uses `<h3>` for its section/card titles (there's no
+  `<h2>` anywhere on the page), so those two tabs' `<h4>`s were an unexplained, inconsistent jump
+  past a heading level the rest of the page uses.
+- Checked but not flagged: all icon-only buttons in `cards.tsx` and `site-chrome.tsx` already had
+  `aria-label`; all cover/background images with `alt=""` are genuinely decorative (paired with a
+  visible name/heading, or a gradient-overlay hero image); no fake `onClick`-on-`<div>` interactive
+  elements found anywhere; every `Dialog`/`Sheet` already includes its required `DialogTitle`/
+  `SheetTitle`.
+
+### Fixes applied
+
+- Added `htmlFor`/`id` pairing to the adoption-interest label/textarea; added `aria-label` matching
+  the visible/placeholder text to the four other unlabelled inputs, the four `find-a-dog.tsx` filter
+  controls, and the send-comment button.
+- Changed the two stray `<h4>`s in `breeders.$slug.tsx` to `<h3>`, matching the heading level every
+  other tab on that page already uses.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all six changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean. This is a code-level accessibility review (verified by
+reading the actual markup/attributes), not a screen-reader or automated-axe browser run — no browser
+was available in this environment; genuine assistive-technology testing remains a manual follow-up.
+
+## Commit
+
+Fourteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, and this accessibility pass.
