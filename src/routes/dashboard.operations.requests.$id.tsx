@@ -20,7 +20,12 @@ import {
   changeOpsRequestStatus,
   getOpsRequestDetail,
   listOpsStatusHistory,
+  listOpsTransportParties,
+  listOpsTransportAnimals,
+  listOpsAmendments,
+  reviewAmendment,
 } from "@/lib/queries/operations";
+import { amendableFieldLabels } from "@/lib/queries/transport";
 import { TransportDocumentChecklist } from "@/components/transport-document-checklist";
 import { ChatThread } from "@/components/chat-thread";
 import { startTransportConversation } from "@/lib/queries/messaging";
@@ -62,6 +67,19 @@ function OpsRequestDetail() {
     queryFn: () => startTransportConversation(id),
   });
 
+  const partiesQuery = useQuery({
+    queryKey: ["ops-request-parties", id],
+    queryFn: () => listOpsTransportParties(id),
+  });
+  const animalsQuery = useQuery({
+    queryKey: ["ops-request-animals", id],
+    queryFn: () => listOpsTransportAnimals(id),
+  });
+  const amendmentsQuery = useQuery({
+    queryKey: ["ops-request-amendments", id],
+    queryFn: () => listOpsAmendments(id),
+  });
+
   const mutation = useMutation({
     mutationFn: () =>
       changeOpsRequestStatus({
@@ -82,6 +100,17 @@ function OpsRequestDetail() {
       queryClient.invalidateQueries({ queryKey: ["ops-kpi-counts"] });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update status."),
+  });
+
+  const amendmentMutation = useMutation({
+    mutationFn: (input: { amendmentId: string; approve: boolean }) => reviewAmendment(input),
+    onSuccess: (_data, variables) => {
+      toast.success(variables.approve ? "Amendment approved." : "Amendment rejected.");
+      queryClient.invalidateQueries({ queryKey: ["ops-request", id] });
+      queryClient.invalidateQueries({ queryKey: ["ops-request-amendments", id] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not review amendment."),
   });
 
   if (requestQuery.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -145,13 +174,105 @@ function OpsRequestDetail() {
               <Field label="Latest date" value={r.latest_date} />
               <Field label="Flexible" value={r.flexible_dates ? "Yes" : "No"} />
               <Field label="Delivery type" value={r.delivery_type?.replace("_", " ")} />
+              <Field label="Exact pickup address" value={r.pickup_address_exact} />
+              <Field label="Exact destination address" value={r.destination_address_exact} />
             </Grid>
             <div className="mt-3 flex items-center gap-2 rounded-lg bg-secondary/50 p-3 text-xs text-muted-foreground">
               <Lock className="size-3.5 shrink-0" />
-              Exact addresses are only visible to assigned operations staff and drivers once a
-              transport is accepted — not shown in this summary view.
+              Exact addresses are operations-only — never shown to the public or to unrelated
+              customers.
             </div>
           </Card>
+
+          {animalsQuery.data && animalsQuery.data.length > 1 && (
+            <Card title={`Animals (${animalsQuery.data.length})`}>
+              <div className="space-y-3">
+                {animalsQuery.data.map((a) => (
+                  <div key={a.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                    <div className="font-medium">
+                      #{a.position} {a.name || "Unnamed"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {a.breed_free_text || "—"} · {a.sex || "?"} · {a.size_category || "?"}
+                      {a.animal_id && " · linked to a registered animal"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <Card title="Parties">
+            {partiesQuery.data && partiesQuery.data.length > 0 ? (
+              <div className="space-y-2">
+                {partiesQuery.data.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm"
+                  >
+                    <span className="font-medium capitalize">
+                      {p.party_role.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {p.profiles?.display_name || p.organisations?.name || p.external_name || "—"}
+                      {p.external_phone && ` · ${p.external_phone}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Only the requester on record for this legacy request — no separate party rows.
+              </p>
+            )}
+          </Card>
+
+          {amendmentsQuery.data && amendmentsQuery.data.length > 0 && (
+            <Card title="Amendment requests">
+              <div className="space-y-3">
+                {amendmentsQuery.data.map((a) => (
+                  <div key={a.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">
+                        {amendableFieldLabels[a.field_name as keyof typeof amendableFieldLabels] ??
+                          a.field_name}
+                      </span>
+                      <Badge variant={a.status === "pending" ? "default" : "outline"}>
+                        {a.status}
+                      </Badge>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      "{a.old_value || "—"}" → "{a.new_value}"
+                    </div>
+                    {a.status === "pending" && (
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={amendmentMutation.isPending}
+                          onClick={() =>
+                            amendmentMutation.mutate({ amendmentId: a.id, approve: true })
+                          }
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={amendmentMutation.isPending}
+                          onClick={() =>
+                            amendmentMutation.mutate({ amendmentId: a.id, approve: false })
+                          }
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <Card title="Compliance">
             <Grid>

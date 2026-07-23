@@ -244,3 +244,68 @@ export async function sendQuotation(id: string, transportRequestId: string, acto
     customer_note: "A quotation is ready for you to review.",
   });
 }
+
+// docs/adr/TRANSPORT_DATA_MODEL.md Phase 7: ops must clearly see every party (legal owner, sender,
+// recipient, payer, pickup/delivery contact), every animal, and any pending amendment on a
+// request — none of which the single-animal inline snapshot alone represents. RLS ("ops staff
+// manage all transport parties/animals/amendments") already permits this; these are read helpers,
+// same shape as the rest of this file.
+export type OpsTransportPartyRow = {
+  id: string;
+  party_role: string;
+  profile_id: string | null;
+  organisation_id: string | null;
+  external_name: string | null;
+  external_phone: string | null;
+  external_email: string | null;
+  profiles: { display_name: string | null } | null;
+  organisations: { name: string | null } | null;
+};
+
+export async function listOpsTransportParties(transportRequestId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_parties")
+    .select(
+      "id, party_role, profile_id, organisation_id, external_name, external_phone, external_email, profiles(display_name), organisations(name)",
+    )
+    .eq("transport_request_id", transportRequestId);
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsTransportPartyRow[];
+}
+
+export async function listOpsTransportAnimals(transportRequestId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_request_animals")
+    .select("*")
+    .eq("transport_request_id", transportRequestId)
+    .order("position", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listOpsAmendments(transportRequestId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_request_amendments")
+    .select("*")
+    .eq("transport_request_id", transportRequestId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function reviewAmendment(input: {
+  amendmentId: string;
+  approve: boolean;
+  reviewNote?: string;
+}) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("review_transport_amendment", {
+    p_amendment_id: input.amendmentId,
+    p_approve: input.approve,
+    p_review_note: input.reviewNote || null,
+  });
+  if (error) throw error;
+}
