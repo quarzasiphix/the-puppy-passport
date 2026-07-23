@@ -18,11 +18,11 @@ a guess. Where something could not be checked, it says so explicitly instead of 
 
 | Check | Result |
 |---|---|
-| `supabase db reset` (61 migrations + seed) | **Clean.** Confirmed multiple times across this session's phases; every new migration applied without error. |
+| `supabase db reset` (66 migrations + seed) | **Clean.** Confirmed multiple times across this session's phases; every new migration applied without error. |
 | `npx tsc --noEmit` | **Clean.** |
 | `npm run lint` | **38 pre-existing errors, 13 warnings** — all in files never touched this session (`dashboard.breeder.litters.tsx`'s sibling files, `matching.ts`, `pricing.ts`, `how-it-works.tsx`, `guards.ts`, `fleet.ts`, plus 3 new fast-refresh warnings from `src/lib/i18n/index.tsx`, same class already present elsewhere in the codebase). Every file actually touched this session is lint-clean. |
 | `npm run build` | **Clean** — Cloudflare Worker bundle, confirmed working via `npx wrangler dev` earlier in the project's history (`docs/DEPLOYMENT_CHECKLIST.md`). |
-| `npm run test:db` (123 tests) | **123 passing, 0 failing.** The 4 open findings tracked in `docs/DATABASE_TESTING.md` (a transport-request operational-field-locking gap, an ownership-vs-role org-access gap, a notifications `RETURNING`/visibility gap, and a driver-document storage column-shadowing bug) were all fixed in a dedicated security-hardening pass (migrations `20260101006000`–`20260101006300`) and their tests rewritten into comprehensive allowed/forbidden coverage — see "Fixed findings" below. Verified against a clean reset and confirmed repeatable by running the suite twice in a row without a reset in between. |
+| `npm run test:db` (124 tests) | **124 passing, 0 failing.** The 4 open findings tracked in `docs/DATABASE_TESTING.md` (a transport-request operational-field-locking gap, an ownership-vs-role org-access gap, a notifications `RETURNING`/visibility gap, and a driver-document storage column-shadowing bug) were all fixed in a dedicated security-hardening pass (migrations `20260101006000`–`20260101006400`) and their tests rewritten into comprehensive allowed/forbidden coverage — see "Fixed findings" below. Verified against a clean reset and confirmed repeatable by running the suite twice in a row without a reset in between. |
 | `npm run test:e2e` (Playwright) | **Blocked in this sandbox** — Chromium's headless shell fails to load a system library (`libglib-2.0.so.0`), and this sandbox's `apt` sources are broken for installing it (see `docs/E2E_TESTING.md`). Not run this session; not claimed as passing. Needs a machine with working package installation. |
 | Route-tree consistency | **Confirmed** — all 116 route files are represented in `routeTree.gen.ts` (checked by direct comparison, not assumed). |
 | `mock-data.ts` usage | **One file** (`src/components/cards.tsx`), **type imports only** — confirmed by grep, no rendered data comes from it anywhere. |
@@ -99,7 +99,7 @@ checked, not that the code merely looks correct.
   way — see `IMPLEMENTATION_PLAN.md` phases 15/16/17).
 - Legal-requirements rule-pack schema (species/jurisdiction/enforcement-level, extended this
   session).
-- A Node-based database/API regression suite (`tests/db/`, 123 tests) protecting all of the above
+- A Node-based database/API regression suite (`tests/db/`, 124 tests) protecting all of the above
   against RLS regressions — did not exist before this session.
 - A major routing bug (6 pages silently rendering the wrong content) found and fixed this session —
   see `docs/DECISIONS.md`.
@@ -176,7 +176,9 @@ than a single broad assertion:
    reading correctly. Root cause: `INSERT ... RETURNING` requires a matching `SELECT` policy too,
    and none existed for "an org owner sees a notification filed under someone else's profile\_id".
    Fixed with a narrowly-scoped `actor_profile_id`-based `SELECT` policy — the sender can see what
-   they sent, never the recipient's full inbox.
+   they sent, never the recipient's full inbox. A follow-up audit found the actor-stamping trigger
+   only filled that column when the client left it null, letting a user forge it to someone else's
+   id — hardened to always be server-set from `auth.uid()` regardless of client input.
 4. **A column-shadowing bug blocked an assigned driver from their own job's documents in Storage** —
    the same bug class already fixed once for `conversations`, reintroduced via a different pair of
    same-named columns (`storage.objects.name` vs. `drivers.name`). Fixed by qualifying the

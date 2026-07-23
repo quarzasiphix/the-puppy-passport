@@ -146,7 +146,14 @@ this section is kept as the historical record of what was wrong and how it was c
    notifications sent by ops/admin/other unrelated senders. `tests/db/security-regressions.test.ts`
    now covers the real relationship succeeding, an unrelated org being blocked, the sender being
    unable to list the recipient's other notifications, the recipient seeing their own notification,
-   and a third party seeing neither.
+   and a third party seeing neither. A follow-up hardening pass
+   (**`20260101006400_notifications_actor_always_server_stamped.sql`**) closed a related integrity
+   gap found immediately after shipping #3: the actor-stamping trigger only filled
+   `actor_profile_id` when the client left it null, so a user inserting their own notification could
+   forge it to someone else's id — `actor_profile_id` is now always server-set from `auth.uid()`,
+   never client-supplied, matching how `requester_profile_id`/`owner_profile_id` are already
+   handled elsewhere in this schema. Tested explicitly in
+   `tests/db/security-regressions.test.ts` ("actor_profile_id cannot be forged to someone else's id").
 4. **An assigned driver could not read their job's documents in Storage — a column-shadowing bug.**
    `20260101003400_transport_documents_storage_driver_access.sql`'s policy source read
    `(storage.foldername(name))[1]::uuid`, intending the bare `name` to mean `storage.objects.name`

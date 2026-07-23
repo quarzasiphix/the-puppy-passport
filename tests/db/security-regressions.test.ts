@@ -205,6 +205,31 @@ test("org owner notifies a real applicant: allowed, correctly scoped, no inbox l
     );
   });
 
+  await t.test("actor_profile_id cannot be forged to someone else's id", async () => {
+    // 20260101006400_notifications_actor_always_server_stamped.sql hardening: a user notifying
+    // themselves (allowed by "users manage their own notifications") could otherwise set
+    // actor_profile_id to any value in the insert payload, planting a row a different, unrelated
+    // user would then see via "actors view notifications they personally sent".
+    const buyer = await as("buyer");
+    const forged = await buyer
+      .from("notifications")
+      .insert({
+        profile_id: ids.buyer,
+        notification_type: "system",
+        title: "Self-notification with a forged actor_profile_id",
+        actor_profile_id: ids.breeder1,
+      })
+      .select("id, actor_profile_id")
+      .single();
+    assert.equal(forged.error, null);
+    assert.equal(
+      forged.data?.actor_profile_id,
+      ids.buyer,
+      "actor_profile_id must always be server-set from auth.uid(), never trusted from the client",
+    );
+    await buyer.from("notifications").delete().eq("id", forged.data!.id);
+  });
+
   const buyer = await as("buyer");
   if (sentId) await buyer.from("notifications").delete().eq("id", sentId);
   if (systemNotificationId)

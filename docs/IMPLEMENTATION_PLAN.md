@@ -316,7 +316,7 @@ migrations `20260101006000`–`20260101006300`): a customer could change their o
 request's operational status; suspending a breeder's role didn't revoke org-management access; the
 org-owner-notify-applicant path failed outright on `RETURNING`; a column-shadowing bug blocked
 assigned drivers from their own job's documents in Storage. All four fixed and given comprehensive
-allowed/forbidden regression coverage (123 tests now passing, 0 failing) — see
+allowed/forbidden regression coverage (124 tests now passing, 0 failing) — see
 `docs/DATABASE_TESTING.md`'s "Previously-open findings, now fixed" section for root-cause detail.
 
 1. **Automated tests** — a Playwright auth spec and a Node-based DB/API regression suite
