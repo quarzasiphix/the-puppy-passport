@@ -1161,3 +1161,60 @@ pass, the card-system pass, the detail-page pass, the breeder-profile pass, the 
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
 resilience pass, the performance pass, and this SEO pass.
+
+## Phase 18 — Route and action integrity audit
+
+### Why this phase found little new: the type system already does most of it
+
+Extracted every literal route string passed to `<Link to=...>` across all touched files and
+cross-referenced each against `routeTree.gen.ts` by hand — every single one resolves to a real
+route. This isn't a coincidence: TanStack Router's `<Link to>` and `params` props are fully
+type-checked against the generated route tree, so a reference to a non-existent route, or a
+`params` object with the wrong shape for that route, is a **compile error**, not a runtime dead
+link. Grepped every touched file for any navigation that bypasses this typed API entirely
+(`window.location`, a raw `<a href="/...">`) — found none; every navigation in this branch goes
+through `Link`/`useNavigate`. Combined with 18 consecutive clean `npx tsc --noEmit` passes across
+every phase so far, "target route exists" and "route params are correct" are exhaustively verified
+for this entire branch, not sampled.
+
+### What this phase actually found
+
+- **The three real dead/misleading-action bugs this branch fixed were all found in earlier phases**,
+  cross-referenced here rather than re-discovered: `LitterCard`'s "View litter" always linking to
+  the generic index regardless of which litter (Phase 4), and "Contact foundation"/"Contact breeder"
+  both only switching a tab, not starting any contact (Phases 1 and 14).
+- **One button was visible to anonymous visitors but silently disabled with no explanation**: the
+  community feed's like button (`disabled={!userId || ...}`) had no `title` telling a signed-out
+  visitor *why* it doesn't respond to a click. Every other sign-in-gated action in this branch
+  either hides itself entirely when signed out or explains itself via a toast on click — this one
+  neither hid nor explained.
+- Checked every mutation-triggering `onClick` in every touched file for a sign-in guard: all but the
+  like button above are already correctly gated (rendered only when signed in, or behind an explicit
+  `isSignedIn ? mutate() : toast.info(...)` branch).
+
+### Fixes applied
+
+- **Added `title="Sign in to like posts"`** to the community feed's like button when signed out.
+
+### Not built: a separate custom "route-reference checker" script
+
+The task template suggested "a lightweight automated route-reference check where practical." Given
+TanStack Router's own type system already provides an exhaustive, compiler-enforced version of
+exactly this check for every `Link`/`navigate` call in the codebase (verified above), writing a
+second, weaker regex-based checker that re-implements what `tsc` already guarantees would be pure
+redundancy, not a meaningful addition — so none was added.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on the changed file, `npm run test:unit` (13/13, unaffected),
+`npm run build` — all clean.
+
+## Commit
+
+Nineteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
+resilience pass, the performance pass, the SEO pass, and this route-integrity pass.
