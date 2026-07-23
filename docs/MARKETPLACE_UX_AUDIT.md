@@ -586,9 +586,44 @@ seller page" bar.
 `npx tsc --noEmit`, `npx eslint --fix` on all three changed files, `npm run test:unit` (13/13,
 unaffected), `npm run build` — all clean.
 
+## Phase 7 — Foundation and adoption experience
+
+Reviewed `/foundations/$slug` against the same "priorities" list Phase 6 used for breeders, plus
+the adoption-to-transport messaging requirements specific to foundations.
+
+### Findings
+
+- **Foundations had no "Updates" section**, the same gap Phase 6 found and fixed for breeders —
+  now fixed identically here for consistency between the two organisation types.
+- **The transport tab's copy didn't make the adoption-first sequencing explicit.** It said Havenpaw
+  "can arrange transport for dogs adopted from this organisation" without stating that transport is
+  only arranged *after* the organisation approves the adoption, is never booked automatically, and
+  that the exact pickup/delivery address stays private — all real, already-true constraints
+  elsewhere in the app, just not stated on this specific page.
+- Everything else on the checklist was already correct: org-type wording (Phase 5), no implication
+  every org is literally "a foundation" (the type badge already shows Foundation/Shelter/Rescue),
+  no "donation" framing (already "adoption fee"), only published+available animals are ever shown,
+  and the adoption action copy already frames applying as a first step, not a confirmed outcome.
+
+### Fixes applied
+
+- **Added the identical "Updates" tab** to the foundation profile (new `posts` loader field via the
+  same `listPublicPostsByOrg`), with new `foundations.tabUpdates`/`foundations.noUpdatesPublished`
+  keys (en + pl).
+- **Rewrote `transportAvailableDesc`/`transportUnknownDesc`** to state the adoption-to-transport
+  sequence explicitly: apply/ask first → transport only arranged after approval → never automatic →
+  exact address stays private and is confirmed during the transport request itself.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on the changed file, `npm run test:unit` (13/13 — including
+the i18n parity test, confirming the new keys landed in both `en.json` and `pl.json`), `npm run
+build` — all clean.
+
 ## Commit
 
-Seven commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Eight commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
-pass, the card-system pass, the detail-page pass, and this breeder-profile pass.
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, and this foundation-
+experience pass.

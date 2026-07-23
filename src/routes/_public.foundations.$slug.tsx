@@ -11,6 +11,7 @@ import { AdoptionCard } from "@/components/cards";
 import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
+import { listPublicPostsByOrg } from "@/lib/queries/profile";
 import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_public/foundations/$slug")({
@@ -20,8 +21,11 @@ export const Route = createFileRoute("/_public/foundations/$slug")({
     // coerced into the same 404 as a real absence (see the function's own doc comment).
     const f = await getFoundationBySlug(params.slug);
     if (!f) throw notFound();
-    const animals = await listPublishedAdoptionsForOrg(f.id);
-    return { f, animals };
+    const [animals, posts] = await Promise.all([
+      listPublishedAdoptionsForOrg(f.id),
+      listPublicPostsByOrg(f.id),
+    ]);
+    return { f, animals, posts };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -38,7 +42,7 @@ export const Route = createFileRoute("/_public/foundations/$slug")({
 });
 
 function FoundationProfile() {
-  const { f, animals } = Route.useLoaderData();
+  const { f, animals, posts } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -148,6 +152,7 @@ function FoundationProfile() {
           <TabsList className="w-full flex-wrap justify-start">
             <TabsTrigger value="about">{t("foundations.tabAbout")}</TabsTrigger>
             <TabsTrigger value="animals">{t("foundations.tabAnimals")}</TabsTrigger>
+            <TabsTrigger value="updates">{t("foundations.tabUpdates")}</TabsTrigger>
             <TabsTrigger value="transport">{t("foundations.tabTransport")}</TabsTrigger>
             <TabsTrigger value="contact">{t("foundations.tabContact")}</TabsTrigger>
           </TabsList>
@@ -176,6 +181,30 @@ function FoundationProfile() {
                   <HeartHandshake className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
                   <p className="text-muted-foreground">{t("foundations.noAnimalsPublished")}</p>
                 </div>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="updates" className="mt-6 space-y-3">
+            {posts.length ? (
+              posts.map((post) => (
+                <Card key={post.id}>
+                  {post.content && <p className="whitespace-pre-wrap text-sm">{post.content}</p>}
+                  <time
+                    dateTime={post.created_at}
+                    className="mt-2 block text-xs text-muted-foreground"
+                  >
+                    {new Date(post.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </time>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <p className="text-muted-foreground">{t("foundations.noUpdatesPublished")}</p>
               </Card>
             )}
           </TabsContent>
