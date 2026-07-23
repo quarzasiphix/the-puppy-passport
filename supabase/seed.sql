@@ -405,6 +405,51 @@ insert into public.transport_requests (
    'veterinary_review_required', 'individual', 'veterinary_hold', 'private',
    true, true, true, true, true, null, null);
 
+-- The 7 rows above supply request_number literals directly, never touching
+-- public.transport_request_seq — left alone, the very next row created through the normal
+-- set_transport_request_number() trigger (nextval() starting at 1) would generate 'TR-2026-000001'
+-- and collide with the first seeded row. Advancing the sequence past every literal used above is
+-- the real fix (found while testing create_transport_draft() directly against a freshly reset
+-- database — this is a pre-existing gap the RPC was the first real caller to actually hit, since
+-- every previous transport-creating test/flow happened to supply its own request_number).
+select setval('public.transport_request_seq', 7, true);
+
+-- transport_request_animals: one position-1 row per request, mirroring exactly what
+-- 20260101006500_transport_request_animals.sql's backfill does for a database that already has
+-- real transport_requests rows when it runs (this seed always loads after migrations, so that
+-- backfill sees an empty table here — this manually reproduces its effect against the seed data so
+-- local development and tests see the same fully-populated shape a real upgraded database would).
+insert into public.transport_request_animals (
+  transport_request_id, position, animal_id, name, breed_free_text, sex
+) values
+  ('a0000000-0000-0000-0000-000000000001', 1, null, 'Fitch', 'Mixed breed, medium', 'male'),
+  ('a0000000-0000-0000-0000-000000000002', 1, null, 'Luna', 'Beagle', 'female'),
+  ('a0000000-0000-0000-0000-000000000003', 1, null, 'Max', 'German Shepherd', 'male'),
+  ('a0000000-0000-0000-0000-000000000004', 1, null, 'Bianca', 'Cavalier King Charles Spaniel', 'female'),
+  ('a0000000-0000-0000-0000-000000000005', 1, '60000000-0000-0000-0000-000000000011', 'Reksio', 'German Shepherd', 'male'),
+  ('a0000000-0000-0000-0000-000000000006', 1, null, 'Nala', 'French Bulldog', 'female'),
+  ('a0000000-0000-0000-0000-000000000007', 1, null, 'Otto', 'Dachshund', 'male');
+
+-- transport_parties: requester on every request (mirrors the migration's unconditional backfill),
+-- plus a few real illustrative party rows so the previously-unused table has genuine seed data to
+-- develop and test against — Reksio's rescue transport is requested by foundation1 acting for their
+-- own foundation (a real sender-org case), and TR-2026-000001 has a real external delivery contact
+-- (the exact free-text-only shape release/receive_authorized_by always had).
+insert into public.transport_parties (transport_request_id, party_role, profile_id) values
+  ('a0000000-0000-0000-0000-000000000001', 'requester', '10000000-0000-0000-0000-000000000001'),
+  ('a0000000-0000-0000-0000-000000000002', 'requester', '10000000-0000-0000-0000-000000000002'),
+  ('a0000000-0000-0000-0000-000000000003', 'requester', '10000000-0000-0000-0000-000000000001'),
+  ('a0000000-0000-0000-0000-000000000004', 'requester', '10000000-0000-0000-0000-000000000001'),
+  ('a0000000-0000-0000-0000-000000000005', 'requester', '10000000-0000-0000-0000-000000000006'),
+  ('a0000000-0000-0000-0000-000000000006', 'requester', '10000000-0000-0000-0000-000000000002'),
+  ('a0000000-0000-0000-0000-000000000007', 'requester', '10000000-0000-0000-0000-000000000002');
+
+insert into public.transport_parties (transport_request_id, party_role, organisation_id) values
+  ('a0000000-0000-0000-0000-000000000005', 'sender', '20000000-0000-0000-0000-000000000003');
+
+insert into public.transport_parties (transport_request_id, party_role, external_name, external_phone) values
+  ('a0000000-0000-0000-0000-000000000001', 'delivery_contact', 'Marta de Vries', '+31 6 1234 5678');
+
 insert into public.quotations (transport_request_id, service_type, pickup, destination, planned_date_range, base_price, total_price, currency, expiry_date, status, created_by) values
   ('a0000000-0000-0000-0000-000000000001', 'shared', 'Warsaw, Poland', 'Amsterdam, Netherlands', '1–10 Aug 2026', 260, 320, 'EUR', '2026-07-28', 'accepted', '10000000-0000-0000-0000-000000000008'),
   ('a0000000-0000-0000-0000-000000000003', 'express', 'Poznań, Poland', 'Berlin, Germany', '30 Jul – 2 Aug 2026', 340, 410, 'EUR', '2026-07-27', 'sent', '10000000-0000-0000-0000-000000000008'),
