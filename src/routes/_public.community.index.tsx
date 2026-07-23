@@ -25,6 +25,8 @@ import { listFollowedProfileIds } from "@/lib/queries/profile";
 import { useTranslation } from "@/lib/i18n";
 import { orgProfileRoute } from "@/lib/org-routing";
 import { formatDate, formatDateTime } from "@/lib/presentation/date";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 // Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
 // hierarchy pillar 3), not a generic feed. No linked-content preview (animal/transport/route) yet
@@ -158,23 +160,21 @@ function CommunityPage() {
       {postsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : postsQuery.isError ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <p className="font-medium">Couldn't load the community feed</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Something went wrong — this isn't the same as there being no posts yet.
-          </p>
-          <Button variant="outline" className="mt-4" onClick={() => postsQuery.refetch()}>
-            Try again
-          </Button>
-        </div>
+        <ErrorState
+          title="Couldn't load the community feed"
+          description="Something went wrong — this isn't the same as there being no posts yet."
+          action={
+            <Button variant="outline" onClick={() => postsQuery.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : posts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <Users className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No posts yet</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Be the first to share something with the community.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No posts yet"
+          description="Be the first to share something with the community."
+        />
       ) : (
         <div className="space-y-8">
           {followedPosts.length > 0 && (

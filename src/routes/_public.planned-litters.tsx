@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listPublishedLitters } from "@/lib/queries/marketplace";
 import { LitterCard } from "@/components/cards";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/planned-litters")({
   loader: () => listPublishedLitters("planned"),
@@ -21,11 +22,7 @@ function PlannedLittersPage() {
         </p>
       </header>
       {plannedLitters.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            No planned litters right now — check back soon.
-          </p>
-        </div>
+        <EmptyState title="No planned litters right now — check back soon." />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {plannedLitters.map((l) => (

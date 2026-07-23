@@ -20,6 +20,8 @@ import { listMyQuotations, respondToQuotation } from "@/lib/queries/transport";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
 import { formatNumber } from "@/lib/presentation/number";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -84,13 +86,21 @@ function BuyerQuotationsPage() {
 
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : query.isError ? (
+        <ErrorState
+          title="Couldn't load your quotations"
+          description="Something went wrong — this isn't the same as having no quotations. Please try again."
+          action={
+            <Button variant="outline" onClick={() => query.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : !query.data?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <Receipt className="mx-auto size-6 text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            No quotations yet — you'll see one here once operations prepares it for a request.
-          </p>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title="No quotations yet — you'll see one here once operations prepares it for a request."
+        />
       ) : (
         <div className="space-y-3">
           {query.data.map((q) => (

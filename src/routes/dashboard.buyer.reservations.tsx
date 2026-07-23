@@ -12,6 +12,8 @@ import {
 } from "@/lib/queries/transport";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 export const Route = createFileRoute("/dashboard/buyer/reservations")({
   component: BuyerReservations,
@@ -20,7 +22,12 @@ export const Route = createFileRoute("/dashboard/buyer/reservations")({
 function BuyerReservations() {
   const { userId } = useAuth();
   const { locale } = useTranslation();
-  const { data: reservations, isLoading } = useQuery({
+  const {
+    data: reservations,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["my-reservations", userId],
     enabled: !!userId,
     queryFn: () => listMyReservationsAsBuyer(userId!),
@@ -42,12 +49,18 @@ function BuyerReservations() {
       </header>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : isError ? (
+        <ErrorState
+          title="Couldn't load your reservations"
+          description="Something went wrong — this isn't the same as having no reservations."
+          action={
+            <Button variant="outline" onClick={() => refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : !reservations?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No reservations yet — once a breeder confirms your application, it will show up here.
-          </p>
-        </div>
+        <EmptyState title="No reservations yet — once a breeder confirms your application, it will show up here." />
       ) : (
         <div className="space-y-3">
           {reservations.map((r) => (

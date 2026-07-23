@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { listApprovedKennels } from "@/lib/queries/marketplace";
 import { BreederCard } from "@/components/cards";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/breeder-map")({
   loader: () => listApprovedKennels(),
@@ -84,13 +85,11 @@ function BreederMapPage() {
       )}
 
       {breeders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <MapPin className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No verified breeders published yet</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Check back soon as more kennels complete verification.
-          </p>
-        </div>
+        <EmptyState
+          icon={MapPin}
+          title="No verified breeders published yet"
+          description="Check back soon as more kennels complete verification."
+        />
       ) : (
         <div className="space-y-8">
           {byCity.map(([city, kennels]) => (

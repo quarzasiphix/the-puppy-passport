@@ -5,6 +5,7 @@ import { BreederCard } from "@/components/cards";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
@@ -61,18 +62,20 @@ function BreedersList() {
         </div>
       </header>
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            {breeders.length === 0
+        <EmptyState
+          title={
+            breeders.length === 0
               ? "No verified kennels yet — check back soon."
-              : "No kennels match your search — try a different kennel, breeder or breed name."}
-          </p>
-          {breeders.length > 0 && (
-            <Button variant="outline" className="mt-4" onClick={() => setSearch("")}>
-              Clear search
-            </Button>
-          )}
-        </div>
+              : "No kennels match your search — try a different kennel, breeder or breed name."
+          }
+          action={
+            breeders.length > 0 && (
+              <Button variant="outline" onClick={() => setSearch("")}>
+                Clear search
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((b) => (

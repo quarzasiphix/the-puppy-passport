@@ -21,6 +21,8 @@ import {
 import { listSavedAnimals } from "@/lib/queries/buyer-activity";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { ErrorState } from "@/components/public/error-state";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 export const Route = createFileRoute("/dashboard/buyer/")({
   component: BuyerOverview,
@@ -217,7 +219,7 @@ function BuyerOverview() {
                 params={{ id: item.id }}
                 className="group overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:bg-secondary/40"
               >
-                <img src={item.image} alt="" className="aspect-[4/3] w-full object-cover" />
+                <AnimalImage src={item.image} alt="" className="aspect-[4/3] w-full object-cover" />
                 <div className="p-4">
                   <div className="font-display text-lg font-semibold">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
@@ -242,12 +244,15 @@ function statusLabelFor(status: string) {
 
 function SectionError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm">
-      <p className="font-medium">Couldn't load this — try again</p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-        Retry
-      </Button>
-    </div>
+    <ErrorState
+      compact
+      title="Couldn't load this — try again"
+      action={
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      }
+    />
   );
 }
 

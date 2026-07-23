@@ -10,6 +10,8 @@ import {
   unfollowOrg,
 } from "@/lib/queries/buyer-activity";
 import { foundationOrgTypeLabel } from "@/components/cards";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 export const Route = createFileRoute("/dashboard/buyer/followed")({
   component: FollowedOrganisations,
@@ -59,37 +61,36 @@ function FollowedOrganisations() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : isError ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <p className="font-medium">Couldn't load who you follow</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Something went wrong — this isn't the same as not following anyone. Please try again.
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => {
-              breedersQuery.refetch();
-              foundationsQuery.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </div>
+        <ErrorState
+          title="Couldn't load who you follow"
+          description="Something went wrong — this isn't the same as not following anyone. Please try again."
+          action={
+            <Button
+              variant="outline"
+              onClick={() => {
+                breedersQuery.refetch();
+                foundationsQuery.refetch();
+              }}
+            >
+              Try again
+            </Button>
+          }
+        />
       ) : isEmpty ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">Not following anyone yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Follow a breeder or foundation from their profile page to see their updates here.
-          </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
-            <Link to="/breeders" className="text-sm text-primary hover:underline">
-              Browse verified breeders
-            </Link>
-            <Link to="/foundations" className="text-sm text-primary hover:underline">
-              Browse foundations
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          title="Not following anyone yet"
+          description="Follow a breeder or foundation from their profile page to see their updates here."
+          action={
+            <>
+              <Link to="/breeders" className="text-sm text-primary hover:underline">
+                Browse verified breeders
+              </Link>
+              <Link to="/foundations" className="text-sm text-primary hover:underline">
+                Browse foundations
+              </Link>
+            </>
+          }
+        />
       ) : (
         <div className="space-y-8">
           {breeders.length > 0 && (
