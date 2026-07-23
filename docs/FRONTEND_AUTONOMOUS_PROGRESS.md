@@ -68,6 +68,24 @@ requirements.
 19. `0ce7c21` — route/action integrity audit; added a missing sign-in explanation on one button.
 20. `2f5e45c` — extracted `pluralCategory`/foundation-org-type logic into unit-tested pure modules;
     expanded the test suite to 29 tests.
+21. `e4835ec` — added this progress tracker and `docs/FRONTEND_BACKEND_GAPS.md`.
+22. `0e94d18` — onboarding UX: fixed unlabelled `/rehome` fields, an unannounced org-type picker
+    state, and a duplicate-submission risk on `/create-breeder`.
+23. `c3c641e` — added `docs/FRONTEND_TRANSPORT_HANDOFF.md`; fixed `/adoptions/$id`'s inert
+    "Transport available" badge by adding the same request-transport CTA `/puppies/$id` already had.
+24. `47373fb` — placeholder/dead-code scan and design-consistency check (both verified clean).
+25. `769d205` — branch self-review: full diff re-checked as a PR, forbidden-file boundary
+    re-verified, one combined lint pass across all changed files.
+26. `bb93596` — added `docs/FRONTEND_BROWSER_QA.md`, including a genuinely-attempted (and
+    genuinely-failed, exact error recorded) real Chromium launch.
+27. `ffa6d3e` — added `docs/FRONTEND_INTEGRATION_REPORT.md` (branch/commit/route/rollback summary
+    for the eventual cherry-pick onto `main`).
+28. `64c2b2c` — final verification: full 24-point checklist run fresh, all clean.
+29. `af4a729` — continuation queue: added a real photo gallery to `/adoptions/$id` (previously
+    showed only the first photo despite a full `animal_images` gallery existing), and fixed
+    `/puppies/$id`'s gallery thumbnail buttons having zero accessible name.
+30. `7a0ccc3` — corrected `FRONTEND_INTEGRATION_REPORT.md`'s routes-touched list and cherry-pick
+    sequence to include the three continuation-queue commits above it.
 
 ## Phase mapping — this session's work vs. the expanded 30-phase brief
 
@@ -94,8 +112,8 @@ unless the audit finds a real problem").
 | 12 — Community feed | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 9 + Phase 15; commits `9e5a79d`, `7bda665` |
 | 13 — Community groups | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 10; commit `8001e1e` |
 | 14 — Buyer dashboard frontend | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 11; commit `f1dc31f` |
-| 15 — Public publishing/onboarding UX | ⏳ not started | `/create-breeder`, `/signup`, `/rehome` not yet audited this session |
-| 16 — Transport handoff frontend contract | ⏳ not started | See `docs/FRONTEND_BACKEND_GAPS.md` once created |
+| 15 — Public publishing/onboarding UX | ✅ done | `/create-breeder`, `/signup`, `/rehome` audited; commit `0e94d18` |
+| 16 — Transport handoff frontend contract | ✅ done | `docs/FRONTEND_TRANSPORT_HANDOFF.md`; commit `c3c641e` |
 | 17 — EN/PL localisation completion | ✅ done (as an honest audit, not a full rewrite) | `MARKETPLACE_UX_AUDIT.md` Phase 12 — explains explicitly why a full-app translation rewrite wasn't attempted |
 | 18 — Accessibility audit | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 13; commit `941fd9f` |
 | 19 — Responsive/mobile audit | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 14; commit `5a27159` |
@@ -105,11 +123,11 @@ unless the audit finds a real problem").
 | 23 — Route and action integrity | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 18; commit `0ce7c21` |
 | 24 — Frontend utility/regression tests | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 19; commit `2f5e45c` |
 | 25 — SSR and browser smoke tests | ✅ done (SSR only — browser genuinely blocked) | `MARKETPLACE_UX_AUDIT.md` Phase 1's "live smoke check without a database" |
-| 26 — Remove placeholders/dead presentation | ⏳ in progress | Next |
-| 27 — Design consistency polish | ⏳ not started | |
-| 28 — Branch self-review | ⏳ not started | |
-| 29 — Integration readiness report | ⏳ not started | `docs/FRONTEND_INTEGRATION_REPORT.md` to be created |
-| 30 — Final verification | ⏳ not started | |
+| 26 — Remove placeholders/dead presentation | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 21; commit `47373fb` |
+| 27 — Design consistency polish | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 21; commit `47373fb` |
+| 28 — Branch self-review | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 22; commit `769d205` |
+| 29 — Integration readiness report | ✅ done | `docs/FRONTEND_INTEGRATION_REPORT.md`; commits `ffa6d3e`, `7a0ccc3` |
+| 30 — Final verification | ✅ done | `MARKETPLACE_UX_AUDIT.md` Phase 23; commit `64c2b2c` |
 
 ## Remaining work this session (in order)
 
@@ -131,14 +149,22 @@ unless the audit finds a real problem").
    pass across all 34 changed TS/TSX files.
 7. ✅ `docs/FRONTEND_BROWSER_QA.md` — done (commit `bb93596`), including a genuinely-attempted (and
    genuinely-failed, exact error recorded) real Chromium launch.
-8. ✅ `docs/FRONTEND_INTEGRATION_REPORT.md` — done, this commit.
-9. ⏳ Final verification pass + closing commit — **next.**
+8. ✅ `docs/FRONTEND_INTEGRATION_REPORT.md` — done (commit `ffa6d3e`, corrected in `7a0ccc3`).
+9. ✅ Final verification pass — done (commit `64c2b2c`, full 24-point checklist).
+10. ✅ Continuation queue A–E — done (commit `af4a729`): second-pass product critique and copy
+    quality (A, B) reviewed with no further genuine issues found beyond earlier phases; image
+    resilience (C) found and fixed two real gaps (missing adoption-detail gallery, unlabelled puppy
+    gallery thumbnails); mutation resilience (D) verified every mutation trigger already guards
+    against double-submission; documentation corrected (E) in `7a0ccc3`.
+11. ✅ Continuation queue F (final clean checkpoint) — this commit.
 
-## Session status: Phase 30 next, then continuing into the continuation queue
+## Session status: complete
 
-All 30 phases of the expanded brief are done or honestly documented as blocked (browser
-verification — see `FRONTEND_BROWSER_QA.md`), except the final verification pass itself (next).
-Per explicit user instruction to continue through everything, this session continues into the
-continuation queue after Phase 30 closes: (A) second-pass product critique, (B) copy-quality audit,
-(C) image resilience, (D) mutation resilience, (E) final documentation correction, (F) final clean
-checkpoint. Each remains its own focused commit, same discipline as every phase before it.
+All 30 phases of the expanded brief plus the continuation queue (A–F) are done, or — for the one
+genuine environment limitation encountered (no working Chromium/`libglib-2.0.so.0` in this sandbox,
+so no real browser/visual verification was possible) — honestly documented as blocked, never
+claimed as done. `git status --short` is clean at this checkpoint; `npx tsc --noEmit`, `npm run
+test:unit` (29/29), and `npm run build` all pass. The branch is ready for the cherry-pick
+integration sequence recorded in `docs/FRONTEND_INTEGRATION_REPORT.md`; no further work is planned
+on this branch per the earlier instruction to stop growing it after this hardening/polish pass so
+integration onto `main` stays tractable.
