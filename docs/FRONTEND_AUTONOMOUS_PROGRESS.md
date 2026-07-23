@@ -272,3 +272,27 @@ continue. Recorded here rather than edited away, since it was accurate at the ti
   sandbox to actually trigger a broken image URL and watch the swap happen. Documented honestly in
   `docs/FRONTEND_BACKEND_GAPS.md` rather than claimed as fully verified.
 - Checks: tsc, eslint (0 errors after one `--fix` pass), test:unit (37/37), build — clean.
+
+### Number formatting + two raw-status-enum bugs (commits `dacd24a`, `5163613`)
+
+- **Real CLAUDE.md rule violation found**: `dashboard.buyer.quotations.tsx` rendered `q.status`
+  (`"sent"`/`"viewed"`/`"replaced"`/etc.) directly as a badge — a raw internal enum shown to a buyer,
+  exactly what the project's "never show raw internal codes... without translation" rule prohibits.
+  Added a plain-language `statusLabels` map.
+- **Same bug, second instance**: `/planned-routes` rendered `r.status` (`"planning"`/`"confirmed"`,
+  confirmed by reading — not modifying — `supabase/migrations/20260101002700_public_routes_view.sql`)
+  raw on a public, unauthenticated page. Added `routeStatusLabels`.
+- **Also fixed**: every `.toLocaleString()` number format (prices, fees, budget options) had no
+  explicit Intl locale — a hydration-mismatch risk and, like the earlier date bug, locale-blind.
+  Added `src/lib/presentation/number.ts` (`formatNumber`), unit tested, wired into cards.tsx,
+  puppy/adoption detail, find-a-dog, find-your-dog, buyer quotations.
+- Checks: tsc, eslint (0 errors), test:unit (41/41), build — clean both commits.
+
+## Supplemental queue — appended mid-session
+
+A second, larger instruction ("SUPPLEMENTAL MULTI-HOUR FRONTEND PRODUCT, DESIGN-SYSTEM, TRUST,
+QUALITY AND RELEASE QUEUE", stages A–AH) arrived while Phase 11-equivalent work was in progress.
+Per its own explicit instruction, the original queue was finished first (through the route-status
+fix above) before starting stage A. Isolation re-verified before starting: `pwd` confirms the
+frontend worktree, branch `ux-marketplace-frontend-pass`, clean status, main worktree untouched
+(advanced independently to a new commit under the backend agent — not entered or modified).
