@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ShieldCheck, Truck, MessageCircle, MapPin, Heart, HeartHandshake } from "lucide-react";
+import { ShieldCheck, Truck, MapPin, Heart, HeartHandshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -15,7 +15,10 @@ import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_public/foundations/$slug")({
   loader: async ({ params }) => {
-    const f = await getFoundationBySlug(params.slug).catch(() => null);
+    // getFoundationBySlug only returns null for a genuine "no such public foundation" — a real
+    // query failure throws and is left to propagate to the root error boundary instead of being
+    // coerced into the same 404 as a real absence (see the function's own doc comment).
+    const f = await getFoundationBySlug(params.slug);
     if (!f) throw notFound();
     const animals = await listPublishedAdoptionsForOrg(f.id);
     return { f, animals };
@@ -57,7 +60,13 @@ function FoundationProfile() {
       if (isFollowing) await unfollowOrg(userId, f.id);
       else await followOrg(userId, f.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
+    onSuccess: () => {
+      // See the identical comment on _public.breeders.$slug.tsx's follow mutation — three query
+      // keys represent one piece of state, so all three must invalidate together.
+      queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-followed-breeders", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-followed-foundations", userId] });
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
   });
 
@@ -73,7 +82,7 @@ function FoundationProfile() {
           <div className="flex flex-wrap items-start gap-6">
             <img
               src={f.logo}
-              alt=""
+              alt={`${t("foundations.logoAltPrefix")} ${f.name}`}
               className="size-24 rounded-2xl border-4 border-background object-cover shadow-md"
             />
             <div className="flex-1">
@@ -106,9 +115,9 @@ function FoundationProfile() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button size="lg" onClick={() => setTab("animals")}>
-                  <MessageCircle className="mr-1 size-4" /> {t("foundations.contactFoundation")}
+                  <HeartHandshake className="mr-1 size-4" /> {t("foundations.viewAnimalsCta")}
                 </Button>
                 <Button
                   size="lg"

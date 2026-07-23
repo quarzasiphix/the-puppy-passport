@@ -61,7 +61,15 @@ function BreederProfile() {
       if (isFollowing) await unfollowOrg(userId, b.id);
       else await followOrg(userId, b.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
+    onSuccess: () => {
+      // followed-org-ids, my-followed-breeders and my-followed-foundations all represent the same
+      // underlying "who does this buyer follow" state under different shapes — following/
+      // unfollowing here must invalidate all three or the followed-organisations dashboard page
+      // shows stale data until a full reload.
+      queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-followed-breeders", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-followed-foundations", userId] });
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
   });
 

@@ -320,27 +320,43 @@ export type Foundation = {
   responseTime: string;
 };
 
-async function orgAvailableAdoptionCount(orgId: string) {
+export function toFoundationOrgType(orgType: string): FoundationOrgType {
+  return (FOUNDATION_ORG_TYPES as readonly string[]).includes(orgType)
+    ? (orgType as FoundationOrgType)
+    : "foundation";
+}
+
+// Batched count for one or many orgs in a single query — avoids the N+1 pattern of firing one
+// count query per organisation when mapping a whole directory page. A genuinely open adoption
+// listing means published, listed as "adoption" (never a breeder puppy or private rehoming, which
+// use different listing_category values), and still available/open to applications.
+export async function orgAvailableAdoptionCounts(orgIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (orgIds.length === 0) return counts;
   const supabase = getSupabaseBrowserClient();
-  const { count } = await supabase
+  const { data, error } = await supabase
     .from("animals")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId)
+    .select("organization_id")
+    .in("organization_id", orgIds)
     .eq("listing_category", "adoption")
     .eq("is_published", true)
     .in("availability_status", ["available", "applications_open"]);
-  return count ?? 0;
+  // Thrown, not swallowed into a 0 — a failed count query must not read as "no dogs available"
+  // when the real answer is unknown.
+  if (error) throw error;
+  for (const row of (data ?? []) as { organization_id: string | null }[]) {
+    if (!row.organization_id) continue;
+    counts.set(row.organization_id, (counts.get(row.organization_id) ?? 0) + 1);
+  }
+  return counts;
 }
 
-export async function mapOrgToFoundation(o: OrgRow): Promise<Foundation> {
-  const availableForAdoption = await orgAvailableAdoptionCount(o.id);
+export function mapOrgToFoundation(o: OrgRow, availableForAdoption: number): Foundation {
   return {
     id: o.id,
     name: o.name,
     slug: o.slug,
-    orgType: (FOUNDATION_ORG_TYPES as readonly string[]).includes(o.org_type)
-      ? (o.org_type as FoundationOrgType)
-      : "foundation",
+    orgType: toFoundationOrgType(o.org_type),
     city: o.city ?? "",
     country: o.country ?? "",
     verified: o.verification_status === "approved",
@@ -363,19 +379,31 @@ export async function listApprovedFoundations() {
     .eq("verification_status", "approved")
     .eq("is_public", true);
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as OrgRow[]).map(mapOrgToFoundation));
+  const orgs = (data ?? []) as unknown as OrgRow[];
+  const counts = await orgAvailableAdoptionCounts(orgs.map((o) => o.id));
+  return orgs.map((o) => mapOrgToFoundation(o, counts.get(o.id) ?? 0));
 }
 
-export async function getFoundationBySlug(slug: string) {
+// Returns null only for a genuine "no such foundation" (or one that isn't public/approved yet —
+// same rule as listApprovedFoundations, so a pending/private org can't be reached directly by
+// guessing its slug). A real query failure (network, RLS denial, etc.) throws instead of being
+// coerced into the same null/not-found result — see _public.foundations.$slug.tsx's loader, which
+// no longer swallows every error into a 404.
+export async function getFoundationBySlug(slug: string): Promise<Foundation | null> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
     .select(orgSelect)
     .eq("slug", slug)
     .in("org_type", FOUNDATION_ORG_TYPES)
-    .single();
+    .eq("verification_status", "approved")
+    .eq("is_public", true)
+    .maybeSingle();
   if (error) throw error;
-  return mapOrgToFoundation(data as unknown as OrgRow);
+  if (!data) return null;
+  const org = data as unknown as OrgRow;
+  const counts = await orgAvailableAdoptionCounts([org.id]);
+  return mapOrgToFoundation(org, counts.get(org.id) ?? 0);
 }
 
 export async function listPuppiesForKennel(kennelId: string) {

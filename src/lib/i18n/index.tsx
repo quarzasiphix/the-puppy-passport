@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import en from "./locales/en.json";
-import pl from "./locales/pl.json";
+import {
+  checkTranslationCompleteness,
+  getByPath,
+  resources,
+  SUPPORTED_LOCALES,
+  type Locale,
+} from "./completeness";
+
+export { checkTranslationCompleteness, SUPPORTED_LOCALES, type Locale };
 
 // Real i18n infrastructure (docs/PRODUCT_VISION.md "Geographic direction",
 // docs/IMPLEMENTATION_PLAN.md phase 14) — deliberately hand-rolled rather than pulling in
@@ -12,11 +19,6 @@ import pl from "./locales/pl.json";
 // Locale is currently client-side only (localStorage), not SSR-aware via a cookie yet — a signed-
 // in visitor's very first server-rendered paint is always English, then re-renders in their saved
 // language on the client. Documented as a known gap, not silently accepted as "done".
-export const SUPPORTED_LOCALES = ["en", "pl"] as const;
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
-
-const resources: Record<Locale, typeof en> = { en, pl: pl as typeof en };
-
 const STORAGE_KEY = "havenpaw-locale";
 const FALLBACK_LOCALE: Locale = "en";
 
@@ -28,43 +30,6 @@ function readStoredLocale(): Locale {
   if (typeof window === "undefined") return FALLBACK_LOCALE;
   const stored = window.localStorage.getItem(STORAGE_KEY);
   return isLocale(stored) ? stored : FALLBACK_LOCALE;
-}
-
-function getByPath(obj: unknown, path: string): unknown {
-  return path.split(".").reduce<unknown>((acc, segment) => {
-    if (acc && typeof acc === "object" && segment in (acc as Record<string, unknown>)) {
-      return (acc as Record<string, unknown>)[segment];
-    }
-    return undefined;
-  }, obj);
-}
-
-/**
- * Detects missing keys (docs/PRODUCT_VISION.md-derived requirement: "detect missing translation
- * keys, report locale completeness"). Compares every leaf key path in the English resource
- * (treated as the canonical key set) against each other locale, so a new English string added
- * without its Polish counterpart shows up here instead of silently rendering in the wrong
- * language.
- */
-export function checkTranslationCompleteness(): Record<Locale, { missingKeys: string[] }> {
-  function leafPaths(obj: unknown, prefix = ""): string[] {
-    if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-      return Object.entries(obj as Record<string, unknown>).flatMap(([key, value]) =>
-        leafPaths(value, prefix ? `${prefix}.${key}` : key),
-      );
-    }
-    return [prefix];
-  }
-
-  const canonicalKeys = leafPaths(en);
-  const result = {} as Record<Locale, { missingKeys: string[] }>;
-  for (const locale of SUPPORTED_LOCALES) {
-    const missingKeys = canonicalKeys.filter(
-      (key) => getByPath(resources[locale], key) === undefined,
-    );
-    result[locale] = { missingKeys };
-  }
-  return result;
 }
 
 type TranslateFn = (key: string) => string;
@@ -126,3 +91,21 @@ export const LOCALE_DISPLAY_NAMES: Record<Locale, string> = {
   en: "English",
   pl: "Polski",
 };
+
+export type PluralCategory = "one" | "few" | "many";
+
+/**
+ * Polish has three plural forms (1; 2–4 except 12–14; everything else), not the two English has —
+ * a naive `n === 1 ? singular : plural` composition (as the original foundations count sentence
+ * used) reads as ungrammatical Polish for counts like 2–4. English only has "one"/"other", so it
+ * always resolves to "many" for anything but 1 — callers should give English's "few" key the same
+ * value as its "many" key.
+ */
+export function pluralCategory(locale: Locale, n: number): PluralCategory {
+  if (locale !== "pl") return n === 1 ? "one" : "many";
+  if (n === 1) return "one";
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "few";
+  return "many";
+}

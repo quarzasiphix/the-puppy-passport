@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 import { listApprovedFoundations } from "@/lib/queries/marketplace";
 import { FoundationCard } from "@/components/cards";
-import { useTranslation } from "@/lib/i18n";
+import { pluralCategory, useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_public/foundations")({
   loader: () => listApprovedFoundations(),
@@ -19,21 +19,26 @@ export const Route = createFileRoute("/_public/foundations")({
   component: FoundationsPage,
 });
 
+const countSuffixKey = {
+  one: "countSuffixOne",
+  few: "countSuffixFew",
+  many: "countSuffixMany",
+} as const;
+
 function FoundationsPage() {
   const foundations = Route.useLoaderData();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const count = foundations.length;
   return (
     <div className="container-page py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-medium">{t("foundations.pageTitle")}</h1>
           <p className="text-sm text-muted-foreground">
-            {foundations.length > 0 && `${foundations.length} `}
-            {foundations.length === 0
+            {count > 0 && `${count} `}
+            {count === 0
               ? t("foundations.countSuffixEmpty")
-              : foundations.length === 1
-                ? t("foundations.countSuffixSingular")
-                : t("foundations.countSuffixPlural")}
+              : t(`foundations.${countSuffixKey[pluralCategory(locale, count)]}`)}
           </p>
         </div>
         <Link to="/adoptions" className="text-sm text-primary hover:underline">

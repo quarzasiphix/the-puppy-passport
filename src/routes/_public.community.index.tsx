@@ -21,6 +21,12 @@ import {
 } from "@/lib/queries/community";
 import { listFollowedOrgIds } from "@/lib/queries/buyer-activity";
 import { listFollowedProfileIds } from "@/lib/queries/profile";
+import { useTranslation, type Locale } from "@/lib/i18n";
+import { orgProfileRoute } from "@/lib/org-routing";
+
+// Intl locale tags for date formatting — kept separate from the app's bare "en"/"pl" locale codes
+// so date order/punctuation matches each language's convention (UK day-month-year vs Polish).
+const DATE_LOCALE: Record<Locale, string> = { en: "en-GB", pl: "pl-PL" };
 
 // Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
 // hierarchy pillar 3), not a generic feed. No linked-content preview (animal/transport/route) yet
@@ -212,6 +218,7 @@ function PostCard({
   userId: string | null | undefined;
 }) {
   const queryClient = useQueryClient();
+  const { locale } = useTranslation();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
 
@@ -253,13 +260,9 @@ function PostCard({
           <div className="flex items-center gap-2 font-medium">
             {post.author_organization_id && post.organisations ? (
               <Link
-                to={
-                  post.organisations.org_type === "kennel"
-                    ? "/breeders/$slug"
-                    : "/foundations/$slug"
-                }
+                to={orgProfileRoute(post.organisations.org_type)}
                 params={{ slug: post.organisations.slug }}
-                className="hover:underline"
+                className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {authorName(post)}
               </Link>
@@ -267,7 +270,7 @@ function PostCard({
               <Link
                 to="/profile/$profileId"
                 params={{ profileId: post.author_profile_id }}
-                className="hover:underline"
+                className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {authorName(post)}
               </Link>
@@ -282,10 +285,10 @@ function PostCard({
           </div>
           <time
             dateTime={post.created_at}
-            title={new Date(post.created_at).toLocaleString("en-GB")}
+            title={new Date(post.created_at).toLocaleString(DATE_LOCALE[locale])}
             className="block text-xs text-muted-foreground"
           >
-            {new Date(post.created_at).toLocaleDateString("en-GB", {
+            {new Date(post.created_at).toLocaleDateString(DATE_LOCALE[locale], {
               day: "numeric",
               month: "short",
               year: "numeric",
