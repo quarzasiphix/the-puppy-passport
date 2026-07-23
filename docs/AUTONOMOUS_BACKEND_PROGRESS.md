@@ -29,6 +29,7 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `d52da87` | F (Phase 14) | Completed the adoption questionnaire on `buyer_applications` (landlord permission, veterinary plan, consent metadata, org supplemental answers jsonb, `internal_notes`, `draft`/`interview_planned`/`expired` statuses). Found + fixed a real gap: buyers had unrestricted `for all` RLS on their own application row, so could self-approve/forge `breeder_response`/forge `internal_notes` — added a default-deny lock trigger. `dashboard.foundation.applications.tsx` now renders the full questionnaire + internal notes + a transport-draft action on approval. `tests/db/adoption-questionnaire.test.ts`. 273/273 tests. |
 | `cca8f02` | G (Phase 15) | Real user-facing moderation decisions and appeals: `affected_profile_id` (auto-populated for user/animal_listing targets), `public_decision_summary`, `appeal_deadline` (14 days, fixed a bug where it only fired on UPDATE not INSERT), `my_moderation_case_view` (fixed a bug where `security_invoker=true` inherited an always-false RLS result — switched to a definer-style view like `public_transport_requests`), `moderation_appeals` with a same-moderator-conflict check. New `_public.moderation.$caseId.tsx` + extended `dashboard.admin.moderation.tsx`. `tests/db/moderation-appeals.test.ts`. 299/299 tests. |
 | `3026f22` | H (Phase 16) | Real notification preferences (`notification_preferences`, opt-out default, mandatory `security` category, `get_notification_preference()`/`create_notification_if_enabled()`), scoped to the 4 notification types that actually exist in the codebase (not a fabricated full category list). Replaced the "coming soon" placeholder on both breeder/foundation settings pages. `tests/db/notification-preferences.test.ts`. 320/320 tests. |
+| `229cb35` | I (Phase 17) | Real `dashboard.admin.organisations.tsx` (suspend/restore + new `is_featured` flag, with a lock-trigger fix for owner self-featuring), real `dashboard.admin.settings.tsx` (markets table, previously zero UI), real `dashboard.buyer.scheduled.tsx` (scheduled-or-later transport list + timeline). Left 3 document-library placeholders honest (no backing schema, out of Stage I's priority list). `tests/db/admin-placeholders.test.ts`. 335/335 tests. |
 
 ## Supplemental queue appended mid-session
 
@@ -41,20 +42,34 @@ factories, load readiness, a security red-team pass, and a final release-candida
 appended to the original Phase 10–25 queue. Per its own instruction, the original queue (I–Q) is
 being finished first, then this session continues directly into R onward without stopping.
 
+## Third queue appended mid-session
+
+A third instruction set ("SECOND OVERNIGHT BACKEND PLATFORM, OPERATIONS, COMPLIANCE AND
+RELIABILITY QUEUE," Stages BA–CI: background jobs, document expiry engine, org verification
+workflow, driver/vehicle eligibility, route/stop state machines, proof of pickup/delivery,
+incidents, service areas, i18n normalisation, consent versioning, support cases, moderation
+workload, risk signals, duplicate detection, search read models, error taxonomy, API contracts,
+webhooks (disabled), bulk import, archival, Storage cleanup, health checks, SLOs, incident
+runbooks, maintenance mode, a migration preflight command, a database invariant catalogue,
+state-machine/chaos tests, a permission inventory, data-access consolidation, a tech-debt register,
+a final backend PR review, and a second release-candidate report) was appended on top of the
+original and first supplemental queues. Per its own instruction, all earlier queues are being
+finished first, in order, before this one starts.
+
 ## Remaining stages (not started this session)
 
-**Original queue**: I (admin placeholder audit), J (abuse prevention), K (CI), L (full DB/Storage
-audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch reconciliation), Q
-(final verification + report).
+**Original queue**: J (abuse prevention), K (CI), L (full DB/Storage audit), M (scenario suite), N
+(performance), O (privacy/lifecycle), P (launch reconciliation), Q (final verification + report).
 
-**Supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
+**First supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
 lifecycle), U (multi-species), V (taxonomy), W (search/discovery), X (application/handover state
 machines), Y (handover/ownership transfer), Z (quotation/pricing), AA (payment abstraction,
 disabled), AB (fundraising gating), AC (outbox/email jobs), AD (domain events), AE (audit quality),
 AF (feature flags), AG (idempotency/concurrency audit), AH (data export), AI (deletion/
 anonymisation execution), AJ (support tooling), AK (backup/DR docs), AL (migration quality), AM
-(test factories), AN (load readiness), AO (security red-team pass), AP (release-candidate report),
-plus a final post-AP review pass.
+(test factories), AN (load readiness), AO (security red-team pass), AP (release-candidate report).
+
+**Second supplemental queue**: BA–CI (see above) plus a final post-CI adversarial review pass.
 
 ## Known open items carried forward
 
