@@ -167,11 +167,20 @@ export interface Database {
           color: string | null;
           date_of_birth: string | null;
           approximate_age: string | null;
+          weight_kg: number | null;
+          size_category: "small" | "medium" | "large" | "giant" | null;
+          microchip_number: string | null;
+          tattoo_number: string | null;
+          registry_country: string | null;
+          registry_name: string | null;
+          registry_reference: string | null;
+          identification_verified_status: string;
           price: number | null;
           currency: string | null;
           description: string | null;
           temperament: string | null;
           ideal_home: string | null;
+          health_tests: unknown;
           is_published: boolean;
           availability_status: string;
           transport_available: boolean;
@@ -481,6 +490,60 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["transport_parties"]["Row"]>;
         Relationships: [];
       };
+      transport_request_animals: {
+        Row: {
+          id: string;
+          transport_request_id: string;
+          position: number;
+          animal_id: string | null;
+          name: string | null;
+          breed_free_text: string | null;
+          sex: "male" | "female" | null;
+          approximate_age: string | null;
+          weight_kg: number | null;
+          size_category: "small" | "medium" | "large" | "giant" | null;
+          microchip_number: string | null;
+          microchip_known: boolean;
+          passport_available: boolean | null;
+          vaccination_status: string | null;
+          rabies_vaccination_date: string | null;
+          health_condition: string | null;
+          medication: string | null;
+          behavioural_notes: string | null;
+          anxiety_or_aggression_notes: string | null;
+          can_travel_with_others: boolean | null;
+          crate_requirements: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["transport_request_animals"]["Row"]> & {
+          transport_request_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["transport_request_animals"]["Row"]>;
+        Relationships: [];
+      };
+      transport_request_amendments: {
+        Row: {
+          id: string;
+          transport_request_id: string;
+          requested_by: string;
+          field_name: string;
+          old_value: string | null;
+          new_value: string;
+          status: "pending" | "approved" | "rejected";
+          review_note: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["transport_request_amendments"]["Row"]> & {
+          transport_request_id: string;
+          requested_by: string;
+          field_name: string;
+          new_value: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["transport_request_amendments"]["Row"]>;
+        Relationships: [];
+      };
       transport_requests: {
         Row: {
           id: string;
@@ -585,6 +648,7 @@ export interface Database {
         Row: {
           id: string;
           transport_request_id: string;
+          transport_party_id: string | null;
           category: string;
           file_url: string | null;
           status: string;
@@ -1115,6 +1179,40 @@ export interface Database {
         };
         Relationships: [];
       };
+      driver_transport_job_view: {
+        Row: {
+          id: string;
+          request_number: string | null;
+          status: string;
+          pickup_country: string | null;
+          pickup_city: string | null;
+          pickup_area_approx: string | null;
+          pickup_address_exact: string | null;
+          destination_country: string | null;
+          destination_city: string | null;
+          destination_area_approx: string | null;
+          destination_address_exact: string | null;
+          earliest_date: string | null;
+          latest_date: string | null;
+          flexible_dates: boolean;
+          delivery_type: string;
+          animal_name: string | null;
+          breed_free_text: string | null;
+          sex: string | null;
+          weight_kg: number | null;
+          size_category: string | null;
+          crate_requirements: string | null;
+          behavioural_notes: string | null;
+          anxiety_or_aggression_notes: string | null;
+          can_travel_with_others: boolean | null;
+          release_authorized_by: string | null;
+          receive_authorized_by: string | null;
+          assigned_driver_id: string | null;
+          assigned_route_id: string | null;
+          assigned_vehicle_id: string | null;
+        };
+        Relationships: [];
+      };
       public_routes: {
         Row: {
           id: string;
@@ -1173,6 +1271,18 @@ export interface Database {
       start_transport_conversation: {
         Args: { p_transport_request_id: string };
         Returns: string;
+      };
+      create_transport_draft: {
+        Args: { p_request: Json; p_animals?: Json; p_parties?: Json };
+        Returns: string;
+      };
+      request_transport_amendment: {
+        Args: { p_transport_request_id: string; p_field_name: string; p_new_value: string };
+        Returns: string;
+      };
+      review_transport_amendment: {
+        Args: { p_amendment_id: string; p_approve: boolean; p_review_note?: string | null };
+        Returns: undefined;
       };
     };
   };
