@@ -1218,3 +1218,49 @@ pass, the card-system pass, the detail-page pass, the breeder-profile pass, the 
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
 resilience pass, the performance pass, the SEO pass, and this route-integrity pass.
+
+## Phase 19 — Frontend smoke tests (expanding pure-logic test coverage)
+
+Extended the unit-test suite built in Phase 1 to cover two more pure functions that previously
+lived inside Supabase-importing or React/JSX files (and so couldn't be tested directly under plain
+`node --test`), and consolidated a duplicated constant along the way.
+
+### What was extracted and why
+
+- **`pluralCategory`** lived in `src/lib/i18n/index.tsx`, which imports React and contains JSX —
+  moved to the existing pure `src/lib/i18n/completeness.ts` (already home to the other i18n pure
+  logic since Phase 1), re-exported from `index.tsx` for every existing caller. No behaviour change.
+- **`toFoundationOrgType`/`FOUNDATION_ORG_TYPES`/`FoundationOrgType`** lived in
+  `src/lib/queries/marketplace.ts`, which imports `getSupabaseBrowserClient` (throws at import time
+  outside a Vite runtime) — moved to `src/lib/org-routing.ts` (already home to `orgProfileRoute`
+  since Phase 1) alongside a new `isFoundationOrgType` type-guard. **Found and fixed a real
+  duplication while doing this**: `buyer-activity.ts` had declared its own identical local copy of
+  `FOUNDATION_ORG_TYPES` rather than importing the one in `marketplace.ts` (which it couldn't have,
+  since importing it would have re-triggered the Supabase-at-import-time problem for the pure
+  module) — both files now import the single shared definition from `org-routing.ts`, removing the
+  duplicate.
+
+### Tests added
+
+- `tests/unit/plural-category.test.ts` — English (1 → "one", everything else → "many") and Polish's
+  full three-way split, including the 12–14 exception (which reads as "many" despite ending in
+  2/3/4, unlike 22–24) — the specific case that's easy to get wrong in a naive mod-10
+  implementation.
+- Expanded `tests/unit/org-routing.test.ts` with `isFoundationOrgType` and `toFoundationOrgType`
+  coverage, including the defensive fallback for an org_type outside the known three.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all seven changed/added files, `npm run test:unit`
+(29/29 — up from 13, all passing), `npm run build` — all clean.
+
+## Commit
+
+Twenty commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
+resilience pass, the performance pass, the SEO pass, the route-integrity pass, and this test-coverage
+pass.
