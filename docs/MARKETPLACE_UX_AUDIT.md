@@ -805,3 +805,71 @@ feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, the public-profile pass, the community-feed pass, the groups pass, and this buyer-
 dashboard pass.
+
+## Phase 12 — Localisation expansion (audit + parity, not a rewrite)
+
+Reviewed every file touched across phases 1–11 for i18n coverage, consistency, and whether any page
+ends up visibly mixing English and Polish.
+
+### What's actually covered vs. not — stated honestly
+
+The app's i18n architecture (`src/lib/i18n`) covers only a "small, demonstrated slice" by its own
+design doc comment: the site header/footer, the homepage hero, and — as of this branch — the
+foundations directory and profile pages. Every other page this branch touched (`/find-a-dog`,
+`/find-your-dog`, `/breeders` + `/breeders/$slug`, `/adoptions/$id`, `/profile/$profileId`,
+`/community` + `/community/groups*`, every `dashboard.buyer.*` page) was **already 100% hardcoded
+English before this branch touched it**, and stays that way — consistent with how it already was,
+not a regression. This branch did not attempt to translate all of it into Polish; that would be a
+substantial standalone effort (dozens of files, hundreds of strings) beyond what "harden and audit
+what this branch changed" calls for, and doing it half-heartedly (translating a random subset of
+strings in an otherwise-English file) would produce exactly the "mixing languages on a page"
+problem this phase is supposed to prevent — a file that's 95% hardcoded English with two mystery
+translated fragments reads worse than a consistently-English file.
+
+**The rule this branch actually followed, verified file-by-file this phase**: every *new* string
+added to a page that was *already* on the i18n path (homepage, foundations pages) got real
+English + Polish keys, immediately, in the same commit — never left as a hardcoded gap on an
+otherwise-translated page. Every new string added to a page that was *not* on the i18n path stayed
+in that page's existing (English-only) convention. Grepped every touched route file for
+`useTranslation`/`t(` — confirmed zero pages have a *partial* mix (some `t()` calls alongside
+hardcoded strings for equivalent content); a page is either fully on the i18n path or not at all.
+
+One narrow, intentional exception: `_public.community.index.tsx`'s post timestamps (fixed in the
+Phase 1 hardening pass) use `useTranslation()` only to read the active `locale` for
+`toLocaleDateString`, not for any translated copy — so a Polish-locale visitor sees an English post
+feed with Polish month abbreviations in timestamps (e.g. "23 lip 2026"). This was an explicit,
+named requirement ("semantic time elements using the active locale rather than permanently
+hardcoded en-GB"), and date-format locale is a different concern from content translation — not
+treated as a new "mixing" bug.
+
+### Parity checker
+
+Already built in the Phase 1 hardening pass (`src/lib/i18n/completeness.ts`'s
+`checkTranslationCompleteness()`, previously real code that nothing ever called, now exercised by
+`tests/unit/i18n-completeness.test.ts`). Added a dedicated `npm run i18n:check` script this phase
+(`node --test tests/unit/i18n-completeness.test.ts`) so it can be run on its own, not just as part
+of the full `test:unit` suite — this is the "run it as a local command" deliverable.
+
+### Quality check on existing Polish content
+
+Re-read every Polish string added across this branch (`pl.json`) for natural phrasing and correct
+grammar, not just structural key parity: verb/number agreement in the three-way plural set from
+Phase 1 (`countSuffixOne/Few/Many`, `cardDogsForAdoptionOne/Few/Many` — checked `0`, `1`, `2`–`4`,
+and `5+` all select the grammatically correct Polish form via `pluralCategory()`), and the
+`logoAltPrefix` + name concatenation (`"Logo organizacji" + " " + name`) reads as correct Polish
+word order. No machine-translation artifacts found.
+
+### Checks run
+
+`npx tsc --noEmit`, `npm run test:unit` (13/13, including the i18n parity test), `npm run i18n:check`
+(new, 3/3), `npm run build` — all clean. No code changes this phase beyond the new package.json
+script; the rest was verification, and this doc's honest account of what is and isn't translated.
+
+## Commit
+
+Thirteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, and this localisation-audit pass.

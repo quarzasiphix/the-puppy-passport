@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:unit": "node --test tests/unit/*.test.ts",
+    "i18n:check": "node --test tests/unit/i18n-completeness.test.ts",
     "test:db": "node --test --test-concurrency=1 tests/db/*.test.ts",
     "test:unit": "node --test tests/unit/*.test.ts",
     "db:start": "supabase start",
