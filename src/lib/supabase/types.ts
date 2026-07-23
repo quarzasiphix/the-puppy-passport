@@ -612,6 +612,7 @@ export interface Database {
           link_url: string | null;
           is_read: boolean;
           created_at: string;
+          actor_profile_id: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> & {
           profile_id: string;

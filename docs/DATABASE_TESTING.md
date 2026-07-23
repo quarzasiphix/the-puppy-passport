@@ -14,8 +14,9 @@ PII over-exposure, RLS recursion, `INSERT ... RETURNING` treated as `SELECT`, an
 bug that silently returned empty results instead of erroring (see `docs/MVP_TEST_REPORT.md` §3).
 Every one of those was only ever caught by testing real authenticated API calls, not by reading the
 policy SQL and assuming it was correct. This suite automates exactly that testing style so those
-bug classes can't quietly come back, and so new ones (see "Open findings" below — this first pass
-already found four) get caught by CI instead of by a future user.
+bug classes can't quietly come back, and so new ones get caught by CI instead of by a future user —
+the first pass found four (see "Previously-open findings, now fixed" below), all closed out in a
+follow-up security-hardening pass the same week.
 
 ## Required setup
 
@@ -56,19 +57,26 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   area (profiles/contact data, organisations, animal listings, buyer/adoption applications,
   transport requests, quotations, saved animals/follows, moderation cases, audit logs, private
   documents in Storage) for anonymous visitors, buyers, breeders, foundation members, operations
-  staff, drivers and admins.
+  staff, drivers and admins — including a five-part assigned-driver document-access suite (finding
+  #4 below): the assigned driver can read it, an unrelated driver cannot, an unrelated customer
+  cannot, and access disappears/returns exactly when the assignment does.
 - **`tests/db/security-regressions.test.ts`** — one test per specific historical bug from
   `docs/MVP_TEST_REPORT.md` §3 (missing table grants, profiles email/phone exposure, RLS recursion,
   `INSERT ... RETURNING`-as-`SELECT`, self-referencing conversation policies, the conversations
   column-shadowing bug, conversations created without a real relationship, plus a check that
-  drivers can't see unrelated routes/fleet records) — and, separately and clearly labelled, the
-  **open findings** this pass discovered (see below).
+  drivers can't see unrelated routes/fleet records), plus comprehensive multi-part coverage for two
+  of the four now-fixed findings below: transport-request operational-field locking (every allowed
+  customer transition and every forbidden one, tested separately — not one broad assertion) and the
+  org-owner-notifies-applicant scope (allowed, blocked-when-unrelated, no sender-side inbox leak,
+  correct recipient/third-party visibility).
 - **`tests/db/workflows.test.ts`** — ten end-to-end scenarios: buyer applies for a puppy → breeder
   reviews it; a foundation receives an adoption enquiry; private rehoming stays hidden until admin
   approval; a transport request goes from submission through a sent quotation; an unrelated
   customer can't see it; a driver only sees work once actually assigned; reporting an organisation
-  creates a moderation case; and a role-suspension test that shows the difference between
-  role-gated access (correctly revoked) and ownership-gated access (see open findings).
+  creates a moderation case; and a role-suspension suite covering both role-gated access
+  (ops/admin — always correctly revoked) and ownership-gated access (kennel/foundation/shelter/
+  rescue organisations — see finding #2 below), plus that a non-owner org member's access and an
+  admin's access are both unaffected by another user's role suspension.
 - **`tests/db/fundraising.test.ts`** — verified-organisation fundraising
   (`docs/FUNDRAISING_POLICY.md`, `20260101005600_fundraising.sql`): only an approved foundation/
   shelter/rescue can create a campaign (a kennel is rejected); a campaign can't be backed by a
@@ -85,50 +93,80 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   policy on their own campaigns at all (by design, but the test fixtures had to be updated to clean
   up via admin instead of the org account).
 
-## Open findings (real, currently-unfixed issues this suite discovered)
+## Previously-open findings, now fixed
 
-Building this suite surfaced **four real, currently-open bugs** — reproduced independently via raw
-`curl` with real bearer tokens before any test was written, so these are not test artifacts. Each
-one has a test in `tests/db/` that asserts the *correct* behaviour and is **expected to currently
-fail** — they were deliberately left in, unfixed, rather than deleted or weakened, so they stay
-visible in `npm run test:db` / CI until someone fixes the underlying policy:
+Building this suite surfaced **four real bugs**, each reproduced independently via raw `curl` (or,
+for #1, direct `psql` against the local database) with real bearer tokens/roles before any test was
+written, so these were never test artifacts. Each one was left in as a deliberately-failing
+"OPEN FINDING" test for one pass, then fixed in a dedicated security-hardening pass
+(migrations `20260101006000`–`20260101006300`), with the tests rewritten into comprehensive
+allowed/forbidden coverage rather than a single broad assertion. All four are now fixed and green;
+this section is kept as the historical record of what was wrong and how it was closed.
 
-1. **Customers can change their own transport request's operational `status` directly.**
-   `"requesters update their own transport requests"` only checks row ownership
-   (`requester_profile_id = auth.uid()`), not which columns change. A signed-in customer can PATCH
-   `status` (or `compliance_review_result`, `assigned_*`) to any value, bypassing the entire ops
-   workflow. See `tests/db/security-regressions.test.ts`.
-2. **Suspending a breeder's role does not revoke their organisation-management access.**
+1. **Customers could change their own transport request's operational `status` directly.**
+   `"requesters update their own transport requests"` only checked row ownership
+   (`requester_profile_id = auth.uid()`), not which columns changed — a signed-in customer could
+   PATCH `status` (or `compliance_review_result`, `visibility`, `assigned_*`) to any value,
+   bypassing the entire ops workflow. RLS is row-level, not column-level, so
+   **`20260101006000_lock_transport_request_operational_fields.sql`** adds a `BEFORE UPDATE`
+   trigger (`prevent_non_staff_operational_field_changes`) that blocks any change to those columns
+   unless the actor is ops staff/admin or the specific driver already assigned to that request.
+   Two customer-initiated transitions stay legitimately allowed: submitting their own draft
+   (`draft -> submitted`) and self-cancelling (`-> cancelled_by_customer`) — found necessary by
+   re-running the full workflow suite against a first version of the trigger that blocked
+   everything and broke the real "customer submits a transport request" flow. Every allowed and
+   forbidden transition now has its own test in `tests/db/security-regressions.test.ts` (submit,
+   cancel, arbitrary status, `compliance_review_result`, `visibility`, `assigned_*`, ops staff
+   retaining access, an unrelated driver having none).
+2. **Suspending a breeder's role did not revoke their organisation-management access.**
    `owns_org()`-gated policies (organisations, animals, litters, parent_dogs,
-   buyer_applications-as-org-owner) check only `organisations.owner_user_id`, never
-   `user_roles.status`. A breeder whose role is set to `suspended` keeps full control of their
-   kennel. (By contrast, suspending an `operations`/`admin`/`moderator` role correctly *does* revoke
-   access, since `is_ops_staff()`/`is_admin()`/`is_moderator()` do check role status — see the same
-   test file for both halves of this comparison.) See `tests/db/workflows.test.ts`.
-3. **An org owner notifying an applicant currently fails.**
-   `20260101004900_notifications_org_owner_notify_applicants.sql` added a policy so a breeder can
-   notify a buyer with a real application to their org — exactly what
-   `src/lib/queries/applications.ts`'s `respondToApplication()` → `notifyUser()` calls in
-   production. The policy reads correctly and matches this exact scenario, but the INSERT is
-   rejected with `42501` regardless, reproduced via `curl` with a real breeder bearer token. Root
-   cause not yet identified. See `tests/db/security-regressions.test.ts`.
-4. **An assigned driver cannot read their job's documents in Storage — a column-shadowing bug.**
-   `20260101003400_transport_documents_storage_driver_access.sql`'s policy source reads
+   buyer_applications-as-org-owner) checked only `organisations.owner_user_id`, never
+   `user_roles.status` — a breeder whose role was `suspended` kept full control of their kennel.
+   **`20260101006100_owns_org_checks_active_role.sql`** adds `owner_role_for_org_type()`, mirroring
+   `approve_user_verification()`'s own creation-time role mapping (`kennel` → `breeder`, `shelter` →
+   `shelter_member`, `foundation`/`rescue` → `foundation_member`), and `owns_org()` now also
+   requires that role to still be `active` for org types where one applies (org types with no
+   role mapping, e.g. `transport_company`/`kennel_club`/`other`, are unaffected — pure ownership,
+   same as before). `tests/db/workflows.test.ts` now covers all four role-mapped org types
+   (kennel/foundation seeded; shelter/rescue built as ad-hoc fixtures since none are seeded),
+   confirms a non-owner member's read access is unaffected, and confirms an admin's access never
+   depends on `owns_org()` at all.
+3. **An org owner notifying an applicant failed with `42501` despite the policy reading correctly.**
+   `20260101004900_notifications_org_owner_notify_applicants.sql`'s INSERT policy always evaluated
+   correctly — the row went in every time. The failure only appeared when the caller also asked for
+   the row back (PostgREST's default `.insert(...).select(...)`, or `Prefer: return=representation`)
+   because Postgres treats `INSERT ... RETURNING` like a `SELECT`, and `notifications` had no
+   `SELECT` policy letting an org owner see a row filed under the *applicant's* `profile_id` — only
+   "your own rows" and moderator/admin existed. Confirmed by reproducing the exact insert directly
+   against the database with and without `RETURNING`.
+   **`20260101006200_notifications_actor_visibility.sql`** adds a real `actor_profile_id` column
+   (auto-stamped by a trigger, mirroring the existing `audit_logs.actor_profile_id` convention) and
+   a `SELECT` policy scoped to "you can see notifications you personally sent" — deliberately
+   narrower than "you can see everything your applicant ever received", which would leak
+   notifications sent by ops/admin/other unrelated senders. `tests/db/security-regressions.test.ts`
+   now covers the real relationship succeeding, an unrelated org being blocked, the sender being
+   unable to list the recipient's other notifications, the recipient seeing their own notification,
+   and a third party seeing neither.
+4. **An assigned driver could not read their job's documents in Storage — a column-shadowing bug.**
+   `20260101003400_transport_documents_storage_driver_access.sql`'s policy source read
    `(storage.foldername(name))[1]::uuid`, intending the bare `name` to mean `storage.objects.name`
-   (the pattern every other storage policy correctly uses). Its subquery also joins
-   `public.drivers d`, which **also** has a `name` column, and Postgres resolves the unqualified
+   (the pattern every other storage policy correctly uses). Its subquery also joined
+   `public.drivers d`, which **also** has a `name` column, and Postgres resolved the unqualified
    `name` to `d.name` (the driver's personal name) instead — confirmed live via `select policyname,
-   qual from pg_policies where tablename='objects' and policyname ilike '%driver%'`, which shows
-   the stored policy literally reading `storage.foldername(d.name)`. This is the exact
+   qual from pg_policies where tablename='objects' and policyname ilike '%driver%'`, which showed
+   the stored policy literally reading `storage.foldername(d.name)`. The exact
    "column-shadowing silently returns the wrong result" bug class already fixed once for
-   `conversations`/`conversation_participants` (`20260101005200_...`), reintroduced here via a
-   different pair of same-named columns and never caught until this pass. See
-   `tests/db/access-control.test.ts`.
+   `conversations`/`conversation_participants` (`20260101005200_...`), reintroduced via a different
+   pair of same-named columns. **`20260101006300_fix_driver_storage_column_shadowing.sql`**
+   qualifies the reference explicitly (`storage.foldername(objects.name)`) — re-confirmed live
+   against the fixed policy's stored `qual`, not just the migration source.
+   `tests/db/access-control.test.ts` now covers the assigned driver reading it, an unrelated driver
+   being blocked, an unrelated customer being blocked, and access disappearing/returning exactly
+   when the assignment does.
 
-**Do not fix these by weakening the test assertions or the RLS policies' intent** — fix the
-underlying policy/trigger so the *documented* behaviour actually holds, then flip each test from an
-"OPEN FINDING" back to a plain regression guard (remove the "OPEN FINDING" label and the
-now-resolved explanation comment).
+Every fix was verified against a clean `supabase db reset` and the full suite run twice in a row
+without a reset in between (confirming test fixtures actually restore shared seed state), not just
+against the specific previously-failing assertion.
 
 ## How test data is reset / isolated
 
@@ -150,9 +188,10 @@ itself, using the same RLS-governed access a real user would have:
   `assigned_driver_id`) always restore the original value in a `finally` block, and this pass
   verified afterward (via direct API queries) that every seed count and mutated field was back to
   its original state.
-- The one exception is the two intentionally-failing "OPEN FINDING" tests whose entire point is
-  that a write which *should* be blocked currently isn't — those also revert the row in a `finally`
-  block regardless of whether the assertion passed or failed.
+- Ad-hoc fixtures built for org types with no seeded example (a temporary `shelter`/`rescue`
+  organisation and a temporary active role grant, used by the suspended-role-owner tests in
+  `tests/db/workflows.test.ts`) are created and deleted within the same test, verified by running
+  the full suite twice in a row without a `db reset` in between.
 
 ## Known environment limitations
 
@@ -166,6 +205,7 @@ itself, using the same RLS-governed access a real user would have:
 - **`--test-concurrency=1` makes the suite slower than it could be** (a few seconds total as of
   this writing) in exchange for determinism against shared seed accounts. Worth revisiting only if
   the suite grows enough that this becomes a real bottleneck.
-- **CI job is expected to fail today** (see "Open findings" above) — this is intentional, not a
-  broken pipeline; see the comment above the `database-tests` job in
-  `.github/workflows/ci.yml`.
+- **CI job (`database-tests` in `.github/workflows/ci.yml`) is expected to be green.** It ran red
+  for one pass while the four findings above were deliberately left open and documented; all four
+  are now fixed and the job should pass — a red result now is a real regression, not the suite
+  doing its job.

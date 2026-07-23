@@ -22,7 +22,7 @@ a guess. Where something could not be checked, it says so explicitly instead of 
 | `npx tsc --noEmit` | **Clean.** |
 | `npm run lint` | **38 pre-existing errors, 13 warnings** — all in files never touched this session (`dashboard.breeder.litters.tsx`'s sibling files, `matching.ts`, `pricing.ts`, `how-it-works.tsx`, `guards.ts`, `fleet.ts`, plus 3 new fast-refresh warnings from `src/lib/i18n/index.tsx`, same class already present elsewhere in the codebase). Every file actually touched this session is lint-clean. |
 | `npm run build` | **Clean** — Cloudflare Worker bundle, confirmed working via `npx wrangler dev` earlier in the project's history (`docs/DEPLOYMENT_CHECKLIST.md`). |
-| `npm run test:db` (89 tests) | **83 passing, 6 failing.** The 6 failures are exactly the 4 known open findings (2 top-level + 2 subtest-cascade counts) documented in `docs/DATABASE_TESTING.md` — real, currently-open bugs, deliberately left failing so they stay visible, not silently tolerated. Nothing else fails. |
+| `npm run test:db` (123 tests) | **123 passing, 0 failing.** The 4 open findings tracked in `docs/DATABASE_TESTING.md` (a transport-request operational-field-locking gap, an ownership-vs-role org-access gap, a notifications `RETURNING`/visibility gap, and a driver-document storage column-shadowing bug) were all fixed in a dedicated security-hardening pass (migrations `20260101006000`–`20260101006300`) and their tests rewritten into comprehensive allowed/forbidden coverage — see "Fixed findings" below. Verified against a clean reset and confirmed repeatable by running the suite twice in a row without a reset in between. |
 | `npm run test:e2e` (Playwright) | **Blocked in this sandbox** — Chromium's headless shell fails to load a system library (`libglib-2.0.so.0`), and this sandbox's `apt` sources are broken for installing it (see `docs/E2E_TESTING.md`). Not run this session; not claimed as passing. Needs a machine with working package installation. |
 | Route-tree consistency | **Confirmed** — all 116 route files are represented in `routeTree.gen.ts` (checked by direct comparison, not assumed). |
 | `mock-data.ts` usage | **One file** (`src/components/cards.tsx`), **type imports only** — confirmed by grep, no rendered data comes from it anywhere. |
@@ -67,9 +67,10 @@ checked, not that the code merely looks correct.
    yet (documented in phase 12, commit `b019db7`).
 9. **Driver sees only assigned work and completes pickup and handover.** Real, RLS-enforced
    (`tests/db/security-regressions.test.ts` "drivers cannot see routes or fleet records they're not
-   assigned to" — passing). One real, currently-open bug in this exact area: a column-shadowing bug
-   in a storage policy blocks an assigned driver from reading their own job's documents (see "Open
-   findings" below).
+   assigned to" — passing). A column-shadowing bug that blocked an assigned driver from reading
+   their own job's documents in Storage was found and fixed this session (migration
+   `20260101006300`, see "Fixed findings" below) — confirmed against the live policy definition,
+   not just the migration source.
 10. **Every enabled language renders the important flows correctly.** **Partially real.** The site
     header, footer and homepage hero render correctly in English and Polish (verified: SSR English
     output checked directly, Polish resource values checked directly, both locale files confirmed to
@@ -98,10 +99,13 @@ checked, not that the code merely looks correct.
   way — see `IMPLEMENTATION_PLAN.md` phases 15/16/17).
 - Legal-requirements rule-pack schema (species/jurisdiction/enforcement-level, extended this
   session).
-- A Node-based database/API regression suite (`tests/db/`, 89 tests) protecting all of the above
+- A Node-based database/API regression suite (`tests/db/`, 123 tests) protecting all of the above
   against RLS regressions — did not exist before this session.
 - A major routing bug (6 pages silently rendering the wrong content) found and fixed this session —
   see `docs/DECISIONS.md`.
+- All 4 security findings below (transport-request operational-field locking, ownership-vs-role
+  organisation access, notifications visibility scope, driver-document storage access) — fixed and
+  verified end to end, not just documented as known issues.
 
 ### Technically ready but needs external configuration
 
@@ -153,21 +157,30 @@ checked, not that the code merely looks correct.
 - Image lazy-loading is inconsistent (5 of 21 `<img>` tags use `loading="lazy"`) — a real, minor
   performance polish item, not a functional bug.
 
-## Open findings (real, currently-unfixed bugs — see `docs/DATABASE_TESTING.md` for full detail)
+## Fixed findings (see `docs/DATABASE_TESTING.md` for full root-cause detail and live-policy verification)
 
-Each of these has a deliberately-failing regression test (`tests/db/`) asserting the *correct*
-behaviour, so they stay visible in CI until fixed rather than silently tolerated:
+All four were found the same way as everything else in this report — by testing a real
+authenticated call, not by reading SQL and assuming it was correct — then fixed in migrations
+`20260101006000`–`20260101006300` and given comprehensive allowed/forbidden test coverage rather
+than a single broad assertion:
 
-1. **A customer can change their own transport request's operational `status` directly** —
-   `requesters update their own transport requests` only checks row ownership, not which columns
-   change.
-2. **Suspending a breeder's role does not revoke their organisation-management access** —
-   ownership-gated policies check `organisations.owner_user_id`, never `user_roles.status`.
-3. **An org owner notifying an applicant currently fails outright** (`42501`) despite the policy
-   reading correctly against the exact scenario it's meant to allow — root cause not yet identified.
-4. **A column-shadowing bug blocks an assigned driver from their own job's documents in Storage** —
+1. **A customer could change their own transport request's operational `status` directly.** Fixed
+   by a `BEFORE UPDATE` trigger that blocks any change to `status`/`compliance_review_result`/
+   `visibility`/`assigned_*` unless the actor is ops staff or the assigned driver — while still
+   allowing the two legitimate customer transitions (`draft -> submitted`, `-> cancelled_by_customer`).
+2. **Suspending a breeder's role did not revoke their organisation-management access.** Fixed by
+   making `owns_org()` also require the role that org type actually depends on (kennel → breeder,
+   shelter → shelter_member, foundation/rescue → foundation_member) to still be active — verified
+   for all four org types, plus that non-owner members and admins are unaffected.
+3. **An org owner notifying an applicant failed outright** (`42501`) despite the INSERT policy
+   reading correctly. Root cause: `INSERT ... RETURNING` requires a matching `SELECT` policy too,
+   and none existed for "an org owner sees a notification filed under someone else's profile\_id".
+   Fixed with a narrowly-scoped `actor_profile_id`-based `SELECT` policy — the sender can see what
+   they sent, never the recipient's full inbox.
+4. **A column-shadowing bug blocked an assigned driver from their own job's documents in Storage** —
    the same bug class already fixed once for `conversations`, reintroduced via a different pair of
-   same-named columns (`storage.objects.name` vs. `drivers.name`).
+   same-named columns (`storage.objects.name` vs. `drivers.name`). Fixed by qualifying the
+   reference explicitly.
 
 ## What this report does not do
 

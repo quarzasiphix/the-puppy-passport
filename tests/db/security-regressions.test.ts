@@ -93,36 +93,122 @@ test("regression: INSERT ... RETURNING for another user's notification still wor
   await buyer.from("notifications").delete().eq("id", notification.data![0].id);
 });
 
-test("OPEN FINDING: an org owner notifying an applicant currently fails", async () => {
-  // migration 20260101004900_notifications_org_owner_notify_applicants.sql added a narrowly-scoped
-  // policy so a breeder/foundation can notify a buyer who has a real application with their org
-  // (this is exactly what src/lib/queries/applications.ts's respondToApplication() ->
-  // notifyUser() calls in production). The policy reads correctly and matches this exact scenario
-  // (buyer@ has an approved application with breeder1's Cichy Las, application id
-  // ids.applicationFabian) — but reproduced here, and independently via a raw authenticated curl
-  // call with a real bearer token before this test was written, the INSERT is rejected with 42501
-  // regardless. This test asserts the CORRECT (documented, intended) behaviour and is expected to
-  // currently FAIL. Left in, unfixed and undeleted, so it stays visible — see the task report for
-  // full detail. Do not weaken this policy's condition to make the test pass; find out why the
-  // existing condition doesn't evaluate as written instead.
-  const breeder1 = await as("breeder1");
-  const notification = await breeder1
-    .from("notifications")
-    .insert({
-      profile_id: ids.buyer,
-      notification_type: "application_response",
-      title: "Should be allowed: real application relationship exists",
-    })
-    .select("id, title");
-  assert.equal(
-    notification.error,
-    null,
-    `expected the org-owner-notifies-applicant policy to allow this insert, got ${JSON.stringify(notification.error)}`,
-  );
-  if (notification.data?.[0]?.id) {
+test("org owner notifies a real applicant: allowed, correctly scoped, no inbox leak", async (t) => {
+  // Fixed by 20260101006200_notifications_actor_visibility.sql. Root cause (found by reproducing
+  // the exact INSERT directly against the local database with and without a RETURNING clause):
+  // 20260101004900_notifications_org_owner_notify_applicants.sql's INSERT policy always evaluated
+  // correctly — the row went in every time. The 42501 only appeared when the caller also asked for
+  // the row back (PostgREST's default `.insert(...).select(...)`), because Postgres treats
+  // INSERT ... RETURNING like a SELECT, and notifications had no SELECT policy letting an org owner
+  // see a row filed under the *applicant's* profile_id. The fix added a real `actor_profile_id`
+  // column (auto-stamped by a trigger) and a SELECT policy scoped to "you can see notifications you
+  // personally sent" — deliberately narrower than "you can see everything your applicants ever
+  // received", which would leak notifications sent by ops/admin/other unrelated senders. Every
+  // sub-test below asserts one specific allowed or forbidden edge of that scope, not just the happy
+  // path.
+  let sentId: string | undefined;
+  let systemNotificationId: string | undefined;
+
+  await t.test("a real org-applicant relationship: insert + RETURNING succeeds", async () => {
+    const breeder1 = await as("breeder1");
+    const notification = await breeder1
+      .from("notifications")
+      .insert({
+        profile_id: ids.buyer,
+        notification_type: "application_response",
+        title: "Should be allowed: real application relationship exists",
+      })
+      .select("id, title");
+    assert.equal(
+      notification.error,
+      null,
+      `expected the org-owner-notifies-applicant policy to allow this insert, got ${JSON.stringify(notification.error)}`,
+    );
+    assert.equal(
+      notification.data?.[0]?.title,
+      "Should be allowed: real application relationship exists",
+    );
+    sentId = notification.data?.[0]?.id as string | undefined;
+    assert.notEqual(sentId, undefined);
+  });
+
+  await t.test("an unrelated org cannot notify the same applicant", async () => {
+    // foundation1 owns Fundacja — buyer@ has applications with Cichy Las and Wolna Dolina
+    // (seed data) but none with Fundacja, so this is a genuinely unrelated org for this applicant.
+    // (breeder2's Wolna Dolina looked like a plausible "unrelated" choice at first glance, but
+    // buyer@ actually does have a real under_review application there too — reusing it here would
+    // have silently tested nothing. Found by checking the real seeded buyer_applications rows,
+    // not by assuming.)
+    const foundation1 = await as("foundation1");
+    const attempt = await foundation1
+      .from("notifications")
+      .insert({
+        profile_id: ids.buyer,
+        notification_type: "application_response",
+        title: "Should be blocked: no real application relationship",
+      })
+      .select("id");
+    assert.ok(
+      isBlocked(attempt.data, attempt.error),
+      "an org with no application relationship to this applicant must not be able to notify them",
+    );
+  });
+
+  await t.test("the sender cannot list the recipient's other notifications", async () => {
+    const admin = await as("admin");
+    const systemNotification = await admin
+      .from("notifications")
+      .insert({
+        profile_id: ids.buyer,
+        notification_type: "system",
+        title: "Unrelated system notification, not sent by breeder1",
+      })
+      .select("id")
+      .single();
+    assert.equal(systemNotification.error, null);
+    systemNotificationId = systemNotification.data!.id as string;
+
+    const breeder1 = await as("breeder1");
+    const bulkRead = await breeder1.from("notifications").select("id").eq("profile_id", ids.buyer);
+    // breeder1 sees at most the ones they personally sent (sentId) — never the admin-sent one,
+    // proving actor_profile_id scopes read access to "sent by me", not "sent to my applicant".
+    const ids_ = (bulkRead.data ?? []).map((r: { id: string }) => r.id);
+    assert.ok(
+      !ids_.includes(systemNotificationId),
+      "an org owner must not be able to read a notification they did not personally send",
+    );
+  });
+
+  await t.test("the recipient can see their own notification", async () => {
     const buyer = await as("buyer");
-    await buyer.from("notifications").delete().eq("id", notification.data[0].id);
-  }
+    const seen = await buyer
+      .from("notifications")
+      .select("id, title")
+      .eq("id", sentId as string);
+    assert.equal(seen.error, null);
+    assert.equal(
+      seen.data?.length,
+      1,
+      "the actual recipient must see the notification sent to them",
+    );
+  });
+
+  await t.test("an unrelated user cannot see the notification", async () => {
+    const breeder2 = await as("breeder2");
+    const blocked = await breeder2
+      .from("notifications")
+      .select("id")
+      .eq("id", sentId as string);
+    assert.ok(
+      isBlocked(blocked.data, blocked.error),
+      "a third party (neither sender nor recipient) must not see the notification",
+    );
+  });
+
+  const buyer = await as("buyer");
+  if (sentId) await buyer.from("notifications").delete().eq("id", sentId);
+  if (systemNotificationId)
+    await buyer.from("notifications").delete().eq("id", systemNotificationId);
 });
 
 test("regression: conversation_participants self-referential policy does not recurse (42P17)", async () => {
@@ -195,42 +281,186 @@ test("regression: conversations cannot be created without a real relationship", 
   );
 });
 
-test("OPEN FINDING: customers can currently change their own request's operational status", async () => {
-  // Found while building this suite (2026-07-22), reproduced against the real local API before
-  // writing this test: "requesters update their own transport requests" only checks row
-  // ownership (requester_profile_id = auth.uid()), not which columns change or what value
-  // `status`/`compliance_review_result`/assigned_* are set to. A signed-in customer can currently
-  // PATCH their own request's `status` straight to e.g. 'completed', bypassing the entire ops
-  // workflow. This test asserts the CORRECT behaviour and is expected to currently FAIL — it is
-  // intentionally included, unfixed, so this stays visible until a deliberate fix (e.g. a
-  // trigger or a narrower column-scoped policy) lands. Do not delete or weaken this test to make
-  // it pass; fix the RLS/trigger instead. See the task report for full detail.
-  const customer = await as("customer");
-  const before = await customer
-    .from("transport_requests")
-    .select("status")
-    .eq("id", ids.transportBerlin)
-    .single();
-  const originalStatus = before.data?.status;
-  assert.notEqual(originalStatus, undefined);
+// Custom trigger exceptions (P0001) are not RLS permission-denied (42501) or a silently-empty
+// result, so isBlocked()/isForbidden() don't recognize them — same established convention as
+// tests/db/fundraising.test.ts's purpose-lock trigger assertions. Check explicitly instead.
+function isTriggerBlocked(error: { code?: string } | null): boolean {
+  return error?.code === "P0001";
+}
 
-  try {
+test("transport_requests: operational-field locking (fixed by 20260101006000)", async (t) => {
+  // Root cause: "requesters update their own transport requests" (20260101001300) only ever
+  // checked row ownership (requester_profile_id = auth.uid()), never which columns changed — a
+  // signed-in customer could PATCH their own request's `status`, `compliance_review_result`,
+  // `visibility` or any `assigned_*` column straight to any value, bypassing the entire ops
+  // workflow. RLS is row-level, not column-level, so the fix is a BEFORE UPDATE trigger
+  // (prevent_non_staff_operational_field_changes) layered on top of the existing row-level
+  // policies. Two customer-initiated transitions are genuinely legitimate product features and
+  // must stay allowed — draft -> submitted (the one-time initial submission every request goes
+  // through) and -> cancelled_by_customer (self-cancel) — everything else stays staff/driver-only.
+  // Each sub-test below is one specific allowed or forbidden transition, not one broad assertion.
+
+  await t.test("a customer may submit their own draft (draft -> submitted)", async () => {
+    const customer = await as("customer");
+    const requestNumber = `TR-SECTEST-${Date.now()}`;
+    const draft = await customer
+      .from("transport_requests")
+      .insert({
+        requester_profile_id: ids.customer,
+        request_number: requestNumber,
+        request_purpose: "own_dog",
+        animal_name: "Security Regression Test Dog",
+        pickup_country: "Poland",
+        pickup_city: "Warsaw",
+        destination_country: "Germany",
+        destination_city: "Berlin",
+        status: "draft",
+      })
+      .select("id")
+      .single();
+    assert.equal(draft.error, null);
+    const requestId = draft.data!.id as string;
+
+    try {
+      const submitted = await customer
+        .from("transport_requests")
+        .update({ status: "submitted" })
+        .eq("id", requestId)
+        .select("status")
+        .single();
+      assert.equal(submitted.error, null, "draft -> submitted is a legitimate customer action");
+      assert.equal(submitted.data?.status, "submitted");
+    } finally {
+      const admin = await as("admin");
+      await admin.from("transport_requests").delete().eq("id", requestId);
+    }
+  });
+
+  await t.test("a customer may cancel their own request (-> cancelled_by_customer)", async () => {
+    const customer = await as("customer");
+    const requestNumber = `TR-SECTEST-CANCEL-${Date.now()}`;
+    const created = await customer
+      .from("transport_requests")
+      .insert({
+        requester_profile_id: ids.customer,
+        request_number: requestNumber,
+        request_purpose: "own_dog",
+        animal_name: "Security Regression Test Dog 2",
+        pickup_country: "Poland",
+        pickup_city: "Warsaw",
+        destination_country: "Germany",
+        destination_city: "Berlin",
+        status: "submitted",
+      })
+      .select("id")
+      .single();
+    assert.equal(created.error, null);
+    const requestId = created.data!.id as string;
+
+    try {
+      const cancelled = await customer
+        .from("transport_requests")
+        .update({ status: "cancelled_by_customer" })
+        .eq("id", requestId)
+        .select("status")
+        .single();
+      assert.equal(cancelled.error, null, "self-cancel is a legitimate customer action");
+      assert.equal(cancelled.data?.status, "cancelled_by_customer");
+    } finally {
+      const admin = await as("admin");
+      await admin.from("transport_requests").delete().eq("id", requestId);
+    }
+  });
+
+  await t.test("a customer may NOT set an arbitrary operational status", async () => {
+    const customer = await as("customer");
     const attempt = await customer
       .from("transport_requests")
       .update({ status: "completed" })
       .eq("id", ids.transportBerlin)
       .select("status");
     assert.ok(
-      isBlocked(attempt.data, attempt.error),
-      "a customer must not be able to set their own request's operational status directly",
+      isTriggerBlocked(attempt.error),
+      `expected a P0001 trigger rejection, got ${JSON.stringify(attempt.error)}`,
     );
-  } finally {
+  });
+
+  await t.test("a customer may NOT change compliance_review_result", async () => {
+    const customer = await as("customer");
+    const attempt = await customer
+      .from("transport_requests")
+      .update({ compliance_review_result: "manually_approved" })
+      .eq("id", ids.transportBerlin)
+      .select();
+    assert.ok(isTriggerBlocked(attempt.error));
+  });
+
+  await t.test("a customer may NOT change visibility", async () => {
+    const customer = await as("customer");
+    const attempt = await customer
+      .from("transport_requests")
+      .update({ visibility: "community_visible" })
+      .eq("id", ids.transportBerlin)
+      .select();
+    assert.ok(isTriggerBlocked(attempt.error));
+  });
+
+  await t.test("a customer may NOT set assigned_route_id/vehicle_id/driver_id", async () => {
+    const customer = await as("customer");
+    const attempt = await customer
+      .from("transport_requests")
+      .update({ assigned_driver_id: ids.driverRecord })
+      .eq("id", ids.transportBerlin)
+      .select();
+    assert.ok(isTriggerBlocked(attempt.error));
+  });
+
+  await t.test("ops staff retain full operational-field management", async () => {
     const ops = await as("ops");
+    const before = await ops
+      .from("transport_requests")
+      .select("compliance_review_result")
+      .eq("id", ids.transportBerlin)
+      .single();
+    const original = before.data?.compliance_review_result;
+
+    const attempt = await ops
+      .from("transport_requests")
+      .update({ compliance_review_result: "manually_approved" })
+      .eq("id", ids.transportBerlin)
+      .select("compliance_review_result")
+      .single();
+    assert.equal(
+      attempt.error,
+      null,
+      "ops staff must be unaffected by the customer-scoped trigger",
+    );
+    assert.equal(attempt.data?.compliance_review_result, "manually_approved");
+
     await ops
       .from("transport_requests")
-      .update({ status: originalStatus })
+      .update({ compliance_review_result: original })
       .eq("id", ids.transportBerlin);
-  }
+  });
+
+  await t.test(
+    "an unrelated (unassigned) driver cannot update someone else's request at all",
+    async () => {
+      // Row-level policy alone should already block this (driver's UPDATE policy requires
+      // assigned_driver_id = their own driver row) — confirms the new trigger didn't accidentally
+      // widen driver access, since drivers must stay scoped to only their own assigned work.
+      const driver = await as("driver");
+      const attempt = await driver
+        .from("transport_requests")
+        .update({ status: "in_transport" })
+        .eq("id", ids.transportBerlin)
+        .select();
+      assert.ok(
+        isBlocked(attempt.data, attempt.error),
+        "a driver not assigned to this request must have zero write access to it",
+      );
+    },
+  );
 });
 
 test("regression: drivers cannot see routes or fleet records they're not assigned to", async () => {

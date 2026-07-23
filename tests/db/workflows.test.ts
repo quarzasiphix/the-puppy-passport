@@ -403,17 +403,20 @@ test("workflow: a suspended role's effect depends on ownership vs. role-gated ac
     assert.equal(restored.error, null);
   });
 
+  // Fixed by 20260101006100_owns_org_checks_active_role.sql. Root cause: owns_org()-gated policies
+  // (organisations, animals, litters, parent_dogs, buyer_applications-as-org-owner) checked only
+  // organisations.owner_user_id, never user_roles.status — suspending the exact role that earned
+  // someone their organisation in the first place (owner_role_for_org_type() mirrors
+  // approve_user_verification()'s creation-time mapping: kennel -> breeder, shelter ->
+  // shelter_member, foundation/rescue -> foundation_member) had no effect on their ability to keep
+  // managing it. Each org_type below is tested explicitly, plus that a non-owner member's read
+  // access and an admin's access are both unaffected — this must revoke management, not lock out
+  // everyone.
+  const admin = await as("admin");
+
   await t.test(
-    "OPEN FINDING: suspending a breeder's role does not revoke their organisation-management access",
+    "suspending a kennel-owning breeder's role revokes org-management access",
     async () => {
-      // Found while building this suite (2026-07-22): owns_org()-gated policies (organisations,
-      // animals, litters, parent_dogs, buyer_applications-as-org-owner) check only
-      // organisations.owner_user_id, never user_roles.status. Suspending a breeder's `breeder`
-      // role today has NO effect on their ability to keep managing their kennel. This test
-      // asserts the correct behaviour and is expected to currently FAIL — intentionally left
-      // failing rather than deleted, per the same reasoning as the transport-status finding in
-      // security-regressions.test.ts. See the task report for detail.
-      const admin = await as("admin");
       const suspend = await admin
         .from("user_roles")
         .update({ status: "suspended" })
@@ -439,13 +442,279 @@ test("workflow: a suspended role's effect depends on ownership vs. role-gated ac
           .update({ status: "active" })
           .eq("user_id", ids.breeder2)
           .eq("role", "breeder");
-        // Best-effort revert of the org row itself in case the update above went through (which,
-        // per this open finding, it currently does).
-        await admin
-          .from("organisations")
-          .update({ response_time: "same day" })
-          .eq("id", ids.orgWolnaDolina);
       }
+
+      const breeder2 = await as("breeder2");
+      const restored = await breeder2
+        .from("organisations")
+        .update({ response_time: "same day" })
+        .eq("id", ids.orgWolnaDolina)
+        .select();
+      assert.equal(
+        restored.error,
+        null,
+        "management access must come back once the role is reactivated",
+      );
     },
   );
+
+  await t.test(
+    "suspending a foundation-owning member's role revokes org-management access",
+    async () => {
+      const suspend = await admin
+        .from("user_roles")
+        .update({ status: "suspended" })
+        .eq("user_id", ids.foundation1)
+        .eq("role", "foundation_member")
+        .select("status");
+      assert.equal(suspend.error, null);
+
+      try {
+        const foundation1 = await as("foundation1");
+        const attempt = await foundation1
+          .from("organisations")
+          .update({ response_time: "should be blocked" })
+          .eq("id", ids.orgFundacja)
+          .select();
+        assert.ok(
+          isBlocked(attempt.data, attempt.error),
+          "a suspended foundation_member must not retain organisation-management access",
+        );
+      } finally {
+        await admin
+          .from("user_roles")
+          .update({ status: "active" })
+          .eq("user_id", ids.foundation1)
+          .eq("role", "foundation_member");
+      }
+
+      const foundation1 = await as("foundation1");
+      const restored = await foundation1
+        .from("organisations")
+        .select("id")
+        .eq("id", ids.orgFundacja);
+      assert.equal(restored.error, null, "access must come back once the role is reactivated");
+    },
+  );
+
+  await t.test(
+    "suspending a shelter-owning member's role revokes org-management access (ad-hoc fixture: no shelter org is seeded)",
+    async (t) => {
+      // No shelter-type organisation exists in supabase/seed.sql, so this builds one: grant
+      // breederPending an active shelter_member role (their seeded role is a *different*,
+      // unrelated 'breeder'/'pending' row — user_roles is keyed on (user_id, role), so this
+      // doesn't touch it) and a real organisation of type 'shelter' they own, exactly the shape
+      // approve_user_verification() would have produced for a real shelter verification.
+      let orgId: string | undefined;
+      await t.test("setup: grant an active shelter_member role and a shelter org", async () => {
+        const role = await admin
+          .from("user_roles")
+          .upsert(
+            { user_id: ids.breederPending, role: "shelter_member", status: "active" },
+            { onConflict: "user_id,role" },
+          )
+          .select("status");
+        assert.equal(role.error, null);
+
+        const org = await admin
+          .from("organisations")
+          .insert({
+            org_type: "shelter",
+            name: "Regression Test Shelter",
+            slug: `regression-test-shelter-${Date.now()}`,
+            verification_status: "approved",
+            is_public: true,
+            owner_user_id: ids.breederPending,
+          })
+          .select("id")
+          .single();
+        assert.equal(org.error, null);
+        orgId = org.data!.id as string;
+      });
+
+      await t.test("an active shelter_member can manage their shelter", async () => {
+        const breederPending = await as("breederPending");
+        const attempt = await breederPending
+          .from("organisations")
+          .update({ response_time: "same day" })
+          .eq("id", orgId!)
+          .select();
+        assert.equal(
+          attempt.error,
+          null,
+          "an active shelter_member must be able to manage their org",
+        );
+        assert.equal(attempt.data?.length, 1);
+      });
+
+      await t.test("suspending the shelter_member role blocks management", async () => {
+        const suspend = await admin
+          .from("user_roles")
+          .update({ status: "suspended" })
+          .eq("user_id", ids.breederPending)
+          .eq("role", "shelter_member");
+        assert.equal(suspend.error, null);
+
+        const breederPending = await as("breederPending");
+        const attempt = await breederPending
+          .from("organisations")
+          .update({ response_time: "should be blocked" })
+          .eq("id", orgId!)
+          .select();
+        assert.ok(
+          isBlocked(attempt.data, attempt.error),
+          "a suspended shelter_member must not retain organisation-management access",
+        );
+      });
+
+      await t.test("cleanup", async () => {
+        if (orgId) await admin.from("organisations").delete().eq("id", orgId);
+        await admin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", ids.breederPending)
+          .eq("role", "shelter_member");
+      });
+    },
+  );
+
+  await t.test(
+    "suspending a rescue-owning member's role revokes org-management access (ad-hoc fixture: no rescue org is seeded)",
+    async (t) => {
+      // Same reasoning as the shelter case above, using foundationPending — approve_user_verification
+      // grants 'foundation_member' for every non-shelter organisation type, including 'rescue'.
+      let orgId: string | undefined;
+      await t.test("setup: grant an active foundation_member role and a rescue org", async () => {
+        const role = await admin
+          .from("user_roles")
+          .upsert(
+            { user_id: ids.foundationPending, role: "foundation_member", status: "active" },
+            { onConflict: "user_id,role" },
+          )
+          .select("status");
+        assert.equal(role.error, null);
+
+        const org = await admin
+          .from("organisations")
+          .insert({
+            org_type: "rescue",
+            name: "Regression Test Rescue",
+            slug: `regression-test-rescue-${Date.now()}`,
+            verification_status: "approved",
+            is_public: true,
+            owner_user_id: ids.foundationPending,
+          })
+          .select("id")
+          .single();
+        assert.equal(org.error, null);
+        orgId = org.data!.id as string;
+      });
+
+      await t.test("an active foundation_member can manage their rescue org", async () => {
+        const foundationPending = await as("foundationPending");
+        const attempt = await foundationPending
+          .from("organisations")
+          .update({ response_time: "same day" })
+          .eq("id", orgId!)
+          .select();
+        assert.equal(attempt.error, null);
+        assert.equal(attempt.data?.length, 1);
+      });
+
+      await t.test("suspending the foundation_member role blocks management", async () => {
+        const suspend = await admin
+          .from("user_roles")
+          .update({ status: "suspended" })
+          .eq("user_id", ids.foundationPending)
+          .eq("role", "foundation_member");
+        assert.equal(suspend.error, null);
+
+        const foundationPending = await as("foundationPending");
+        const attempt = await foundationPending
+          .from("organisations")
+          .update({ response_time: "should be blocked" })
+          .eq("id", orgId!)
+          .select();
+        assert.ok(isBlocked(attempt.data, attempt.error));
+      });
+
+      await t.test("cleanup", async () => {
+        if (orgId) await admin.from("organisations").delete().eq("id", orgId);
+        await admin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", ids.foundationPending)
+          .eq("role", "foundation_member");
+      });
+    },
+  );
+
+  await t.test(
+    "an active (non-owner) organisation member is unaffected by the owner's role suspension",
+    async (t) => {
+      let memberRowId: string | undefined;
+      await t.test(
+        "setup: add breederPending as a non-owner staff member on Wolna Dolina",
+        async () => {
+          const member = await admin
+            .from("organisation_members")
+            .insert({
+              org_id: ids.orgWolnaDolina,
+              profile_id: ids.breederPending,
+              member_role: "employee",
+            })
+            .select("id")
+            .single();
+          assert.equal(member.error, null);
+          memberRowId = member.data!.id as string;
+        },
+      );
+
+      await t.test("the member keeps read access while the owner's role is suspended", async () => {
+        const suspend = await admin
+          .from("user_roles")
+          .update({ status: "suspended" })
+          .eq("user_id", ids.breeder2)
+          .eq("role", "breeder");
+        assert.equal(suspend.error, null);
+
+        try {
+          const breederPending = await as("breederPending");
+          const read = await breederPending
+            .from("organisations")
+            .select("id")
+            .eq("id", ids.orgWolnaDolina);
+          assert.equal(read.error, null);
+          assert.equal(
+            read.data?.length,
+            1,
+            "a non-owner member's read access must not depend on the owner's role status",
+          );
+        } finally {
+          await admin
+            .from("user_roles")
+            .update({ status: "active" })
+            .eq("user_id", ids.breeder2)
+            .eq("role", "breeder");
+        }
+      });
+
+      await t.test("cleanup", async () => {
+        if (memberRowId) await admin.from("organisation_members").delete().eq("id", memberRowId);
+      });
+    },
+  );
+
+  await t.test("an admin's organisation access never depends on owns_org()", async () => {
+    const attempt = await admin
+      .from("organisations")
+      .update({ response_time: "same day" })
+      .eq("id", ids.orgWolnaDolina)
+      .select();
+    assert.equal(
+      attempt.error,
+      null,
+      "admins manage all organisations regardless of ownership/role status",
+    );
+  });
 });

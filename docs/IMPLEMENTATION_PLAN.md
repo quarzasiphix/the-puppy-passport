@@ -311,53 +311,55 @@ exhibition calendar. Kept on the list (`PRODUCT_VISION.md`), not committed.
 
 ## Prioritised backlog (real missing functionality, ordered by launch risk / dependency)
 
-1. **Fix the four open findings in `docs/DATABASE_TESTING.md`** — real, currently-open bugs (a
-   customer can change their own transport request's operational status; suspending a breeder's
-   role doesn't revoke org-management access; the org-owner-notify-applicant path fails outright;
-   a column-shadowing bug blocks assigned drivers from their own job's documents in Storage). Each
-   has a deliberately-failing regression test already written — fixing the bug flips the test, not
-   the other way around.
-2. **Automated tests** — a Playwright auth spec and a Node-based DB/API regression suite
+~~1. Fix the four open findings in `docs/DATABASE_TESTING.md`~~ — **done** (security-hardening pass,
+migrations `20260101006000`–`20260101006300`): a customer could change their own transport
+request's operational status; suspending a breeder's role didn't revoke org-management access; the
+org-owner-notify-applicant path failed outright on `RETURNING`; a column-shadowing bug blocked
+assigned drivers from their own job's documents in Storage. All four fixed and given comprehensive
+allowed/forbidden regression coverage (123 tests now passing, 0 failing) — see
+`docs/DATABASE_TESTING.md`'s "Previously-open findings, now fixed" section for root-cause detail.
+
+1. **Automated tests** — a Playwright auth spec and a Node-based DB/API regression suite
    (`tests/db/`, `npm run test:db`) exist as of 2026-07-22; everything else is still manually
    verified only (see `docs/MVP_TEST_REPORT.md` §5, `docs/E2E_TESTING.md`, `docs/DATABASE_TESTING.md`).
-3. **Production Supabase project + production Cloudflare deployment** — business/account steps, not
+2. **Production Supabase project + production Cloudflare deployment** — business/account steps, not
    code; procedures documented in `docs/PRODUCTION_SETUP.md`/`docs/DEPLOYMENT_CHECKLIST.md` but not
    yet executed.
-4. **Legal text finalisation** (`/terms`, `/privacy`, `/cookies`) — needs a real registered business
+3. **Legal text finalisation** (`/terms`, `/privacy`, `/cookies`) — needs a real registered business
    entity and lawyer review before further code work there is useful.
-5. **Transport data-model decision**: the snapshot-on-`transport_requests` vs. dedicated
+4. **Transport data-model decision**: the snapshot-on-`transport_requests` vs. dedicated
    `transport_parties` question (phase 4 above) is **less open than earlier versions of this
    document claimed** — `public.transport_parties` (legal_owner/requester/sender/recipient/payer/
    pickup_contact/delivery_contact, including external non-Havenpaw contacts) already exists in the
    schema with real RLS (`20260101002400_animals_transport_fields.sql`), just entirely unused by any
    UI. The remaining decision is narrower: wire the 7-step transport form and ops tooling to actually
    use this table instead of (or alongside) the inline snapshot fields — not whether to build it.
-6. **Operations calendar** (phase 5) — day/week/route views over already-real route/vehicle/driver/
+5. **Operations calendar** (phase 5) — day/week/route views over already-real route/vehicle/driver/
    matching data.
-7. **Document library / upload UI** (phase 10) — the storage layer is verified and ready; no
+6. **Document library / upload UI** (phase 10) — the storage layer is verified and ready; no
    customer-facing or ops-facing UI exists yet.
-8. **Notification preferences** — currently all-or-nothing; only a "coming soon" placeholder exists
+7. **Notification preferences** — currently all-or-nothing; only a "coming soon" placeholder exists
    on breeder/foundation settings pages.
-9. **Foundation welfare-urgent flow and team/volunteer management** (phase 11) — both honest
+8. **Foundation welfare-urgent flow and team/volunteer management** (phase 11) — both honest
    placeholders today.
-10. **Full adoption/rehoming application questionnaire** — currently simplified to a first-contact
+9. **Full adoption/rehoming application questionnaire** — currently simplified to a first-contact
     message; puppy-purchase applications already have the full multi-step questionnaire as the
     template to extend from.
-11. **Community groups** (phase 12) — schema exists, zero UI.
-11a. **General user-to-user messaging** (phase 12) — message requests/accept/decline/block/mute
+10. **Community groups** (phase 12) — schema exists, zero UI.
+10a. **General user-to-user messaging** (phase 12) — message requests/accept/decline/block/mute
     beyond the existing relationship-gated conversation RPCs; needs deliberate spam/harassment
     safeguards designed up front, not bolted on. **Foundation public detail page** — `/foundations`
     has no equivalent to `/breeders/$slug`.
-12. **Multi-species UI buildout** (phase 15) — the `species` reference table + `species_id` schema
+11. **Multi-species UI buildout** (phase 15) — the `species` reference table + `species_id` schema
     foundation landed 2026-07-22 (see phase 15 above), but no UI, no cattery/cat-litter/kitten
     model, no rabbit/guinea-pig-specific fields, and no configurable per-species field/document/
     eligibility model exist yet — each species deserves its own dedicated design pass rather than
     one universal animal form.
-13. **Internationalisation** (phase 14) — genuinely not started beyond schema readiness; a
+12. **Internationalisation** (phase 14) — genuinely not started beyond schema readiness; a
     significant, deliberate architectural effort (locale/translation infrastructure) that should get
     its own design pass rather than being bolted on ad hoc.
-14. **Verified-organisation fundraising module** (phase 13) — policy is fully defined
+13. **Verified-organisation fundraising module** (phase 13) — policy is fully defined
     (`docs/FUNDRAISING_POLICY.md`), no schema/RLS/UI exists yet; stays behind a feature flag until a
     payment provider, refund rules and legal texts are approved.
-15. **Accessibility and mobile-usability audits** — not yet done as a dedicated pass (see
+14. **Accessibility and mobile-usability audits** — not yet done as a dedicated pass (see
     `PRODUCTION_READINESS_REPORT.md`).

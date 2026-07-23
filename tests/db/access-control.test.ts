@@ -456,43 +456,132 @@ test("private documents and storage access", async (t) => {
   });
 
   await t.test(
-    "OPEN FINDING: an assigned driver cannot actually read their job's documents (storage column-shadowing bug)",
-    async () => {
-      // migration 20260101003400_transport_documents_storage_driver_access.sql's policy source
-      // reads `(storage.foldername(name))[1]::uuid` intending the bare `name` to mean
-      // storage.objects.name (the object's own path) — the same pattern every other storage
-      // policy in 20260101002200_storage.sql correctly uses. But this policy's subquery joins in
-      // `public.drivers d`, which ALSO has a `name` column (the driver's personal name), and
-      // Postgres resolves the unqualified `name` to `d.name` instead — the exact "column-shadowing
-      // silently returns the wrong result" bug class already fixed once for
-      // `conversations`/`conversation_participants` (both share an `id` column), reintroduced here
-      // via a different pair of same-named columns. Confirmed live: `select policyname, qual from
-      // pg_policies where tablename='objects' and policyname ilike '%driver%'` shows the stored
-      // policy literally reading `storage.foldername(d.name)`, not `storage.foldername(objects.
-      // name)`. A driver's personal name has no `/`, so `storage.foldername()` returns nothing to
-      // index, `tr.id = NULL` is never true, and the policy silently denies every request
-      // regardless of assignment. This test asserts the CORRECT behaviour and is expected to
-      // currently FAIL — left in, unfixed, so it stays visible. The fix is qualifying the
-      // reference (`storage.foldername(objects.name)`), not touching drivers.name or reverting
-      // this test. See the task report for full detail.
-      const customer = await as("customer");
-      const upload = await customer.storage.from("transport-documents").upload(path, contents, {
-        contentType: "text/plain",
-        upsert: true,
-      });
+    "assigned-driver document access (fixed by 20260101006300, storage column-shadowing bug)",
+    async (t) => {
+      // Root cause: "assigned drivers read files for their active jobs"
+      // (20260101003400_transport_documents_storage_driver_access.sql) wrote
+      // `(storage.foldername(name))[1]::uuid` intending the bare `name` to mean
+      // storage.objects.name (the object's own path) — the pattern every other storage policy in
+      // 20260101002200_storage.sql correctly uses, because none of them join in another table with
+      // its own `name` column. This one joins `public.drivers d`, which also has a `name` column
+      // (the driver's personal name) — Postgres resolved the unqualified `name` to `d.name`
+      // instead, the exact "column-shadowing silently returns the wrong result" bug class already
+      // fixed once for conversations/conversation_participants (shared `id`), reintroduced here via
+      // a different pair of same-named columns. A driver's personal name has no `/`, so
+      // storage.foldername() returned nothing to index, `tr.id = NULL` was never true, and the
+      // policy silently denied every request regardless of assignment. Fixed by qualifying the
+      // reference (`storage.foldername(objects.name)`) — confirmed against the live policy in
+      // pg_policies, not just the migration source. Each access boundary below is tested
+      // explicitly, not just the one previously-broken happy path.
+      const upload = await (
+        await as("customer")
+      ).storage
+        .from("transport-documents")
+        .upload(path, contents, { contentType: "text/plain", upsert: true });
       assert.equal(upload.error, null);
 
       try {
-        // a1 (ids.transportWarsawAmsterdam) is assigned to driver@havenpaw.test and its status
-        // ('ready_for_scheduling') is not one of the excluded draft/submitted/rejected/cancelled
-        // states, so the assigned driver should be able to read the file for this active job.
-        const driver = await as("driver");
-        const driverDownload = await driver.storage.from("transport-documents").download(path);
-        assert.equal(
-          driverDownload.error,
-          null,
-          `expected the assigned driver to read this file, got ${JSON.stringify(driverDownload.error)}`,
-        );
+        await t.test("the requester (already covered above) and ops can read it", async () => {
+          const ops = await as("ops");
+          const opsDownload = await ops.storage.from("transport-documents").download(path);
+          assert.equal(opsDownload.error, null);
+        });
+
+        await t.test("the assigned driver can read the document for their active job", async () => {
+          // a1 (ids.transportWarsawAmsterdam) is assigned to driver@havenpaw.test and its status
+          // ('ready_for_scheduling') is not one of the excluded draft/submitted/rejected/cancelled
+          // states, so the assigned driver should be able to read the file for this active job.
+          const driver = await as("driver");
+          const driverDownload = await driver.storage.from("transport-documents").download(path);
+          assert.equal(
+            driverDownload.error,
+            null,
+            `expected the assigned driver to read this file, got ${JSON.stringify(driverDownload.error)}`,
+          );
+        });
+
+        await t.test("an unrelated driver cannot read it", async () => {
+          // ops@ is not registered as a driver at all, and the only other driver-role account
+          // (driver@) IS the assigned one — so build a second, genuinely unrelated driver by
+          // temporarily granting the 'driver' role + a drivers row to breederPending, who has no
+          // relationship whatsoever to this transport request.
+          const admin = await as("admin");
+          const role = await admin
+            .from("user_roles")
+            .upsert(
+              { user_id: ids.breederPending, role: "driver", status: "active" },
+              { onConflict: "user_id,role" },
+            )
+            .select("status");
+          assert.equal(role.error, null);
+          const driverRow = await admin
+            .from("drivers")
+            .insert({ profile_id: ids.breederPending, name: "Unrelated Test Driver" })
+            .select("id")
+            .single();
+          assert.equal(driverRow.error, null);
+
+          try {
+            const unrelatedDriver = await as("breederPending");
+            const attempt = await unrelatedDriver.storage
+              .from("transport-documents")
+              .download(path);
+            assert.notEqual(
+              attempt.error,
+              null,
+              "a driver with no assignment to this job must not read its documents",
+            );
+          } finally {
+            await admin.from("drivers").delete().eq("id", driverRow.data!.id);
+            await admin
+              .from("user_roles")
+              .delete()
+              .eq("user_id", ids.breederPending)
+              .eq("role", "driver");
+          }
+        });
+
+        await t.test("an unrelated customer (not the requester) cannot read it", async () => {
+          const buyer = await as("buyer");
+          const attempt = await buyer.storage.from("transport-documents").download(path);
+          assert.notEqual(attempt.error, null);
+        });
+
+        await t.test("access disappears once the driver is unassigned", async () => {
+          const ops = await as("ops");
+          const before = await ops
+            .from("transport_requests")
+            .select("assigned_driver_id")
+            .eq("id", ids.transportWarsawAmsterdam)
+            .single();
+          const originalDriverId = before.data?.assigned_driver_id;
+          assert.notEqual(originalDriverId, null);
+
+          const unassign = await ops
+            .from("transport_requests")
+            .update({ assigned_driver_id: null })
+            .eq("id", ids.transportWarsawAmsterdam);
+          assert.equal(unassign.error, null);
+
+          try {
+            const driver = await as("driver");
+            const attempt = await driver.storage.from("transport-documents").download(path);
+            assert.notEqual(
+              attempt.error,
+              null,
+              "once unassigned, the former driver must lose read access to this job's documents",
+            );
+          } finally {
+            await ops
+              .from("transport_requests")
+              .update({ assigned_driver_id: originalDriverId })
+              .eq("id", ids.transportWarsawAmsterdam);
+          }
+
+          const driver = await as("driver");
+          const restored = await driver.storage.from("transport-documents").download(path);
+          assert.equal(restored.error, null, "access must come back once reassigned");
+        });
       } finally {
         const ops = await as("ops");
         await ops.storage.from("transport-documents").remove([path]);

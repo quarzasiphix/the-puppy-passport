@@ -44,10 +44,9 @@ jobs:
   # longer, so it must never block or fail the basic install/typecheck/lint/build job above if
   # Docker/Supabase isn't available in a given runner. See docs/DATABASE_TESTING.md.
   #
-  # This job is EXPECTED to go red until the open findings documented in
-  # docs/DATABASE_TESTING.md are fixed — several tests in tests/db/ deliberately assert the
-  # *correct* behaviour for currently-real bugs so they stay visible instead of being silently
-  # tolerated. A red check here is the suite doing its job, not a broken pipeline.
+  # The four "open findings" this suite once tracked (docs/DATABASE_TESTING.md) were all fixed in
+  # migrations 20260101006000-20260101006300 — this job is expected to be green. If it goes red,
+  # that's a real regression, not the suite doing its job.
   database-tests:
     name: Database/API regression suite (requires Docker)
     runs-on: ubuntu-latest
