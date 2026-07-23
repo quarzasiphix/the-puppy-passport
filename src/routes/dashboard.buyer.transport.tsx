@@ -4,10 +4,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, ChevronDown, FileEdit, MessageCircle, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Clock3,
+  FileEdit,
+  MessageCircle,
+  Trash2,
+} from "lucide-react";
 import { TransportDocumentChecklist } from "@/components/transport-document-checklist";
 import { ReviewTransportDialog } from "@/components/review-transport-dialog";
 import { ChatThread } from "@/components/chat-thread";
+import { TransportTimeline } from "@/components/transport-timeline";
 import { startTransportConversation } from "@/lib/queries/messaging";
 import {
   AlertDialog,
@@ -23,6 +32,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import {
   deleteDraft,
+  getCustomerTimeline,
   isClosed,
   isOnHold,
   listMyDrafts,
@@ -175,10 +185,16 @@ function RequestCard({
 }) {
   const [showDocs, setShowDocs] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const conversationQuery = useQuery({
     queryKey: ["transport-conversation", t.id],
     enabled: showChat,
     queryFn: () => startTransportConversation(t.id),
+  });
+  const timelineQuery = useQuery({
+    queryKey: ["transport-timeline", t.id],
+    enabled: showTimeline,
+    queryFn: () => getCustomerTimeline(t.id),
   });
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-5">
@@ -224,6 +240,15 @@ function RequestCard({
             className={`size-3.5 transition-transform ${showChat ? "rotate-180" : ""}`}
           />
         </button>
+        <button
+          onClick={() => setShowTimeline((v) => !v)}
+          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <Clock3 className="size-3.5" /> Timeline{" "}
+          <ChevronDown
+            className={`size-3.5 transition-transform ${showTimeline ? "rotate-180" : ""}`}
+          />
+        </button>
         {reviewableStatuses.has(t.status) && (
           <ReviewTransportDialog transportRequestId={t.id} userId={userId} />
         )}
@@ -237,6 +262,15 @@ function RequestCard({
         <div className="mt-3 border-t border-border/60 pt-3">
           {conversationQuery.data ? (
             <ChatThread conversationId={conversationQuery.data} currentUserId={userId} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          )}
+        </div>
+      )}
+      {showTimeline && (
+        <div className="mt-3 border-t border-border/60 pt-3">
+          {timelineQuery.data ? (
+            <TransportTimeline events={timelineQuery.data} />
           ) : (
             <p className="text-sm text-muted-foreground">Loading…</p>
           )}

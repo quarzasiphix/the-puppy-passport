@@ -120,6 +120,35 @@ export async function advanceJobStatus(input: {
   if (historyError) throw historyError;
 }
 
+// Driver-minimum timeline (Stage C): the same status_history rows a driver already has RLS access
+// to for their assigned job ("assigned drivers view and log status on their own requests"), but
+// only customer_note ever leaves the database — internal_note (compliance/ops-only commentary)
+// stays out, matching the driver-minimum-data rule already applied to listMyJobsForRoute().
+export type DriverTimelineEvent = {
+  id: string;
+  timestamp: string;
+  status: string;
+  note: string | null;
+};
+
+export async function getDriverTimeline(
+  transportRequestId: string,
+): Promise<DriverTimelineEvent[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_status_history")
+    .select("id, status, changed_at, customer_note")
+    .eq("transport_request_id", transportRequestId)
+    .order("changed_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((h) => ({
+    id: h.id,
+    timestamp: h.changed_at,
+    status: h.status,
+    note: h.customer_note,
+  }));
+}
+
 export const incidentTypeLabels: Record<string, string> = {
   delay: "Delay",
   vehicle_breakdown: "Vehicle breakdown",

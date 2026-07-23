@@ -810,6 +810,98 @@ export const amendableFieldLabels: Record<AmendableTransportField, string> = {
   receive_authorized_by: "Person authorised to receive the animal",
 };
 
+// --- Timeline (Stage C, docs/AUTONOMOUS_BACKEND_PROGRESS.md) -------------------------------
+// A real event timeline built from transport_status_history (already written on every status
+// change, see changeOpsRequestStatus()/advanceJobStatus()) and transport_request_amendments
+// (already timestamped by request_transport_amendment()/review_transport_amendment()) — never
+// guessed from the current row's own timestamps. Past-tense labels distinct from
+// nextActionForStatus() (which phrases the *current* step as an instruction, "Review and accept
+// your quotation") since a timeline entry describes something that already happened.
+const statusEventLabels: Record<string, string> = {
+  draft: "Draft saved",
+  submitted: "Request submitted",
+  initial_review: "Review started",
+  missing_information: "Additional information requested",
+  documents_under_review: "Documents under review",
+  quotation_prepared: "Quotation being prepared",
+  quotation_sent: "Quotation sent",
+  accepted_by_customer: "Quotation accepted",
+  awaiting_documents: "Awaiting remaining documents",
+  ready_for_scheduling: "Ready for scheduling",
+  scheduled: "Transport scheduled",
+  driver_assigned: "Driver assigned",
+  pickup_confirmed: "Pickup confirmed",
+  animal_collected: "Animal collected",
+  in_transport: "In transport",
+  rest_or_care_stop: "On a rest/care stop",
+  approaching_destination: "Approaching destination",
+  delivered: "Delivered",
+  handover_confirmed: "Handover confirmed",
+  completed: "Completed",
+  rejected: "Request not accepted",
+  cancelled_by_customer: "Cancelled by you",
+  cancelled_by_operations: "Cancelled by Havenpaw",
+  veterinary_hold: "Placed on veterinary hold",
+  compliance_hold: "Placed on compliance hold",
+  route_postponed: "Route postponed",
+};
+
+export function statusEventLabel(status: string): string {
+  return statusEventLabels[status] ?? status.replace(/_/g, " ");
+}
+
+export type TransportTimelineEvent = {
+  id: string;
+  timestamp: string;
+  label: string;
+  detail: string | null;
+};
+
+// Customer-safe: only customer_note ever leaves the database for this role (never internal_note —
+// selected explicitly, not filtered client-side, so a future careless select("*") elsewhere can't
+// leak it through this function), and only a resolved (not pending) amendment's outcome, never the
+// ops-only review_note.
+export async function getCustomerTimeline(
+  transportRequestId: string,
+): Promise<TransportTimelineEvent[]> {
+  const supabase = getSupabaseBrowserClient();
+  const [historyResult, amendmentsResult] = await Promise.all([
+    supabase
+      .from("transport_status_history")
+      .select("id, status, changed_at, customer_note")
+      .eq("transport_request_id", transportRequestId),
+    supabase
+      .from("transport_request_amendments")
+      .select("id, field_name, status, reviewed_at")
+      .eq("transport_request_id", transportRequestId)
+      .neq("status", "pending"),
+  ]);
+  if (historyResult.error) throw historyResult.error;
+  if (amendmentsResult.error) throw amendmentsResult.error;
+
+  const events: TransportTimelineEvent[] = [];
+  for (const h of historyResult.data ?? []) {
+    events.push({
+      id: `status-${h.id}`,
+      timestamp: h.changed_at,
+      label: statusEventLabel(h.status),
+      detail: h.customer_note,
+    });
+  }
+  for (const a of amendmentsResult.data ?? []) {
+    if (!a.reviewed_at) continue;
+    const field = amendableFieldLabels[a.field_name as AmendableTransportField] ?? a.field_name;
+    events.push({
+      id: `amendment-${a.id}`,
+      timestamp: a.reviewed_at,
+      label:
+        a.status === "approved" ? `Change approved: ${field}` : `Change request declined: ${field}`,
+      detail: null,
+    });
+  }
+  return events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+}
+
 // --- Driver job view (column-minimized, docs/adr/TRANSPORT_DATA_MODEL.md) --------------------
 export type DriverTransportJobRow = Database["public"]["Views"]["driver_transport_job_view"]["Row"];
 

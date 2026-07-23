@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   changeOpsRequestStatus,
   getOpsRequestDetail,
-  listOpsStatusHistory,
+  getOpsTimeline,
   listOpsTransportParties,
   listOpsTransportAnimals,
   listOpsAmendments,
@@ -59,7 +59,7 @@ function OpsRequestDetail() {
   });
   const historyQuery = useQuery({
     queryKey: ["ops-request-history", id],
-    queryFn: () => listOpsStatusHistory(id),
+    queryFn: () => getOpsTimeline(id),
   });
 
   const conversationQuery = useQuery({
@@ -362,22 +362,24 @@ function OpsRequestDetail() {
             </div>
           </Card>
 
-          <Card title="Status history">
+          <Card title="Timeline">
+            <p className="mb-3 text-xs text-muted-foreground">
+              Status changes and amendment requests, in order — includes internal-only notes never
+              shown to the customer.
+            </p>
             <ol className="space-y-3 border-l border-border/60 pl-4">
               {historyQuery.data?.map((h) => (
                 <li key={h.id} className="relative">
                   <span className="absolute -left-[21px] top-1.5 size-2.5 rounded-full bg-primary" />
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="size-3" /> {new Date(h.changed_at).toLocaleString("en-GB")}
+                    <Clock className="size-3" /> {new Date(h.timestamp).toLocaleString("en-GB")}
                   </div>
-                  <div className="text-sm font-medium capitalize">
-                    {h.status.replace(/_/g, " ")}
-                  </div>
-                  {h.customer_note && (
-                    <div className="text-xs text-muted-foreground">Customer: {h.customer_note}</div>
+                  <div className="text-sm font-medium capitalize">{h.label}</div>
+                  {h.customerNote && (
+                    <div className="text-xs text-muted-foreground">Customer: {h.customerNote}</div>
                   )}
-                  {h.internal_note && (
-                    <div className="text-xs text-muted-foreground">Internal: {h.internal_note}</div>
+                  {h.internalNote && (
+                    <div className="text-xs text-muted-foreground">Internal: {h.internalNote}</div>
                   )}
                 </li>
               ))}

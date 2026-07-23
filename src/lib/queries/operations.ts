@@ -309,3 +309,62 @@ export async function reviewAmendment(input: {
   });
   if (error) throw error;
 }
+
+// Ops-complete timeline (Stage C): the same real event sources as the customer-safe timeline
+// (src/lib/queries/transport.ts, getCustomerTimeline()) but with both note columns and full
+// amendment detail (including still-pending ones and the ops-only review_note) — this function is
+// only ever called from ops-gated routes, RLS ("ops staff manage all ...") is what actually
+// prevents a non-staff caller from reaching it regardless.
+export type OpsTimelineEvent = {
+  id: string;
+  timestamp: string;
+  label: string;
+  customerNote: string | null;
+  internalNote: string | null;
+};
+
+export async function getOpsTimeline(transportRequestId: string): Promise<OpsTimelineEvent[]> {
+  const supabase = getSupabaseBrowserClient();
+  const [historyResult, amendmentsResult] = await Promise.all([
+    supabase
+      .from("transport_status_history")
+      .select("id, status, changed_at, customer_note, internal_note")
+      .eq("transport_request_id", transportRequestId),
+    supabase
+      .from("transport_request_amendments")
+      .select("id, field_name, status, old_value, new_value, created_at, reviewed_at, review_note")
+      .eq("transport_request_id", transportRequestId),
+  ]);
+  if (historyResult.error) throw historyResult.error;
+  if (amendmentsResult.error) throw amendmentsResult.error;
+
+  const events: OpsTimelineEvent[] = [];
+  for (const h of historyResult.data ?? []) {
+    events.push({
+      id: `status-${h.id}`,
+      timestamp: h.changed_at,
+      label: h.status.replace(/_/g, " "),
+      customerNote: h.customer_note,
+      internalNote: h.internal_note,
+    });
+  }
+  for (const a of amendmentsResult.data ?? []) {
+    events.push({
+      id: `amendment-filed-${a.id}`,
+      timestamp: a.created_at,
+      label: `Amendment filed: ${a.field_name.replace(/_/g, " ")} ("${a.old_value ?? "—"}" → "${a.new_value}")`,
+      customerNote: null,
+      internalNote: a.status === "pending" ? "Awaiting review." : null,
+    });
+    if (a.reviewed_at) {
+      events.push({
+        id: `amendment-reviewed-${a.id}`,
+        timestamp: a.reviewed_at,
+        label: `Amendment ${a.status}: ${a.field_name.replace(/_/g, " ")}`,
+        customerNote: null,
+        internalNote: a.review_note,
+      });
+    }
+  }
+  return events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+}
