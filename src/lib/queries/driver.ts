@@ -53,23 +53,34 @@ export async function listRouteStops(routeId: string) {
 
 export type DriverJobRow = {
   id: string;
-  request_number: string;
+  request_number: string | null;
   animal_name: string | null;
   pickup_city: string | null;
   pickup_country: string | null;
+  pickup_address_exact: string | null;
   destination_city: string | null;
   destination_country: string | null;
+  destination_address_exact: string | null;
   status: string;
   crate_requirements: string | null;
   behavioural_notes: string | null;
+  release_authorized_by: string | null;
+  receive_authorized_by: string | null;
 };
 
+// Queries driver_transport_job_view (docs/adr/TRANSPORT_DATA_MODEL.md) instead of
+// transport_requests directly — a security_invoker view scoped by the same row-level RLS
+// ("assigned drivers view their own requests"), but column-minimized at the database layer as
+// defense in depth against a future careless select("*") regaining access to payer/owner/
+// compliance columns. It also carries the exact pickup/destination address and the
+// pickup/delivery contact name a driver actually needs to do the job, which the previous
+// hand-picked select list on transport_requests never included.
 export async function listMyJobsForRoute(driverId: string, routeId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
-    .from("transport_requests")
+    .from("driver_transport_job_view")
     .select(
-      "id, request_number, animal_name, pickup_city, pickup_country, destination_city, destination_country, status, crate_requirements, behavioural_notes",
+      "id, request_number, animal_name, pickup_city, pickup_country, pickup_address_exact, destination_city, destination_country, destination_address_exact, status, crate_requirements, behavioural_notes, release_authorized_by, receive_authorized_by",
     )
     .eq("assigned_driver_id", driverId)
     .eq("assigned_route_id", routeId);

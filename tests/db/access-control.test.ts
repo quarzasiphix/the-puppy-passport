@@ -248,6 +248,38 @@ test("transport requests", async (t) => {
       assert.ok(isBlocked(unassigned.data, unassigned.error));
     },
   );
+
+  await t.test(
+    "driver_transport_job_view carries exact addresses for an assigned job, and is invisible for an unassigned one",
+    async () => {
+      const driver = await as("driver");
+      const assigned = await driver
+        .from("driver_transport_job_view")
+        .select("id, pickup_address_exact, destination_address_exact")
+        .eq("id", ids.transportWarsawAmsterdam)
+        .maybeSingle();
+      assert.equal(assigned.error, null);
+      assert.ok(assigned.data, "expected the assigned driver to see this job in the view");
+
+      const unassigned = await driver
+        .from("driver_transport_job_view")
+        .select("id")
+        .eq("id", ids.transportBerlin);
+      assert.ok(isBlocked(unassigned.data, unassigned.error));
+    },
+  );
+
+  await t.test(
+    "an unrelated buyer sees no rows at all in driver_transport_job_view for their own request",
+    async () => {
+      const buyer = await as("buyer");
+      const blocked = await buyer
+        .from("driver_transport_job_view")
+        .select("id")
+        .eq("id", ids.transportKrakow);
+      assert.ok(isBlocked(blocked.data, blocked.error));
+    },
+  );
 });
 
 test("quotations", async (t) => {

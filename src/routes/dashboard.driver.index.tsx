@@ -157,6 +157,30 @@ function DriverHome() {
                     <ArrowRight className="size-3.5" />
                     {job.destination_city ?? job.destination_country ?? "?"}
                   </div>
+                  <div className="mt-3 grid gap-2 rounded-lg bg-secondary/40 p-3 text-xs sm:grid-cols-2">
+                    <div>
+                      <div className="font-medium uppercase tracking-wide text-muted-foreground">
+                        Pickup address
+                      </div>
+                      <div>{job.pickup_address_exact || "Not yet provided"}</div>
+                      {job.release_authorized_by && (
+                        <div className="text-muted-foreground">
+                          Contact: {job.release_authorized_by}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium uppercase tracking-wide text-muted-foreground">
+                        Delivery address
+                      </div>
+                      <div>{job.destination_address_exact || "Not yet provided"}</div>
+                      {job.receive_authorized_by && (
+                        <div className="text-muted-foreground">
+                          Contact: {job.receive_authorized_by}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {job.crate_requirements && (
                     <p className="mt-2 text-xs text-muted-foreground">
                       Crate: {job.crate_requirements}
