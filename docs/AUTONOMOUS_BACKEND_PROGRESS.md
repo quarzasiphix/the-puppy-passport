@@ -28,12 +28,33 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `f40ac47` | E (Phase 13) | Real organisation team/invitation management (`organisation_invitations`, 3 new member roles, `status` active/suspended on `organisation_members`, tier-protected invite/remove/suspend/role-change RPCs). Found + fixed a real gap: `owner_user_id` could be changed by any org owner via a plain update, silently transferring/orphaning ownership — locked to admin-only via trigger. `dashboard.foundation.team.tsx` (real) + new `_public.invitations.$token.tsx`. `tests/db/organisation-team.test.ts`. 255/255 tests. |
 | `d52da87` | F (Phase 14) | Completed the adoption questionnaire on `buyer_applications` (landlord permission, veterinary plan, consent metadata, org supplemental answers jsonb, `internal_notes`, `draft`/`interview_planned`/`expired` statuses). Found + fixed a real gap: buyers had unrestricted `for all` RLS on their own application row, so could self-approve/forge `breeder_response`/forge `internal_notes` — added a default-deny lock trigger. `dashboard.foundation.applications.tsx` now renders the full questionnaire + internal notes + a transport-draft action on approval. `tests/db/adoption-questionnaire.test.ts`. 273/273 tests. |
 | `cca8f02` | G (Phase 15) | Real user-facing moderation decisions and appeals: `affected_profile_id` (auto-populated for user/animal_listing targets), `public_decision_summary`, `appeal_deadline` (14 days, fixed a bug where it only fired on UPDATE not INSERT), `my_moderation_case_view` (fixed a bug where `security_invoker=true` inherited an always-false RLS result — switched to a definer-style view like `public_transport_requests`), `moderation_appeals` with a same-moderator-conflict check. New `_public.moderation.$caseId.tsx` + extended `dashboard.admin.moderation.tsx`. `tests/db/moderation-appeals.test.ts`. 299/299 tests. |
+| `3026f22` | H (Phase 16) | Real notification preferences (`notification_preferences`, opt-out default, mandatory `security` category, `get_notification_preference()`/`create_notification_if_enabled()`), scoped to the 4 notification types that actually exist in the codebase (not a fabricated full category list). Replaced the "coming soon" placeholder on both breeder/foundation settings pages. `tests/db/notification-preferences.test.ts`. 320/320 tests. |
+
+## Supplemental queue appended mid-session
+
+A second large instruction set ("SUPPLEMENTAL OVERNIGHT BACKEND QUEUE," Stages R–AP: messaging
+security, attachments, listing lifecycle, multi-species, taxonomy, search, application/handover
+state machines, quotation/pricing hardening, payment abstraction, fundraising gating, outbox/email,
+domain events, audit quality, feature flags, idempotency audit, data export, account
+deletion/anonymisation execution, support tooling, backup/DR docs, migration quality, test
+factories, load readiness, a security red-team pass, and a final release-candidate report) was
+appended to the original Phase 10–25 queue. Per its own instruction, the original queue (I–Q) is
+being finished first, then this session continues directly into R onward without stopping.
 
 ## Remaining stages (not started this session)
 
-H (notification preferences), I (admin placeholder audit), J (abuse prevention), K (CI), L (full
-DB/Storage audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
-reconciliation), Q (final verification + report), plus the post-Q continuation queue.
+**Original queue**: I (admin placeholder audit), J (abuse prevention), K (CI), L (full DB/Storage
+audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch reconciliation), Q
+(final verification + report).
+
+**Supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
+lifecycle), U (multi-species), V (taxonomy), W (search/discovery), X (application/handover state
+machines), Y (handover/ownership transfer), Z (quotation/pricing), AA (payment abstraction,
+disabled), AB (fundraising gating), AC (outbox/email jobs), AD (domain events), AE (audit quality),
+AF (feature flags), AG (idempotency/concurrency audit), AH (data export), AI (deletion/
+anonymisation execution), AJ (support tooling), AK (backup/DR docs), AL (migration quality), AM
+(test factories), AN (load readiness), AO (security red-team pass), AP (release-candidate report),
+plus a final post-AP review pass.
 
 ## Known open items carried forward
 
