@@ -126,6 +126,7 @@ export async function getPuppyById(id: string) {
     .select(animalSelect)
     .eq("id", id)
     .eq("listing_category", "breeder_puppy")
+    .eq("is_published", true)
     .single();
   if (error) throw error;
   return mapAnimalToPuppy(data as unknown as AnimalRow);
@@ -684,6 +685,7 @@ export async function getAdoptionById(id: string) {
     .select(adoptionSelect)
     .eq("id", id)
     .in("listing_category", ["adoption", "private_rehoming"])
+    .eq("is_published", true)
     .single();
   if (error) throw error;
   return mapAnimalToAdoption(data as unknown as AdoptionAnimalRow);

@@ -1110,3 +1110,54 @@ pass, the card-system pass, the detail-page pass, the breeder-profile pass, the 
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
 resilience pass, and this performance pass.
+
+## Phase 17 — SEO and shareability
+
+Reviewed every touched public route's `head()` meta, plus a real correctness question it surfaced:
+whether a detail page's data-fetching query itself could ever expose an unpublished listing's
+metadata.
+
+### Findings
+
+- **`getPuppyById` and `getAdoptionById` had no explicit `is_published` filter.** RLS already
+  restricts anonymous reads to published, approved-org listings — but an owner can read their *own*
+  animal row regardless of publish status (the "owners manage their own animals" policy is `for
+  all`, which includes select). That means an owner previewing their own not-yet-published listing
+  by visiting its public detail URL directly would see it rendered — and its `head()` metadata
+  generated — exactly like a live, public listing, with no "this isn't published yet" indication.
+  Confirmed the fix is safe for private rehoming too by reading `20260101003800_fix_rehoming_rls_
+  recursion.sql`: `is_published` is the same universal visibility flag both categories key off.
+- **Three touched list pages had a title but no description meta at all**: `/breeders`,
+  `/community`, `/community/groups`.
+- **`/adoptions/$id`'s title/description were thinner than the equivalent puppy detail page's**: no
+  breed in the title, and no description meta at all (`/puppies/$id` has both).
+
+### Fixes applied
+
+- **Added `.eq("is_published", true)` to `getPuppyById` and `getAdoptionById`** — matching the exact
+  defensive pattern Phase 1 applied to `getFoundationBySlug` (don't rely solely on RLS nuances for a
+  consumer-facing query; state the intent explicitly). Confirmed via grep that neither function is
+  used anywhere an owner needs to preview their own unpublished listing through this exact query —
+  dashboard pages use separate, owner-scoped queries for that.
+- **Added `description` meta** to `/breeders`, `/community`, `/community/groups`.
+- **Enriched `/adoptions/$id`'s title** to include the breed (`"{name} — {breed} — Adoption —
+  Havenpaw"`, matching `/puppies/$id`'s format) and **added a description meta** summarising name,
+  breed, organisation and city/country — all already-public fields, no private data added.
+- Confirmed throughout: no meta tag anywhere in this branch's touched files references an exact
+  private address, a private phone/email, or a raw internal status code — only city/country-level
+  location and already-customer-facing copy.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all five changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
+## Commit
+
+Eighteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
+resilience pass, the performance pass, and this SEO pass.
