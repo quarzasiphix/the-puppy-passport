@@ -153,21 +153,31 @@ function toLitterStatus(status: string): Litter["status"] {
   return "ready";
 }
 
-async function countAnimalsByStatus(litterId: string, statuses: string[]) {
+type LitterCounts = { available: number; reserved: number };
+
+// One query for however many litters are being mapped, instead of two count queries per litter —
+// same batching approach as Phase 1's foundation adoption counts and this phase's breeder counts.
+async function litterCountsBatch(litterIds: string[]): Promise<Map<string, LitterCounts>> {
+  const result = new Map<string, LitterCounts>();
+  if (litterIds.length === 0) return result;
   const supabase = getSupabaseBrowserClient();
-  const { count } = await supabase
+  const { data, error } = await supabase
     .from("animals")
-    .select("*", { count: "exact", head: true })
-    .eq("litter_id", litterId)
-    .in("availability_status", statuses);
-  return count ?? 0;
+    .select("litter_id, availability_status")
+    .in("litter_id", litterIds)
+    .in("availability_status", ["available", "applications_open", "reserved"]);
+  if (error) throw error;
+  for (const row of (data ?? []) as { litter_id: string | null; availability_status: string }[]) {
+    if (!row.litter_id) continue;
+    const counts = result.get(row.litter_id) ?? { available: 0, reserved: 0 };
+    if (row.availability_status === "reserved") counts.reserved++;
+    else counts.available++;
+    result.set(row.litter_id, counts);
+  }
+  return result;
 }
 
-async function mapLitterRow(l: LitterRow): Promise<Litter> {
-  const [available, reserved] = await Promise.all([
-    countAnimalsByStatus(l.id, ["available", "applications_open"]),
-    countAnimalsByStatus(l.id, ["reserved"]),
-  ]);
+function mapLitterRow(l: LitterRow, counts: LitterCounts): Litter {
   return {
     id: l.id,
     code: l.code,
@@ -181,14 +191,19 @@ async function mapLitterRow(l: LitterRow): Promise<Litter> {
     breederSlug: l.organisations?.slug ?? "",
     kennel: l.organisations?.name ?? "",
     puppyCount: l.puppy_count ?? 0,
-    available,
-    reserved,
+    available: counts.available,
+    reserved: counts.reserved,
     waitingList: 0,
     status: toLitterStatus(l.status),
     image: l.mother?.profile_image_url ?? placeholderImg,
     registration:
       [l.association, l.registration_number].filter(Boolean).join(" ") || "Not registered yet",
   };
+}
+
+async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
+  const counts = await litterCountsBatch(rows.map((l) => l.id));
+  return rows.map((l) => mapLitterRow(l, counts.get(l.id) ?? { available: 0, reserved: 0 }));
 }
 
 const litterSelect =
@@ -200,7 +215,7 @@ export async function listPublishedLitters(status?: string) {
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as LitterRow[]).map(mapLitterRow));
+  return mapLitterRows((data ?? []) as unknown as LitterRow[]);
 }
 
 type OrgRow = {
@@ -222,32 +237,51 @@ type OrgRow = {
   profiles: { display_name: string | null } | null;
 };
 
-async function orgBreeds(orgId: string): Promise<string[]> {
+// Batched breed lists and available-puppy counts for one or many kennels in two queries total —
+// avoids the N+1 pattern of firing 2 queries per kennel when mapping a whole directory page (the
+// exact same fix Phase 1 applied to foundations' adoption counts).
+async function orgBreedsBatch(orgIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (orgIds.length === 0) return result;
   const supabase = getSupabaseBrowserClient();
-  const { data } = await supabase.from("parent_dogs").select("breeds(name)").eq("kennel_id", orgId);
-  const names = new Set<string>();
-  for (const row of (data ?? []) as unknown as { breeds: { name: string } | null }[]) {
-    if (row.breeds?.name) names.add(row.breeds.name);
+  const { data, error } = await supabase
+    .from("parent_dogs")
+    .select("kennel_id, breeds(name)")
+    .in("kennel_id", orgIds);
+  if (error) throw error;
+  const sets = new Map<string, Set<string>>();
+  for (const row of (data ?? []) as unknown as {
+    kennel_id: string;
+    breeds: { name: string } | null;
+  }[]) {
+    if (!row.breeds?.name) continue;
+    const set = sets.get(row.kennel_id) ?? new Set<string>();
+    set.add(row.breeds.name);
+    sets.set(row.kennel_id, set);
   }
-  return Array.from(names);
+  for (const [orgId, set] of sets) result.set(orgId, Array.from(set));
+  return result;
 }
 
-async function orgAvailablePuppyCount(orgId: string) {
+async function orgAvailablePuppyCounts(orgIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (orgIds.length === 0) return counts;
   const supabase = getSupabaseBrowserClient();
-  const { count } = await supabase
+  const { data, error } = await supabase
     .from("animals")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId)
+    .select("organization_id")
+    .in("organization_id", orgIds)
     .eq("is_published", true)
     .in("availability_status", ["available", "applications_open"]);
-  return count ?? 0;
+  if (error) throw error;
+  for (const row of (data ?? []) as { organization_id: string | null }[]) {
+    if (!row.organization_id) continue;
+    counts.set(row.organization_id, (counts.get(row.organization_id) ?? 0) + 1);
+  }
+  return counts;
 }
 
-export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
-  const [breeds, availablePuppies] = await Promise.all([
-    orgBreeds(o.id),
-    orgAvailablePuppyCount(o.id),
-  ]);
+export function mapOrgToBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Breeder {
   return {
     id: o.id,
     name: o.profiles?.display_name ?? o.name,
@@ -271,6 +305,16 @@ export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
   };
 }
 
+export async function mapOrgsToBreeders(orgs: OrgRow[]): Promise<Breeder[]> {
+  const [breedsByOrg, puppyCountsByOrg] = await Promise.all([
+    orgBreedsBatch(orgs.map((o) => o.id)),
+    orgAvailablePuppyCounts(orgs.map((o) => o.id)),
+  ]);
+  return orgs.map((o) =>
+    mapOrgToBreeder(o, breedsByOrg.get(o.id) ?? [], puppyCountsByOrg.get(o.id) ?? 0),
+  );
+}
+
 export const orgSelect =
   "id, name, slug, org_type, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, transport_available, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name)";
 export type { OrgRow };
@@ -284,7 +328,7 @@ export async function listApprovedKennels() {
     .eq("verification_status", "approved")
     .eq("is_public", true);
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as OrgRow[]).map(mapOrgToBreeder));
+  return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
 }
 
 export async function getKennelBySlug(slug: string) {
@@ -296,7 +340,8 @@ export async function getKennelBySlug(slug: string) {
     .eq("org_type", "kennel")
     .single();
   if (error) throw error;
-  return mapOrgToBreeder(data as unknown as OrgRow);
+  const [breeders] = await mapOrgsToBreeders([data as unknown as OrgRow]);
+  return breeders;
 }
 
 // Foundations/shelters/rescues share the `organisations` table with kennels (see `org_type`), but
@@ -430,14 +475,15 @@ export async function listLittersForKennel(kennelId: string, status?: string) {
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as LitterRow[]).map(mapLitterRow));
+  return mapLitterRows((data ?? []) as unknown as LitterRow[]);
 }
 
 export async function getLitterById(id: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.from("litters").select(litterSelect).eq("id", id).single();
   if (error) throw error;
-  return mapLitterRow(data as unknown as LitterRow);
+  const [litter] = await mapLitterRows([data as unknown as LitterRow]);
+  return litter;
 }
 
 export type ParentDogInfo = {
@@ -518,7 +564,8 @@ export async function getKennelById(id: string) {
     .eq("id", id)
     .single();
   if (error) throw error;
-  return mapOrgToBreeder(data as unknown as OrgRow);
+  const [breeders] = await mapOrgsToBreeders([data as unknown as OrgRow]);
+  return breeders;
 }
 
 // Adoption listings are `animals` rows with listing_category='adoption' — a rescue/shelter dog,
