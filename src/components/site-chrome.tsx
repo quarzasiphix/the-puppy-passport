@@ -215,6 +215,7 @@ export function SiteFooter() {
             ["Marketplace", "/find-a-dog"],
             ["Find your ideal dog", "/find-your-dog"],
             ["Verified breeders", "/breeders"],
+            ["Planned litters", "/planned-litters"],
             ["Foundations", "/foundations"],
             ["Adoptions", "/adoptions"],
             ["Rehome your dog", "/rehome"],
@@ -232,6 +233,7 @@ export function SiteFooter() {
           title={t("footer.account")}
           items={[
             ["How it works", "/how-it-works"],
+            ["Community groups", "/community/groups"],
             ["Create an account", "/signup"],
             ["Apply as breeder / foundation", "/create-breeder"],
             ["Sign in", "/signin"],

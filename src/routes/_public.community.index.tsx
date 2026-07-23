@@ -251,7 +251,19 @@ function PostCard({
         </Avatar>
         <div>
           <div className="flex items-center gap-2 font-medium">
-            {!post.author_organization_id && post.author_profile_id ? (
+            {post.author_organization_id && post.organisations ? (
+              <Link
+                to={
+                  post.organisations.org_type === "kennel"
+                    ? "/breeders/$slug"
+                    : "/foundations/$slug"
+                }
+                params={{ slug: post.organisations.slug }}
+                className="hover:underline"
+              >
+                {authorName(post)}
+              </Link>
+            ) : post.author_profile_id ? (
               <Link
                 to="/profile/$profileId"
                 params={{ profileId: post.author_profile_id }}
@@ -268,13 +280,17 @@ function PostCard({
               </Badge>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <time
+            dateTime={post.created_at}
+            title={new Date(post.created_at).toLocaleString("en-GB")}
+            className="block text-xs text-muted-foreground"
+          >
             {new Date(post.created_at).toLocaleDateString("en-GB", {
               day: "numeric",
               month: "short",
               year: "numeric",
             })}
-          </div>
+          </time>
         </div>
       </div>
       {post.content && <p className="mt-3 whitespace-pre-wrap text-sm">{post.content}</p>}

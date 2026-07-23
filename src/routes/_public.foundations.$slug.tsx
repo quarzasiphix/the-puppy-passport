@@ -1,0 +1,224 @@
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ShieldCheck, Truck, MessageCircle, MapPin, Heart, HeartHandshake } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getFoundationBySlug, listPublishedAdoptionsForOrg } from "@/lib/queries/marketplace";
+import { AdoptionCard } from "@/components/cards";
+import { ReportDialog } from "@/components/report-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
+import { useTranslation } from "@/lib/i18n";
+
+export const Route = createFileRoute("/_public/foundations/$slug")({
+  loader: async ({ params }) => {
+    const f = await getFoundationBySlug(params.slug).catch(() => null);
+    if (!f) throw notFound();
+    const animals = await listPublishedAdoptionsForOrg(f.id);
+    return { f, animals };
+  },
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData ? `${loaderData.f.name} — Havenpaw` : "Foundation — Havenpaw" },
+      {
+        name: "description",
+        content: loaderData
+          ? `${loaderData.f.name} in ${loaderData.f.city}, ${loaderData.f.country} — a verified foundation on Havenpaw.`
+          : "A foundation profile on Havenpaw.",
+      },
+    ],
+  }),
+  component: FoundationProfile,
+});
+
+function FoundationProfile() {
+  const { f, animals } = Route.useLoaderData();
+  const { userId, isSignedIn } = useAuth();
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const [tab, setTab] = useState("about");
+  const orgTypeLabel = {
+    foundation: t("foundations.orgTypeFoundation"),
+    shelter: t("foundations.orgTypeShelter"),
+    rescue: t("foundations.orgTypeRescue"),
+  }[f.orgType];
+  const followedQuery = useQuery({
+    queryKey: ["followed-org-ids", userId],
+    enabled: !!userId,
+    queryFn: () => listFollowedOrgIds(userId!),
+  });
+  const isFollowing = followedQuery.data?.includes(f.id) ?? false;
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error("Sign in to follow foundations.");
+      if (isFollowing) await unfollowOrg(userId, f.id);
+      else await followOrg(userId, f.id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+  });
+
+  return (
+    <div>
+      <div className="relative h-64 bg-secondary md:h-80">
+        <img src={f.cover} alt="" className="size-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+      </div>
+
+      <div className="container-page -mt-24 pb-16">
+        <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm md:p-8">
+          <div className="flex flex-wrap items-start gap-6">
+            <img
+              src={f.logo}
+              alt=""
+              className="size-24 rounded-2xl border-4 border-background object-cover shadow-md"
+            />
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-display text-3xl font-medium">{f.name}</h1>
+                <Badge variant="secondary">{orgTypeLabel}</Badge>
+                {f.verified && (
+                  <Badge className="bg-primary/90 text-primary-foreground">
+                    <ShieldCheck className="mr-1 size-3" /> {t("foundations.verified")}
+                  </Badge>
+                )}
+              </div>
+              {(f.city || f.country) && (
+                <p className="mt-1 text-muted-foreground">
+                  <MapPin className="mr-1 inline size-3.5" />
+                  {[f.city, f.country].filter(Boolean).join(", ")}
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-6 text-sm">
+                <Stat
+                  label={t("foundations.statDogsForAdoption")}
+                  value={String(f.availableForAdoption)}
+                />
+                {f.association && (
+                  <Stat label={t("foundations.statAssociation")} value={f.association} />
+                )}
+                {f.responseTime && (
+                  <Stat label={t("foundations.statResponseTime")} value={f.responseTime} />
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex gap-2">
+                <Button size="lg" onClick={() => setTab("animals")}>
+                  <MessageCircle className="mr-1 size-4" /> {t("foundations.contactFoundation")}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  disabled={followMutation.isPending}
+                  onClick={() =>
+                    isSignedIn
+                      ? followMutation.mutate()
+                      : toast.info(t("foundations.signInToFollow"))
+                  }
+                >
+                  <Heart
+                    className={`mr-1 size-4 ${isFollowing ? "fill-current text-accent" : ""}`}
+                  />
+                  {isFollowing ? t("foundations.following") : t("foundations.follow")}
+                </Button>
+              </div>
+              <ReportDialog
+                targetType="organisation"
+                targetId={f.id}
+                triggerLabel={t("foundations.reportOrg")}
+              />
+            </div>
+          </div>
+        </div>
+
+        <Tabs value={tab} onValueChange={setTab} className="mt-8">
+          <TabsList className="w-full flex-wrap justify-start">
+            <TabsTrigger value="about">{t("foundations.tabAbout")}</TabsTrigger>
+            <TabsTrigger value="animals">{t("foundations.tabAnimals")}</TabsTrigger>
+            <TabsTrigger value="transport">{t("foundations.tabTransport")}</TabsTrigger>
+            <TabsTrigger value="contact">{t("foundations.tabContact")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="about" className="mt-6">
+            <Card>
+              <h3 className="mb-3 font-display text-xl font-semibold">
+                {t("foundations.ourMission")}
+              </h3>
+              <p className="text-muted-foreground">
+                {f.description || t("foundations.noDescription")}
+              </p>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="animals" className="mt-6">
+            {animals.length ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {animals.map((a) => (
+                  <AdoptionCard key={a.id} a={a} />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <div className="flex items-start gap-3">
+                  <HeartHandshake className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                  <p className="text-muted-foreground">{t("foundations.noAnimalsPublished")}</p>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="transport" className="mt-6">
+            <Card>
+              <div className="flex items-start gap-4">
+                <Truck className="size-6 text-primary" />
+                <div>
+                  <h3 className="font-display text-xl font-semibold">
+                    {t("foundations.tabTransport")}
+                  </h3>
+                  <p className="mt-1 text-muted-foreground">
+                    {f.transportAvailable
+                      ? t("foundations.transportAvailableDesc")
+                      : t("foundations.transportUnknownDesc")}
+                  </p>
+                  <Button asChild variant="outline" className="mt-4">
+                    <Link to="/transport">{t("foundations.seeTransportOptions")}</Link>
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="contact" className="mt-6">
+            <Card>
+              <h3 className="mb-3 font-display text-xl font-semibold">
+                {t("foundations.contactProcessTitle")}
+              </h3>
+              <p className="text-muted-foreground">{t("foundations.contactProcessDesc")}</p>
+              <Button className="mt-4" onClick={() => setTab("animals")}>
+                {t("foundations.viewAnimals")}
+              </Button>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-border/70 bg-card p-6 ${className}`}>{children}</div>
+  );
+}
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="font-medium">{value}</div>
+    </div>
+  );
+}

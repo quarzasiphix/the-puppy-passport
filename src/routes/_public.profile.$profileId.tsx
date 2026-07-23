@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import {
   followProfile,
-  getPublicKennelSlugForOwner,
+  getPublicOrgLinkForOwner,
   getPublicProfile,
   isFollowingProfile,
   listPublicPostsByAuthor,
@@ -18,11 +18,11 @@ export const Route = createFileRoute("/_public/profile/$profileId")({
   loader: async ({ params }) => {
     const profile = await getPublicProfile(params.profileId).catch(() => null);
     if (!profile) throw notFound();
-    const [posts, kennelSlug] = await Promise.all([
+    const [posts, orgLink] = await Promise.all([
       listPublicPostsByAuthor(profile.id),
-      getPublicKennelSlugForOwner(profile.id),
+      getPublicOrgLinkForOwner(profile.id),
     ]);
-    return { profile, posts, kennelSlug };
+    return { profile, posts, orgLink };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_public/profile/$profileId")({
 });
 
 function ProfilePage() {
-  const { profile, posts, kennelSlug } = Route.useLoaderData();
+  const { profile, posts, orgLink } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const isOwnProfile = userId === profile.id;
@@ -80,13 +80,22 @@ function ProfilePage() {
                 {[profile.city, profile.country].filter(Boolean).join(", ")}
               </div>
             )}
-            {kennelSlug && (
+            {orgLink && orgLink.orgType === "kennel" && (
               <Link
                 to="/breeders/$slug"
-                params={{ slug: kennelSlug }}
+                params={{ slug: orgLink.slug }}
                 className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
               >
                 <Dog className="size-3.5" /> View kennel profile
+              </Link>
+            )}
+            {orgLink && orgLink.orgType !== "kennel" && (
+              <Link
+                to="/foundations/$slug"
+                params={{ slug: orgLink.slug }}
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              >
+                <Dog className="size-3.5" /> View foundation profile
               </Link>
             )}
           </div>

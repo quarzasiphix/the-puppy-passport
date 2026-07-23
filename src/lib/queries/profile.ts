@@ -44,21 +44,27 @@ export async function listPublicPostsByAuthor(profileId: string): Promise<Profil
   return data ?? [];
 }
 
+export type PublicOrgLink = {
+  slug: string;
+  orgType: "kennel" | "foundation" | "shelter" | "rescue";
+};
+
 // Whether an organisation this profile owns is public+approved, so the page can offer a link into
-// its full portfolio (breeder profiles already have a richer page at /breeders/$slug — this page
-// doesn't duplicate that, it just points to it).
-export async function getPublicKennelSlugForOwner(profileId: string): Promise<string | null> {
+// its full portfolio (breeder profiles at /breeders/$slug, foundation/shelter/rescue profiles at
+// /foundations/$slug — this page doesn't duplicate either, it just points to the right one).
+export async function getPublicOrgLinkForOwner(profileId: string): Promise<PublicOrgLink | null> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
-    .select("slug")
+    .select("slug, org_type")
     .eq("owner_user_id", profileId)
-    .eq("org_type", "kennel")
+    .in("org_type", ["kennel", "foundation", "shelter", "rescue"])
     .eq("verification_status", "approved")
     .eq("is_public", true)
     .maybeSingle();
   if (error) throw error;
-  return data?.slug ?? null;
+  if (!data) return null;
+  return { slug: data.slug, orgType: data.org_type as PublicOrgLink["orgType"] };
 }
 
 export async function listFollowedProfileIds(followerId: string): Promise<string[]> {

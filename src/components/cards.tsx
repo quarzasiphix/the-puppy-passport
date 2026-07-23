@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MapPin, Calendar, Truck, ShieldCheck, Heart } from "lucide-react";
+import { MapPin, Calendar, Truck, ShieldCheck, Heart, HeartHandshake } from "lucide-react";
 import type { Puppy, Litter, Breeder } from "@/lib/mock-data";
-import type { AdoptionListing } from "@/lib/queries/marketplace";
+import type { AdoptionListing, Foundation } from "@/lib/queries/marketplace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -184,7 +184,18 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
           <MapPin className="size-3.5" /> {a.city}, {a.country}
         </span>
         <p className="line-clamp-2 text-sm text-muted-foreground">{a.description}</p>
-        <p className="text-sm text-muted-foreground">{a.orgName}</p>
+        {a.category === "private_rehoming" || !a.orgSlug ? (
+          <p className="text-sm text-muted-foreground">{a.orgName}</p>
+        ) : (
+          <Link
+            to="/foundations/$slug"
+            params={{ slug: a.orgSlug }}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {a.orgName}
+          </Link>
+        )}
         <Button asChild className="mt-auto">
           <Link to="/adoptions/$id" params={{ id: a.id }}>
             Meet {a.name}
@@ -253,6 +264,60 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
             </Button>
           )}
         </div>
+      </div>
+    </article>
+  );
+}
+
+export const foundationOrgTypeLabel: Record<Foundation["orgType"], string> = {
+  foundation: "Foundation",
+  shelter: "Shelter",
+  rescue: "Rescue",
+};
+
+export function FoundationCard({ f }: { f: Foundation }) {
+  return (
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
+      <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
+        <img src={f.cover} alt={f.name} loading="lazy" className="size-full object-cover" />
+        <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
+          {f.verified && (
+            <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
+              <ShieldCheck className="mr-1 size-3" /> Verified
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="font-display text-lg font-semibold">{f.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {foundationOrgTypeLabel[f.orgType]}
+              {f.city || f.country ? ` · ${[f.city, f.country].filter(Boolean).join(", ")}` : ""}
+            </p>
+          </div>
+          {f.transportAvailable && (
+            <Badge variant="secondary" className="shrink-0">
+              <Truck className="mr-1 size-3" /> Transport
+            </Badge>
+          )}
+        </div>
+        <p className="line-clamp-3 text-sm text-muted-foreground">
+          {f.description || "This organisation hasn't added a description yet."}
+        </p>
+        <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <HeartHandshake className="size-3.5" />
+            {f.availableForAdoption} dog{f.availableForAdoption === 1 ? "" : "s"} for adoption
+          </span>
+          {f.responseTime && <span>Responds {f.responseTime}</span>}
+        </div>
+        <Button asChild variant="outline" className="mt-1">
+          <Link to="/foundations/$slug" params={{ slug: f.slug }}>
+            View profile
+          </Link>
+        </Button>
       </div>
     </article>
   );

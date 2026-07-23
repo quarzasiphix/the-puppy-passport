@@ -162,7 +162,17 @@ function AdoptionDetail() {
 
         <aside className="space-y-4">
           <div className="rounded-2xl border border-border/70 bg-card p-5">
-            <h2 className="font-display text-lg font-semibold">{a.orgName}</h2>
+            {a.category === "private_rehoming" || !a.orgSlug ? (
+              <h2 className="font-display text-lg font-semibold">{a.orgName}</h2>
+            ) : (
+              <Link
+                to="/foundations/$slug"
+                params={{ slug: a.orgSlug }}
+                className="font-display text-lg font-semibold hover:underline"
+              >
+                {a.orgName}
+              </Link>
+            )}
             {a.adoptionFee != null && (
               <p className="mt-2 text-sm">
                 Adoption fee:{" "}
