@@ -113,19 +113,21 @@ unless the audit finds a real problem").
 
 ## Remaining work this session (in order)
 
-1. `docs/FRONTEND_BACKEND_GAPS.md` — consolidate every backend dependency already surfaced across
-   `MARKETPLACE_UX_AUDIT.md`'s phases into one dedicated file (report-a-group, image-load-failure
-   fallback, pagination, litter detail page, etc.).
-2. Phase 15-equivalent — audit `/create-breeder`, `/signup`, `/rehome` (not yet reviewed this
-   session).
-3. Phase 16-equivalent — `docs/FRONTEND_TRANSPORT_HANDOFF.md` + any isolated presentation
-   components genuinely missing.
-4. Phase 26 — TODO/FIXME/mock/placeholder scan across touched surfaces.
-5. Phase 27 — design-consistency pass.
-6. Phase 28 — branch self-review (re-reading the full diff from `02e6416` as a PR).
-7. `docs/FRONTEND_BROWSER_QA.md` — consolidate every "needs a real browser" note already scattered
-   through `MARKETPLACE_UX_AUDIT.md` into one checklist.
-8. `docs/FRONTEND_INTEGRATION_REPORT.md` — final integration-readiness report.
-9. Final verification pass + closing commit.
+1. ✅ `docs/FRONTEND_BACKEND_GAPS.md` — done (commit `e4835ec`).
+2. ✅ Phase 15-equivalent — audited `/create-breeder`, `/signup`, `/rehome` (commit `0e94d18`):
+   fixed 8 unlabelled fields on `/rehome`, an unannounced selection state on `/create-breeder`'s
+   org-type picker, and a real duplicate-submission risk (a failed "have you already applied" check
+   silently showed the fresh application form).
+3. ✅ Phase 16-equivalent — `docs/FRONTEND_TRANSPORT_HANDOFF.md` created; found and fixed a real gap
+   while documenting the existing `?animalId=` handoff contract: `/adoptions/$id` showed a
+   "Transport available" badge with no way to act on it, unlike `/puppies/$id`'s existing Transport
+   tab + button. Added the same CTA, honestly worded for adoption vs. private rehoming.
+4. ⏳ Phase 26 — TODO/FIXME/mock/placeholder scan across touched surfaces. **Next.**
+5. ⏳ Phase 27 — design-consistency pass.
+6. ⏳ Phase 28 — branch self-review (re-reading the full diff from `02e6416` as a PR).
+7. ⏳ `docs/FRONTEND_BROWSER_QA.md` — consolidate every "needs a real browser" note already
+   scattered through `MARKETPLACE_UX_AUDIT.md` into one checklist.
+8. ⏳ `docs/FRONTEND_INTEGRATION_REPORT.md` — final integration-readiness report.
+9. ⏳ Final verification pass + closing commit.
 
 This file will be updated after each remaining step.
