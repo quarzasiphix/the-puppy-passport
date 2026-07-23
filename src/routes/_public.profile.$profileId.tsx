@@ -15,6 +15,7 @@ import {
   unfollowProfile,
 } from "@/lib/queries/profile";
 import { orgProfileRoute } from "@/lib/org-routing";
+import { ReportDialog } from "@/components/report-dialog";
 
 export const Route = createFileRoute("/_public/profile/$profileId")({
   loader: async ({ params }) => {
@@ -103,22 +104,31 @@ function ProfilePage() {
           </div>
         </div>
 
-        {isSignedIn && !isOwnProfile && (
-          <Button
-            variant={followingQuery.data ? "outline" : "default"}
-            disabled={followMutation.isPending || followingQuery.isLoading}
-            onClick={() => followMutation.mutate()}
-          >
-            {followingQuery.data ? (
-              <>
-                <UserCheck className="mr-1 size-4" /> Following
-              </>
-            ) : (
-              <>
-                <UserPlus className="mr-1 size-4" /> Follow
-              </>
+        {!isOwnProfile && (
+          <div className="flex flex-col items-end gap-2">
+            {isSignedIn && (
+              <Button
+                variant={followingQuery.data ? "outline" : "default"}
+                disabled={followMutation.isPending || followingQuery.isLoading}
+                onClick={() => followMutation.mutate()}
+              >
+                {followingQuery.data ? (
+                  <>
+                    <UserCheck className="mr-1 size-4" /> Following
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-1 size-4" /> Follow
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
+            <ReportDialog
+              targetType="user"
+              targetId={profile.id}
+              triggerLabel="Report this profile"
+            />
+          </div>
         )}
       </div>
 
