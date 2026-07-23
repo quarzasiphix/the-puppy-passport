@@ -253,6 +253,28 @@ function AdoptionDetail() {
               </div>
             )}
           </div>
+
+          {a.transportAvailable && (
+            <div className="rounded-2xl border border-border/70 bg-card p-5">
+              <div className="flex items-center gap-2">
+                <Truck className="size-4 text-primary" />
+                <h2 className="font-display text-base font-semibold">Transport</h2>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {a.orgName} can arrange transport for {a.name} once{" "}
+                {a.category === "private_rehoming"
+                  ? "the handover is agreed"
+                  : "your adoption is approved"}{" "}
+                — it's never booked automatically, and the exact pickup/delivery address stays
+                private until you submit a transport request.
+              </p>
+              <Button asChild variant="outline" className="mt-3 w-full">
+                <Link to="/transport/request" search={{ animalId: a.id }}>
+                  Check transport options
+                </Link>
+              </Button>
+            </div>
+          )}
         </aside>
       </div>
     </div>
