@@ -787,6 +787,20 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["welfare_case_documents"]["Row"]>;
         Relationships: [];
       };
+      rate_limit_events: {
+        Row: {
+          id: string;
+          actor_profile_id: string;
+          action_key: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["rate_limit_events"]["Row"]> & {
+          actor_profile_id: string;
+          action_key: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["rate_limit_events"]["Row"]>;
+        Relationships: [];
+      };
       markets: {
         Row: {
           id: string;
@@ -1619,6 +1633,10 @@ export interface Database {
           p_link_url?: string | null;
         };
         Returns: string;
+      };
+      enforce_rate_limit: {
+        Args: { p_action_key: string; p_max_count: number; p_window: string };
+        Returns: undefined;
       };
     };
   };
