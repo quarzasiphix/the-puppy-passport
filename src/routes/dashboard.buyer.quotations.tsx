@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { listMyQuotations, respondToQuotation } from "@/lib/queries/transport";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { formatNumber } from "@/lib/presentation/number";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -31,6 +32,17 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-destructive/10 text-destructive",
   expired: "bg-destructive/10 text-destructive",
   replaced: "bg-muted text-muted-foreground",
+};
+
+// Never show a raw internal quotation-status enum value to a buyer — translate it into the same
+// plain-language journey every other customer-facing status display in this app already uses.
+const statusLabels: Record<string, string> = {
+  sent: "Awaiting your response",
+  viewed: "Awaiting your response",
+  accepted: "Accepted",
+  rejected: "Declined",
+  expired: "Expired",
+  replaced: "Replaced by a new quotation",
 };
 
 function BuyerQuotationsPage() {
@@ -92,7 +104,7 @@ function BuyerQuotationsPage() {
                     </span>
                   </div>
                   <div className="mt-1 font-display text-2xl font-semibold">
-                    {q.total_price?.toLocaleString()} {q.currency}
+                    {q.total_price != null ? formatNumber(q.total_price, locale) : ""} {q.currency}
                   </div>
                   {q.expiry_date && (
                     <p className="text-xs text-muted-foreground">
@@ -108,7 +120,7 @@ function BuyerQuotationsPage() {
                   </p>
                 </div>
                 <Badge className={statusStyles[q.status] ?? "bg-muted text-muted-foreground"}>
-                  {q.status}
+                  {statusLabels[q.status] ?? q.status}
                 </Badge>
               </div>
               {(q.status === "sent" || q.status === "viewed") && (
@@ -121,9 +133,10 @@ function BuyerQuotationsPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This confirms you agree to {q.total_price?.toLocaleString()} {q.currency}{" "}
-                          for this transport. Operations will follow up on scheduling and remaining
-                          documents.
+                          This confirms you agree to{" "}
+                          {q.total_price != null ? formatNumber(q.total_price, locale) : ""}{" "}
+                          {q.currency} for this transport. Operations will follow up on scheduling
+                          and remaining documents.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

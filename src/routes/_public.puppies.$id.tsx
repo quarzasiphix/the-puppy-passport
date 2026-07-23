@@ -41,6 +41,7 @@ import { startApplicationConversation } from "@/lib/queries/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/lib/queries/applications";
 import { formatDate } from "@/lib/presentation/date";
+import { formatNumber } from "@/lib/presentation/number";
 import { useTranslation } from "@/lib/i18n";
 import { AnimalImage } from "@/components/marketplace/animal-image";
 
@@ -421,10 +422,10 @@ function PuppyDetail() {
 
               <div>
                 <div className="font-display text-3xl font-semibold">
-                  {puppy.pricePLN.toLocaleString()} PLN
+                  {formatNumber(puppy.pricePLN, locale)} PLN
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  ≈ €{puppy.priceEUR.toLocaleString()}
+                  ≈ €{formatNumber(puppy.priceEUR, locale)}
                 </div>
               </div>
 

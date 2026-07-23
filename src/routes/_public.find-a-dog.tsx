@@ -20,6 +20,7 @@ import { listPublishedPuppies, type PuppyWithExtras } from "@/lib/queries/market
 import { PuppyCard } from "@/components/cards";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { formatNumber } from "@/lib/presentation/number";
 
 export const Route = createFileRoute("/_public/find-a-dog")({
   loader: () => listPublishedPuppies(),
@@ -308,10 +309,10 @@ function FindADog() {
                   <div className="flex flex-col items-end justify-between py-1 pr-3">
                     <div className="text-right">
                       <div className="font-display text-lg font-semibold">
-                        {p.pricePLN.toLocaleString()} PLN
+                        {formatNumber(p.pricePLN, locale)} PLN
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        ≈ €{p.priceEUR.toLocaleString()}
+                        ≈ €{formatNumber(p.priceEUR, locale)}
                       </div>
                     </div>
                     <Button size="sm">View puppy</Button>
@@ -343,6 +344,7 @@ function FilterControls({
   priceBounds: [number, number];
   hideHeader?: boolean;
 }) {
+  const { locale } = useTranslation();
   return (
     <>
       {!hideHeader && (
@@ -423,7 +425,7 @@ function FilterControls({
       </FilterGroup>
 
       <FilterGroup
-        title={`Price (PLN) — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
+        title={`Price (PLN) — ${formatNumber(f.price[0], locale)} – ${formatNumber(f.price[1], locale)}`}
       >
         <Slider
           value={f.price}

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "@/lib/queries/buyer-activity";
 import { pluralCategory, useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { formatNumber } from "@/lib/presentation/number";
 import { AnimalImage } from "@/components/marketplace/animal-image";
 
 // Shared across every card on a page — react-query dedupes identical keys, so this is one query
@@ -124,9 +125,11 @@ export function PuppyCard({ p }: { p: Puppy }) {
           </div>
           <div className="shrink-0 text-right">
             <div className="font-display text-lg font-semibold">
-              {p.pricePLN.toLocaleString()} PLN
+              {formatNumber(p.pricePLN, locale)} PLN
             </div>
-            <div className="text-xs text-muted-foreground">≈ €{p.priceEUR.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">
+              ≈ €{formatNumber(p.priceEUR, locale)}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-1.5 text-xs text-muted-foreground">
@@ -150,6 +153,7 @@ export function PuppyCard({ p }: { p: Puppy }) {
 }
 
 export function AdoptionCard({ a }: { a: AdoptionListing }) {
+  const { locale } = useTranslation();
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
@@ -193,7 +197,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
           {a.adoptionFee != null && (
             <div className="shrink-0 text-right">
               <div className="font-display text-lg font-semibold">
-                {a.adoptionFee.toLocaleString()} {a.currency}
+                {formatNumber(a.adoptionFee, locale)} {a.currency}
               </div>
               <div className="text-xs text-muted-foreground">
                 {a.category === "private_rehoming" ? "rehoming fee" : "adoption fee"}
