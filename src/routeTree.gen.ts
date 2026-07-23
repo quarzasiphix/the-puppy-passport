@@ -50,6 +50,7 @@ import { Route as PublicFundraisingIndexRouteImport } from './routes/_public.fun
 import { Route as PublicCommunityIndexRouteImport } from './routes/_public.community.index'
 import { Route as PublicBreedersIndexRouteImport } from './routes/_public.breeders.index'
 import { Route as PublicAdoptionsIndexRouteImport } from './routes/_public.adoptions.index'
+import { Route as DashboardOperationsWelfareCasesRouteImport } from './routes/dashboard.operations.welfare-cases'
 import { Route as DashboardOperationsVehiclesRouteImport } from './routes/dashboard.operations.vehicles'
 import { Route as DashboardOperationsRoutesRouteImport } from './routes/dashboard.operations.routes'
 import { Route as DashboardOperationsReviewQueueRouteImport } from './routes/dashboard.operations.review-queue'
@@ -331,6 +332,12 @@ const PublicAdoptionsIndexRoute = PublicAdoptionsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PublicAdoptionsRoute,
 } as any)
+const DashboardOperationsWelfareCasesRoute =
+  DashboardOperationsWelfareCasesRouteImport.update({
+    id: '/welfare-cases',
+    path: '/welfare-cases',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
 const DashboardOperationsVehiclesRoute =
   DashboardOperationsVehiclesRouteImport.update({
     id: '/vehicles',
@@ -848,6 +855,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
   '/adoptions/': typeof PublicAdoptionsIndexRoute
   '/breeders/': typeof PublicBreedersIndexRoute
   '/community/': typeof PublicCommunityIndexRoute
@@ -949,6 +957,7 @@ export interface FileRoutesByTo {
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
   '/adoptions': typeof PublicAdoptionsIndexRoute
   '/breeders': typeof PublicBreedersIndexRoute
   '/community': typeof PublicCommunityIndexRoute
@@ -1067,6 +1076,7 @@ export interface FileRoutesById {
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
   '/_public/adoptions/': typeof PublicAdoptionsIndexRoute
   '/_public/breeders/': typeof PublicBreedersIndexRoute
   '/_public/community/': typeof PublicCommunityIndexRoute
@@ -1185,6 +1195,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/review-queue'
     | '/dashboard/operations/routes'
     | '/dashboard/operations/vehicles'
+    | '/dashboard/operations/welfare-cases'
     | '/adoptions/'
     | '/breeders/'
     | '/community/'
@@ -1286,6 +1297,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/quotations'
     | '/dashboard/operations/review-queue'
     | '/dashboard/operations/vehicles'
+    | '/dashboard/operations/welfare-cases'
     | '/adoptions'
     | '/breeders'
     | '/community'
@@ -1403,6 +1415,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/review-queue'
     | '/dashboard/operations/routes'
     | '/dashboard/operations/vehicles'
+    | '/dashboard/operations/welfare-cases'
     | '/_public/adoptions/'
     | '/_public/breeders/'
     | '/_public/community/'
@@ -1723,6 +1736,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/adoptions/'
       preLoaderRoute: typeof PublicAdoptionsIndexRouteImport
       parentRoute: typeof PublicAdoptionsRoute
+    }
+    '/dashboard/operations/welfare-cases': {
+      id: '/dashboard/operations/welfare-cases'
+      path: '/welfare-cases'
+      fullPath: '/dashboard/operations/welfare-cases'
+      preLoaderRoute: typeof DashboardOperationsWelfareCasesRouteImport
+      parentRoute: typeof DashboardOperationsRoute
     }
     '/dashboard/operations/vehicles': {
       id: '/dashboard/operations/vehicles'
@@ -2602,6 +2622,7 @@ interface DashboardOperationsRouteChildren {
   DashboardOperationsReviewQueueRoute: typeof DashboardOperationsReviewQueueRoute
   DashboardOperationsRoutesRoute: typeof DashboardOperationsRoutesRouteWithChildren
   DashboardOperationsVehiclesRoute: typeof DashboardOperationsVehiclesRoute
+  DashboardOperationsWelfareCasesRoute: typeof DashboardOperationsWelfareCasesRoute
   DashboardOperationsIndexRoute: typeof DashboardOperationsIndexRoute
   DashboardOperationsRequestsIdRoute: typeof DashboardOperationsRequestsIdRoute
 }
@@ -2623,6 +2644,7 @@ const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
   DashboardOperationsReviewQueueRoute: DashboardOperationsReviewQueueRoute,
   DashboardOperationsRoutesRoute: DashboardOperationsRoutesRouteWithChildren,
   DashboardOperationsVehiclesRoute: DashboardOperationsVehiclesRoute,
+  DashboardOperationsWelfareCasesRoute: DashboardOperationsWelfareCasesRoute,
   DashboardOperationsIndexRoute: DashboardOperationsIndexRoute,
   DashboardOperationsRequestsIdRoute: DashboardOperationsRequestsIdRoute,
 }

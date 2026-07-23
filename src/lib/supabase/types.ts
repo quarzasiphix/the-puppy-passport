@@ -666,6 +666,68 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["transport_documents"]["Row"]>;
         Relationships: [];
       };
+      welfare_cases: {
+        Row: {
+          id: string;
+          case_number: string | null;
+          organisation_id: string;
+          created_by: string;
+          animal_id: string | null;
+          animal_name: string | null;
+          animal_description: string | null;
+          reason: string;
+          urgency: "routine" | "urgent" | "critical";
+          location_country: string | null;
+          location_city: string | null;
+          location_area_approx: string | null;
+          location_address_exact: string | null;
+          destination_country: string | null;
+          destination_city: string | null;
+          deadline: string | null;
+          welfare_notes: string | null;
+          contact_name: string | null;
+          contact_phone: string | null;
+          status:
+            | "draft"
+            | "submitted"
+            | "under_review"
+            | "information_required"
+            | "accepted_for_assessment"
+            | "declined"
+            | "converted_to_transport"
+            | "closed";
+          ops_acknowledged: boolean;
+          ops_acknowledged_by: string | null;
+          ops_acknowledged_at: string | null;
+          review_notes: string | null;
+          converted_transport_request_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["welfare_cases"]["Row"]> & {
+          organisation_id: string;
+          created_by: string;
+          reason: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["welfare_cases"]["Row"]>;
+        Relationships: [];
+      };
+      welfare_case_documents: {
+        Row: {
+          id: string;
+          welfare_case_id: string;
+          file_url: string;
+          uploaded_by: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["welfare_case_documents"]["Row"]> & {
+          welfare_case_id: string;
+          file_url: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["welfare_case_documents"]["Row"]>;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;
@@ -1283,6 +1345,22 @@ export interface Database {
       review_transport_amendment: {
         Args: { p_amendment_id: string; p_approve: boolean; p_review_note?: string | null };
         Returns: undefined;
+      };
+      acknowledge_welfare_case: {
+        Args: { p_case_id: string };
+        Returns: undefined;
+      };
+      review_welfare_case: {
+        Args: {
+          p_case_id: string;
+          p_decision: "accepted_for_assessment" | "declined" | "information_required";
+          p_review_notes?: string | null;
+        };
+        Returns: undefined;
+      };
+      convert_welfare_case_to_transport_draft: {
+        Args: { p_case_id: string };
+        Returns: string;
       };
     };
   };

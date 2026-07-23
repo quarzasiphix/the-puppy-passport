@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   TrendingUp,
   Users,
+  HeartPulse,
 } from "lucide-react";
 import { requireRole } from "@/lib/auth/guards";
 import { DashboardShell, type DashboardNavItem } from "@/components/dashboard-shell";
@@ -40,6 +41,7 @@ const items: DashboardNavItem[] = [
   { to: "/dashboard/operations/drivers", label: "Drivers", icon: UserRound },
   { to: "/dashboard/operations/documents", label: "Documents", icon: FileText },
   { to: "/dashboard/operations/compliance-holds", label: "Compliance holds", icon: ShieldAlert },
+  { to: "/dashboard/operations/welfare-cases", label: "Welfare cases", icon: HeartPulse },
   { to: "/dashboard/operations/incidents", label: "Incidents", icon: AlertOctagon },
   { to: "/dashboard/operations/completed", label: "Completed transports", icon: CheckCircle2 },
 ];
