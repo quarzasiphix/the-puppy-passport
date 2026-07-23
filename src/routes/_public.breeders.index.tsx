@@ -8,7 +8,16 @@ import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
-  head: () => ({ meta: [{ title: "Verified breeders — Havenpaw" }] }),
+  head: () => ({
+    meta: [
+      { title: "Verified breeders — Havenpaw" },
+      {
+        name: "description",
+        content:
+          "Browse verified dog breeders across Europe, checked for identity, association membership and breeding practice.",
+      },
+    ],
+  }),
   component: BreedersList,
 });
 
