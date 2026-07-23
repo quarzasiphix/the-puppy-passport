@@ -47,6 +47,7 @@ export type Litter = {
   father: string;
   breederId: string;
   breederName: string;
+  breederSlug?: string;
   kennel: string;
   puppyCount: number;
   available: number;

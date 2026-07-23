@@ -143,7 +143,7 @@ type LitterRow = {
   breeds: { name: string } | null;
   mother: { registered_name: string; profile_image_url: string | null } | null;
   father: { registered_name: string } | null;
-  organisations: { id: string; name: string } | null;
+  organisations: { id: string; name: string; slug: string } | null;
 };
 
 function toLitterStatus(status: string): Litter["status"] {
@@ -177,6 +177,7 @@ async function mapLitterRow(l: LitterRow): Promise<Litter> {
     father: l.father?.registered_name ?? "Not on file",
     breederId: l.organisations?.id ?? "",
     breederName: l.organisations?.name ?? "",
+    breederSlug: l.organisations?.slug ?? "",
     kennel: l.organisations?.name ?? "",
     puppyCount: l.puppy_count ?? 0,
     available,
@@ -190,7 +191,7 @@ async function mapLitterRow(l: LitterRow): Promise<Litter> {
 }
 
 const litterSelect =
-  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, name)";
+  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, name, slug)";
 
 export async function listPublishedLitters(status?: string) {
   const supabase = getSupabaseBrowserClient();
