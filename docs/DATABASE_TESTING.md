@@ -92,6 +92,20 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   — reproduced against the real API before fixing), and organisations turned out to have no DELETE
   policy on their own campaigns at all (by design, but the test fixtures had to be updated to clean
   up via admin instead of the org account).
+- **`tests/db/transport-domain.test.ts`** — the transport-data-model hardening pass
+  (`docs/adr/TRANSPORT_DATA_MODEL.md`): `create_transport_draft()`'s happy path with multiple
+  animals and parties, atomic creation (a mid-call failure leaves no orphan rows), the
+  'requester'-party-is-automatic rule, the legal_owner/sender/payer forgery block (naming another
+  Havenpaw user as recipient is allowed, the same roles via profile_id are not), the animal
+  entitlement check (a customer can't attach an animal they have no real connection to; the owning
+  organisation's own member can), the post-draft snapshot lock on `transport_requests` (ops can still
+  correct it directly, the requester can't), the equivalent lock on
+  `transport_request_animals`/`transport_parties` insert/update/delete, the full amendment workflow
+  (file → an unrelated user can't see or review it → ops approves and it applies to the live row →
+  an already-reviewed amendment can't be reviewed again, plus a field outside the allow-list is
+  rejected and a still-draft request can't be amended), `transport_documents.transport_party_id`
+  must belong to the same request, and the real document upload flow (a private Storage object, not
+  a public link; a signed URL only the requester can generate).
 
 ## Previously-open findings, now fixed
 

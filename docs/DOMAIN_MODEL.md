@@ -67,14 +67,59 @@ shape and *why*, not every field.
 ## Transport (the largest module)
 
 - **`transport_requests`** — the center of the platform. Carries the full 7-step-form field set:
-  request type/purpose, inline animal snapshot (plus optional `animal_id` link into `animals`),
-  parties (`current_owner_profile_id`, `sender_org_id`, etc. — currently limited to Havenpaw users/
-  orgs, not yet free-text external contacts, see `DECISIONS.md`), route (approximate + separate
-  private-exact address columns), the compliance questionnaire, `compliance_review_result` (a
-  routing label, never a legal decision), `requested_service_type`, the ~24-state operational
-  `status` enum, and the 5 step-7 confirmation booleans.
+  request type/purpose, inline animal snapshot (plus optional `animal_id` link into `animals`) —
+  this remains the booking-time snapshot of the *first* animal on the request, unchanged since it
+  was built — route (approximate + separate private-exact address columns), the compliance
+  questionnaire, `compliance_review_result` (a routing label, never a legal decision),
+  `requested_service_type`, the ~24-state operational `status` enum, and the 5 step-7 confirmation
+  booleans. Two triggers lock this row down once it leaves `draft` (see
+  `docs/adr/TRANSPORT_DATA_MODEL.md`): operational columns (`status`/`compliance_review_result`/
+  `visibility`/`assigned_*`) are ops/driver-only (`20260101006000`); every other snapshot column is
+  read-only to the requester (`20260101006900`) — a post-submission change goes through the
+  amendment workflow below instead.
+- **`transport_request_animals`** (added in the transport-data-model hardening pass) — one row per
+  animal on the request (`position` 1..N), each either linked to a real `animals.id` or carrying its
+  own inline snapshot for an animal never registered in Havenpaw. Finally gives
+  `transport_requests.number_of_animals > 1` an actual, queryable representation — previously just a
+  plain integer with no linkage to which animals those were. `create_transport_draft()` also
+  validates that any linked `animal_id` is one the caller actually has a real connection to
+  (ownership, org membership, or an existing application/reservation naming them) — otherwise a
+  customer could attach an arbitrary real animal's uuid to their own request and have it wrongly
+  appear on an unrelated breeder/foundation's dashboard.
+- **`transport_parties`** — legal_owner/sender/recipient/payer/pickup_contact/delivery_contact,
+  each a `profile_id`, an `organisation_id`, or a full external contact (name + phone + email — not
+  just the single free-text name the legacy `release_authorized_by`/`receive_authorized_by` columns
+  on `transport_requests` ever captured, though those columns are kept, unchanged, for backward
+  compatibility). Existed since 2026-07-22 with correct RLS but zero real callers; backfilled from
+  the legacy inline columns and given a real writer (`create_transport_draft()`) in the hardening
+  pass. `legal_owner`/`sender`/`payer` may only carry a bare `profile_id` equal to the requester's
+  own id — a customer cannot claim an arbitrary other Havenpaw user already agreed to own/send/pay.
+  `recipient` and organisation-based parties of any role carry no such restriction.
+- **`transport_request_amendments`** + `request_transport_amendment()`/`review_transport_amendment()`
+  — the deliberate path for a legitimate post-submission change (the task's own example: "changed
+  contact details after booking") to one of a fixed allow-list of fields
+  (pickup/destination city/area/exact-address, earliest/latest date, release/receive authorized by).
+  The requester files a proposed change; operations approves (applies it, `audit_logs`-recorded) or
+  rejects. `transport_request_animals`/`transport_parties` rows are similarly locked to
+  insert/update/delete only while the parent request is still `draft`.
+- **`create_transport_draft()`** — the single atomic RPC creating a transport_requests row + its
+  `transport_request_animals` rows + its `transport_parties` rows in one transaction. Always creates
+  `status = 'draft'` regardless of caller input — submitting, scheduling, and confirming a driver/
+  payment all remain separate, deliberate later steps. `src/lib/queries/transport.ts` also exposes
+  three Phase-5 integration entry points that pre-fill this call from known context
+  (`createTransportDraftForMarketplacePurchase`/`ForFoundationAdoption`/`ForPrivateRehoming`) — none
+  are wired into any UI button yet, they exist for a future UI to call without re-deriving the
+  atomic-creation logic three more times.
+- **`driver_transport_job_view`** — a `security_invoker` view over `transport_requests` exposing
+  only the columns an assigned driver actually needs (never payer/owner/compliance/internal-review
+  fields). Row-level access is still governed entirely by the base table's own RLS (this view only
+  narrows columns, never widens which rows a caller can reach) — formalizes at the database layer
+  the column-minimization `src/lib/queries/driver.ts` already did correctly at the application layer.
 - **`transport_status_history`** — append-only audit trail of every status change.
-- **`transport_documents`** — per-category document tracking, private by default.
+- **`transport_documents`** — per-category document tracking, private by default. Now has an
+  optional, nullable `transport_party_id` (added, never backfilled — existing documents have no way
+  to know retroactively which party they concerned) so a document can be linked to the specific
+  party it's about, not just the request as a whole.
 - **`quotations`** — draft quotations are ops-internal; only `sent`-or-later quotations are
   visible to the requester.
 - **`compliance_reviews`**, **`handover_protocols`** — operational review/handover records.

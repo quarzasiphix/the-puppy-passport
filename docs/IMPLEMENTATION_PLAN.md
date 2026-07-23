@@ -29,14 +29,29 @@ session-expiry handling, a dedicated multi-step onboarding flow, an account-stat
 ## 4. Transport requests
 **Working end to end.** The 7-step public request form writes a real `transport_requests` row +
 `transport_status_history`; customer dashboards show real request lists with plain-language status.
-**Partially implemented**: animal and party data on a transport request is currently an inline
-snapshot on `transport_requests`. A dedicated `public.transport_parties` table (legal_owner/
-requester/sender/recipient/payer/pickup_contact/delivery_contact, including non-Havenpaw external
-contacts) **already exists in the schema with real RLS**
-(`20260101002400_animals_transport_fields.sql`) — confirmed by reading the migration directly, this
-document previously and incorrectly said it didn't exist yet — but no UI or query layer uses it.
-The real remaining work is wiring the 7-step form and ops tooling to it, not building it. Draft
-save/resume/edit/delete before submission is **not implemented**.
+
+**Data model hardened** (see `docs/adr/TRANSPORT_DATA_MODEL.md` for the full audit and decision).
+`transport_parties` (legal_owner/requester/sender/recipient/payer/pickup_contact/delivery_contact,
+including non-Havenpaw external contacts with a real name+phone+email) existed since 2026-07-22 with
+correct RLS but zero callers — now backfilled from the legacy inline columns, hardened (3 integrity
+fixes), and given a real writer. A new `transport_request_animals` table gives
+`number_of_animals > 1` an actual, safe, queryable representation (previously just a plain integer
+with zero linkage to which animals those were). `create_transport_draft()` is the single atomic RPC
+creating a request + its animals + its parties in one transaction, with a real animal-entitlement
+check (a customer can't attach an arbitrary animal's uuid they don't have a genuine connection to) and
+a real forgery check (can't claim another Havenpaw user as legal_owner/sender/payer). A post-draft
+snapshot lock + a deliberate amendment workflow (`transport_request_amendments`,
+`request_transport_amendment()`/`review_transport_amendment()`) close the gap where nothing
+previously stopped a customer from directly rewriting their submitted request's booking-time
+snapshot. `driver_transport_job_view` adds database-layer column minimization for driver access on
+top of the row-level RLS. The ops transport detail page and driver workspace now show parties, the
+multi-animal list, exact addresses, and amendments (small, deliberate UI wiring — not a redesign);
+real document upload to private Storage with signed-URL viewing was also wired in. **Still not
+built**: no UI wiring for the three Phase-5 marketplace-purchase/foundation-adoption/private-
+rehoming entry points (`createTransportDraftFor*` in `src/lib/queries/transport.ts`) — they're real,
+tested backend functions ready for a future UI to call, no button calls them yet. Draft
+save/resume/edit/delete before submission (the standalone form itself) is unchanged from before this
+pass.
 
 **Fast, no-account entry point — already existed, connection gap fixed 2026-07-22.**
 `/estimate` (`_public.estimate.tsx`) already covered most of "fast standalone transport post":
@@ -327,17 +342,17 @@ allowed/forbidden regression coverage (124 tests now passing, 0 failing) — see
    yet executed.
 3. **Legal text finalisation** (`/terms`, `/privacy`, `/cookies`) — needs a real registered business
    entity and lawyer review before further code work there is useful.
-4. **Transport data-model decision**: the snapshot-on-`transport_requests` vs. dedicated
-   `transport_parties` question (phase 4 above) is **less open than earlier versions of this
-   document claimed** — `public.transport_parties` (legal_owner/requester/sender/recipient/payer/
-   pickup_contact/delivery_contact, including external non-Havenpaw contacts) already exists in the
-   schema with real RLS (`20260101002400_animals_transport_fields.sql`), just entirely unused by any
-   UI. The remaining decision is narrower: wire the 7-step transport form and ops tooling to actually
-   use this table instead of (or alongside) the inline snapshot fields — not whether to build it.
+~~4. Transport data-model decision~~ — **done**, see `docs/adr/TRANSPORT_DATA_MODEL.md`:
+   `transport_parties` and the new `transport_request_animals` are now backfilled, RLS-hardened, and
+   have a real writer (`create_transport_draft()`); the legacy inline snapshot columns on
+   `transport_requests` are kept as-is for backward compatibility, unchanged. Remaining: no UI wires
+   the three Phase-5 integration entry points yet (see §4 above).
 5. **Operations calendar** (phase 5) — day/week/route views over already-real route/vehicle/driver/
    matching data.
-6. **Document library / upload UI** (phase 10) — the storage layer is verified and ready; no
-   customer-facing or ops-facing UI exists yet.
+6. **Document library / upload UI** (phase 10) — **partially done**: real file upload to private
+   Storage + signed-URL viewing now exists (previously `file_url` was just whatever text a user
+   typed into a box, no real Storage object ever uploaded); no browsable "all documents in one
+   place" library UI exists yet, only per-request document lists.
 7. **Notification preferences** — currently all-or-nothing; only a "coming soon" placeholder exists
    on breeder/foundation settings pages.
 8. **Foundation welfare-urgent flow and team/volunteer management** (phase 11) — both honest
