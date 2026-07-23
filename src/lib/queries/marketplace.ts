@@ -58,6 +58,7 @@ export type AnimalRow = {
     country: string | null;
     verification_status: string;
     response_time: string | null;
+    org_type: string;
   } | null;
 };
 
@@ -101,7 +102,7 @@ export function mapAnimalToPuppy(a: AnimalRow): PuppyWithExtras {
 }
 
 export const animalSelect =
-  "id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time)";
+  "id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time, org_type)";
 
 // Stage IR-2: the search filters below are applied server-side (SQL WHERE, not a post-fetch JS
 // .filter() over every published row) so they scale independently of how many puppies are
@@ -724,6 +725,9 @@ export type AdoptionListing = {
   orgId: string;
   orgName: string;
   orgSlug: string;
+  // null for private rehoming (no organisation at all) — never assume "foundation" for a listing
+  // that might actually be a shelter or rescue-type org; see foundationOrgTypeLabel.
+  orgType: FoundationOrgType | null;
   verified: boolean;
   transportAvailable: boolean;
   image: string;
@@ -772,6 +776,7 @@ export function mapAnimalToAdoption(a: AdoptionAnimalRow): AdoptionListing {
       ? (a.profiles?.display_name ?? "Private owner")
       : (a.organisations?.name ?? ""),
     orgSlug: a.organisations?.slug ?? "",
+    orgType: !isPrivate && a.organisations ? toFoundationOrgType(a.organisations.org_type) : null,
     verified: !isPrivate && a.organisations?.verification_status === "approved",
     transportAvailable: a.transport_available,
     image: images[0],
@@ -780,7 +785,7 @@ export function mapAnimalToAdoption(a: AdoptionAnimalRow): AdoptionListing {
 }
 
 const adoptionSelect =
-  "id, listing_category, name, sex, color, date_of_birth, approximate_age, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time), profiles!animals_owner_profile_id_fkey(display_name, city, country)";
+  "id, listing_category, name, sex, color, date_of_birth, approximate_age, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time, org_type), profiles!animals_owner_profile_id_fkey(display_name, city, country)";
 
 export async function listPublishedAdoptions() {
   const supabase = getSupabaseBrowserClient();

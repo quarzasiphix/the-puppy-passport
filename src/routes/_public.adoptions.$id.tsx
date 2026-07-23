@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ReportDialog } from "@/components/report-dialog";
 import { startApplicationConversation } from "@/lib/queries/messaging";
+import { foundationOrgTypeLabel } from "@/components/cards";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
@@ -115,7 +116,8 @@ function AdoptionDetail() {
               ) : (
                 a.verified && (
                   <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-                    <ShieldCheck className="mr-1 size-3" /> Verified foundation
+                    <ShieldCheck className="mr-1 size-3" /> Verified{" "}
+                    {(a.orgType ? foundationOrgTypeLabel[a.orgType] : "organisation").toLowerCase()}
                   </Badge>
                 )
               )}
@@ -175,7 +177,7 @@ function AdoptionDetail() {
             )}
             {a.adoptionFee != null && (
               <p className="mt-2 text-sm">
-                Adoption fee:{" "}
+                {a.category === "private_rehoming" ? "Rehoming fee" : "Adoption fee"}:{" "}
                 <span className="font-medium">
                   {a.adoptionFee.toLocaleString()} {a.currency}
                 </span>
@@ -187,7 +189,9 @@ function AdoptionDetail() {
                 <Link to="/signin" className="text-primary hover:underline">
                   Sign in
                 </Link>{" "}
-                to express interest in adopting {a.name}.
+                {a.category === "private_rehoming"
+                  ? `to ask about rehoming ${a.name}.`
+                  : `to express interest in adopting ${a.name}.`}
               </div>
             ) : existingApplicationQuery.isLoading ? (
               <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
@@ -196,8 +200,9 @@ function AdoptionDetail() {
                 <div className="flex items-start gap-2 rounded-xl bg-success/10 p-3 text-sm text-success">
                   <HeartHandshake className="mt-0.5 size-4 shrink-0" />
                   <p>
-                    Your interest has been sent to {a.orgName}. They'll follow up directly — this
-                    isn't a confirmed adoption yet.
+                    {a.category === "private_rehoming"
+                      ? `Your message has been sent to ${a.orgName}. They'll follow up directly — this isn't a confirmed handover yet.`
+                      : `Your interest has been sent to ${a.orgName}. They'll follow up directly — this isn't a confirmed adoption yet.`}
                   </p>
                 </div>
                 <Button
@@ -225,11 +230,14 @@ function AdoptionDetail() {
                   disabled={mutation.isPending}
                   onClick={() => mutation.mutate()}
                 >
-                  I'm interested in adopting {a.name}
+                  {a.category === "private_rehoming"
+                    ? `Ask about rehoming ${a.name}`
+                    : `I'm interested in adopting ${a.name}`}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  This sends a first message to {a.orgName} — they'll ask any further questions
-                  directly before confirming an adoption.
+                  {a.category === "private_rehoming"
+                    ? `This sends a first message to ${a.orgName} — they'll ask any further questions directly before agreeing to a handover.`
+                    : `This sends a first message to ${a.orgName} — they'll ask any further questions directly before confirming an adoption.`}
                 </p>
               </div>
             )}
