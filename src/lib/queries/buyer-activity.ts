@@ -15,7 +15,7 @@ import { classifySavedAnimalKind } from "@/lib/saved-animal-classification";
 // single query can tell a saved breeder puppy apart from a saved adoption/rehoming animal and map
 // each through its correct shape — see listSavedAnimals.
 const savedAnimalSelect =
-  "id, listing_category, name, sex, color, date_of_birth, approximate_age, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time), profiles!animals_owner_profile_id_fkey(display_name, city, country)";
+  "id, listing_category, name, sex, color, date_of_birth, approximate_age, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time, org_type), profiles!animals_owner_profile_id_fkey(display_name, city, country)";
 
 export async function listSavedAnimalIds(buyerId: string): Promise<string[]> {
   const supabase = getSupabaseBrowserClient();

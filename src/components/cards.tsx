@@ -160,7 +160,8 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
           ) : (
             a.verified && (
               <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-                <ShieldCheck className="mr-1 size-3" /> Verified foundation
+                <ShieldCheck className="mr-1 size-3" /> Verified{" "}
+                {(a.orgType ? foundationOrgTypeLabel[a.orgType] : "organisation").toLowerCase()}
               </Badge>
             )
           )}
@@ -184,7 +185,9 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
               <div className="font-display text-lg font-semibold">
                 {a.adoptionFee.toLocaleString()} {a.currency}
               </div>
-              <div className="text-xs text-muted-foreground">adoption fee</div>
+              <div className="text-xs text-muted-foreground">
+                {a.category === "private_rehoming" ? "rehoming fee" : "adoption fee"}
+              </div>
             </div>
           )}
         </div>

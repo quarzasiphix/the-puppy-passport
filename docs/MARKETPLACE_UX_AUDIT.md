@@ -505,9 +505,53 @@ interaction correctness and consistency.
 `npx tsc --noEmit`, `npx eslint --fix` on all three changed files, `npm run test:unit` (13/13,
 unaffected), `npm run build` — all clean.
 
+## Phase 5 — Animal detail pages
+
+Reviewed `/puppies/$id` and `/adoptions/$id` (which already handles both foundation adoption and
+private rehoming through one component) for trust presentation and honest action wording.
+
+### Findings
+
+- **Every adoption listing's verification badge said "Verified foundation," even for a shelter or
+  rescue-type organisation.** `AdoptionListing` never carried the organisation's actual `org_type`
+  through from the query, so `AdoptionCard` and the adoption detail page always hardcoded
+  "foundation" regardless of whether the real org was a foundation, shelter, or rescue.
+- **The adoption action button, its sign-in prompt, its confirmation message and the fee label all
+  said "adopting"/"adoption fee" unconditionally**, even for private rehoming listings, which are a
+  private individual rehoming their own dog, not a formal organisation adoption. Task's own
+  suggested wording ("Ask about rehoming," distinct from "I'm interested in adopting") wasn't used.
+- `/puppies/$id` was already in excellent shape: correct non-commerce action wording ("Apply for
+  this puppy," "Ask breeder," never "buy" or "add to cart"), an explicit disclaimer that Havenpaw
+  doesn't sell puppies directly and applying only opens a conversation, honest "documents expected"
+  framing in the Health tab (explicitly *not* claiming verification it doesn't have), and transport
+  estimates clearly labelled "approximate... confirmed after you submit a transport request." No
+  changes needed there.
+
+### Fixes applied
+
+- **Threaded the organisation's real `org_type` through the adoption data path**: added `org_type`
+  to the shared `organisations` join type (`AnimalRow`) and to all four select strings that join it
+  (`animalSelect`, `adoptionSelect`, `orgSelect`, and `buyer-activity.ts`'s `savedAnimalSelect` — the
+  last one was found out of sync with the others: its `organisations` join was missing `org_type`
+  entirely, which would have silently produced a wrong `orgType` on any saved adoption listing even
+  though nothing currently renders it there). Added `orgType: FoundationOrgType | null` to
+  `AdoptionListing` (`null` for private rehoming, which has no organisation at all), computed via
+  the existing `toFoundationOrgType()` helper from Phase 1.
+- **`AdoptionCard` and the adoption detail page now show the real type** ("Verified foundation" /
+  "Verified shelter" / "Verified rescue") instead of always "foundation."
+- **Private rehoming now gets its own wording** on the adoption detail page: "Ask about rehoming
+  {name}" (not "I'm interested in adopting"), "Rehoming fee" (not "Adoption fee," on both the card
+  and detail page), a rehoming-specific sign-in prompt, and a rehoming-specific confirmation message
+  ("before agreeing to a handover" instead of "before confirming an adoption").
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all four changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
 ## Commit
 
-Five commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Six commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
-pass, and this card-system pass.
+pass, the card-system pass, and this detail-page pass.
