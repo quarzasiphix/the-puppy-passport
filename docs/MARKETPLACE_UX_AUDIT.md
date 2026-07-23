@@ -1317,3 +1317,45 @@ local `ux-marketplace-polish` HEAD, not from stale `origin/main`) as of this pha
 `docs/FRONTEND_AUTONOMOUS_PROGRESS.md` for the full ordered commit list, which is now the
 authoritative running log (this file's own per-phase "Commit" counters below predate that file and
 are kept for historical continuity within each phase's own section).
+
+## Phase 21 — Placeholder/dead-code scan and design-consistency check (verification, no changes)
+
+Two checks that came back genuinely clean — recorded here as real, verified work rather than
+skipped, not padded with invented findings.
+
+### Placeholder/dead-code scan
+
+Grepped every touched public/buyer route plus `cards.tsx`/`site-chrome.tsx` for `TODO`, `FIXME`,
+"coming soon", "not implemented", `console.log`, `mock`, `fake`, `temporary`, and commented-out JSX
+blocks. Findings, all legitimate:
+
+- Every `mock`/`fake` hit was either a comment *documenting that the code deliberately avoids* being
+  fake (e.g. community.index.tsx's "rather than a fake engagement-optimised ranking"), a correct
+  technical term (`reset-password.tsx`'s "temporary session," a real Supabase auth concept), or a
+  reference to `mock-data.ts`.
+- **Directly re-verified `mock-data.ts` is never rendered**: both of its two remaining importers
+  (`cards.tsx`, `marketplace.ts`) use `import type { ... } from "@/lib/mock-data"` — a type-only
+  import, erased entirely at compile time. Its data arrays cannot execute or render.
+- The one hardcoded (non-conditional) `disabled` button found (`LitterCard`'s "Join waiting list")
+  already carries an honest `title` tooltip explaining it's a real, tracked future feature, not a
+  silent no-op — already documented in `docs/FRONTEND_BACKEND_GAPS.md`.
+- No commented-out JSX found — every `{/* ... */}` hit was an explanatory comment on real,
+  executing code.
+
+### Design-consistency check
+
+Grepped every error-state and empty-state panel this session added or touched for visual
+consistency. All 8 error-state panels use the identical `rounded-2xl border border-destructive/30
+bg-destructive/5` language (one inline sub-section error, inside an already-scrolled group post
+list, correctly uses the smaller `rounded-xl` — a deliberate, consistent scale-down for a
+sub-component, not an inconsistency). All 58 empty-state panels across the app use the identical
+`rounded-2xl border-dashed border-border/70 bg-secondary/40`. The only non-conforming matches
+(`dashboard.breeder.litters.$id.tsx`, `dashboard.buyer.transport.tsx`) are pre-existing,
+untouched-this-session files — the latter is transport-adjacent and deliberately left alone per this
+session's boundary, not fixed opportunistically.
+
+### Checks run
+
+No code changed this phase — `npx tsc --noEmit`/`npm run test:unit`/`npm run build` all remain at
+their previous clean state (last verified in the transport-handoff commit immediately before this
+one).
