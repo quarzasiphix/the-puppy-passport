@@ -21,6 +21,7 @@ import { PuppyCard } from "@/components/cards";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
 import { formatNumber } from "@/lib/presentation/number";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/find-a-dog")({
   loader: () => listPublishedPuppies(),
@@ -255,18 +256,20 @@ function FindADog() {
           </div>
 
           {filtered.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                {puppies.length === 0
+            <EmptyState
+              title={
+                puppies.length === 0
                   ? "No puppies are published yet — check back soon."
-                  : "No puppies match your filters — try widening them."}
-              </p>
-              {puppies.length > 0 && (
-                <Button variant="outline" className="mt-4" onClick={() => setF(defaultFilters)}>
-                  Clear filters
-                </Button>
-              )}
-            </div>
+                  : "No puppies match your filters — try widening them."
+              }
+              action={
+                puppies.length > 0 && (
+                  <Button variant="outline" onClick={() => setF(defaultFilters)}>
+                    Clear filters
+                  </Button>
+                )
+              }
+            />
           )}
 
           {view === "grid" ? (

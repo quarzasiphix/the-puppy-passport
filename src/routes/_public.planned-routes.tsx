@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { joinRouteWaitlist } from "@/lib/queries/routes";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { EmptyState } from "@/components/public/empty-state";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 
@@ -66,15 +67,15 @@ function PlannedRoutesPage() {
       </header>
 
       {routes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <RouteIcon className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            No planned routes are open right now.
-          </p>
-          <Button asChild className="mt-4">
-            <Link to="/transport/request">Request transport</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={RouteIcon}
+          title="No planned routes are open right now."
+          action={
+            <Button asChild>
+              <Link to="/transport/request">Request transport</Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {routes.map((r) => (

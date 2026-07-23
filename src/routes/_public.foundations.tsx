@@ -3,6 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { listApprovedFoundations } from "@/lib/queries/marketplace";
 import { FoundationCard } from "@/components/cards";
 import { pluralCategory, useTranslation } from "@/lib/i18n";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/foundations")({
   loader: () => listApprovedFoundations(),
@@ -47,13 +48,11 @@ function FoundationsPage() {
       </header>
 
       {foundations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <ShieldCheck className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">{t("foundations.emptyTitle")}</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            {t("foundations.emptyDesc")}
-          </p>
-        </div>
+        <EmptyState
+          icon={ShieldCheck}
+          title={t("foundations.emptyTitle")}
+          description={t("foundations.emptyDesc")}
+        />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {foundations.map((f) => (

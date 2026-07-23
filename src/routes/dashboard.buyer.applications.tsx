@@ -14,6 +14,8 @@ import {
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/buyer/applications")({
@@ -68,30 +70,30 @@ function BuyerApplications() {
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : query.isError ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <p className="font-medium">Couldn't load your applications</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Something went wrong — this isn't the same as having no applications. Please try again.
-          </p>
-          <Button variant="outline" className="mt-4" onClick={() => query.refetch()}>
-            Try again
-          </Button>
-        </div>
+        <ErrorState
+          title="Couldn't load your applications"
+          description="Something went wrong — this isn't the same as having no applications. Please try again."
+          action={
+            <Button variant="outline" onClick={() => query.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : !query.data?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">No applications yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Find a puppy or a dog to adopt and apply from its listing page.
-          </p>
-          <div className="mt-4 flex justify-center gap-3">
-            <Button asChild>
-              <Link to="/find-a-dog">Browse puppies</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/adoptions">Browse adoptions</Link>
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          title="No applications yet"
+          description="Find a puppy or a dog to adopt and apply from its listing page."
+          action={
+            <>
+              <Button asChild>
+                <Link to="/find-a-dog">Browse puppies</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/adoptions">Browse adoptions</Link>
+              </Button>
+            </>
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {query.data.map((a) => (

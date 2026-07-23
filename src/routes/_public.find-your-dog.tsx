@@ -8,6 +8,8 @@ import { listPublishedPuppies, type PuppyWithExtras } from "@/lib/queries/market
 import { PuppyCard } from "@/components/cards";
 import { useTranslation } from "@/lib/i18n";
 import { formatNumber } from "@/lib/presentation/number";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 export const Route = createFileRoute("/_public/find-your-dog")({
   head: () => ({
@@ -243,30 +245,28 @@ function FindYourDogPage() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-              <p className="font-medium">Couldn't load puppies to search</p>
-              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                This isn't the same as "no matches" — something went wrong loading listings. Please
-                try again.
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  puppiesQuery.refetch();
-                  breedSizesQuery.refetch();
-                }}
-              >
-                Try again
-              </Button>
-            </div>
+            <ErrorState
+              title="Couldn't load puppies to search"
+              description={
+                'This isn\'t the same as "no matches" — something went wrong loading listings. Please try again.'
+              }
+              action={
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    puppiesQuery.refetch();
+                    breedSizesQuery.refetch();
+                  }}
+                >
+                  Try again
+                </Button>
+              }
+            />
           ) : matches.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-              <p className="font-medium">No exact matches right now</p>
-              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                Try loosening one of your answers, or browse all available puppies instead.
-              </p>
-            </div>
+            <EmptyState
+              title="No exact matches right now"
+              description="Try loosening one of your answers, or browse all available puppies instead."
+            />
           ) : (
             <div className="grid gap-6 sm:grid-cols-2">
               {matches.map((p) => (

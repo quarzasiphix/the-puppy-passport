@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { listSavedAnimals } from "@/lib/queries/buyer-activity";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 export const Route = createFileRoute("/dashboard/buyer/saved")({
   component: SavedAnimals,
@@ -29,24 +33,30 @@ function SavedAnimals() {
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : query.isError ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-muted-foreground">
-          Couldn't load your saved animals. Please try again.
-        </div>
+        <ErrorState
+          compact
+          title="Couldn't load your saved animals. Please try again."
+          action={
+            <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : saved.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">Nothing saved yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tap the heart on any listing to save it here.
-          </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
-            <Link to="/find-a-dog" className="text-sm text-primary hover:underline">
-              Browse available puppies
-            </Link>
-            <Link to="/adoptions" className="text-sm text-primary hover:underline">
-              Browse dogs for adoption
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          title="Nothing saved yet"
+          description="Tap the heart on any listing to save it here."
+          action={
+            <>
+              <Link to="/find-a-dog" className="text-sm text-primary hover:underline">
+                Browse available puppies
+              </Link>
+              <Link to="/adoptions" className="text-sm text-primary hover:underline">
+                Browse dogs for adoption
+              </Link>
+            </>
+          }
+        />
       ) : (
         <div className="space-y-8">
           {puppies.length > 0 && (
@@ -127,7 +137,7 @@ function AnimalTile({
       params={{ id }}
       className="overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <img src={image} alt="" className="aspect-[4/3] w-full object-cover" />
+      <AnimalImage src={image} alt="" className="aspect-[4/3] w-full object-cover" />
       <div className="p-4">
         <div className="font-display text-lg font-semibold">{name}</div>
         <div className="break-words text-sm text-muted-foreground">{secondaryLine}</div>

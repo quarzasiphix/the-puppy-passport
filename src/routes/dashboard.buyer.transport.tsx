@@ -45,6 +45,7 @@ import {
 } from "@/lib/queries/transport";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/dashboard/buyer/transport")({
   component: BuyerTransport,
@@ -142,14 +143,14 @@ function BuyerTransport() {
         </p>
       )}
       {query.data && submitted.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            You haven't submitted a transport request yet.
-          </p>
-          <Button asChild className="mt-4">
-            <Link to="/transport/request">Request transport</Link>
-          </Button>
-        </div>
+        <EmptyState
+          title="You haven't submitted a transport request yet."
+          action={
+            <Button asChild>
+              <Link to="/transport/request">Request transport</Link>
+            </Button>
+          }
+        />
       )}
 
       <div className="space-y-3">

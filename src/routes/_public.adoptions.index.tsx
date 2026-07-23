@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { HeartHandshake } from "lucide-react";
 import { listPublishedAdoptions } from "@/lib/queries/marketplace";
 import { AdoptionCard } from "@/components/cards";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/adoptions/")({
   loader: () => listPublishedAdoptions(),
@@ -36,14 +37,11 @@ function AdoptionsPage() {
       </header>
 
       {animals.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <HeartHandshake className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No adoption listings published yet</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Check back soon — approved foundations and reviewed private rehoming submissions appear
-            here.
-          </p>
-        </div>
+        <EmptyState
+          icon={HeartHandshake}
+          title="No adoption listings published yet"
+          description="Check back soon — approved foundations and reviewed private rehoming submissions appear here."
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {animals.map((a) => (

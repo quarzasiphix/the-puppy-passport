@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { joinGroup, leaveGroup, listGroups, listMyGroupIds } from "@/lib/queries/groups";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 const GROUP_TYPE_LABELS: Record<string, string> = {
@@ -67,19 +69,17 @@ function GroupsPage() {
       {groupsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : groupsQuery.isError ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <p className="font-medium">Couldn't load groups</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Something went wrong — this isn't the same as there being no groups. Please try again.
-          </p>
-          <Button variant="outline" className="mt-4" onClick={() => groupsQuery.refetch()}>
-            Try again
-          </Button>
-        </div>
+        <ErrorState
+          title="Couldn't load groups"
+          description="Something went wrong — this isn't the same as there being no groups. Please try again."
+          action={
+            <Button variant="outline" onClick={() => groupsQuery.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : !groupsQuery.data?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="text-sm text-muted-foreground">No groups exist yet — check back soon.</p>
-        </div>
+        <EmptyState title="No groups exist yet — check back soon." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {groupsQuery.data.map((group) => (

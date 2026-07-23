@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { listMyConversations, type ConversationListRow } from "@/lib/queries/messaging";
 import { ChatThread } from "@/components/chat-thread";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/public/empty-state";
+import { ErrorState } from "@/components/public/error-state";
 
 export const Route = createFileRoute("/dashboard/buyer/messages")({
   validateSearch: (search: Record<string, unknown>): { conversation?: string } => ({
@@ -51,13 +54,21 @@ function BuyerMessages() {
       </header>
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : query.isError ? (
+        <ErrorState
+          title="Couldn't load your conversations"
+          description="Something went wrong — this isn't the same as having no conversations. Please try again."
+          action={
+            <Button variant="outline" onClick={() => query.refetch()}>
+              Try again
+            </Button>
+          }
+        />
       ) : !query.data?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">No conversations yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Once you apply for a puppy, you can message the breeder here.
-          </p>
-        </div>
+        <EmptyState
+          title="No conversations yet"
+          description="Once you apply for a puppy, you can message the breeder here."
+        />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
           <div className="rounded-2xl border border-border/70 bg-card">

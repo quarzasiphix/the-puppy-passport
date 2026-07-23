@@ -3,6 +3,7 @@ import { HeartHandshake } from "lucide-react";
 import { listPublicCampaigns } from "@/lib/queries/fundraising";
 import { FUNDRAISING_ENABLED } from "@/lib/fundraising-flag";
 import { FundraisingDisabledNotice } from "@/components/fundraising-disabled-notice";
+import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/fundraising/")({
   head: () => ({ meta: [{ title: "Support animal transport — Havenpaw" }] }),
@@ -32,10 +33,7 @@ function FundraisingListPage() {
       {!FUNDRAISING_ENABLED ? (
         <FundraisingDisabledNotice />
       ) : campaigns.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <HeartHandshake className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No active campaigns right now</p>
-        </div>
+        <EmptyState icon={HeartHandshake} title="No active campaigns right now" />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {campaigns.map((c) => (
