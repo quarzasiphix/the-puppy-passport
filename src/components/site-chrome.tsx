@@ -152,6 +152,7 @@ export function SiteHeader() {
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
                 className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
+                activeProps={{ className: "bg-secondary" }}
               >
                 {t(item.labelKey)}
               </Link>
@@ -214,31 +215,31 @@ export function SiteFooter() {
         <FooterCol
           title={t("footer.discover")}
           items={[
-            ["Marketplace", "/find-a-dog"],
-            ["Find your ideal dog", "/find-your-dog"],
-            ["Verified breeders", "/breeders"],
-            ["Planned litters", "/planned-litters"],
-            ["Foundations", "/foundations"],
-            ["Adoptions", "/adoptions"],
-            ["Rehome your dog", "/rehome"],
+            [t("footer.linkMarketplace"), "/find-a-dog"],
+            [t("footer.linkFindYourDog"), "/find-your-dog"],
+            [t("footer.linkVerifiedBreeders"), "/breeders"],
+            [t("footer.linkPlannedLitters"), "/planned-litters"],
+            [t("footer.linkFoundations"), "/foundations"],
+            [t("footer.linkAdoptions"), "/adoptions"],
+            [t("footer.linkRehome"), "/rehome"],
           ]}
         />
         <FooterCol
           title={t("footer.transportSection")}
           items={[
-            ["Request transport", "/transport/request"],
-            ["Service categories", "/transport"],
-            ["Planned routes", "/planned-routes"],
+            [t("footer.linkRequestTransport"), "/transport/request"],
+            [t("footer.linkServiceCategories"), "/transport"],
+            [t("footer.linkPlannedRoutes"), "/planned-routes"],
           ]}
         />
         <FooterCol
           title={t("footer.account")}
           items={[
-            ["How it works", "/how-it-works"],
-            ["Community groups", "/community/groups"],
-            ["Create an account", "/signup"],
-            ["Apply as breeder / foundation", "/create-breeder"],
-            ["Sign in", "/signin"],
+            [t("footer.linkHowItWorks"), "/how-it-works"],
+            [t("footer.linkCommunityGroups"), "/community/groups"],
+            [t("footer.linkCreateAccount"), "/signup"],
+            [t("footer.linkApplyBreeder"), "/create-breeder"],
+            [t("footer.linkSignIn"), "/signin"],
           ]}
         />
       </div>
@@ -247,13 +248,13 @@ export function SiteFooter() {
           <span>© 2026 Havenpaw. {t("footer.rightsReserved")}</span>
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link to="/terms" className="hover:text-foreground hover:underline">
-              Terms
+              {t("footer.linkTerms")}
             </Link>
             <Link to="/privacy" className="hover:text-foreground hover:underline">
-              Privacy
+              {t("footer.linkPrivacy")}
             </Link>
             <Link to="/cookies" className="hover:text-foreground hover:underline">
-              Cookies
+              {t("footer.linkCookies")}
             </Link>
           </span>
           <span>{t("footer.welfareDisclaimer")}</span>
