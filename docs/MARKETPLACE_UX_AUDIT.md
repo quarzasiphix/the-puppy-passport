@@ -387,8 +387,66 @@ community; secondary: publish, request transport, planned routes, sign in, creat
 `npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (13/13, unaffected
 by this phase), `npm run build` — all clean.
 
+## Phase 3 — Animal discovery and search UX
+
+Reviewed `/find-a-dog`, `/find-your-dog`, `/planned-litters`, `/adoptions` for filter honesty,
+search states and mobile behaviour.
+
+### Findings
+
+- **`/find-a-dog`'s breed and country filter options were a hardcoded 6-breed/4-country list**
+  (`breedOptions`/`countryOptions` module constants), not derived from the actual published
+  puppies. A breed or country outside that fixed list had no way to be filtered for even though it
+  would still appear in "All breeds"/"All Europe" results — an honesty gap (the filter silently
+  couldn't cover real data), not a fabricated/non-functional filter, but wrong either way.
+- **The price slider's fixed 1,000–20,000 PLN range** didn't reflect the real spread of published
+  prices, making the default range less useful the further real prices sit from that guess.
+- **The entire filter panel rendered inline, above the results, on any screen narrower than `lg`.**
+  Seven filter groups (breed, country, availability, sex, price, ready-date, verification/transport)
+  stacked in normal document flow before a single puppy card — an ordinary mobile visitor had to
+  scroll past the whole filter panel just to see results, with no way to collapse it and no way back
+  to results without scrolling back up past it again.
+- **`find-your-dog.tsx`'s guided search had no distinct error state.** If either of its two queries
+  (`listPublishedPuppies`/`listBreedSizes`) failed, `matches` silently evaluated to an empty array,
+  and the results step displayed "0 matching puppies — try loosening one of your answers" — exactly
+  the "a query failure must never look like '0 animals available'" anti-pattern, with no indication
+  anything had actually gone wrong and no way to retry.
+- `/adoptions` and `/planned-litters` have no filters at all today (confirmed — no `Select`/
+  `Checkbox`/filter state in either file) — nothing to standardise there; both already have honest,
+  reasonable empty states and rely on the same un-caught-loader-error-propagates-to-root-boundary
+  pattern as everywhere else, so no fix was needed on either page this pass. Adding a new filter
+  system to either would be a new feature, not a fix, and is out of this pass's scope.
+
+### Fixes applied
+
+- **Breed/country options are now derived from the loaded puppies** (`distinctOptions()` in
+  `_public.find-a-dog.tsx`) — sorted, deduplicated, always exactly the values actually present, so
+  the filter can never omit a real breed/country or offer one with zero possible matches.
+- **The price slider's min/max now come from the real min/max of published prices**
+  (`priceBoundsOf()`), computed once per page load; the slider disables itself (rather than showing
+  a broken zero-width range) on the edge case of zero published puppies.
+- **Filters moved into a slide-in `Sheet` on narrow screens**, opened by a "Filters" button (with a
+  live active-filter-count badge) next to the search box; the desktop persistent sidebar
+  (`hidden ... lg:block`) is unchanged. The same `FilterControls` component renders in both places
+  from the same lifted state, so nothing can drift between the two. The sheet's own primary action
+  is "Show N results" — closes the sheet and returns straight to the (now-filtered) results, which
+  is the explicit "must be able to return to results after opening filters" requirement.
+- **`find-your-dog.tsx` now has a real, distinct error state** — checks `isError` on both queries,
+  shows "Couldn't load puppies to search" with a "Try again" button calling `refetch()` on both,
+  instead of silently reading as zero matches.
+- Minor: grid/list view toggle buttons got `aria-pressed`/`aria-label` (were icon-only with no
+  accessible name before).
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (13/13, unaffected
+by this phase), `npm run build` — all clean. Not verified in an actual browser (see the environment
+note in the Phase 1 section) — the mobile Sheet's open/close behaviour, the badge count, and the
+slider's disabled edge case are code-reviewed but not visually confirmed at a real narrow viewport.
+
 ## Commit
 
-Three commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Four commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
-feature commit (1444e35), the hardening pass, and this navigation-hierarchy pass.
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, and this discovery/
+search UX pass.
