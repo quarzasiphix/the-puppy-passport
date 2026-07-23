@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { notifyUser } from "@/lib/queries/notifications";
 
 export type ReportTargetType = "animal_listing" | "organisation" | "post" | "message" | "user";
 export type ReportReason =
@@ -93,9 +94,13 @@ export type ModerationCaseRow = {
   target_type: ReportTargetType;
   target_id: string;
   status: "open" | "investigating" | "resolved" | "dismissed";
+  assigned_moderator_id: string | null;
   decision: string | null;
   decision_explanation: string | null;
   appeal_status: "none" | "requested" | "reviewed";
+  affected_profile_id: string | null;
+  public_decision_summary: string | null;
+  appeal_deadline: string | null;
   created_at: string;
   resolved_at: string | null;
 };
@@ -113,10 +118,123 @@ export async function listModerationCases() {
 export async function updateModerationCase(
   id: string,
   payload: Partial<
-    Pick<ModerationCaseRow, "status" | "decision" | "decision_explanation" | "resolved_at">
+    Pick<
+      ModerationCaseRow,
+      | "status"
+      | "decision"
+      | "decision_explanation"
+      | "resolved_at"
+      | "affected_profile_id"
+      | "public_decision_summary"
+      | "assigned_moderator_id"
+    >
   >,
 ) {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("moderation_cases").update(payload).eq("id", id);
+  if (error) throw error;
+}
+
+// Notifies the affected user once a case resolves, with a link to the safe case view — the only
+// current discovery path for `_public.moderation.$caseId.tsx`, matching how transport-conversation
+// links already work elsewhere in this codebase (direct link, not a separate list page yet).
+export async function notifyAffectedUserOfDecision(caseId: string, affectedProfileId: string) {
+  await notifyUser({
+    profileId: affectedProfileId,
+    type: "moderation_decision",
+    title: "A moderation decision affects you",
+    body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
+    linkUrl: `/moderation/${caseId}`,
+  });
+}
+
+// --- Affected user's own view + appeal ---------------------------------------------------------
+export type MyModerationCaseRow = {
+  id: string;
+  case_type: string;
+  target_type: ReportTargetType;
+  status: "open" | "investigating" | "resolved" | "dismissed";
+  public_decision_summary: string | null;
+  appeal_status: "none" | "requested" | "reviewed";
+  appeal_deadline: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export async function getMyModerationCase(caseId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("my_moderation_case_view")
+    .select("*")
+    .eq("id", caseId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as MyModerationCaseRow | null;
+}
+
+export type ModerationAppealRow = {
+  id: string;
+  moderation_case_id: string;
+  submitted_by: string;
+  statement: string;
+  supporting_document_url: string | null;
+  status: "submitted" | "under_review" | "upheld" | "overturned";
+  outcome_notes: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+};
+
+export async function getMyAppealForCase(caseId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("moderation_appeals")
+    .select(
+      "id, moderation_case_id, submitted_by, statement, supporting_document_url, status, outcome_notes, created_at, reviewed_at",
+    )
+    .eq("moderation_case_id", caseId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as ModerationAppealRow | null;
+}
+
+export async function submitModerationAppeal(input: {
+  caseId: string;
+  statement: string;
+  supportingDocumentUrl?: string | null;
+}): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("submit_moderation_appeal", {
+    p_case_id: input.caseId,
+    p_statement: input.statement,
+    p_supporting_document_url: input.supportingDocumentUrl ?? null,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+// --- Moderator side ------------------------------------------------------------------------
+export async function listAppealsForCase(caseId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("moderation_appeals")
+    .select("*")
+    .eq("moderation_case_id", caseId);
+  if (error) throw error;
+  return (data ?? []) as (ModerationAppealRow & { internal_notes: string | null })[];
+}
+
+export async function reviewModerationAppeal(input: {
+  appealId: string;
+  decision: "upheld" | "overturned";
+  outcomeNotes?: string;
+  internalNotes?: string;
+}) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("review_moderation_appeal", {
+    p_appeal_id: input.appealId,
+    p_decision: input.decision,
+    p_outcome_notes: input.outcomeNotes || null,
+    p_internal_notes: input.internalNotes || null,
+  });
   if (error) throw error;
 }

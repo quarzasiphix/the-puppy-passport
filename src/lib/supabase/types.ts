@@ -1027,6 +1027,9 @@ export interface Database {
           decision: string | null;
           decision_explanation: string | null;
           appeal_status: "none" | "requested" | "reviewed";
+          affected_profile_id: string | null;
+          public_decision_summary: string | null;
+          appeal_deadline: string | null;
           created_at: string;
           resolved_at: string | null;
         };
@@ -1036,6 +1039,28 @@ export interface Database {
           target_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["moderation_cases"]["Row"]>;
+        Relationships: [];
+      };
+      moderation_appeals: {
+        Row: {
+          id: string;
+          moderation_case_id: string;
+          submitted_by: string;
+          statement: string;
+          supporting_document_url: string | null;
+          status: "submitted" | "under_review" | "upheld" | "overturned";
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          outcome_notes: string | null;
+          internal_notes: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["moderation_appeals"]["Row"]> & {
+          moderation_case_id: string;
+          submitted_by: string;
+          statement: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["moderation_appeals"]["Row"]>;
         Relationships: [];
       };
       quotations: {
@@ -1279,6 +1304,20 @@ export interface Database {
       // explicit keys above collapses supabase-js's generic inference for every table to `never`.)
     };
     Views: {
+      my_moderation_case_view: {
+        Row: {
+          id: string;
+          case_type: string;
+          target_type: "animal_listing" | "organisation" | "post" | "message" | "user";
+          status: "open" | "investigating" | "resolved" | "dismissed";
+          public_decision_summary: string | null;
+          appeal_status: "none" | "requested" | "reviewed";
+          appeal_deadline: string | null;
+          created_at: string;
+          resolved_at: string | null;
+        };
+        Relationships: [];
+      };
       public_transport_requests: {
         Row: {
           id: string;
@@ -1466,6 +1505,19 @@ export interface Database {
       };
       leave_organisation: {
         Args: { p_org_id: string };
+        Returns: undefined;
+      };
+      submit_moderation_appeal: {
+        Args: { p_case_id: string; p_statement: string; p_supporting_document_url?: string | null };
+        Returns: string;
+      };
+      review_moderation_appeal: {
+        Args: {
+          p_appeal_id: string;
+          p_decision: "upheld" | "overturned";
+          p_outcome_notes?: string | null;
+          p_internal_notes?: string | null;
+        };
         Returns: undefined;
       };
     };

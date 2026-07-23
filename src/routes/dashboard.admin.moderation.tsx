@@ -9,8 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   listModerationCases,
   updateModerationCase,
+  notifyAffectedUserOfDecision,
+  listAppealsForCase,
+  reviewModerationAppeal,
   type ModerationCaseRow,
 } from "@/lib/queries/moderation";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/dashboard/admin/moderation")({
   component: ModerationPage,
@@ -24,12 +28,21 @@ const statusStyles: Record<ModerationCaseRow["status"], string> = {
 };
 
 function ModerationPage() {
+  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["admin-moderation-cases"], queryFn: listModerationCases });
   const [notesById, setNotesById] = useState<Record<string, string>>({});
+  const [summaryById, setSummaryById] = useState<Record<string, string>>({});
+  const [appealsOpenFor, setAppealsOpenFor] = useState<string | null>(null);
+
+  const appealsQuery = useQuery({
+    queryKey: ["case-appeals", appealsOpenFor],
+    enabled: !!appealsOpenFor,
+    queryFn: () => listAppealsForCase(appealsOpenFor!),
+  });
 
   const resolve = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       status,
       decision,
@@ -37,13 +50,18 @@ function ModerationPage() {
       id: string;
       status: "resolved" | "dismissed";
       decision: string;
-    }) =>
-      updateModerationCase(id, {
+    }) => {
+      await updateModerationCase(id, {
         status,
         decision,
         decision_explanation: notesById[id] || null,
+        public_decision_summary: summaryById[id] || null,
+        assigned_moderator_id: userId,
         resolved_at: new Date().toISOString(),
-      }),
+      });
+      const affected = query.data?.find((c) => c.id === id)?.affected_profile_id;
+      if (affected) await notifyAffectedUserOfDecision(id, affected);
+    },
     onSuccess: () => {
       toast.success("Case updated.");
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
@@ -52,11 +70,30 @@ function ModerationPage() {
   });
 
   const investigate = useMutation({
-    mutationFn: (id: string) => updateModerationCase(id, { status: "investigating" }),
+    mutationFn: (id: string) =>
+      updateModerationCase(id, { status: "investigating", assigned_moderator_id: userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update case."),
+  });
+
+  const reviewAppeal = useMutation({
+    mutationFn: (input: { appealId: string; decision: "upheld" | "overturned" }) =>
+      reviewModerationAppeal({
+        appealId: input.appealId,
+        decision: input.decision,
+        outcomeNotes:
+          input.decision === "upheld"
+            ? "After review, the original decision stands."
+            : "After review, the original decision has been overturned.",
+      }),
+    onSuccess: () => {
+      toast.success("Appeal reviewed.");
+      queryClient.invalidateQueries({ queryKey: ["case-appeals", appealsOpenFor] });
+      queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not review appeal."),
   });
 
   return (
@@ -112,6 +149,19 @@ function ModerationPage() {
                       Internal note: {c.decision_explanation}
                     </p>
                   )}
+                  {c.public_decision_summary && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Sent to affected user: {c.public_decision_summary}
+                    </p>
+                  )}
+                  {!c.affected_profile_id &&
+                    c.target_type !== "user" &&
+                    c.target_type !== "animal_listing" && (
+                      <p className="mt-1 text-xs text-warning">
+                        No affected user resolved automatically for this target type — the case
+                        won't be visible to anyone until this is set directly on the row.
+                      </p>
+                    )}
                 </div>
                 <Badge className={statusStyles[c.status]}>{c.status}</Badge>
               </div>
@@ -128,6 +178,12 @@ function ModerationPage() {
                     placeholder="Decision notes (internal only)…"
                     value={notesById[c.id] ?? ""}
                     onChange={(e) => setNotesById({ ...notesById, [c.id]: e.target.value })}
+                  />
+                  <Textarea
+                    rows={2}
+                    placeholder="Explanation sent to the affected user (safe, never mentions the reporter)…"
+                    value={summaryById[c.id] ?? ""}
+                    onChange={(e) => setSummaryById({ ...summaryById, [c.id]: e.target.value })}
                   />
                   <div className="flex gap-2">
                     <Button
@@ -150,6 +206,61 @@ function ModerationPage() {
                       <XCircle className="mr-1 size-4" /> Dismiss — no action
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {c.status === "resolved" && c.appeal_status !== "none" && (
+                <div className="mt-4 border-t border-border/60 pt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setAppealsOpenFor(appealsOpenFor === c.id ? null : c.id)}
+                  >
+                    {appealsOpenFor === c.id ? "Hide appeal" : "View appeal"}
+                  </Button>
+                  {appealsOpenFor === c.id && (
+                    <div className="mt-3 space-y-2">
+                      {appealsQuery.data?.map((a) => (
+                        <div key={a.id} className="rounded-lg border border-border/60 p-3 text-sm">
+                          <p>{a.statement}</p>
+                          {a.status === "submitted" || a.status === "under_review" ? (
+                            c.assigned_moderator_id === userId ? (
+                              <p className="mt-2 text-xs text-warning">
+                                You made the original decision on this case — another moderator must
+                                review this appeal.
+                              </p>
+                            ) : (
+                              <div className="mt-2 flex gap-2">
+                                <Button
+                                  size="sm"
+                                  disabled={reviewAppeal.isPending}
+                                  onClick={() =>
+                                    reviewAppeal.mutate({ appealId: a.id, decision: "overturned" })
+                                  }
+                                >
+                                  Overturn decision
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={reviewAppeal.isPending}
+                                  onClick={() =>
+                                    reviewAppeal.mutate({ appealId: a.id, decision: "upheld" })
+                                  }
+                                >
+                                  Uphold decision
+                                </Button>
+                              </div>
+                            )
+                          ) : (
+                            <Badge variant="secondary" className="mt-2">
+                              {a.status}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
