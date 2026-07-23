@@ -130,6 +130,8 @@ function BuyerProfile() {
       })
       .eq("id", userId);
     if (error) {
+      // Never surface a raw Postgres/RLS error to the user — getFriendlyErrorMessage maps it to a
+      // safe, honest message.
       toast.error(getFriendlyErrorMessage(error, "Could not update your profile."));
       return;
     }

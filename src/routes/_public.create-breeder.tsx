@@ -117,6 +117,8 @@ function CreateBreeder() {
       },
     });
     if (error) {
+      // Never surface a raw Postgres/RLS error (constraint names, column names, policy text) to the
+      // applicant — getFriendlyErrorMessage maps it to a safe, honest message.
       toast.error(getFriendlyErrorMessage(error, "Could not submit your application."));
       return;
     }
