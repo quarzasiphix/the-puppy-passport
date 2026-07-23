@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { listMyQuotations, respondToQuotation } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -33,6 +35,7 @@ const statusStyles: Record<string, string> = {
 
 function BuyerQuotationsPage() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["my-quotations", userId],
@@ -93,7 +96,7 @@ function BuyerQuotationsPage() {
                   </div>
                   {q.expiry_date && (
                     <p className="text-xs text-muted-foreground">
-                      Valid until {new Date(q.expiry_date).toLocaleDateString("en-GB")}
+                      Valid until {formatDate(q.expiry_date, locale)}
                     </p>
                   )}
                   {q.assumptions && (

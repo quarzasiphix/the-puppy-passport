@@ -344,8 +344,11 @@ export async function getKennelBySlug(slug: string) {
     .select(orgSelect)
     .eq("slug", slug)
     .eq("org_type", "kennel")
-    .single();
+    .eq("verification_status", "approved")
+    .eq("is_public", true)
+    .maybeSingle();
   if (error) throw error;
+  if (!data) return null;
   const [breeders] = await mapOrgsToBreeders([data as unknown as OrgRow]);
   return breeders;
 }

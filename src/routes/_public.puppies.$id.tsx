@@ -40,6 +40,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/lib/queries/applications";
+import { formatDate } from "@/lib/presentation/date";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_public/puppies/$id")({
   loader: async ({ params }) => {
@@ -83,6 +85,7 @@ const emptyParent: ParentDogInfo = {
 
 function PuppyDetail() {
   const { puppy, litter, parents, breeder } = Route.useLoaderData();
+  const { locale } = useTranslation();
   const { isSaved, toggle: toggleSaved, pending: savePending } = useIsSaved(puppy.id);
   const { isSignedIn, userId } = useAuth();
   const navigate = useNavigate();
@@ -235,7 +238,7 @@ function PuppyDetail() {
                   <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
                     {[
                       ["Litter", litter.code],
-                      ["Born", new Date(litter.birthDate).toLocaleDateString("en-GB")],
+                      ["Born", formatDate(litter.birthDate, locale)],
                       ["Total puppies", `${litter.puppyCount}`],
                       ["Available now", `${litter.available}`],
                       ["Reserved", `${litter.reserved}`],
@@ -390,12 +393,12 @@ function PuppyDetail() {
                 <Field
                   icon={<Calendar className="size-4" />}
                   label="Date of birth"
-                  value={new Date(puppy.dob).toLocaleDateString("en-GB")}
+                  value={formatDate(puppy.dob, locale)}
                 />
                 <Field
                   icon={<Calendar className="size-4" />}
                   label="Ready"
-                  value={new Date(puppy.readyDate).toLocaleDateString("en-GB")}
+                  value={formatDate(puppy.readyDate, locale)}
                 />
                 <Field
                   icon={<MapPin className="size-4" />}

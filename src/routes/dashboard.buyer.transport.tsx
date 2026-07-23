@@ -32,6 +32,8 @@ import {
   reviewableStatuses,
   transportMilestones,
 } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/transport")({
   component: BuyerTransport,
@@ -39,6 +41,7 @@ export const Route = createFileRoute("/dashboard/buyer/transport")({
 
 function BuyerTransport() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["my-transport-requests", userId],
@@ -84,8 +87,7 @@ function BuyerTransport() {
                   <div className="font-medium">{d.animal_name || "Unnamed request"}</div>
                   <div className="text-xs text-muted-foreground">
                     {d.pickup_city ?? "?"} <ArrowRight className="mx-1 inline size-3" />{" "}
-                    {d.destination_city ?? "?"} · Saved{" "}
-                    {new Date(d.updated_at).toLocaleDateString("en-GB")}
+                    {d.destination_city ?? "?"} · Saved {formatDate(d.updated_at, locale)}
                   </div>
                 </div>
                 <div className="flex gap-2">

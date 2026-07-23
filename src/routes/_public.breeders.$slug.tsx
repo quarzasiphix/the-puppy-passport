@@ -18,6 +18,8 @@ import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
 import { listPublicPostsByOrg } from "@/lib/queries/profile";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/breeders/$slug")({
   loader: async ({ params }) => {
@@ -48,6 +50,10 @@ export const Route = createFileRoute("/_public/breeders/$slug")({
 
 function BreederProfile() {
   const { b, kPuppies, kPlanned, kParents, kChampions, kPosts } = Route.useLoaderData();
+  // Only the date-format locale is read here, not translated copy — this page's rest of the
+  // content stays hardcoded English, consistent with the Phase 12 localisation audit's rule that
+  // date-format locale is a separate concern from content translation.
+  const { locale } = useTranslation();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("about");
@@ -274,7 +280,7 @@ function BreederProfile() {
                     dateTime={post.created_at}
                     className="mt-2 block text-xs text-muted-foreground"
                   >
-                    {new Date(post.created_at).toLocaleDateString("en-GB", {
+                    {formatDate(post.created_at, locale, {
                       day: "numeric",
                       month: "short",
                       year: "numeric",

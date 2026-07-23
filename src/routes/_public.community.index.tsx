@@ -22,12 +22,9 @@ import {
 } from "@/lib/queries/community";
 import { listFollowedOrgIds } from "@/lib/queries/buyer-activity";
 import { listFollowedProfileIds } from "@/lib/queries/profile";
-import { useTranslation, type Locale } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n";
 import { orgProfileRoute } from "@/lib/org-routing";
-
-// Intl locale tags for date formatting — kept separate from the app's bare "en"/"pl" locale codes
-// so date order/punctuation matches each language's convention (UK day-month-year vs Polish).
-const DATE_LOCALE: Record<Locale, string> = { en: "en-GB", pl: "pl-PL" };
+import { formatDate, formatDateTime } from "@/lib/presentation/date";
 
 // Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
 // hierarchy pillar 3), not a generic feed. No linked-content preview (animal/transport/route) yet
@@ -305,10 +302,10 @@ function PostCard({
           </div>
           <time
             dateTime={post.created_at}
-            title={new Date(post.created_at).toLocaleString(DATE_LOCALE[locale])}
+            title={formatDateTime(post.created_at, locale)}
             className="block text-xs text-muted-foreground"
           >
-            {new Date(post.created_at).toLocaleDateString(DATE_LOCALE[locale], {
+            {formatDate(post.created_at, locale, {
               day: "numeric",
               month: "short",
               year: "numeric",

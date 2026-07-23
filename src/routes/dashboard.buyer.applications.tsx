@@ -12,6 +12,8 @@ import {
   withdrawApplication,
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/applications")({
   component: BuyerApplications,
@@ -27,6 +29,7 @@ const withdrawable: string[] = [
 
 function BuyerApplications() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -100,7 +103,7 @@ function BuyerApplications() {
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {a.animals?.organisations?.name ?? "Independent listing"} · Applied{" "}
-                    {new Date(a.submitted_at).toLocaleDateString("en-GB")}
+                    {formatDate(a.submitted_at, locale)}
                   </div>
                 </div>
                 <Badge className={applicationStatusStyles[a.status]}>

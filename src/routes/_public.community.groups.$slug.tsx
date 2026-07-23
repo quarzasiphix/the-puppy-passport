@@ -17,6 +17,8 @@ import {
   listGroupPosts,
   listMyGroupIds,
 } from "@/lib/queries/groups";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/community/groups/$slug")({
   loader: async ({ params }) => {
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/_public/community/groups/$slug")({
 
 function GroupDetailPage() {
   const { group, memberCount } = Route.useLoaderData();
+  const { locale } = useTranslation();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const [newPost, setNewPost] = useState("");
@@ -195,7 +198,7 @@ function GroupDetailPage() {
                         <span className="text-sm font-medium">Member</span>
                       )}
                       <div className="text-xs text-muted-foreground">
-                        {new Date(post.created_at).toLocaleDateString("en-GB", {
+                        {formatDate(post.created_at, locale, {
                           day: "numeric",
                           month: "short",
                           year: "numeric",

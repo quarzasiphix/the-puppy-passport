@@ -17,6 +17,8 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useAuth } from "@/hooks/use-auth";
 import { joinRouteWaitlist } from "@/lib/queries/routes";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/planned-routes")({
   head: () => ({ meta: [{ title: "Planned routes — Havenpaw" }] }),
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/_public/planned-routes")({
 
 function PlannedRoutesPage() {
   const { routes } = Route.useLoaderData();
+  const { locale } = useTranslation();
 
   return (
     <div className="container-page py-10">
@@ -83,9 +86,7 @@ function PlannedRoutesPage() {
                 <div>
                   <dt>Departure</dt>
                   <dd className="font-medium text-foreground">
-                    {r.departure_date
-                      ? new Date(r.departure_date).toLocaleDateString("en-GB")
-                      : "Flexible"}
+                    {r.departure_date ? formatDate(r.departure_date, locale) : "Flexible"}
                   </dd>
                 </div>
                 <div>

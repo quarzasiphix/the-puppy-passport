@@ -19,6 +19,8 @@ import {
   listMyApplications,
 } from "@/lib/queries/applications";
 import { listSavedAnimals } from "@/lib/queries/buyer-activity";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/")({
   component: BuyerOverview,
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/dashboard/buyer/")({
 
 function BuyerOverview() {
   const { userId, firstName } = useAuth();
+  const { locale } = useTranslation();
   const transportQuery = useQuery({
     queryKey: ["my-transport-requests", userId],
     enabled: !!userId,
@@ -165,7 +168,7 @@ function BuyerOverview() {
                   {a.animals?.organisations?.name ?? "Independent listing"}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Applied {new Date(a.submitted_at).toLocaleDateString("en-GB")}
+                  Applied {formatDate(a.submitted_at, locale)}
                 </div>
               </div>
               <div className="flex items-center gap-2">

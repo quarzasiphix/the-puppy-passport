@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { listPublishedPuppies, type PuppyWithExtras } from "@/lib/queries/marketplace";
 import { PuppyCard } from "@/components/cards";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/find-a-dog")({
   loader: () => listPublishedPuppies(),
@@ -82,6 +84,7 @@ function countActiveFilters(f: Filters, defaults: Filters): number {
 
 function FindADog() {
   const puppies = Route.useLoaderData();
+  const { locale } = useTranslation();
   const priceBounds = useMemo(() => priceBoundsOf(puppies), [puppies]);
   const defaultFilters = useMemo(() => makeDefaultFilters(priceBounds), [priceBounds]);
   const breedNames = useMemo(() => distinctOptions(puppies, (p) => p.breed), [puppies]);
@@ -297,8 +300,7 @@ function FindADog() {
                         <MapPin className="size-3" /> {p.city}, {p.country}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3" /> Ready{" "}
-                        {new Date(p.readyDate).toLocaleDateString("en-GB")}
+                        <Calendar className="size-3" /> Ready {formatDate(p.readyDate, locale)}
                       </span>
                       <span>{p.kennel}</span>
                     </div>
