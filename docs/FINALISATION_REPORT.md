@@ -112,6 +112,12 @@ checked, not that the code merely looks correct.
 - Google/Facebook OAuth (buttons exist, honestly show "not configured").
 - Production Supabase project and Cloudflare deployment (procedure documented in
   `docs/PRODUCTION_SETUP.md`/`docs/DEPLOYMENT_CHECKLIST.md`, not executed — a business/account step).
+- **Rate limiting / abuse protection at the edge** — found during this pass's launch-hardening
+  audit: nothing in this codebase throttles repeated auth attempts, application/message spam, or
+  API abuse. This is correctly an infra-level concern for a Cloudflare Worker deployment (Cloudflare
+  dashboard → Security → WAF rate-limiting rules, or Supabase Auth's own rate limits, both
+  configured outside this repo), not a code gap — but it genuinely does not exist yet anywhere, and
+  should be configured before a real public launch, not assumed.
 - Playwright E2E execution (blocked by this sandbox's missing system libraries, not by the code —
   see the automated-verification table above).
 
