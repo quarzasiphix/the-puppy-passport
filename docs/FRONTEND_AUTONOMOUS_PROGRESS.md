@@ -296,3 +296,21 @@ Per its own explicit instruction, the original queue was finished first (through
 fix above) before starting stage A. Isolation re-verified before starting: `pwd` confirms the
 frontend worktree, branch `ux-marketplace-frontend-pass`, clean status, main worktree untouched
 (advanced independently to a new commit under the backend agent — not entered or modified).
+
+## Supplemental queue progress
+
+### Stage A/D — design-system + empty/error state consolidation (commits `b863613`, `6dc9c90`)
+
+- Found ~20 duplicated hand-rolled empty-state divs and 8 duplicated error-state divs across public/
+  buyer-dashboard pages. Added `<EmptyState>`/`<ErrorState>` (`src/components/public/*`), wired into
+  19 files.
+- **Real bugs found while doing this** (not just refactoring): `dashboard.buyer.reservations.tsx`,
+  `.quotations.tsx` and `.messages.tsx` had no `isError` branch at all — a query failure silently
+  read as "nothing here yet." Fixed all three. `dashboard.buyer.saved.tsx` and `.index.tsx`'s saved-
+  preview tile used a raw `<img>` with no broken-image fallback (missed by the earlier `AnimalImage`
+  rollout, which only covered `_public.*` routes) — fixed both.
+- Added `docs/FRONTEND_DESIGN_SYSTEM.md` documenting the component contracts and the
+  loading→error→empty→populated rule.
+- Checks: tsc, eslint (0 errors), test:unit (41/41), i18n:check (3/3), build — clean.
+- A third overnight instruction (stages DA–EP) arrived mid-stage-A; per its own "finish the current
+  unit first" rule, stage A/D was completed and committed before continuing.
