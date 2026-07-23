@@ -14,6 +14,7 @@ import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-
 import { listPublicPostsByOrg } from "@/lib/queries/profile";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 export const Route = createFileRoute("/_public/foundations/$slug")({
   loader: async ({ params }) => {
@@ -78,14 +79,14 @@ function FoundationProfile() {
   return (
     <div>
       <div className="relative h-64 bg-secondary md:h-80">
-        <img src={f.cover} alt="" className="size-full object-cover" />
+        <AnimalImage src={f.cover} alt="" className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
       </div>
 
       <div className="container-page -mt-24 pb-16">
         <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-start gap-6">
-            <img
+            <AnimalImage
               src={f.logo}
               alt={`${t("foundations.logoAltPrefix")} ${f.name}`}
               className="size-24 rounded-2xl border-4 border-background object-cover shadow-md"

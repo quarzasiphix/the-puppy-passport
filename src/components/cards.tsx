@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "@/lib/queries/buyer-activity";
 import { pluralCategory, useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 // Shared across every card on a page — react-query dedupes identical keys, so this is one query
 // per page, not one per card.
@@ -84,7 +85,7 @@ export function PuppyCard({ p }: { p: Puppy }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-        <img
+        <AnimalImage
           src={p.image}
           alt={p.name}
           loading="lazy"
@@ -152,7 +153,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-        <img
+        <AnimalImage
           src={a.image}
           alt={a.name}
           loading="lazy"
@@ -231,7 +232,7 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
-        <img
+        <AnimalImage
           src={l.image}
           alt={`${l.breed} litter — mother dog`}
           loading="lazy"
@@ -330,7 +331,7 @@ export function FoundationCard({ f }: { f: Foundation }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
-        <img src={f.cover} alt={f.name} loading="lazy" className="size-full object-cover" />
+        <AnimalImage src={f.cover} alt={f.name} loading="lazy" className="size-full object-cover" />
         <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
           {f.verified && (
             <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
@@ -392,7 +393,12 @@ export function BreederCard({ b }: { b: Breeder }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
-        <img src={b.cover} alt={b.kennel} loading="lazy" className="size-full object-cover" />
+        <AnimalImage
+          src={b.cover}
+          alt={b.kennel}
+          loading="lazy"
+          className="size-full object-cover"
+        />
         {b.verified && (
           <Badge className="absolute right-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground">
             <ShieldCheck className="mr-1 size-3" /> Verified

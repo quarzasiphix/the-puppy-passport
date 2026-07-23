@@ -59,17 +59,18 @@ backend side, not missing from this list by oversight.
 
 ## Infrastructure gaps
 
-### No image-load-failure fallback
+### Image-load-failure fallback — implemented, not visually verified
 Every mapper function (`mapAnimalToPuppy`, `mapAnimalToAdoption`, `mapOrgToBreeder`,
 `mapOrgToFoundation`, `mapLitterRow`) already falls back to a local placeholder image when the
-database has **no** image at all. But if a stored image URL is valid in the database yet the actual
-file 404s (deleted from storage, a broken migration, etc.), no `<img onError>` handler exists
-anywhere in the codebase to swap in the placeholder at render time — this is a real, pre-existing
-gap across the whole app, not something this branch introduced. Fixing it means adding an `onError`
-handler (and probably a small shared `<AnimalImage>`/`<img>` wrapper component) everywhere an
-animal/org image renders — a frontend-only fix in principle, deferred this session because
-verifying it actually works needs a real broken-image URL and a real browser, neither available
-here.
+database has **no** image at all. The other failure mode — a stored image URL is valid-looking in
+the database but the actual file 404s at render time (deleted from storage, a broken migration, a
+dead external URL) — is now handled too: added `src/components/marketplace/animal-image.tsx`
+(`<AnimalImage>`, a thin `<img>` wrapper with an `onError` handler that swaps to the same local
+placeholder once) and wired it into every animal/org image render this session touched (card
+system, puppy/adoption detail galleries, breeder/foundation profile cover+logo+parent images).
+Verified by code review and `tsc`/build only — actually seeing a broken image swap requires a real
+broken image URL and a real browser, neither available in this sandbox (see
+`docs/FRONTEND_BROWSER_QA.md`), so this is implemented but not visually confirmed.
 
 ### No pagination on public list pages
 `/find-a-dog`, `/breeders`, `/foundations`, `/adoptions` all load their entire result set

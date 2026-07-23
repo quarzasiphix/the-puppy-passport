@@ -19,6 +19,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ReportDialog } from "@/components/report-dialog";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { foundationOrgTypeLabel } from "@/components/cards";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
@@ -117,7 +118,7 @@ function AdoptionDetail() {
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div>
           <div className="overflow-hidden rounded-2xl bg-secondary">
-            <img
+            <AnimalImage
               src={a.gallery[activePhoto] ?? a.image}
               alt={a.name}
               className="aspect-[4/3] w-full object-cover"
@@ -136,7 +137,7 @@ function AdoptionDetail() {
                     activePhoto === i ? "border-primary" : "border-transparent"
                   }`}
                 >
-                  <img src={g} alt="" className="size-full object-cover" />
+                  <AnimalImage src={g} alt="" className="size-full object-cover" />
                 </button>
               ))}
             </div>

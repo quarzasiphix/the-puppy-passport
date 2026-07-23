@@ -42,6 +42,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/lib/queries/applications";
 import { formatDate } from "@/lib/presentation/date";
 import { useTranslation } from "@/lib/i18n";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/puppies/$id")({
@@ -175,7 +176,7 @@ function PuppyDetail() {
           <div>
             <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
               <div className="aspect-[4/3] bg-secondary">
-                <img
+                <AnimalImage
                   src={puppy.gallery[active]}
                   alt={puppy.name}
                   className="size-full object-cover"
@@ -190,7 +191,7 @@ function PuppyDetail() {
                     aria-pressed={active === i}
                     className={`aspect-square w-20 overflow-hidden rounded-lg border-2 ${active === i ? "border-primary" : "border-transparent"}`}
                   >
-                    <img src={g} alt="" className="size-full object-cover" />
+                    <AnimalImage src={g} alt="" className="size-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -295,7 +296,11 @@ function PuppyDetail() {
               <TabsContent value="breeder" className="mt-6">
                 <SectionCard title="About the breeder">
                   <div className="flex items-start gap-4">
-                    <img src={breeder.cover} alt="" className="size-24 rounded-xl object-cover" />
+                    <AnimalImage
+                      src={breeder.cover}
+                      alt=""
+                      className="size-24 rounded-xl object-cover"
+                    />
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="font-display text-lg font-semibold">{breeder.kennel}</h4>
@@ -559,7 +564,7 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
 function ParentCard({ p, label }: { p: ParentDogInfo; label: string }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-      <img
+      <AnimalImage
         src={p.image || placeholderImg}
         alt={p.name}
         className="aspect-[4/3] w-full object-cover"
