@@ -2,7 +2,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
   mapAnimalToAdoption,
   mapAnimalToPuppy,
-  mapOrgToBreeder,
+  mapOrgsToBreeders,
   mapOrgToFoundation,
   orgAvailableAdoptionCounts,
   orgSelect,
@@ -127,7 +127,7 @@ async function listFollowedOrgRows(buyerId: string): Promise<OrgRow[]> {
 // regardless of org_type).
 export async function listFollowedBreeders(buyerId: string) {
   const orgs = await listFollowedOrgRows(buyerId);
-  return Promise.all(orgs.filter((o) => o.org_type === "kennel").map(mapOrgToBreeder));
+  return mapOrgsToBreeders(orgs.filter((o) => o.org_type === "kennel"));
 }
 
 export async function listFollowedFoundations(buyerId: string) {

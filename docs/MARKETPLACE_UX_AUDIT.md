@@ -1044,3 +1044,69 @@ pass, the card-system pass, the detail-page pass, the breeder-profile pass, the 
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, and
 this resilience pass.
+
+## Phase 16 — Performance pass
+
+Fixed the two N+1 client-query patterns flagged and deliberately deferred in Phases 1 and 4, since
+this phase is exactly where they belong. Both are pre-existing patterns predating this branch, not
+introduced by it — but they're the same fix already proven correct on foundations' adoption counts,
+so applying it consistently was the right call now that a performance phase exists to justify the
+diff.
+
+### Findings (both pre-existing, already noted in earlier phases)
+
+- **`mapOrgToBreeder` fired 2 queries per kennel** (`orgBreeds` + `orgAvailablePuppyCount`), called
+  via `Promise.all(orgs.map(mapOrgToBreeder))` in `listApprovedKennels` (`/breeders`) and
+  `listFollowedBreeders` (the followed-organisations dashboard page) — the exact N+1 shape Phase 1
+  fixed for foundations, just never carried over to the older, pre-existing breeder code path.
+- **`mapLitterRow` fired 2 count queries per litter** (available+applications_open, reserved
+  separately), called via `Promise.all(rows.map(mapLitterRow))` in `listPublishedLitters`
+  (`/planned-litters`, the homepage's upcoming-litters section) and `listLittersForKennel` (breeder
+  profile's Planned tab) — flagged explicitly in Phase 4 as "deferred to Phase 16."
+
+### Fixes applied
+
+- **Breeders**: `mapOrgToBreeder` is now a plain sync function taking pre-computed `breeds`/
+  `availablePuppies` as parameters (mirroring `mapOrgToFoundation`'s Phase-1 shape exactly). New
+  `orgBreedsBatch`/`orgAvailablePuppyCounts` fetch all kennels' breed lists and puppy counts in two
+  queries total regardless of how many kennels are being mapped, via a new `mapOrgsToBreeders`
+  helper used by `listApprovedKennels` and `listFollowedBreeders`; `getKennelBySlug`/`getKennelById`
+  (single-kennel lookups) call the same batched helper with a one-element array for consistency —
+  no behavioural change there, just one code path instead of two.
+- **Litters**: `mapLitterRow` now takes pre-computed `{available, reserved}` counts; a new
+  `litterCountsBatch` fetches every requested litter's animal rows in one query
+  (`.in("litter_id", litterIds)`, one `availability_status` filter covering both buckets) and buckets
+  them client-side, via a `mapLitterRows` helper used by `listPublishedLitters` and
+  `listLittersForKennel`; `getLitterById` calls it with a one-element array.
+- Confirmed via grep that no stale references to the removed per-item helper functions
+  (`orgBreeds`, `orgAvailablePuppyCount`, `countAnimalsByStatus`) remain anywhere in the codebase.
+
+### Not changed
+
+- Duplicate/unstable query keys: already addressed directly in the Phase 1 hardening pass (the
+  saved-animal and followed-org cache-invalidation fixes) — nothing further found this phase.
+- Unnecessary full-row selects: every select string this branch touches already lists explicit
+  columns, not `select("*")`, except the intentional `{ count: "exact", head: true }` count-only
+  queries (which fetch zero rows by design).
+- Large unpaginated public lists: `/find-a-dog`, `/breeders`, `/foundations` and `/adoptions` all
+  load their full result set client-side with no pagination — a real scalability question once the
+  marketplace has hundreds of listings, but adding pagination/infinite-scroll is a UX and backend-
+  shape decision (page-size RPC or keyset pagination) beyond a "fix what's inefficient" pass; flagged
+  as a backend-adjacent follow-up, not attempted here.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean. Query-count reduction was verified by reading the rewritten
+code (N+1 → 2 fixed queries regardless of list size), not by measuring real network traffic against
+a live database (none reachable in this environment).
+
+## Commit
+
+Seventeen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
+resilience pass, and this performance pass.

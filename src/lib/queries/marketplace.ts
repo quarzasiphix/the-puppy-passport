@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Puppy, Litter, Breeder, PuppyStatus } from "@/lib/mock-data";
-import type { AnimalAvailabilityStatus, LitterStatus } from "@/lib/supabase/enums";
+import type { LitterStatus } from "@/lib/supabase/enums";
 import placeholderImg from "@/assets/puppy-1.jpg";
 
 // Maps real Supabase rows onto the existing mock-data.ts shapes so the already-built
@@ -114,7 +114,7 @@ export const animalSelect =
 // exactly as before -- nothing about this change requires a frontend update. `countPublishedPuppies`
 // is the paired total-count query a future paginated search UI would need alongside a page of
 // results (kept as a separate lightweight query rather than changing this function's return shape,
-// matching the existing `countAnimalsByStatus`/`mapLitterRows` split above).
+// matching the existing `litterCountsBatch`/`mapLitterRows` split above).
 export type PuppySearchFilters = {
   breed?: string;
   country?: string;
@@ -238,17 +238,31 @@ function toLitterStatus(status: string): Litter["status"] {
   return "ready";
 }
 
-async function countAnimalsByStatus(litterId: string, statuses: AnimalAvailabilityStatus[]) {
+type LitterCounts = { available: number; reserved: number };
+
+// One query for however many litters are being mapped, instead of two count queries per litter —
+// same batching approach as Phase 1's foundation adoption counts and this phase's breeder counts.
+async function litterCountsBatch(litterIds: string[]): Promise<Map<string, LitterCounts>> {
+  const result = new Map<string, LitterCounts>();
+  if (litterIds.length === 0) return result;
   const supabase = getSupabaseBrowserClient();
-  const { count } = await supabase
+  const { data, error } = await supabase
     .from("animals")
-    .select("*", { count: "exact", head: true })
-    .eq("litter_id", litterId)
-    .in("availability_status", statuses);
-  return count ?? 0;
+    .select("litter_id, availability_status")
+    .in("litter_id", litterIds)
+    .in("availability_status", ["available", "applications_open", "reserved"]);
+  if (error) throw error;
+  for (const row of (data ?? []) as { litter_id: string | null; availability_status: string }[]) {
+    if (!row.litter_id) continue;
+    const counts = result.get(row.litter_id) ?? { available: 0, reserved: 0 };
+    if (row.availability_status === "reserved") counts.reserved++;
+    else counts.available++;
+    result.set(row.litter_id, counts);
+  }
+  return result;
 }
 
-function buildLitter(l: LitterRow, available: number, reserved: number): Litter {
+function mapLitterRow(l: LitterRow, counts: LitterCounts): Litter {
   return {
     id: l.id,
     code: l.code,
@@ -262,8 +276,8 @@ function buildLitter(l: LitterRow, available: number, reserved: number): Litter 
     breederSlug: l.organisations?.slug ?? "",
     kennel: l.organisations?.name ?? "",
     puppyCount: l.puppy_count ?? 0,
-    available,
-    reserved,
+    available: counts.available,
+    reserved: counts.reserved,
     waitingList: 0,
     status: toLitterStatus(l.status),
     image: l.mother?.profile_image_url ?? placeholderImg,
@@ -272,48 +286,9 @@ function buildLitter(l: LitterRow, available: number, reserved: number): Litter 
   };
 }
 
-async function mapLitterRow(l: LitterRow): Promise<Litter> {
-  const [available, reserved] = await Promise.all([
-    countAnimalsByStatus(l.id, ["available", "applications_open"]),
-    countAnimalsByStatus(l.id, ["reserved"]),
-  ]);
-  return buildLitter(l, available, reserved);
-}
-
-// Batched counterpart to mapLitterRow, for listing pages rendering N litters at once. The
-// per-row version above issues 2 count queries per litter (2N total for a page of N) — fine for
-// a single litter detail page, but a real N+1 pattern on a listing page. This does the same two
-// counts in a single query total (one status-in-array select across every litter id, grouped
-// client-side), independent of how many litters are on the page.
-async function countAnimalsByStatusForLitters(
-  litterIds: string[],
-): Promise<Map<string, { available: number; reserved: number }>> {
-  const counts = new Map<string, { available: number; reserved: number }>();
-  if (litterIds.length === 0) return counts;
-
-  const supabase = getSupabaseBrowserClient();
-  const { data } = await supabase
-    .from("animals")
-    .select("litter_id, availability_status")
-    .in("litter_id", litterIds)
-    .in("availability_status", ["available", "applications_open", "reserved"]);
-
-  for (const row of (data ?? []) as { litter_id: string | null; availability_status: string }[]) {
-    if (!row.litter_id) continue;
-    const entry = counts.get(row.litter_id) ?? { available: 0, reserved: 0 };
-    if (row.availability_status === "reserved") entry.reserved += 1;
-    else entry.available += 1;
-    counts.set(row.litter_id, entry);
-  }
-  return counts;
-}
-
 async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
-  const counts = await countAnimalsByStatusForLitters(rows.map((l) => l.id));
-  return rows.map((l) => {
-    const entry = counts.get(l.id) ?? { available: 0, reserved: 0 };
-    return buildLitter(l, entry.available, entry.reserved);
-  });
+  const counts = await litterCountsBatch(rows.map((l) => l.id));
+  return rows.map((l) => mapLitterRow(l, counts.get(l.id) ?? { available: 0, reserved: 0 }));
 }
 
 const litterSelect =
@@ -347,28 +322,51 @@ type OrgRow = {
   profiles: { display_name: string | null } | null;
 };
 
-async function orgBreeds(orgId: string): Promise<string[]> {
+// Batched breed lists and available-puppy counts for one or many kennels in two queries total —
+// avoids the N+1 pattern of firing 2 queries per kennel when mapping a whole directory page (the
+// exact same fix Phase 1 applied to foundations' adoption counts).
+async function orgBreedsBatch(orgIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (orgIds.length === 0) return result;
   const supabase = getSupabaseBrowserClient();
-  const { data } = await supabase.from("parent_dogs").select("breeds(name)").eq("kennel_id", orgId);
-  const names = new Set<string>();
-  for (const row of (data ?? []) as unknown as { breeds: { name: string } | null }[]) {
-    if (row.breeds?.name) names.add(row.breeds.name);
+  const { data, error } = await supabase
+    .from("parent_dogs")
+    .select("kennel_id, breeds(name)")
+    .in("kennel_id", orgIds);
+  if (error) throw error;
+  const sets = new Map<string, Set<string>>();
+  for (const row of (data ?? []) as unknown as {
+    kennel_id: string;
+    breeds: { name: string } | null;
+  }[]) {
+    if (!row.breeds?.name) continue;
+    const set = sets.get(row.kennel_id) ?? new Set<string>();
+    set.add(row.breeds.name);
+    sets.set(row.kennel_id, set);
   }
-  return Array.from(names);
+  for (const [orgId, set] of sets) result.set(orgId, Array.from(set));
+  return result;
 }
 
-async function orgAvailablePuppyCount(orgId: string) {
+async function orgAvailablePuppyCounts(orgIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (orgIds.length === 0) return counts;
   const supabase = getSupabaseBrowserClient();
-  const { count } = await supabase
+  const { data, error } = await supabase
     .from("animals")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", orgId)
+    .select("organization_id")
+    .in("organization_id", orgIds)
     .eq("is_published", true)
     .in("availability_status", ["available", "applications_open"]);
-  return count ?? 0;
+  if (error) throw error;
+  for (const row of (data ?? []) as { organization_id: string | null }[]) {
+    if (!row.organization_id) continue;
+    counts.set(row.organization_id, (counts.get(row.organization_id) ?? 0) + 1);
+  }
+  return counts;
 }
 
-function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Breeder {
+export function mapOrgToBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Breeder {
   return {
     id: o.id,
     name: o.profiles?.display_name ?? o.name,
@@ -392,65 +390,14 @@ function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Br
   };
 }
 
-export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
-  const [breeds, availablePuppies] = await Promise.all([
-    orgBreeds(o.id),
-    orgAvailablePuppyCount(o.id),
+export async function mapOrgsToBreeders(orgs: OrgRow[]): Promise<Breeder[]> {
+  const [breedsByOrg, puppyCountsByOrg] = await Promise.all([
+    orgBreedsBatch(orgs.map((o) => o.id)),
+    orgAvailablePuppyCounts(orgs.map((o) => o.id)),
   ]);
-  return buildBreeder(o, breeds, availablePuppies);
-}
-
-// Batched counterpart to mapOrgToBreeder, for listing pages rendering N organisations at once —
-// same N+1 reasoning as countAnimalsByStatusForLitters above: 2 queries total instead of 2N.
-async function orgBreedsAndCountsBatch(
-  orgIds: string[],
-): Promise<Map<string, { breeds: string[]; availablePuppies: number }>> {
-  const result = new Map<string, { breeds: string[]; availablePuppies: number }>();
-  if (orgIds.length === 0) return result;
-
-  const supabase = getSupabaseBrowserClient();
-  const [breedsResult, puppiesResult] = await Promise.all([
-    supabase.from("parent_dogs").select("kennel_id, breeds(name)").in("kennel_id", orgIds),
-    supabase
-      .from("animals")
-      .select("organization_id")
-      .in("organization_id", orgIds)
-      .eq("is_published", true)
-      .in("availability_status", ["available", "applications_open"]),
-  ]);
-
-  const breedSets = new Map<string, Set<string>>();
-  for (const row of (breedsResult.data ?? []) as unknown as {
-    kennel_id: string | null;
-    breeds: { name: string } | null;
-  }[]) {
-    if (!row.kennel_id) continue;
-    const set = breedSets.get(row.kennel_id) ?? new Set<string>();
-    if (row.breeds?.name) set.add(row.breeds.name);
-    breedSets.set(row.kennel_id, set);
-  }
-
-  const puppyCounts = new Map<string, number>();
-  for (const row of (puppiesResult.data ?? []) as { organization_id: string | null }[]) {
-    if (!row.organization_id) continue;
-    puppyCounts.set(row.organization_id, (puppyCounts.get(row.organization_id) ?? 0) + 1);
-  }
-
-  for (const orgId of orgIds) {
-    result.set(orgId, {
-      breeds: Array.from(breedSets.get(orgId) ?? []),
-      availablePuppies: puppyCounts.get(orgId) ?? 0,
-    });
-  }
-  return result;
-}
-
-export async function mapOrgsToBreeders(rows: OrgRow[]): Promise<Breeder[]> {
-  const byOrg = await orgBreedsAndCountsBatch(rows.map((o) => o.id));
-  return rows.map((o) => {
-    const entry = byOrg.get(o.id) ?? { breeds: [], availablePuppies: 0 };
-    return buildBreeder(o, entry.breeds, entry.availablePuppies);
-  });
+  return orgs.map((o) =>
+    mapOrgToBreeder(o, breedsByOrg.get(o.id) ?? [], puppyCountsByOrg.get(o.id) ?? 0),
+  );
 }
 
 export const orgSelect =
@@ -478,7 +425,8 @@ export async function getKennelBySlug(slug: string) {
     .eq("org_type", "kennel")
     .single();
   if (error) throw error;
-  return mapOrgToBreeder(data as unknown as OrgRow);
+  const [breeders] = await mapOrgsToBreeders([data as unknown as OrgRow]);
+  return breeders;
 }
 
 // Foundations/shelters/rescues share the `organisations` table with kennels (see `org_type`), but
@@ -619,7 +567,8 @@ export async function getLitterById(id: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.from("litters").select(litterSelect).eq("id", id).single();
   if (error) throw error;
-  return mapLitterRow(data as unknown as LitterRow);
+  const [litter] = await mapLitterRows([data as unknown as LitterRow]);
+  return litter;
 }
 
 export type ParentDogInfo = {
@@ -700,7 +649,8 @@ export async function getKennelById(id: string) {
     .eq("id", id)
     .single();
   if (error) throw error;
-  return mapOrgToBreeder(data as unknown as OrgRow);
+  const [breeders] = await mapOrgsToBreeders([data as unknown as OrgRow]);
+  return breeders;
 }
 
 // Adoption listings are `animals` rows with listing_category='adoption' — a rescue/shelter dog,
