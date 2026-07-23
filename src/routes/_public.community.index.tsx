@@ -324,6 +324,7 @@ function PostCard({
           disabled={!userId || likeMutation.isPending}
           onClick={() => likeMutation.mutate()}
           aria-label={liked ? "Unlike this post" : "Like this post"}
+          title={!userId ? "Sign in to like posts" : undefined}
           aria-pressed={liked}
           className={`inline-flex items-center gap-1.5 hover:text-accent disabled:opacity-50 ${liked ? "text-accent" : ""}`}
         >
