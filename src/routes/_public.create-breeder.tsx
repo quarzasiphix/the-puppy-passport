@@ -146,6 +146,26 @@ function CreateBreeder() {
     );
   }
 
+  if (verificationQuery.isError) {
+    return (
+      <div className="container-page grid min-h-[60vh] place-items-center py-16 text-center">
+        <div className="max-w-md">
+          <XCircle className="mx-auto size-8 text-destructive" />
+          <h1 className="mt-4 font-display text-2xl font-medium">
+            Couldn't check your application
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            We couldn't tell whether you've already applied — this isn't the same as not having
+            applied, so we didn't show the form to avoid a duplicate submission. Please try again.
+          </p>
+          <Button variant="outline" className="mt-6" onClick={() => verificationQuery.refetch()}>
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const verification = verificationQuery.data;
 
   if (verification) {
@@ -193,6 +213,7 @@ function CreateBreeder() {
                       type="button"
                       key={opt.value}
                       onClick={() => form.setValue("orgType", opt.value)}
+                      aria-pressed={form.watch("orgType") === opt.value}
                       className={`rounded-xl border p-3 text-sm font-medium transition-colors ${
                         form.watch("orgType") === opt.value
                           ? "border-primary bg-primary/5"
