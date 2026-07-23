@@ -168,3 +168,60 @@ test:unit` (29/29), and `npm run build` all pass. The branch is ready for the ch
 integration sequence recorded in `docs/FRONTEND_INTEGRATION_REPORT.md`; no further work is planned
 on this branch per the earlier instruction to stop growing it after this hardening/polish pass so
 integration onto `main` stays tractable.
+
+---
+
+## Overnight session 2 — resumed per explicit new instruction
+
+The note directly above ("no further work is planned on this branch") reflected the previous
+session's own stopping point — superseded by an explicit new overnight-session instruction to
+continue. Recorded here rather than edited away, since it was accurate at the time it was written.
+
+### Startup state (this session)
+
+- **Worktree**: `/p/the-puppy-passport-ux/.claude/worktrees/marketplace-ux-pass` (confirmed via
+  `pwd`).
+- **Branch**: `ux-marketplace-frontend-pass` (confirmed via `git branch --show-current`).
+- **Starting HEAD**: `54f95da` (`git status --short` clean at startup).
+- **Worktree isolation confirmed**: `git worktree list` shows `/p/the-puppy-passport` on `main` at
+  `7bf02eb`, untouched; this session only ever operated in its own worktree.
+- **Baseline checks at startup**: `npx tsc --noEmit` clean, `npm run test:unit` 29/29,
+  `npm run build` succeeds.
+
+### Phase 1 + 2 — PR review and presentation core (commit `0573acf`)
+
+- **Real bug found (Phase 1)**: `getKennelBySlug` (`src/lib/queries/marketplace.ts`) had no
+  `verification_status`/`is_public` scoping, unlike `getFoundationBySlug` — an unapproved or hidden
+  kennel's slug could still resolve directly via `/breeders/$slug`, bypassing the directory's own
+  correct filtering. Fixed to match `getFoundationBySlug`'s pattern exactly (`.maybeSingle()` +
+  return `null` → caller's existing `notFound()`).
+- **Real bug found (Phase 2)**: every date-formatting call site across the app (puppy/adoption/
+  litter cards, puppy detail, public profile, foundation/breeder profiles, community groups,
+  transport index, planned routes, find-a-dog, every `dashboard.buyer.*` page) hardcoded the Intl
+  locale tag `"en-GB"`, ignoring a Polish-preference visitor's chosen locale — dates always
+  rendered in English regardless of active language. Only `_public.community.index.tsx` had
+  previously fixed this (with its own local `DATE_LOCALE` map).
+- **Fix**: added `src/lib/presentation/date.ts` (`formatDate`/`formatDateTime` + shared
+  `DATE_LOCALE`), the first module under the brief's suggested `src/lib/presentation/**` path, with
+  `tests/unit/presentation-date.test.ts` (8 new tests, total now 37). Wired into every call site
+  listed above; `_public.community.index.tsx`'s own local `DATE_LOCALE` copy removed in favor of the
+  shared one. Where a page is still intentionally all-English (e.g. `/breeders/$slug`), only
+  `useTranslation()`'s `locale` value is read for date formatting — no other copy translated,
+  per the existing Phase 12 precedent that date-format locale is a separate concern from content
+  translation.
+- **Files changed**: `src/lib/queries/marketplace.ts`, `src/components/cards.tsx`,
+  `src/routes/_public.{breeders.$slug,community.groups.$slug,community.index,find-a-dog,
+  foundations.$slug,planned-routes,profile.$profileId,puppies.$id,transport.index}.tsx`,
+  `src/routes/dashboard.buyer.{applications,index,quotations,reservations,transport}.tsx`,
+  new `src/lib/presentation/date.ts`, new `tests/unit/presentation-date.test.ts`.
+- **Checks run**: `npx tsc --noEmit`, `eslint` (0 errors after one `--fix` pass for line-length
+  reflow) on every changed file, `npm run test:unit` (37/37), `npm run build` — all clean.
+- **Browser verification**: none — no browser available this session either (see
+  `docs/FRONTEND_BROWSER_QA.md`).
+- **Backend dependency discovered**: none new.
+- **Likely integration conflicts**: `src/lib/queries/marketplace.ts` (small, isolated hunk —
+  `getKennelBySlug` only) and `src/components/cards.tsx` (touched extensively by earlier commits
+  already flagged as a likely conflict point in `docs/FRONTEND_INTEGRATION_REPORT.md`).
+- **Remaining work**: continuing through the rest of the overnight queue (Phases 3–30 + the
+  after-Phase-30 continuation), finding and fixing only genuinely new issues per phase rather than
+  redoing prior verified work.
