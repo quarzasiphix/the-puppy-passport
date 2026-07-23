@@ -1399,3 +1399,33 @@ routes, generated-file noise, and every forbidden-file/boundary rule.
 
 `npx tsc --noEmit`, `npm run test:unit` (29/29), `npm run i18n:check` (3/3), `npm run build` — all
 clean, re-run fresh for this review rather than assumed from the prior phase.
+
+## Phase 23 — Final verification (the full 24-point checklist)
+
+Ran every item from the session brief's final-verification list fresh, in one pass, rather than
+relying on earlier phases' individual checks:
+
+1. `git status --short` — clean. 2. Branch — `ux-marketplace-frontend-pass`. 3. HEAD —
+`ffa6d3e`. 4. Diff from starting HEAD (`02e6416`) — 43 files, +4314/−477. 5. Forbidden-file scan —
+clean. 6. Untracked-file scan — none unexpected. 7. `npx tsc --noEmit` — clean. 8. Changed-file
+lint — 0 errors, 8 pre-existing style warnings (documented in every earlier phase). 9. Full
+repo-wide lint baseline — 38 pre-existing errors, all in files this branch never touched
+(`matching.ts`, `pricing.ts`, `how-it-works.tsx`, `transport.request.tsx`, `fleet.ts`,
+`auth/guards.ts` — the exact same pre-existing set found in the very first commit's own audit).
+10. `npm run build` — succeeds. 11. `npm run test:unit` — 29/29. 12. `npm run i18n:check` — 3/3.
+13–14. `routeTree.gen.ts` diff since `1444e35` — zero lines, confirming no route changed. 15. SSR
+smoke test — see Phase 1's request-level check (unreachable-backend error propagation, not
+repeated fresh this phase since nothing route-loader-related changed since). 16. Browser test — see
+Phase "browser QA" work: genuinely attempted, genuinely blocked by a missing system library, exact
+error recorded, not retried. 17–19. Hardcoded-string/TODO/FIXME scans — clean (same result as the
+dedicated Phase 21 scan). 20. `mock-data.ts` rendering scan — both remaining importers use `import
+type`, confirmed again. 21. Secret scan — clean. 22. Generated-file scan — `routeTree.gen.ts`
+untouched since `1444e35`. 23. Backend-owned-file scan — clean. 24. Documentation consistency scan
+— grepped every doc this session created/touched for any claim that payments are enabled, transport
+books automatically, translations are complete outside touched surfaces, every organisation is a
+foundation, or every listing is verified — none found.
+
+### Checks run
+
+All 24 items above, executed directly in this phase (not inferred from earlier phases) — every one
+passes or resolves to an already-documented, honest limitation.
