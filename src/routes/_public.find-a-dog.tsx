@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { listPublishedPuppies } from "@/lib/queries/marketplace";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { listPublishedPuppies, type PuppyWithExtras } from "@/lib/queries/marketplace";
 import { PuppyCard } from "@/components/cards";
 
 export const Route = createFileRoute("/_public/find-a-dog")({
@@ -29,43 +30,67 @@ export const Route = createFileRoute("/_public/find-a-dog")({
   component: FindADog,
 });
 
-const breedOptions = [
-  ["all", "All breeds"],
-  ["Golden Retriever", "Golden Retriever"],
-  ["Border Collie", "Border Collie"],
-  ["Labrador Retriever", "Labrador Retriever"],
-  ["German Shepherd", "German Shepherd"],
-  ["Bernese Mountain Dog", "Bernese Mountain Dog"],
-  ["French Bulldog", "French Bulldog"],
-] as const;
+// "all" plus every distinct value actually present in the loaded puppies — never a hardcoded
+// breed/country list, which would either offer an option with zero real results or silently omit a
+// breed/country that does have listings. Options are derived, not fabricated.
+function distinctOptions(puppies: PuppyWithExtras[], pick: (p: PuppyWithExtras) => string) {
+  const values = Array.from(new Set(puppies.map(pick).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+  return values;
+}
 
-const countryOptions = [
-  ["all", "All Europe"],
-  ["Poland", "Poland"],
-  ["Germany", "Germany"],
-  ["Netherlands", "Netherlands"],
-  ["Czech Republic", "Czech Republic"],
-] as const;
+function priceBoundsOf(puppies: PuppyWithExtras[]): [number, number] {
+  if (puppies.length === 0) return [0, 0];
+  const prices = puppies.map((p) => p.pricePLN);
+  return [Math.min(...prices), Math.max(...prices)];
+}
 
-const defaultFilters = {
-  search: "",
-  breed: "all",
-  country: "all",
-  price: [1000, 20000] as [number, number],
-  availableOnly: false,
-  applicationsOpenOnly: false,
-  male: false,
-  female: false,
-  transportOnly: false,
-  verifiedOnly: false,
-  readyFrom: "",
-  sort: "newest",
-};
+function makeDefaultFilters(priceBounds: [number, number]) {
+  return {
+    search: "",
+    breed: "all",
+    country: "all",
+    price: priceBounds,
+    availableOnly: false,
+    applicationsOpenOnly: false,
+    male: false,
+    female: false,
+    transportOnly: false,
+    verifiedOnly: false,
+    readyFrom: "",
+    sort: "newest",
+  };
+}
+type Filters = ReturnType<typeof makeDefaultFilters>;
+
+function countActiveFilters(f: Filters, defaults: Filters): number {
+  let count = 0;
+  if (f.search.trim()) count++;
+  if (f.breed !== "all") count++;
+  if (f.country !== "all") count++;
+  if (f.price[0] !== defaults.price[0] || f.price[1] !== defaults.price[1]) count++;
+  if (f.availableOnly) count++;
+  if (f.applicationsOpenOnly) count++;
+  if (f.male) count++;
+  if (f.female) count++;
+  if (f.transportOnly) count++;
+  if (f.verifiedOnly) count++;
+  if (f.readyFrom) count++;
+  return count;
+}
 
 function FindADog() {
   const puppies = Route.useLoaderData();
+  const priceBounds = useMemo(() => priceBoundsOf(puppies), [puppies]);
+  const defaultFilters = useMemo(() => makeDefaultFilters(priceBounds), [priceBounds]);
+  const breedNames = useMemo(() => distinctOptions(puppies, (p) => p.breed), [puppies]);
+  const countryNames = useMemo(() => distinctOptions(puppies, (p) => p.country), [puppies]);
+
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [f, setF] = useState(defaultFilters);
+  const [f, setF] = useState<Filters>(defaultFilters);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const activeFilterCount = countActiveFilters(f, defaultFilters);
 
   const filtered = useMemo(() => {
     const rows = puppies.filter((p) => {
@@ -103,7 +128,7 @@ function FindADog() {
     return sorted;
   }, [puppies, f]);
 
-  function update<K extends keyof typeof f>(key: K, value: (typeof f)[K]) {
+  function update<K extends keyof Filters>(key: K, value: Filters[K]) {
     setF((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -120,132 +145,66 @@ function FindADog() {
             </Link>
           </p>
         </div>
-        <div className="relative w-full max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search breed, kennel, city…"
-            className="pl-9"
-            value={f.search}
-            onChange={(e) => update("search", e.target.value)}
-          />
+        <div className="flex w-full max-w-md gap-2">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search breed, kennel, city…"
+              className="pl-9"
+              value={f.search}
+              onChange={(e) => update("search", e.target.value)}
+            />
+          </div>
+          <Button
+            variant="outline"
+            className="shrink-0 lg:hidden"
+            onClick={() => setMobileFiltersOpen(true)}
+          >
+            <SlidersHorizontal className="mr-1 size-4" /> Filters
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-1.5 px-1.5">
+                {activeFilterCount}
+              </Badge>
+            )}
+          </Button>
         </div>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-2xl border border-border/70 bg-card p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <SlidersHorizontal className="size-4" /> Filters
-            </h2>
-            <button
-              type="button"
-              onClick={() => setF(defaultFilters)}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Reset
-            </button>
-          </div>
-
-          <FilterGroup title="Breed">
-            <Select value={f.breed} onValueChange={(v) => update("breed", v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {breedOptions.map(([v, l]) => (
-                  <SelectItem key={v} value={v}>
-                    {l}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FilterGroup>
-
-          <FilterGroup title="Country">
-            <Select value={f.country} onValueChange={(v) => update("country", v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {countryOptions.map(([v, l]) => (
-                  <SelectItem key={v} value={v}>
-                    {l}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FilterGroup>
-
-          <FilterGroup title="Availability">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={f.availableOnly}
-                  onCheckedChange={(v) => update("availableOnly", !!v)}
-                />{" "}
-                Available now
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={f.applicationsOpenOnly}
-                  onCheckedChange={(v) => update("applicationsOpenOnly", !!v)}
-                />{" "}
-                Applications open
-              </label>
-            </div>
-          </FilterGroup>
-
-          <FilterGroup title="Sex">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={f.male} onCheckedChange={(v) => update("male", !!v)} /> Male
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={f.female} onCheckedChange={(v) => update("female", !!v)} />{" "}
-                Female
-              </label>
-            </div>
-          </FilterGroup>
-
-          <FilterGroup
-            title={`Price (PLN) — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
-          >
-            <Slider
-              value={f.price}
-              onValueChange={(v) => update("price", v as [number, number])}
-              min={1000}
-              max={20000}
-              step={100}
-            />
-          </FilterGroup>
-
-          <FilterGroup title="Collection-ready from">
-            <Input
-              type="date"
-              value={f.readyFrom}
-              onChange={(e) => update("readyFrom", e.target.value)}
-            />
-          </FilterGroup>
-
-          <FilterGroup title="Verification & transport">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={f.verifiedOnly}
-                  onCheckedChange={(v) => update("verifiedOnly", !!v)}
-                />{" "}
-                Verified breeders only
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={f.transportOnly}
-                  onCheckedChange={(v) => update("transportOnly", !!v)}
-                />{" "}
-                Transport available
-              </label>
-            </div>
-          </FilterGroup>
+        <aside className="hidden rounded-2xl border border-border/70 bg-card p-5 lg:block">
+          <FilterControls
+            f={f}
+            update={update}
+            onReset={() => setF(defaultFilters)}
+            breedNames={breedNames}
+            countryNames={countryNames}
+            priceBounds={priceBounds}
+          />
         </aside>
+
+        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <SheetContent side="right" className="w-full max-w-sm overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="font-display text-lg">Filters</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">
+              <FilterControls
+                f={f}
+                update={update}
+                onReset={() => setF(defaultFilters)}
+                breedNames={breedNames}
+                countryNames={countryNames}
+                priceBounds={priceBounds}
+                hideHeader
+              />
+            </div>
+            {/* Lets the user go straight back to the (now-filtered) results instead of having to
+                find a small close icon — important on a phone where the sheet covers everything. */}
+            <Button className="mt-6 w-full" onClick={() => setMobileFiltersOpen(false)}>
+              Show {filtered.length} result{filtered.length === 1 ? "" : "s"}
+            </Button>
+          </SheetContent>
+        </Sheet>
 
         <div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-3">
@@ -268,6 +227,8 @@ function FindADog() {
                 size="sm"
                 variant={view === "grid" ? "default" : "ghost"}
                 onClick={() => setView("grid")}
+                aria-label="Grid view"
+                aria-pressed={view === "grid"}
               >
                 <LayoutGrid className="size-4" />
               </Button>
@@ -275,6 +236,8 @@ function FindADog() {
                 size="sm"
                 variant={view === "list" ? "default" : "ghost"}
                 onClick={() => setView("list")}
+                aria-label="List view"
+                aria-pressed={view === "list"}
               >
                 <List className="size-4" />
               </Button>
@@ -289,7 +252,9 @@ function FindADog() {
           {filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
               <p className="text-sm text-muted-foreground">
-                No puppies match right now — check back soon, or widen your filters.
+                {puppies.length === 0
+                  ? "No puppies are published yet — check back soon."
+                  : "No puppies match your filters — try widening them."}
               </p>
               {puppies.length > 0 && (
                 <Button variant="outline" className="mt-4" onClick={() => setF(defaultFilters)}>
@@ -355,6 +320,145 @@ function FindADog() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FilterControls({
+  f,
+  update,
+  onReset,
+  breedNames,
+  countryNames,
+  priceBounds,
+  hideHeader,
+}: {
+  f: Filters;
+  update: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
+  onReset: () => void;
+  breedNames: string[];
+  countryNames: string[];
+  priceBounds: [number, number];
+  hideHeader?: boolean;
+}) {
+  return (
+    <>
+      {!hideHeader && (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+            <SlidersHorizontal className="size-4" /> Filters
+          </h2>
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
+      <FilterGroup title="Breed">
+        <Select value={f.breed} onValueChange={(v) => update("breed", v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All breeds</SelectItem>
+            {breedNames.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterGroup>
+
+      <FilterGroup title="Country">
+        <Select value={f.country} onValueChange={(v) => update("country", v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Europe</SelectItem>
+            {countryNames.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterGroup>
+
+      <FilterGroup title="Availability">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={f.availableOnly}
+              onCheckedChange={(v) => update("availableOnly", !!v)}
+            />{" "}
+            Available now
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={f.applicationsOpenOnly}
+              onCheckedChange={(v) => update("applicationsOpenOnly", !!v)}
+            />{" "}
+            Applications open
+          </label>
+        </div>
+      </FilterGroup>
+
+      <FilterGroup title="Sex">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={f.male} onCheckedChange={(v) => update("male", !!v)} /> Male
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={f.female} onCheckedChange={(v) => update("female", !!v)} /> Female
+          </label>
+        </div>
+      </FilterGroup>
+
+      <FilterGroup
+        title={`Price (PLN) — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
+      >
+        <Slider
+          value={f.price}
+          onValueChange={(v) => update("price", v as [number, number])}
+          min={priceBounds[0]}
+          max={priceBounds[1]}
+          step={100}
+          disabled={priceBounds[0] === priceBounds[1]}
+        />
+      </FilterGroup>
+
+      <FilterGroup title="Collection-ready from">
+        <Input
+          type="date"
+          value={f.readyFrom}
+          onChange={(e) => update("readyFrom", e.target.value)}
+        />
+      </FilterGroup>
+
+      <FilterGroup title="Verification & transport">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={f.verifiedOnly}
+              onCheckedChange={(v) => update("verifiedOnly", !!v)}
+            />{" "}
+            Verified breeders only
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={f.transportOnly}
+              onCheckedChange={(v) => update("transportOnly", !!v)}
+            />{" "}
+            Transport available
+          </label>
+        </div>
+      </FilterGroup>
+    </>
   );
 }
 

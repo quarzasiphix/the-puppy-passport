@@ -79,6 +79,7 @@ function FindYourDogPage() {
 
   const step = steps[stepIndex];
   const isLoading = puppiesQuery.isLoading || breedSizesQuery.isLoading;
+  const isError = puppiesQuery.isError || breedSizesQuery.isError;
 
   function next() {
     setStepIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -226,7 +227,9 @@ function FindYourDogPage() {
               <h2 className="font-display text-xl font-semibold">
                 {isLoading
                   ? "Searching…"
-                  : `${matches.length} matching ${matches.length === 1 ? "puppy" : "puppies"}`}
+                  : isError
+                    ? "Couldn't search right now"
+                    : `${matches.length} matching ${matches.length === 1 ? "puppy" : "puppies"}`}
               </h2>
               <p className="text-sm text-muted-foreground">Based on today's published listings.</p>
             </div>
@@ -236,6 +239,24 @@ function FindYourDogPage() {
           </div>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : isError ? (
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+              <p className="font-medium">Couldn't load puppies to search</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                This isn't the same as "no matches" — something went wrong loading listings. Please
+                try again.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  puppiesQuery.refetch();
+                  breedSizesQuery.refetch();
+                }}
+              >
+                Try again
+              </Button>
+            </div>
           ) : matches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
               <p className="font-medium">No exact matches right now</p>
