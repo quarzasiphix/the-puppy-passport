@@ -26,13 +26,14 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `fd33235` | C (Phase 11) | Real transport timeline (`getCustomerTimeline`/`getOpsTimeline`/`getDriverTimeline`, `TransportTimeline` component) sourced only from `transport_status_history`/`transport_request_amendments`. Found + fixed a real gap: named `transport_parties` (not the legacy inline columns) had no visibility into the request/history/amendments at all — added `is_named_transport_party()` + 3 policies. `tests/db/transport-timeline.test.ts`. 199/199 tests. |
 | `7bac2c0` | D (Phase 12) | Real urgent welfare/rescue workflow: `welfare_cases` + `welfare_case_documents` tables, eligibility gated to verified foundation/shelter/rescue orgs, ops acknowledge/review actions, `convert_welfare_case_to_transport_draft()` reusing `create_transport_draft()`. `dashboard.foundation.urgent.tsx` (real) + new `dashboard.operations.welfare-cases.tsx`. `tests/db/welfare-cases.test.ts`. 221/221 tests. |
 | `f40ac47` | E (Phase 13) | Real organisation team/invitation management (`organisation_invitations`, 3 new member roles, `status` active/suspended on `organisation_members`, tier-protected invite/remove/suspend/role-change RPCs). Found + fixed a real gap: `owner_user_id` could be changed by any org owner via a plain update, silently transferring/orphaning ownership — locked to admin-only via trigger. `dashboard.foundation.team.tsx` (real) + new `_public.invitations.$token.tsx`. `tests/db/organisation-team.test.ts`. 255/255 tests. |
+| `d52da87` | F (Phase 14) | Completed the adoption questionnaire on `buyer_applications` (landlord permission, veterinary plan, consent metadata, org supplemental answers jsonb, `internal_notes`, `draft`/`interview_planned`/`expired` statuses). Found + fixed a real gap: buyers had unrestricted `for all` RLS on their own application row, so could self-approve/forge `breeder_response`/forge `internal_notes` — added a default-deny lock trigger. `dashboard.foundation.applications.tsx` now renders the full questionnaire + internal notes + a transport-draft action on approval. `tests/db/adoption-questionnaire.test.ts`. 273/273 tests. |
 
 ## Remaining stages (not started this session)
 
-F (adoption questionnaire), G (moderation appeals), H (notification preferences), I (admin
-placeholder audit), J (abuse prevention), K (CI), L (full DB/Storage audit), M (scenario suite), N
-(performance), O (privacy/lifecycle), P (launch reconciliation), Q (final verification + report),
-plus the post-Q continuation queue.
+G (moderation appeals), H (notification preferences), I (admin placeholder audit), J (abuse
+prevention), K (CI), L (full DB/Storage audit), M (scenario suite), N (performance), O
+(privacy/lifecycle), P (launch reconciliation), Q (final verification + report), plus the post-Q
+continuation queue.
 
 ## Known open items carried forward
 
