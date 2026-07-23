@@ -1429,3 +1429,55 @@ foundation, or every listing is verified — none found.
 
 All 24 items above, executed directly in this phase (not inferred from earlier phases) — every one
 passes or resolves to an already-documented, honest limitation.
+
+## Phase 24 — Continuation queue: second-pass critique, image resilience, mutation resilience
+
+Continued past the 30-phase brief per explicit instruction, into its own "if time remains, continue
+automatically" continuation queue.
+
+### Mutation resilience (queue item D) — verified, no fixes needed
+
+Checked every `useMutation` call site across every touched file for a `disabled={...isPending}`
+guard on its trigger control, to catch a possible double-submission-on-double-click gap. All of
+them already have it — save/unsave, follow/unfollow, join/leave-group, like, comment, report,
+apply/withdraw application, message, rehoming submission. Nothing to fix; this is a genuine
+"already correct" finding, not a skipped check.
+
+### Image resilience (queue item C) — two real, previously-unnoticed gaps found and fixed
+
+- **`/puppies/$id`'s gallery thumbnail buttons had zero accessible name.** Each thumbnail is a
+  `<button>` whose only content is an `<img alt="">` (correctly empty, since the large "main" image
+  right above it already conveys the same content with a real alt) — but that left the *button
+  itself* with nothing for a screen reader to announce beyond "button." This file wasn't part of any
+  earlier phase's file list (this branch had never touched `_public.puppies.$id.tsx` before this
+  point), so the systematic Phase 13 accessibility sweep never saw it.
+- **`/adoptions/$id` only ever showed the first photo (`a.image`), even when `a.gallery` (the full,
+  real `animal_images` list, sorted cover-first) had more.** Unlike the puppy detail page, which
+  already has a full thumbnail gallery, the adoption/rescue detail page silently dropped every photo
+  after the first — real data (multiple uploaded photos of a rescue dog) that an adopter simply
+  never saw. Confirmed by reading `mapAnimalToAdoption`: `gallery` is built from every real
+  `animal_images` row, not a single-element duplicate of `image`.
+
+### Fixes applied
+
+- Added `aria-label`/`aria-pressed` to `/puppies/$id`'s gallery thumbnail buttons
+  (`"Photo {n} of {total} of {name}"`).
+- **Added a real photo gallery to `/adoptions/$id`**, mirroring the puppy detail page's pattern
+  exactly (including the same new accessible-name treatment): clicking a thumbnail switches the main
+  image, shown only when more than one photo exists (a small improvement over the puppy page's
+  unconditional single-thumbnail render, not applied retroactively there to avoid unrelated churn on
+  a file this phase didn't otherwise need to touch).
+
+### Second-pass product critique (queue item A) and copy quality (queue item B)
+
+Reviewed the homepage's image-loading strategy (hero image correctly has no `loading="lazy"` — an
+above-the-fold LCP image should load eagerly; the below-the-fold transport section image correctly
+does use `loading="lazy"`), the language switcher (already has a real `aria-label`), and the
+community feed's zero-likes display (`{likeCount || ""}`, showing a blank count rather than "0") —
+judged a deliberate, defensible minimalist choice (the same pattern older Twitter used) rather than
+a bug, left unchanged. No further genuine friction found beyond what earlier phases already fixed.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (29/29,
+unaffected), `npm run build` — all clean.

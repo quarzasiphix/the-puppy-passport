@@ -183,6 +183,8 @@ function PuppyDetail() {
                   <button
                     key={i}
                     onClick={() => setActive(i)}
+                    aria-label={`Photo ${i + 1} of ${puppy.gallery.length} of ${puppy.name}`}
+                    aria-pressed={active === i}
                     className={`aspect-square w-20 overflow-hidden rounded-lg border-2 ${active === i ? "border-primary" : "border-transparent"}`}
                   >
                     <img src={g} alt="" className="size-full object-cover" />
