@@ -16,18 +16,20 @@ import { signOut } from "@/lib/auth/actions";
 import { NotificationBell } from "@/components/notification-bell";
 import { useTranslation, SUPPORTED_LOCALES, LOCALE_DISPLAY_NAMES } from "@/lib/i18n";
 
-// Animal discovery leads the navigation — Havenpaw is a dedicated animal ecosystem, not a
-// transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
-// prominent, real feature, just not the first thing a visitor sees.
+// Primary navigation matches the product's actual priority hierarchy (docs/PRODUCT_VISION.md):
+// find an animal, browse breeders, browse foundations, planned litters, adoptions, community are
+// all primary destinations, so all six get a top-level slot. Transport keeps one prominent slot —
+// a real, major feature — but "Breeder map," "Planned routes" and "How it works" are secondary/
+// informational pages that don't need to compete for primary nav space; they stay one click away
+// in the footer instead of diluting the six primary destinations with three more.
 const nav = [
   { to: "/find-a-dog", labelKey: "nav.findADog" },
-  { to: "/breeder-map", labelKey: "nav.breederMap" },
   { to: "/breeders", labelKey: "nav.breeders" },
+  { to: "/foundations", labelKey: "nav.foundations" },
+  { to: "/planned-litters", labelKey: "nav.plannedLitters" },
   { to: "/adoptions", labelKey: "nav.adoptions" },
   { to: "/community", labelKey: "nav.community" },
   { to: "/transport", labelKey: "nav.transport" },
-  { to: "/planned-routes", labelKey: "nav.plannedRoutes" },
-  { to: "/how-it-works", labelKey: "nav.howItWorks" },
 ] as const;
 
 function LanguageSwitcher() {
