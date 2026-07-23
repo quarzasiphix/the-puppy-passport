@@ -35,7 +35,25 @@
     "transportSection": "Transport",
     "account": "Account",
     "rightsReserved": "All rights reserved.",
-    "welfareDisclaimer": "Havenpaw does not guarantee the health or behaviour of any animal, nor a fixed transport delivery time before review."
+    "welfareDisclaimer": "Havenpaw does not guarantee the health or behaviour of any animal, nor a fixed transport delivery time before review.",
+    "linkMarketplace": "Marketplace",
+    "linkFindYourDog": "Find your ideal dog",
+    "linkVerifiedBreeders": "Verified breeders",
+    "linkPlannedLitters": "Planned litters",
+    "linkFoundations": "Foundations",
+    "linkAdoptions": "Adoptions",
+    "linkRehome": "Rehome your dog",
+    "linkRequestTransport": "Request transport",
+    "linkServiceCategories": "Service categories",
+    "linkPlannedRoutes": "Planned routes",
+    "linkHowItWorks": "How it works",
+    "linkCommunityGroups": "Community groups",
+    "linkCreateAccount": "Create an account",
+    "linkApplyBreeder": "Apply as breeder / foundation",
+    "linkSignIn": "Sign in",
+    "linkTerms": "Terms",
+    "linkPrivacy": "Privacy",
+    "linkCookies": "Cookies"
   },
   "language": {
     "switchLabel": "Language"
