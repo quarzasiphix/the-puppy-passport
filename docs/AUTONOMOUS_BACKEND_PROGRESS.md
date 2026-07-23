@@ -24,13 +24,14 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 |---|---|---|
 | `f5cb8c7` | B (Phase 10) | Operations calendar: `src/lib/queries/calendar.ts` (unscheduled queue, date-range route listing, deterministic conflict detection), `dashboard.operations.calendar.tsx` real UI (day/week, filters, conflicts banner), `tests/db/calendar-scheduling.test.ts`. 184/184 tests. |
 | `fd33235` | C (Phase 11) | Real transport timeline (`getCustomerTimeline`/`getOpsTimeline`/`getDriverTimeline`, `TransportTimeline` component) sourced only from `transport_status_history`/`transport_request_amendments`. Found + fixed a real gap: named `transport_parties` (not the legacy inline columns) had no visibility into the request/history/amendments at all — added `is_named_transport_party()` + 3 policies. `tests/db/transport-timeline.test.ts`. 199/199 tests. |
+| `7bac2c0` | D (Phase 12) | Real urgent welfare/rescue workflow: `welfare_cases` + `welfare_case_documents` tables, eligibility gated to verified foundation/shelter/rescue orgs, ops acknowledge/review actions, `convert_welfare_case_to_transport_draft()` reusing `create_transport_draft()`. `dashboard.foundation.urgent.tsx` (real) + new `dashboard.operations.welfare-cases.tsx`. `tests/db/welfare-cases.test.ts`. 221/221 tests. |
 
 ## Remaining stages (not started this session)
 
-D (urgent welfare), E (team management), F (adoption questionnaire), G (moderation appeals), H
-(notification preferences), I (admin placeholder audit), J (abuse prevention), K (CI), L (full
-DB/Storage audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
-reconciliation), Q (final verification + report), plus the post-Q continuation queue.
+E (team management), F (adoption questionnaire), G (moderation appeals), H (notification
+preferences), I (admin placeholder audit), J (abuse prevention), K (CI), L (full DB/Storage
+audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch reconciliation), Q
+(final verification + report), plus the post-Q continuation queue.
 
 ## Known open items carried forward
 
