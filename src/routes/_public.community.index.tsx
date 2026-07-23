@@ -152,6 +152,16 @@ function CommunityPage() {
 
       {postsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : postsQuery.isError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <p className="font-medium">Couldn't load the community feed</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Something went wrong — this isn't the same as there being no posts yet.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => postsQuery.refetch()}>
+            Try again
+          </Button>
+        </div>
       ) : posts.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <Users className="mx-auto size-8 text-muted-foreground" />

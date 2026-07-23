@@ -992,3 +992,55 @@ pass, the card-system pass, the detail-page pass, the breeder-profile pass, the 
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, the accessibility pass, and this mobile/responsive
 pass.
+
+## Phase 15 — Loading, errors and resilience
+
+Cross-checked every `useQuery` call in every touched public route against whether it has an
+`isError` branch, to find any remaining place where a real failure could still silently read as a
+legitimate empty result.
+
+### Findings
+
+- **The main community feed's primary content query had no error state.** `postsQuery.data ?? []`
+  meant a failed fetch and a genuinely-empty feed both rendered the identical "No posts yet — be the
+  first to share something" empty state — the single most-visited page this branch touches, showing
+  its most important failure mode as if nothing were wrong.
+- **Several supporting queries remain without a dedicated error UI on purpose, not by oversight**:
+  "am I already following this breeder/foundation/profile" checks (`breeders.$slug.tsx`,
+  `foundations.$slug.tsx`, `profile.$profileId.tsx`), "am I already a member of this group"
+  (`community.groups.$slug.tsx`), and "have I already applied to this animal"
+  (`adoptions.$id.tsx`). Each of these is a secondary state check, not primary content: a failure
+  just means the follow/join/apply button might show its "not yet" state even if the user already
+  is — annoying but not data-hiding, and in the apply/follow cases the underlying mutation already
+  has its own duplicate-detection safety net (`followOrg`/`joinGroup` treat a duplicate insert as a
+  no-op; the adoption interest mutation explicitly catches a duplicate-key error and tells the user
+  they'd already applied). Adding a full error-state UI to each of these small boolean checks would
+  be disproportionate to the actual risk.
+- Mutation rollback: none of the mutations in this app perform an optimistic update, so there is
+  nothing to roll back — not a gap, just not applicable here.
+- Broken/missing images (a valid database row whose stored image URL 404s, as opposed to no image
+  existing at all — the latter already falls back to a placeholder in every mapper function): no
+  `<img onError>` fallback exists anywhere in the app. This is a real, pre-existing gap across the
+  whole codebase, not something introduced or specific to this branch's files — flagged as a
+  worthwhile follow-up rather than fixed here, since verifying an image-load-failure fallback
+  actually renders correctly needs a real browser, which this environment doesn't have.
+
+### Fixes applied
+
+- **Added a real error state to the community feed's post query**, with a working `refetch()` retry
+  button, matching the pattern already used everywhere else this branch touched.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on the changed file, `npm run test:unit` (13/13, unaffected),
+`npm run build` — all clean.
+
+## Commit
+
+Sixteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, and
+this resilience pass.
