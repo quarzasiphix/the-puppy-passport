@@ -23,13 +23,23 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | Commit | Stage | Summary |
 |---|---|---|
 | `f5cb8c7` | B (Phase 10) | Operations calendar: `src/lib/queries/calendar.ts` (unscheduled queue, date-range route listing, deterministic conflict detection), `dashboard.operations.calendar.tsx` real UI (day/week, filters, conflicts banner), `tests/db/calendar-scheduling.test.ts`. 184/184 tests. |
+| `fd33235` | C (Phase 11) | Real transport timeline (`getCustomerTimeline`/`getOpsTimeline`/`getDriverTimeline`, `TransportTimeline` component) sourced only from `transport_status_history`/`transport_request_amendments`. Found + fixed a real gap: named `transport_parties` (not the legacy inline columns) had no visibility into the request/history/amendments at all — added `is_named_transport_party()` + 3 policies. `tests/db/transport-timeline.test.ts`. 199/199 tests. |
 
 ## Remaining stages (not started this session)
 
-C (timeline), D (urgent welfare), E (team management), F (adoption questionnaire), G (moderation
-appeals), H (notification preferences), I (admin placeholder audit), J (abuse prevention), K (CI),
-L (full DB/Storage audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
+D (urgent welfare), E (team management), F (adoption questionnaire), G (moderation appeals), H
+(notification preferences), I (admin placeholder audit), J (abuse prevention), K (CI), L (full
+DB/Storage audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
 reconciliation), Q (final verification + report), plus the post-Q continuation queue.
+
+## Known open items carried forward
+
+- Quotation RLS column-scoping gap (see above) — candidate for Stage L.
+- `driver_transport_job_view` and the new timeline queries don't yet expose the multi-animal list
+  (`transport_request_animals`) — a driver/timeline viewer still only ever sees the primary/first
+  animal snapshot on multi-animal requests. Documented as a known non-goal in
+  `docs/adr/TRANSPORT_DATA_MODEL.md`; candidate for a future pass if multi-animal requests become
+  common in practice.
 
 ## Known open items carried from the previous session (not yet fixed)
 
