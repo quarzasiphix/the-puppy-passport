@@ -1264,3 +1264,56 @@ experience pass, the public-profile pass, the community-feed pass, the groups pa
 dashboard pass, the localisation-audit pass, the accessibility pass, the mobile/responsive pass, the
 resilience pass, the performance pass, the SEO pass, the route-integrity pass, and this test-coverage
 pass.
+
+## Phase 20 — Public publishing and onboarding UX
+
+Reviewed `/rehome`, `/create-breeder` and `/signup` — the three public flows that end in a real
+submission, not yet covered by this session's earlier phases.
+
+### Findings
+
+- **`/rehome`'s form fields used `<Label>` with no `htmlFor`/`id` pairing** to their `Input`/
+  `Select`/`Textarea` siblings — 8 fields, the same unlabelled-control gap Phase 13 fixed elsewhere,
+  just in a file not yet reviewed this session.
+- **`/create-breeder`'s org-type picker** (three plain buttons for Kennel/Foundation/Shelter) had no
+  `aria-pressed`, so a screen reader couldn't tell which was currently selected — only a border/
+  background colour change indicated it visually.
+- **`/create-breeder`'s "have you already applied" check had no error state.** If
+  `verificationQuery` failed, the code fell straight through past the loading and "not signed in"
+  checks into rendering the full application form as if the user had never applied — even if they
+  actually have a pending or approved application sitting in review. A resubmission in that state
+  would very likely hit a database constraint and fail with a confusing raw error, or worse, produce
+  a duplicate record if none exists.
+- `/create-breeder`'s main form and `/signup` both already use the shadcn `Form`/`FormLabel`/
+  `FormControl` (`react-hook-form` + zod) pattern, which wires up `htmlFor`/`id`/
+  `aria-describedby` correctly out of the box — no fix needed there, and confirms the project's own
+  documented form pattern (`_public.signup.tsx`, referenced in `CLAUDE.md`) is the right one to
+  reach for.
+- `/rehome`'s own submission flow was already excellent: signed-out visitors are asked to sign in
+  first (keeping rehoming accountable to a real account), a preview step clearly separates what's
+  private ("only seen by our review team") from what's public, and the success state is honest and
+  specific ("Submitted for review... not public yet... An admin reviews every private rehoming
+  submission... usually within a couple of days") rather than a bare "Success."
+
+### Fixes applied
+
+- **Added `id`/`htmlFor` pairing** (or `aria-labelledby` for the `Select` fields, which don't accept
+  a plain `htmlFor` target) to all 8 fields on `/rehome`.
+- **Added `aria-pressed`** to `/create-breeder`'s org-type picker buttons.
+- **Added a real error state to `/create-breeder`'s verification-status check**: on failure, shows
+  "Couldn't check your application... this isn't the same as not having applied, so we didn't show
+  the form to avoid a duplicate submission" with a retry button, instead of silently falling through
+  to the fresh application form.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (29/29,
+unaffected), `npm run build` — all clean.
+
+## Commit
+
+Twenty-two commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current
+local `ux-marketplace-polish` HEAD, not from stale `origin/main`) as of this phase — see
+`docs/FRONTEND_AUTONOMOUS_PROGRESS.md` for the full ordered commit list, which is now the
+authoritative running log (this file's own per-phase "Commit" counters below predate that file and
+are kept for historical continuity within each phase's own section).

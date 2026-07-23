@@ -137,17 +137,21 @@ function RehomePage() {
       {step === "form" && (
         <div className="space-y-4">
           <div>
-            <Label>Your dog's name</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label htmlFor="rehome-name">Your dog's name</Label>
+            <Input
+              id="rehome-name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Sex</Label>
+              <Label id="rehome-sex-label">Sex</Label>
               <Select
                 value={form.sex}
                 onValueChange={(v) => setForm({ ...form, sex: v as "male" | "female" })}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-labelledby="rehome-sex-label">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,8 +161,9 @@ function RehomePage() {
               </Select>
             </div>
             <div>
-              <Label>Approximate age</Label>
+              <Label htmlFor="rehome-age">Approximate age</Label>
               <Input
+                id="rehome-age"
                 placeholder="e.g. About 3 years"
                 value={form.approximateAge}
                 onChange={(e) => setForm({ ...form, approximateAge: e.target.value })}
@@ -167,9 +172,9 @@ function RehomePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Breed (if known)</Label>
+              <Label id="rehome-breed-label">Breed (if known)</Label>
               <Select value={form.breedId} onValueChange={(v) => setForm({ ...form, breedId: v })}>
-                <SelectTrigger>
+                <SelectTrigger aria-labelledby="rehome-breed-label">
                   <SelectValue placeholder="Mixed / unknown" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,16 +187,18 @@ function RehomePage() {
               </Select>
             </div>
             <div>
-              <Label>Color</Label>
+              <Label htmlFor="rehome-color">Color</Label>
               <Input
+                id="rehome-color"
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
               />
             </div>
           </div>
           <div>
-            <Label>Why are you looking to rehome them?</Label>
+            <Label htmlFor="rehome-reason">Why are you looking to rehome them?</Label>
             <Textarea
+              id="rehome-reason"
               rows={3}
               value={form.reasonForRehoming}
               onChange={(e) => setForm({ ...form, reasonForRehoming: e.target.value })}
@@ -199,8 +206,9 @@ function RehomePage() {
             />
           </div>
           <div>
-            <Label>Tell adopters about them (optional)</Label>
+            <Label htmlFor="rehome-description">Tell adopters about them (optional)</Label>
             <Textarea
+              id="rehome-description"
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -209,15 +217,17 @@ function RehomePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Temperament (optional)</Label>
+              <Label htmlFor="rehome-temperament">Temperament (optional)</Label>
               <Input
+                id="rehome-temperament"
                 value={form.temperament}
                 onChange={(e) => setForm({ ...form, temperament: e.target.value })}
               />
             </div>
             <div>
-              <Label>Ideal home (optional)</Label>
+              <Label htmlFor="rehome-ideal-home">Ideal home (optional)</Label>
               <Input
+                id="rehome-ideal-home"
                 value={form.idealHome}
                 onChange={(e) => setForm({ ...form, idealHome: e.target.value })}
               />
