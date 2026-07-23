@@ -444,9 +444,70 @@ by this phase), `npm run build` — all clean. Not verified in an actual browser
 note in the Phase 1 section) — the mobile Sheet's open/close behaviour, the badge count, and the
 slider's disabled edge case are code-reviewed but not visually confirmed at a real narrow viewport.
 
+## Phase 4 — Animal listing card system
+
+Audited every card variant in `components/cards.tsx` (`PuppyCard`, `AdoptionCard`, `LitterCard`,
+`BreederCard`, `FoundationCard`) plus the saved/followed dashboard tiles for image handling,
+interaction correctness and consistency.
+
+### Findings
+
+- **`LitterCard`'s "View litter" button always linked to `/planned-litters`** (the general index),
+  regardless of which specific litter's card it appeared on — clicking it from any litter never
+  took you to information about *that* litter, just the same generic list every time. A real dead/
+  misleading-action bug (task explicitly calls out "no dead button" / "no action that only changes
+  visual state without real behaviour").
+- **`LitterCard`'s image `alt` text was the litter's registration code** (e.g., `"GR-2026-003"`) —
+  not a meaningful description of what the image actually shows (the mother dog).
+- Every other card's primary action already routes correctly per-item (`PuppyCard` →
+  `/puppies/$id`, `AdoptionCard` → `/adoptions/$id`, `BreederCard`/`FoundationCard` →
+  `/breeders|foundations/$slug`, each parameterised by that specific card's own id/slug) — no
+  further fix needed there.
+- All cards already have `loading="lazy"` and stable `aspect-*` ratios; alt text on `PuppyCard`,
+  `AdoptionCard`, `BreederCard`, `FoundationCard` was already meaningful (animal/kennel/org name).
+  Dashboard save/follow tiles (`dashboard.buyer.saved.tsx`, `dashboard.buyer.followed.tsx`,
+  `dashboard.buyer.index.tsx`) correctly use `alt=""` — the entity's name is already visible as
+  adjacent text inside the same link, so a repeated alt would be redundant to a screen reader, not
+  a missing-alt bug.
+- No image-resizing/transform utility exists anywhere in the codebase (checked for
+  `srcset`/`sizes`/any storage-transform helper) — "no huge original image downloads where existing
+  utilities support sizing" doesn't apply; there's no existing utility to wire up, and building an
+  image-transform pipeline from scratch would be new infrastructure, not a fix.
+- No nested-interactive-control or link-inside-a-clickable-card violations found in any card — none
+  of the card `<article>` roots are themselves links; save/follow buttons, org-name links and the
+  primary CTA are always siblings, never nested inside one another.
+
+### Fixes applied
+
+- **`LitterCard` now links to the litter's actual kennel** (`/breeders/$slug`, "View kennel") when
+  the litter's organisation has a public slug — a real, specific destination instead of the generic
+  index every time. Added `breederSlug` to the `Litter` type (optional, since the retired mock-data
+  literal arrays don't have one and adding it there would be pointless churn on dead data) and
+  threads it through `mapLitterRow`/`litterSelect` (`organisations!litters_kennel_id_fkey(id, name,
+  slug)`) — one additional selected column, no new query. Falls back to the old `/planned-litters`
+  link only if a litter's org genuinely has no slug (shouldn't happen for a published litter, but
+  fails safely rather than crashing).
+- **`LitterCard`'s image alt text now describes what's shown** (`"{breed} litter — mother dog"`)
+  instead of the registration code.
+
+### Deferred to a later phase
+
+- `mapLitterRow` fires two `countAnimalsByStatus` queries per litter (available + reserved counts),
+  which is an N+1 pattern across every litter list (homepage, `/planned-litters`, breeder profile
+  "planned" tab) — pre-existing, not introduced by 1444e35. Noted for the Phase 16 performance pass
+  rather than fixed here, to keep this phase to card-level correctness.
+- `find-a-dog.tsx`'s list-view row (a hand-rolled puppy row, not `PuppyCard`) still duplicates
+  `PuppyCard`'s layout rather than reusing it — flagged in the original audit, still not merged;
+  it's a legitimate distinct layout (list vs. grid), not a bug, so left alone again this pass.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all three changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
 ## Commit
 
-Four commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Five commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
-feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, and this discovery/
-search UX pass.
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, and this card-system pass.

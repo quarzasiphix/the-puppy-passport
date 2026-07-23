@@ -218,7 +218,12 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
-        <img src={l.image} alt={l.code} loading="lazy" className="size-full object-cover" />
+        <img
+          src={l.image}
+          alt={`${l.breed} litter — mother dog`}
+          loading="lazy"
+          className="size-full object-cover"
+        />
         <Badge className="absolute left-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground">
           {planned ? "Planned litter" : "Current litter"}
         </Badge>
@@ -259,8 +264,18 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
           </p>
         )}
         <div className="mt-auto flex gap-2 pt-2">
+          {/* There's no dedicated per-litter detail page yet — the breeder's own profile page is
+              the real place this specific litter is shown (About/Planned tabs), so link there by
+              slug instead of always pointing at the generic index regardless of which card this
+              is. Falls back to the index only if this litter's kennel has no public slug. */}
           <Button asChild variant="outline" className="flex-1">
-            <Link to="/planned-litters">View litter</Link>
+            {l.breederSlug ? (
+              <Link to="/breeders/$slug" params={{ slug: l.breederSlug }}>
+                View kennel
+              </Link>
+            ) : (
+              <Link to="/planned-litters">View litter</Link>
+            )}
           </Button>
           {planned && (
             <Button
