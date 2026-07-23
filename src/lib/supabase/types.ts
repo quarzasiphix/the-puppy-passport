@@ -82,6 +82,7 @@ export interface Database {
           international_transport_available: boolean;
           verification_status: "pending" | "approved" | "rejected" | "suspended";
           is_public: boolean;
+          is_featured: boolean;
           owner_user_id: string;
           created_at: string;
           updated_at: string;
@@ -784,6 +785,74 @@ export interface Database {
           file_url: string;
         };
         Update: Partial<Database["public"]["Tables"]["welfare_case_documents"]["Row"]>;
+        Relationships: [];
+      };
+      markets: {
+        Row: {
+          id: string;
+          country_code: string;
+          display_name: string;
+          enabled: boolean;
+          default_locale: string;
+          supported_locales: string[];
+          currency: string;
+          marketplace_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          breeder_verification_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          adoption_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          transport_post_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          transport_full_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          fundraising_state:
+            | "unavailable"
+            | "discovery_only"
+            | "listings_available"
+            | "adoption_available"
+            | "transport_requests_available"
+            | "partner_transport"
+            | "full_havenpaw_service";
+          legal_content_ready: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["markets"]["Row"]> & {
+          country_code: string;
+          display_name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["markets"]["Row"]>;
         Relationships: [];
       };
       notifications: {

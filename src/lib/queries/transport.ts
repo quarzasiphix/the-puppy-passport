@@ -221,6 +221,50 @@ export async function listMyTransportRequests(userId: string) {
   >[];
 }
 
+// Stage I: dashboard.buyer.scheduled.tsx was an honest NotImplemented placeholder ("Transport
+// requests that have moved past quotation into a confirmed pickup date and route will appear here,
+// with a live status timeline") — real data (assigned_route_id, the scheduled+ status range) and a
+// real timeline (getCustomerTimeline(), Stage C) already existed; only this query and the page
+// itself were missing.
+const SCHEDULED_OR_LATER_STATUSES = [
+  "scheduled",
+  "driver_assigned",
+  "pickup_confirmed",
+  "animal_collected",
+  "in_transport",
+  "rest_or_care_stop",
+  "approaching_destination",
+  "delivered",
+  "handover_confirmed",
+  "completed",
+];
+
+export async function listMyScheduledTransportRequests(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_requests")
+    .select(
+      "id, request_number, animal_name, pickup_country, pickup_city, destination_country, destination_city, status, earliest_date, latest_date",
+    )
+    .eq("requester_profile_id", userId)
+    .in("status", SCHEDULED_OR_LATER_STATUSES)
+    .order("earliest_date", { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  return (data ?? []) as Pick<
+    TransportRequestRow,
+    | "id"
+    | "request_number"
+    | "animal_name"
+    | "pickup_country"
+    | "pickup_city"
+    | "destination_country"
+    | "destination_city"
+    | "status"
+    | "earliest_date"
+    | "latest_date"
+  >[];
+}
+
 export async function getTransportRequest(id: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
