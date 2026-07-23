@@ -10,9 +10,12 @@ for backend dependencies, `docs/FRONTEND_BROWSER_QA.md` for what still needs a r
 - **Worktree**: `/p/the-puppy-passport-ux/.claude/worktrees/marketplace-ux-pass`
 - **Branch**: `ux-marketplace-frontend-pass`
 - **Starting HEAD**: `02e6416` (the `ux-marketplace-polish` branch tip at session start)
-- **Ending HEAD**: `bb93596`
+- **Ending HEAD**: `af4a729`
 - **Main worktree** (`/p/the-puppy-passport`, parallel backend session): confirmed at `933e1ca` on
   `main` as of this report, never entered/modified.
+- This report was written at `bb93596` and updated in place through `af4a729` as the session
+  continued past the original 30-phase brief into its own continuation queue — see the three
+  commits appended to the ordered list below.
 
 ## Commits, in order
 
@@ -50,8 +53,14 @@ for backend dependencies, `docs/FRONTEND_BROWSER_QA.md` for what still needs a r
 24. `47373fb` — Placeholder/dead-code scan and design-consistency check (both verified clean).
 25. `769d205` — Branch self-review: full diff re-checked as a PR.
 26. `bb93596` — Added `FRONTEND_BROWSER_QA.md`; recorded the genuine Chromium launch failure.
+27. `ffa6d3e` — Added this integration readiness report.
+28. `64c2b2c` — Final verification: full 24-point checklist run fresh, all clean.
+29. `af4a729` — Continuation queue: added a real photo gallery to adoption detail (data already
+    existed via `a.gallery`, was never rendered beyond the first photo); fixed zero-accessible-name
+    gallery thumbnail buttons on both the puppy and adoption detail pages; verified mutation
+    double-submit protection and image-loading strategy across the board (both already correct).
 
-## Files changed (42 total)
+## Files changed (43 total)
 
 ```
 docs/FRONTEND_AUTONOMOUS_PROGRESS.md          (new)
@@ -90,6 +99,7 @@ src/routes/_public.foundations.$slug.tsx      (new, real page — was a stub bef
 src/routes/_public.foundations.tsx
 src/routes/_public.index.tsx
 src/routes/_public.profile.$profileId.tsx
+src/routes/_public.puppies.$id.tsx
 src/routes/_public.rehome.tsx
 src/routeTree.gen.ts                          (generated — unchanged since 1444e35)
 tests/unit/i18n-completeness.test.ts          (new)
@@ -101,7 +111,7 @@ tests/unit/saved-animal-classification.test.ts (new)
 ## Routes touched
 
 `/`, `/find-a-dog`, `/find-your-dog`, `/breeders`, `/breeders/$slug`, `/foundations`,
-`/foundations/$slug`, `/adoptions/$id`, `/profile/$profileId`, `/community`,
+`/foundations/$slug`, `/adoptions/$id`, `/puppies/$id`, `/profile/$profileId`, `/community`,
 `/community/groups`, `/community/groups/$slug`, `/rehome`, `/create-breeder`,
 `/dashboard/buyer`, `/dashboard/buyer/applications`, `/dashboard/buyer/saved`,
 `/dashboard/buyer/followed`.
@@ -270,6 +280,9 @@ git cherry-pick 0e94d18
 git cherry-pick 47373fb
 git cherry-pick 769d205
 git cherry-pick bb93596
+git cherry-pick ffa6d3e
+git cherry-pick 64c2b2c
+git cherry-pick af4a729
 ```
 
 (Every commit before this branch's final state, in the exact order above — the order they were
