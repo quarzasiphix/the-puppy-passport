@@ -216,10 +216,11 @@ function AdoptionDetail() {
               </div>
             ) : (
               <div className="mt-4 space-y-2">
-                <label className="text-sm font-medium">
+                <label htmlFor="adoption-interest-message" className="text-sm font-medium">
                   Tell them a little about yourself (optional)
                 </label>
                 <Textarea
+                  id="adoption-interest-message"
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}

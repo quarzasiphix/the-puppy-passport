@@ -128,6 +128,9 @@ function GroupDetailPage() {
                   ? "e.g. Need to transport a dog from Łódź to Rotterdam around 18 August…"
                   : "Share something with this group…"
               }
+              aria-label={
+                isTransportRouteGroup ? "Describe your transport need" : "Post to this group"
+              }
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
             />

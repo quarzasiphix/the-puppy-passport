@@ -130,6 +130,7 @@ function CommunityPage() {
           <Textarea
             rows={3}
             placeholder="Share something with the community…"
+            aria-label="Share something with the community"
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
           />
@@ -348,6 +349,7 @@ function PostCard({
               <Textarea
                 rows={1}
                 placeholder="Write a comment…"
+                aria-label="Write a comment"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="min-h-0"
@@ -355,6 +357,7 @@ function PostCard({
               <Button
                 size="icon"
                 variant="outline"
+                aria-label="Send comment"
                 disabled={!newComment.trim() || commentMutation.isPending}
                 onClick={() => commentMutation.mutate()}
               >
