@@ -153,6 +153,21 @@ function GroupDetailPage() {
           <div className="mt-4 space-y-3">
             {postsQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : postsQuery.isError ? (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+                <p className="font-medium">Couldn't load posts</p>
+                <p className="mt-1 text-muted-foreground">
+                  Something went wrong — this isn't the same as there being no posts yet.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => postsQuery.refetch()}
+                >
+                  Try again
+                </Button>
+              </div>
             ) : !postsQuery.data?.length ? (
               <p className="text-sm text-muted-foreground">No posts yet in this group.</p>
             ) : (

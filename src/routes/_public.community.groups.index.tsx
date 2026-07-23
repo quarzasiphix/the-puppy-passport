@@ -57,9 +57,23 @@ function GroupsPage() {
 
       {groupsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : groupsQuery.isError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <p className="font-medium">Couldn't load groups</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Something went wrong — this isn't the same as there being no groups. Please try again.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => groupsQuery.refetch()}>
+            Try again
+          </Button>
+        </div>
+      ) : !groupsQuery.data?.length ? (
+        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
+          <p className="text-sm text-muted-foreground">No groups exist yet — check back soon.</p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {groupsQuery.data?.map((group) => (
+          {groupsQuery.data.map((group) => (
             <div key={group.id} className="rounded-2xl border border-border/70 bg-card p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>

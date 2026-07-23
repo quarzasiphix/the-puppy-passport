@@ -712,3 +712,46 @@ Ten commits on branch `ux-marketplace-frontend-pass` (worktree branched from the
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, the public-profile pass, and this community-feed pass.
+
+## Phase 10 — Community groups
+
+Reviewed `/community/groups` and `/community/groups/$slug` for the same "failure must never look
+like empty" and "honest empty state" bar applied everywhere else.
+
+### Findings
+
+- **`/community/groups` had no empty state and no error state at all.** `groupsQuery.data?.map(...)`
+  on an empty or `undefined` array just renders nothing under the header — a genuinely-empty
+  database and a failed query were both silently blank, with zero explanation to the visitor.
+- **`/community/groups/$slug`'s post list had the identical gap**: `isLoading` was checked, but a
+  failed `postsQuery` fell straight through to "No posts yet in this group," misrepresenting a real
+  failure as a legitimate empty result.
+- Reporting an individual group (as opposed to a post within it) isn't supported by `ReportDialog`
+  today — `ReportTargetType` has no `"group"` variant, and adding one would mean touching the
+  moderation enum/schema, out of bounds for this pass. Not fabricated; noted as a real backend
+  dependency for later.
+- Join/leave, member counts, group-type badges, the transport-route group's honest "create a
+  structured transport request" CTA (not a fake parsed-from-text request), and post-level reporting
+  within a group were all already correct.
+
+### Fixes applied
+
+- **`/community/groups`**: added a distinct error state ("Couldn't load groups... try again," with a
+  working `refetch()` button) and a distinct empty state ("No groups exist yet — check back soon"),
+  so a failure, an empty result, and a loading state are all now visually and textually different.
+- **`/community/groups/$slug`**: same fix for the post list — a real query failure now shows
+  "Couldn't load posts... this isn't the same as there being no posts yet" with a retry button,
+  instead of silently reading as "No posts yet in this group."
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
+## Commit
+
+Eleven commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, and this groups pass.
