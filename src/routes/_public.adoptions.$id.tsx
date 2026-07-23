@@ -20,6 +20,8 @@ import { ReportDialog } from "@/components/report-dialog";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { foundationOrgTypeLabel } from "@/components/cards";
 import { AnimalImage } from "@/components/marketplace/animal-image";
+import { useTranslation } from "@/lib/i18n";
+import { formatNumber } from "@/lib/presentation/number";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
@@ -48,6 +50,7 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
 
 function AdoptionDetail() {
   const a = Route.useLoaderData();
+  const { locale } = useTranslation();
   const { userId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -213,7 +216,7 @@ function AdoptionDetail() {
               <p className="mt-2 text-sm">
                 {a.category === "private_rehoming" ? "Rehoming fee" : "Adoption fee"}:{" "}
                 <span className="font-medium">
-                  {a.adoptionFee.toLocaleString()} {a.currency}
+                  {formatNumber(a.adoptionFee, locale)} {a.currency}
                 </span>
               </p>
             )}

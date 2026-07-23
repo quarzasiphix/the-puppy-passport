@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { listPublishedPuppies, type PuppyWithExtras } from "@/lib/queries/marketplace";
 import { PuppyCard } from "@/components/cards";
+import { useTranslation } from "@/lib/i18n";
+import { formatNumber } from "@/lib/presentation/number";
 
 export const Route = createFileRoute("/_public/find-your-dog")({
   head: () => ({
@@ -45,6 +47,7 @@ async function listBreedSizes() {
 const steps = ["size", "location", "transport", "budget", "results"] as const;
 
 function FindYourDogPage() {
+  const { locale } = useTranslation();
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
     size: "any",
@@ -204,7 +207,7 @@ function FindYourDogPage() {
                   next();
                 }}
               >
-                Up to €{b.toLocaleString()}
+                Up to €{formatNumber(b, locale)}
               </OptionButton>
             ))}
           </div>
