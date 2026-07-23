@@ -20,6 +20,14 @@ import { joinRouteWaitlist } from "@/lib/queries/routes";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
 
+// public_routes only ever surfaces routes with status 'planning' or 'confirmed' (see the view's own
+// WHERE clause in supabase/migrations/20260101002700_public_routes_view.sql) — never show either
+// raw internal value to a visitor, translate both into plain language.
+const routeStatusLabels: Record<string, string> = {
+  planning: "Being planned",
+  confirmed: "Confirmed",
+};
+
 export const Route = createFileRoute("/_public/planned-routes")({
   head: () => ({ meta: [{ title: "Planned routes — Havenpaw" }] }),
   loader: async () => {
@@ -79,7 +87,7 @@ function PlannedRoutesPage() {
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <Badge variant="secondary">{r.route_number}</Badge>
                 <Badge variant="secondary" className="capitalize">
-                  {r.status}
+                  {routeStatusLabels[r.status] ?? r.status}
                 </Badge>
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
