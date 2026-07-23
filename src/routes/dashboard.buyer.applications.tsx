@@ -4,6 +4,17 @@ import { toast } from "sonner";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import {
   applicationStatusLabels,
@@ -140,15 +151,34 @@ function BuyerApplications() {
                   {a.application_type === "purchase" ? "Message breeder" : "Message organisation"}
                 </Button>
                 {withdrawable.includes(a.status) && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive"
-                    disabled={withdrawMutation.isPending}
-                    onClick={() => withdrawMutation.mutate(a.id)}
-                  >
-                    Withdraw
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        disabled={withdrawMutation.isPending}
+                      >
+                        Withdraw
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Withdraw this application?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {a.application_type === "purchase"
+                            ? "The breeder will no longer see this as an active application. You can apply again later if the puppy is still available."
+                            : "The organisation will no longer see this as an active application. You can apply again later if the listing is still available."}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => withdrawMutation.mutate(a.id)}>
+                          Withdraw
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
             </li>
