@@ -22,7 +22,7 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 
 | Commit | Stage | Summary |
 |---|---|---|
-| _(in progress)_ | B (Phase 10) | Operations calendar and scheduling |
+| `f5cb8c7` | B (Phase 10) | Operations calendar: `src/lib/queries/calendar.ts` (unscheduled queue, date-range route listing, deterministic conflict detection), `dashboard.operations.calendar.tsx` real UI (day/week, filters, conflicts banner), `tests/db/calendar-scheduling.test.ts`. 184/184 tests. |
 
 ## Remaining stages (not started this session)
 
