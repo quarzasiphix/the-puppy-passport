@@ -212,9 +212,9 @@ function FindADog() {
             <div className="text-sm text-muted-foreground">
               <strong className="text-foreground">{filtered.length}</strong> results
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Select value={f.sort} onValueChange={(v) => update("sort", v)}>
-                <SelectTrigger className="h-9 w-[180px]">
+                <SelectTrigger className="h-9 w-[150px] sm:w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

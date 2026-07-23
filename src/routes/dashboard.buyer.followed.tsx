@@ -160,10 +160,10 @@ function OrgTile({
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
       <img src={cover} alt="" className="aspect-[16/9] w-full object-cover" />
       <div className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="font-display text-lg font-semibold">{name}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 break-words font-display text-lg font-semibold">{name}</div>
           {badge && (
-            <Badge variant="secondary" className="text-xs font-normal">
+            <Badge variant="secondary" className="shrink-0 text-xs font-normal">
               {badge}
             </Badge>
           )}
