@@ -445,3 +445,66 @@ test("transport_documents.transport_party_id must belong to the same request", a
     await customer.from("transport_requests").delete().eq("id", otherRequestId!);
   });
 });
+
+test("real document upload flow: private Storage object + signed URL, not a public link", async (t) => {
+  const customer = await as("customer");
+  const objectPath = `${ids.transportWarsawAmsterdam}/test-upload-${Date.now()}.txt`;
+  let documentId: string | undefined;
+
+  await t.test(
+    "the requester uploads a real file and records the object path (not a URL)",
+    async () => {
+      const upload = await customer.storage
+        .from("transport-documents")
+        .upload(objectPath, new Blob(["not a real document — upload flow test"]), {
+          contentType: "text/plain",
+        });
+      assert.equal(upload.error, null);
+
+      const row = await customer
+        .from("transport_documents")
+        .insert({
+          transport_request_id: ids.transportWarsawAmsterdam,
+          category: "other",
+          file_url: objectPath,
+          uploaded_by: ids.customer,
+          status: "uploaded",
+        })
+        .select("id, file_url")
+        .single();
+      assert.equal(row.error, null);
+      documentId = row.data!.id as string;
+      // The stored value is the private object path, never a public bucket URL.
+      assert.equal(row.data?.file_url, objectPath);
+      assert.ok(!row.data?.file_url?.startsWith("http"));
+    },
+  );
+
+  await t.test("the requester can generate a signed URL for their own document", async () => {
+    const signed = await customer.storage
+      .from("transport-documents")
+      .createSignedUrl(objectPath, 60);
+    assert.equal(signed.error, null);
+    assert.ok(signed.data?.signedUrl);
+  });
+
+  await t.test(
+    "an unrelated user cannot generate a signed URL for someone else's document",
+    async () => {
+      const buyer = await as("buyer");
+      const signed = await buyer.storage
+        .from("transport-documents")
+        .createSignedUrl(objectPath, 60);
+      assert.ok(
+        signed.error,
+        "expected a permission error creating a signed URL for another user's object",
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    if (documentId) await customer.from("transport_documents").delete().eq("id", documentId);
+    const ops = await as("ops");
+    await ops.storage.from("transport-documents").remove([objectPath]);
+  });
+});

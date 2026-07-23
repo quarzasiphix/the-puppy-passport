@@ -404,23 +404,62 @@ export async function listMyDocuments(transportRequestId: string) {
   >[];
 }
 
+// docs/adr/TRANSPORT_DATA_MODEL.md Phase 9: transport_documents.file_url historically held whatever
+// URL a user typed into a text box — no real Storage upload despite the `transport-documents`
+// bucket (20260101002200_storage.sql) already being private and RLS-correct, confirmed by
+// `grep -rln "storage.*upload" src/` finding zero real upload call sites anywhere in the app. This
+// uploads the real file and stores its private object path (never a public URL — the bucket has no
+// public-read policy, only requester/ops/assigned-driver, so the stored value is only ever useful
+// through getSignedDocumentUrl() below, which is exactly the point).
+const TRANSPORT_DOCUMENTS_BUCKET = "transport-documents";
+
+function sanitizeFilenameForStoragePath(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
 export async function submitDocument(input: {
   transportRequestId: string;
   category: string;
-  fileUrl: string;
+  file: File;
   expiryDate: string | null;
   uploadedBy: string;
 }) {
   const supabase = getSupabaseBrowserClient();
+  const objectPath = `${input.transportRequestId}/${input.category}-${Date.now()}-${sanitizeFilenameForStoragePath(input.file.name)}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(TRANSPORT_DOCUMENTS_BUCKET)
+    .upload(objectPath, input.file, { contentType: input.file.type || undefined });
+  if (uploadError) throw uploadError;
+
   const { error } = await supabase.from("transport_documents").insert({
     transport_request_id: input.transportRequestId,
     category: input.category,
-    file_url: input.fileUrl,
+    file_url: objectPath,
     expiry_date: input.expiryDate,
     uploaded_by: input.uploadedBy,
     status: "uploaded",
   });
+  if (error) {
+    // Best-effort cleanup so a failed row insert doesn't leave an orphan Storage object behind —
+    // not wrapped in a transaction (Storage and Postgres are separate systems here), but this is
+    // the same "clean up on the way out" pattern used elsewhere in this codebase.
+    await supabase.storage.from(TRANSPORT_DOCUMENTS_BUCKET).remove([objectPath]);
+    throw error;
+  }
+}
+
+// The bucket is private (no public-read policy) — a stored object path is only ever useful through
+// a short-lived signed URL, generated on demand right before the user views/downloads it, never
+// persisted or shown as a bare link. 5 minutes is enough for a click-through view without leaving a
+// long-lived credential sitting in browser history/devtools.
+export async function getSignedDocumentUrl(objectPath: string): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.storage
+    .from(TRANSPORT_DOCUMENTS_BUCKET)
+    .createSignedUrl(objectPath, 300);
   if (error) throw error;
+  return data.signedUrl;
 }
 
 // A document counts as "nearing expiry" the same way vehicle/driver documents do elsewhere in the

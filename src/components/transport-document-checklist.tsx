@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ExternalLink, Plus, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, Plus, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,40 @@ import {
 import {
   documentCategoryLabels,
   documentExpiryWarning,
+  getSignedDocumentUrl,
   listMyDocuments,
   reviewDocument,
   submitDocument,
 } from "@/lib/queries/transport";
+
+// The transport-documents Storage bucket is private — there is no public URL to link to, only a
+// short-lived signed URL generated on demand right before opening it (never persisted or shown as
+// a bare href). See getSignedDocumentUrl() in src/lib/queries/transport.ts.
+function ViewDocumentButton({ objectPath }: { objectPath: string }) {
+  const [loading, setLoading] = useState(false);
+  return (
+    <Button
+      type="button"
+      variant="link"
+      size="sm"
+      className="h-auto gap-1 p-0 text-primary"
+      disabled={loading}
+      onClick={async () => {
+        setLoading(true);
+        try {
+          const url = await getSignedDocumentUrl(objectPath);
+          window.open(url, "_blank", "noopener,noreferrer");
+        } catch {
+          toast.error("Could not open this document.");
+        } finally {
+          setLoading(false);
+        }
+      }}
+    >
+      <Eye className="size-3" /> View
+    </Button>
+  );
+}
 
 const statusStyles: Record<string, string> = {
   uploaded: "bg-accent/15 text-accent",
@@ -50,7 +80,7 @@ export function TransportDocumentChecklist({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [expiryDate, setExpiryDate] = useState("");
 
   const query = useQuery({
@@ -63,19 +93,20 @@ export function TransportDocumentChecklist({
       submitDocument({
         transportRequestId,
         category,
-        fileUrl,
+        file: file!,
         expiryDate: expiryDate || null,
         uploadedBy: userId,
       }),
     onSuccess: () => {
-      toast.success("Document added — operations will review it.");
+      toast.success("Document uploaded — operations will review it.");
       setOpen(false);
       setCategory("");
-      setFileUrl("");
+      setFile(null);
       setExpiryDate("");
       queryClient.invalidateQueries({ queryKey: ["transport-documents", transportRequestId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not add document."),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not upload document."),
   });
 
   const reviewMutation = useMutation({
@@ -120,12 +151,15 @@ export function TransportDocumentChecklist({
                   </Select>
                 </div>
                 <div>
-                  <Label>Link to the document</Label>
+                  <Label>File</Label>
                   <Input
-                    placeholder="https://…"
-                    value={fileUrl}
-                    onChange={(e) => setFileUrl(e.target.value)}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Private — only you and Havenpaw operations can view it.
+                  </p>
                 </div>
                 <div>
                   <Label>Expiry date (if it has one)</Label>
@@ -137,10 +171,10 @@ export function TransportDocumentChecklist({
                 </div>
                 <Button
                   className="w-full"
-                  disabled={!category || !fileUrl || submitMutation.isPending}
+                  disabled={!category || !file || submitMutation.isPending}
                   onClick={() => submitMutation.mutate()}
                 >
-                  Add document
+                  {submitMutation.isPending ? "Uploading…" : "Upload document"}
                 </Button>
               </div>
             </DialogContent>
@@ -166,16 +200,7 @@ export function TransportDocumentChecklist({
                       {documentCategoryLabels[doc.category] ?? doc.category}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {doc.file_url && (
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline"
-                        >
-                          View <ExternalLink className="size-3" />
-                        </a>
-                      )}
+                      {doc.file_url && <ViewDocumentButton objectPath={doc.file_url} />}
                       {doc.expiry_date && (
                         <span>Expires {new Date(doc.expiry_date).toLocaleDateString("en-GB")}</span>
                       )}
