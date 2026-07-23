@@ -16,7 +16,17 @@ import {
   type ApplicationStatus,
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
-import { CheckCircle2, XCircle, Info, Phone, ListPlus, MessageCircle } from "lucide-react";
+import { createTransportDraftForFoundationAdoption } from "@/lib/queries/transport";
+import {
+  CheckCircle2,
+  XCircle,
+  Info,
+  Phone,
+  ListPlus,
+  MessageCircle,
+  CalendarClock,
+  Truck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/foundation/applications")({
   component: ApplicationsPage,
@@ -34,6 +44,7 @@ function ApplicationsPage() {
   const queryClient = useQueryClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
 
   const { data: org } = useQuery({
     queryKey: ["my-foundation", userId],
@@ -55,6 +66,7 @@ function ApplicationsPage() {
         id: active.id,
         status: params.status,
         breederResponse: reply || null,
+        internalNotes: internalNotes || null,
         buyerId: active.buyer_id,
         animalName: active.animals?.name ?? "your listing",
       });
@@ -64,8 +76,26 @@ function ApplicationsPage() {
       queryClient.invalidateQueries({ queryKey: ["foundation-applications", org?.id] });
       setOpenId(null);
       setReply("");
+      setInternalNotes("");
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+  });
+
+  const transportMutation = useMutation({
+    mutationFn: () => {
+      if (!active) throw new Error("No application selected");
+      return createTransportDraftForFoundationAdoption({
+        animalId: active.animal_id,
+        adopterProfileId: active.buyer_id,
+      });
+    },
+    onSuccess: () => {
+      toast.success(
+        "A transport draft has been started for this adoption. Find it under Transport requests.",
+      );
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not start a transport draft."),
   });
 
   const messageMutation = useMutation({
@@ -138,7 +168,14 @@ function ApplicationsPage() {
                     </Badge>
                   </td>
                   <td className="p-4 text-right">
-                    <Button size="sm" variant="outline" onClick={() => setOpenId(a.id)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setOpenId(a.id);
+                        setInternalNotes(a.internal_notes ?? "");
+                      }}
+                    >
                       Open
                     </Button>
                   </td>
@@ -155,6 +192,7 @@ function ApplicationsPage() {
           if (!v) {
             setOpenId(null);
             setReply("");
+            setInternalNotes("");
           }
         }}
       >
@@ -179,8 +217,30 @@ function ApplicationsPage() {
                     ? `, children (${active.children_ages || "ages not given"})`
                     : ""}
                   {active.other_animals ? ` — other animals: ${active.other_animals}` : ""}
+                  {active.landlord_permission != null &&
+                    ` · Landlord permission: ${active.landlord_permission ? "Yes" : "No"}`}
                 </Field>
                 <Field label="Experience">{active.previous_experience || "Not provided"}</Field>
+                <Field label="Breed/species knowledge">
+                  {active.breed_knowledge || "Not provided"}
+                </Field>
+                <Field label="Daily routine">
+                  {active.working_schedule && `Work: ${active.working_schedule}. `}
+                  {active.alone_time && `Time alone: ${active.alone_time}.`}
+                  {!active.working_schedule && !active.alone_time && "Not provided"}
+                </Field>
+                <Field label="What they're looking for">
+                  {active.intended_purpose || "Not provided"}
+                </Field>
+                <Field label="Veterinary planning">
+                  {active.veterinary_plan || "Not provided"}
+                </Field>
+                <Field label="Collection">
+                  {active.collection_method?.replace(/_/g, " ") || "Not specified"}
+                  {active.transport_required && " · Interested in Havenpaw transport"}
+                  {active.preferred_collection_date &&
+                    ` · Preferred ${new Date(active.preferred_collection_date).toLocaleDateString("en-GB")}`}
+                </Field>
                 <Field label="Contact">
                   {active.phone} · {active.buyer_city}, {active.buyer_country}
                 </Field>
@@ -190,7 +250,7 @@ function ApplicationsPage() {
                 )}
                 <div>
                   <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Reply (sent with your decision)
+                    Reply (sent with your decision — visible to the applicant)
                   </div>
                   <Textarea
                     rows={4}
@@ -199,6 +259,27 @@ function ApplicationsPage() {
                     onChange={(e) => setReply(e.target.value)}
                   />
                 </div>
+                <div>
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Internal notes (never shown to the applicant)
+                  </div>
+                  <Textarea
+                    rows={3}
+                    placeholder="Notes for your team only…"
+                    value={internalNotes}
+                    onChange={(e) => setInternalNotes(e.target.value)}
+                  />
+                </div>
+                {active.status === "approved" && active.application_type === "adoption" && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={transportMutation.isPending}
+                    onClick={() => transportMutation.mutate()}
+                  >
+                    <Truck className="mr-1 size-4" /> Start a transport request for this adoption
+                  </Button>
+                )}
               </div>
               <div className="mt-6 grid grid-cols-2 gap-2">
                 <Button
@@ -238,7 +319,13 @@ function ApplicationsPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="col-span-2"
+                  disabled={respondMutation.isPending}
+                  onClick={() => respondMutation.mutate({ status: "interview_planned" })}
+                >
+                  <CalendarClock className="mr-1 size-4" /> Plan interview
+                </Button>
+                <Button
+                  variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "waiting_list" })}
                 >

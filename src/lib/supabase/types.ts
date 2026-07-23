@@ -365,8 +365,17 @@ export interface Database {
             | "approved"
             | "rejected"
             | "withdrawn"
-            | "converted_to_reservation";
+            | "converted_to_reservation"
+            | "draft"
+            | "interview_planned"
+            | "expired";
           breeder_response: string | null;
+          landlord_permission: boolean | null;
+          veterinary_plan: string | null;
+          internal_notes: string | null;
+          consent_version: string | null;
+          consent_given_at: string | null;
+          organisation_supplemental_answers: Json;
           submitted_at: string;
           updated_at: string;
         };
