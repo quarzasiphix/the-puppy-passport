@@ -115,6 +115,7 @@ import { Route as PublicProfileProfileIdRouteImport } from './routes/_public.pro
 import { Route as PublicModerationCaseIdRouteImport } from './routes/_public.moderation.$caseId'
 import { Route as PublicInvitationsTokenRouteImport } from './routes/_public.invitations.$token'
 import { Route as PublicFundraisingIdRouteImport } from './routes/_public.fundraising.$id'
+import { Route as PublicFoundationsSlugRouteImport } from './routes/_public.foundations.$slug'
 import { Route as PublicCommunityGroupsRouteImport } from './routes/_public.community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public.adoptions.$id'
@@ -702,6 +703,11 @@ const PublicFundraisingIdRoute = PublicFundraisingIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => PublicFundraisingRoute,
 } as any)
+const PublicFoundationsSlugRoute = PublicFoundationsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PublicFoundationsRoute,
+} as any)
 const PublicCommunityGroupsRoute = PublicCommunityGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
@@ -784,7 +790,7 @@ export interface FileRoutesByFullPath {
   '/find-a-dog': typeof PublicFindADogRoute
   '/find-your-dog': typeof PublicFindYourDogRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
-  '/foundations': typeof PublicFoundationsRoute
+  '/foundations': typeof PublicFoundationsRouteWithChildren
   '/fundraising': typeof PublicFundraisingRouteWithChildren
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
@@ -805,6 +811,7 @@ export interface FileRoutesByFullPath {
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/foundations/$slug': typeof PublicFoundationsSlugRoute
   '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/moderation/$caseId': typeof PublicModerationCaseIdRoute
@@ -899,7 +906,7 @@ export interface FileRoutesByTo {
   '/find-a-dog': typeof PublicFindADogRoute
   '/find-your-dog': typeof PublicFindYourDogRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
-  '/foundations': typeof PublicFoundationsRoute
+  '/foundations': typeof PublicFoundationsRouteWithChildren
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
   '/planned-routes': typeof PublicPlannedRoutesRoute
@@ -912,6 +919,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/foundations/$slug': typeof PublicFoundationsSlugRoute
   '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/moderation/$caseId': typeof PublicModerationCaseIdRoute
@@ -1008,7 +1016,7 @@ export interface FileRoutesById {
   '/_public/find-a-dog': typeof PublicFindADogRoute
   '/_public/find-your-dog': typeof PublicFindYourDogRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
-  '/_public/foundations': typeof PublicFoundationsRoute
+  '/_public/foundations': typeof PublicFoundationsRouteWithChildren
   '/_public/fundraising': typeof PublicFundraisingRouteWithChildren
   '/_public/how-it-works': typeof PublicHowItWorksRoute
   '/_public/planned-litters': typeof PublicPlannedLittersRoute
@@ -1030,6 +1038,7 @@ export interface FileRoutesById {
   '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/_public/foundations/$slug': typeof PublicFoundationsSlugRoute
   '/_public/fundraising/$id': typeof PublicFundraisingIdRoute
   '/_public/invitations/$token': typeof PublicInvitationsTokenRoute
   '/_public/moderation/$caseId': typeof PublicModerationCaseIdRoute
@@ -1151,6 +1160,7 @@ export interface FileRouteTypes {
     | '/adoptions/$id'
     | '/breeders/$slug'
     | '/community/groups'
+    | '/foundations/$slug'
     | '/fundraising/$id'
     | '/invitations/$token'
     | '/moderation/$caseId'
@@ -1258,6 +1268,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/foundations/$slug'
     | '/fundraising/$id'
     | '/invitations/$token'
     | '/moderation/$caseId'
@@ -1375,6 +1386,7 @@ export interface FileRouteTypes {
     | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
     | '/_public/community/groups'
+    | '/_public/foundations/$slug'
     | '/_public/fundraising/$id'
     | '/_public/invitations/$token'
     | '/_public/moderation/$caseId'
@@ -2216,6 +2228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicFundraisingIdRouteImport
       parentRoute: typeof PublicFundraisingRoute
     }
+    '/_public/foundations/$slug': {
+      id: '/_public/foundations/$slug'
+      path: '/$slug'
+      fullPath: '/foundations/$slug'
+      preLoaderRoute: typeof PublicFoundationsSlugRouteImport
+      parentRoute: typeof PublicFoundationsRoute
+    }
     '/_public/community/groups': {
       id: '/_public/community/groups'
       path: '/groups'
@@ -2360,6 +2379,17 @@ const PublicCommunityRouteWithChildren = PublicCommunityRoute._addFileChildren(
   PublicCommunityRouteChildren,
 )
 
+interface PublicFoundationsRouteChildren {
+  PublicFoundationsSlugRoute: typeof PublicFoundationsSlugRoute
+}
+
+const PublicFoundationsRouteChildren: PublicFoundationsRouteChildren = {
+  PublicFoundationsSlugRoute: PublicFoundationsSlugRoute,
+}
+
+const PublicFoundationsRouteWithChildren =
+  PublicFoundationsRoute._addFileChildren(PublicFoundationsRouteChildren)
+
 interface PublicFundraisingRouteChildren {
   PublicFundraisingIdRoute: typeof PublicFundraisingIdRoute
   PublicFundraisingIndexRoute: typeof PublicFundraisingIndexRoute
@@ -2398,7 +2428,7 @@ interface PublicRouteChildren {
   PublicFindADogRoute: typeof PublicFindADogRoute
   PublicFindYourDogRoute: typeof PublicFindYourDogRoute
   PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
-  PublicFoundationsRoute: typeof PublicFoundationsRoute
+  PublicFoundationsRoute: typeof PublicFoundationsRouteWithChildren
   PublicFundraisingRoute: typeof PublicFundraisingRouteWithChildren
   PublicHowItWorksRoute: typeof PublicHowItWorksRoute
   PublicPlannedLittersRoute: typeof PublicPlannedLittersRoute
@@ -2428,7 +2458,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicFindADogRoute: PublicFindADogRoute,
   PublicFindYourDogRoute: PublicFindYourDogRoute,
   PublicForgotPasswordRoute: PublicForgotPasswordRoute,
-  PublicFoundationsRoute: PublicFoundationsRoute,
+  PublicFoundationsRoute: PublicFoundationsRouteWithChildren,
   PublicFundraisingRoute: PublicFundraisingRouteWithChildren,
   PublicHowItWorksRoute: PublicHowItWorksRoute,
   PublicPlannedLittersRoute: PublicPlannedLittersRoute,

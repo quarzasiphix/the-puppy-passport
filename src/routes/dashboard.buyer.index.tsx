@@ -18,7 +18,7 @@ import {
   applicationStatusStyles,
   listMyApplications,
 } from "@/lib/queries/applications";
-import { listSavedPuppies } from "@/lib/queries/buyer-activity";
+import { listSavedAnimals } from "@/lib/queries/buyer-activity";
 
 export const Route = createFileRoute("/dashboard/buyer/")({
   component: BuyerOverview,
@@ -37,10 +37,11 @@ function BuyerOverview() {
     queryFn: () => listMyApplications(userId!),
   });
   const savedQuery = useQuery({
-    queryKey: ["my-saved-puppies", userId],
+    queryKey: ["my-saved-animals", userId],
     enabled: !!userId,
-    queryFn: () => listSavedPuppies(userId!),
+    queryFn: () => listSavedAnimals(userId!),
   });
+  const savedPreview = savedQuery.data?.slice(0, 3);
   const mostRecentTransport = transportQuery.data?.[0];
 
   return (
@@ -85,11 +86,13 @@ function BuyerOverview() {
           </div>
           <div className="text-sm text-muted-foreground">Puppy applications you've sent</div>
         </Card>
-        <Card title="Saved puppies" icon={<Heart className="size-5" />}>
+        <Card title="Saved" icon={<Heart className="size-5" />}>
           <div className="font-display text-3xl font-semibold">
             {savedQuery.data?.length ?? "—"}
           </div>
-          <div className="text-sm text-muted-foreground">Puppies you're keeping an eye on</div>
+          <div className="text-sm text-muted-foreground">
+            Puppies and dogs you're keeping an eye on
+          </div>
         </Card>
       </div>
 
@@ -177,33 +180,37 @@ function BuyerOverview() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Saved puppies</h2>
+          <h2 className="font-display text-xl font-semibold">Saved</h2>
           <Button asChild variant="outline" size="sm">
             <Link to="/dashboard/buyer/saved">View all</Link>
           </Button>
         </div>
         {savedQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-            No saved puppies yet — tap the heart on any listing to save it here.
+            Nothing saved yet — tap the heart on any listing to save it here.
           </div>
         )}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {savedQuery.data?.slice(0, 3).map((p) => (
-            <Link
-              key={p.id}
-              to="/puppies/$id"
-              params={{ id: p.id }}
-              className="group overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:bg-secondary/40"
-            >
-              <img src={p.image} alt="" className="aspect-[4/3] w-full object-cover" />
-              <div className="p-4">
-                <div className="font-display text-lg font-semibold">{p.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {p.breed} · {p.kennel}
+          {savedPreview?.map((s) => {
+            const item = s.kind === "puppy" ? s.puppy : s.adoption;
+            const secondary = s.kind === "puppy" ? s.puppy.kennel : s.adoption.orgName;
+            return (
+              <Link
+                key={item.id}
+                to={s.kind === "puppy" ? "/puppies/$id" : "/adoptions/$id"}
+                params={{ id: item.id }}
+                className="group overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:bg-secondary/40"
+              >
+                <img src={item.image} alt="" className="aspect-[4/3] w-full object-cover" />
+                <div className="p-4">
+                  <div className="font-display text-lg font-semibold">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.breed} · {secondary}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

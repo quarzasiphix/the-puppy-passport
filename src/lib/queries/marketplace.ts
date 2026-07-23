@@ -205,7 +205,12 @@ export async function countPublishedPuppies(filters?: PuppySearchFilters): Promi
 
 export async function getPuppyById(id: string) {
   const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.from("animals").select(animalSelect).eq("id", id).single();
+  const { data, error } = await supabase
+    .from("animals")
+    .select(animalSelect)
+    .eq("id", id)
+    .eq("listing_category", "breeder_puppy")
+    .single();
   if (error) throw error;
   return mapAnimalToPuppy(data as unknown as AnimalRow);
 }
@@ -325,6 +330,7 @@ type OrgRow = {
   id: string;
   name: string;
   slug: string;
+  org_type: string;
   description: string | null;
   city: string | null;
   country: string | null;
@@ -334,6 +340,7 @@ type OrgRow = {
   response_time: string | null;
   cover_image_url: string | null;
   logo_url: string | null;
+  transport_available: boolean;
   owner_user_id: string;
   profiles: { display_name: string | null } | null;
 };
@@ -445,7 +452,7 @@ export async function mapOrgsToBreeders(rows: OrgRow[]): Promise<Breeder[]> {
 }
 
 export const orgSelect =
-  "id, name, slug, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name)";
+  "id, name, slug, org_type, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, transport_available, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name)";
 export type { OrgRow };
 
 export async function listApprovedKennels() {
@@ -466,9 +473,91 @@ export async function getKennelBySlug(slug: string) {
     .from("organisations")
     .select(orgSelect)
     .eq("slug", slug)
+    .eq("org_type", "kennel")
     .single();
   if (error) throw error;
   return mapOrgToBreeder(data as unknown as OrgRow);
+}
+
+// Foundations/shelters/rescues share the `organisations` table with kennels (see `org_type`), but
+// are presented with adoption-oriented framing (mission, "dogs available for adoption") rather than
+// the breeder framing of Breeder/mapOrgToBreeder — hence a separate shape instead of overloading it.
+const FOUNDATION_ORG_TYPES = ["foundation", "shelter", "rescue"] as const;
+export type FoundationOrgType = (typeof FOUNDATION_ORG_TYPES)[number];
+
+export type Foundation = {
+  id: string;
+  name: string;
+  slug: string;
+  orgType: FoundationOrgType;
+  city: string;
+  country: string;
+  verified: boolean;
+  association: string;
+  description: string;
+  cover: string;
+  logo: string;
+  transportAvailable: boolean;
+  availableForAdoption: number;
+  responseTime: string;
+};
+
+async function orgAvailableAdoptionCount(orgId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { count } = await supabase
+    .from("animals")
+    .select("*", { count: "exact", head: true })
+    .eq("organization_id", orgId)
+    .eq("listing_category", "adoption")
+    .eq("is_published", true)
+    .in("availability_status", ["available", "applications_open"]);
+  return count ?? 0;
+}
+
+export async function mapOrgToFoundation(o: OrgRow): Promise<Foundation> {
+  const availableForAdoption = await orgAvailableAdoptionCount(o.id);
+  return {
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    orgType: (FOUNDATION_ORG_TYPES as readonly string[]).includes(o.org_type)
+      ? (o.org_type as FoundationOrgType)
+      : "foundation",
+    city: o.city ?? "",
+    country: o.country ?? "",
+    verified: o.verification_status === "approved",
+    association: o.association_name ?? "",
+    description: o.description ?? "",
+    cover: o.cover_image_url ?? placeholderImg,
+    logo: o.logo_url ?? placeholderImg,
+    transportAvailable: o.transport_available,
+    availableForAdoption,
+    responseTime: o.response_time ?? "",
+  };
+}
+
+export async function listApprovedFoundations() {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisations")
+    .select(orgSelect)
+    .in("org_type", FOUNDATION_ORG_TYPES)
+    .eq("verification_status", "approved")
+    .eq("is_public", true);
+  if (error) throw error;
+  return Promise.all(((data ?? []) as unknown as OrgRow[]).map(mapOrgToFoundation));
+}
+
+export async function getFoundationBySlug(slug: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisations")
+    .select(orgSelect)
+    .eq("slug", slug)
+    .in("org_type", FOUNDATION_ORG_TYPES)
+    .single();
+  if (error) throw error;
+  return mapOrgToFoundation(data as unknown as OrgRow);
 }
 
 export async function listPuppiesForKennel(kennelId: string) {
@@ -626,7 +715,7 @@ function ageLabelFrom(dob: string | null, approx: string | null): string {
   return `${Math.floor(years)} year${Math.floor(years) === 1 ? "" : "s"}`;
 }
 
-function mapAnimalToAdoption(a: AdoptionAnimalRow): AdoptionListing {
+export function mapAnimalToAdoption(a: AdoptionAnimalRow): AdoptionListing {
   const images = a.animal_images?.length
     ? a.animal_images
         .slice()
@@ -670,6 +759,19 @@ export async function listPublishedAdoptions() {
     .from("animals")
     .select(adoptionSelect)
     .in("listing_category", ["adoption", "private_rehoming"])
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as AdoptionAnimalRow[]).map(mapAnimalToAdoption);
+}
+
+export async function listPublishedAdoptionsForOrg(orgId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("animals")
+    .select(adoptionSelect)
+    .eq("organization_id", orgId)
+    .eq("listing_category", "adoption")
     .eq("is_published", true)
     .order("created_at", { ascending: false });
   if (error) throw error;

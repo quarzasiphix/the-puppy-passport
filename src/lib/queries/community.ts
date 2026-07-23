@@ -8,11 +8,11 @@ export type PostRow = {
   content: string | null;
   created_at: string;
   profiles: { display_name: string | null; avatar_url: string | null } | null;
-  organisations: { name: string; slug: string; logo_url: string | null } | null;
+  organisations: { name: string; slug: string; logo_url: string | null; org_type: string } | null;
 };
 
 const postSelect =
-  "id, author_profile_id, author_organization_id, post_type, content, created_at, profiles!posts_author_profile_id_fkey(display_name, avatar_url), organisations!posts_author_organization_id_fkey(name, slug, logo_url)";
+  "id, author_profile_id, author_organization_id, post_type, content, created_at, profiles!posts_author_profile_id_fkey(display_name, avatar_url), organisations!posts_author_organization_id_fkey(name, slug, logo_url, org_type)";
 
 export async function listPublicPosts() {
   const supabase = getSupabaseBrowserClient();
