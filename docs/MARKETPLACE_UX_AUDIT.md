@@ -755,3 +755,53 @@ Eleven commits on branch `ux-marketplace-frontend-pass` (worktree branched from 
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, the public-profile pass, the community-feed pass, and this groups pass.
+
+## Phase 11 — Buyer dashboard frontend quality
+
+Reviewed the buyer dashboard overview, applications, saved and followed pages.
+
+### Findings
+
+- **A real regression risk found while cross-checking Phase 1's `getPuppyById` scoping**:
+  `dashboard.buyer.applications.tsx` and the buyer overview's applications preview both show *all*
+  `buyer_applications` rows (`listMyApplications` has no `application_type` filter — it returns
+  `"purchase"`, `"adoption"`, and `"rehoming_inquiry"` rows together), but both pages' "Open puppy"
+  button unconditionally linked to `/puppies/$id` regardless of type. Since Phase 1 scoped
+  `getPuppyById` to `listing_category = "breeder_puppy"` only, clicking "Open puppy" on any
+  adoption/rehoming application would now hit a real 404 instead of the wrong-but-loading page it
+  used to be. The applications page's own copy ("Every puppy application you've sent") was also
+  factually incomplete once adoption/rehoming rows are included.
+- **No page in the buyer dashboard checked `isError` on any query** (confirmed across
+  `dashboard.buyer.index.tsx`, `dashboard.buyer.applications.tsx`,
+  `dashboard.buyer.followed.tsx` — `dashboard.buyer.saved.tsx` already had it from the Phase 1
+  hardening pass) — a failed fetch on any of them silently rendered as "None yet"/"No applications
+  yet"/"Not following anyone yet," indistinguishable from a genuinely empty result.
+
+### Fixes applied
+
+- **Type-aware application routing**: both the dedicated applications page and the overview preview
+  now link `"purchase"` applications to `/puppies/$id` ("Open puppy") and `"adoption"`/
+  `"rehoming_inquiry"` applications to `/adoptions/$id` ("Open listing"), with the "Message
+  breeder"/"Message organisation" button label and the page's own copy updated to match. The
+  empty state now offers both "Browse puppies" and "Browse adoptions."
+- **Added `isError` handling with a working retry action** to every query on
+  `dashboard.buyer.index.tsx` (transport, applications, saved — via a small shared `SectionError`
+  component) and `dashboard.buyer.followed.tsx` (breeders + foundations together), matching the
+  pattern already established on the saved-animals page.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all three changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean. The applications-routing fix in particular is a code-level
+correction verified by reading `getPuppyById`'s actual scoping and `listMyApplications`'s actual
+return shape side by side — not verified by clicking through a real signed-in session (no reachable
+database in this environment; see the Phase 1 note on why one wasn't started here).
+
+## Commit
+
+Twelve commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, and this buyer-
+dashboard pass.

@@ -58,21 +58,36 @@ function BuyerApplications() {
       <header className="mb-6">
         <h1 className="font-display text-3xl font-medium">Your applications</h1>
         <p className="text-sm text-muted-foreground">
-          Every puppy application you've sent, and the breeder's response.
+          Every puppy application and adoption/rehoming enquiry you've sent, and the response.
         </p>
       </header>
 
       {query.isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : query.isError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <p className="font-medium">Couldn't load your applications</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Something went wrong — this isn't the same as having no applications. Please try again.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => query.refetch()}>
+            Try again
+          </Button>
+        </div>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <p className="font-medium">No applications yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Find a puppy you love and apply from its listing page.
+            Find a puppy or a dog to adopt and apply from its listing page.
           </p>
-          <Button asChild className="mt-4">
-            <Link to="/find-a-dog">Browse available puppies</Link>
-          </Button>
+          <div className="mt-4 flex justify-center gap-3">
+            <Button asChild>
+              <Link to="/find-a-dog">Browse puppies</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/adoptions">Browse adoptions</Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <ul className="space-y-3">
@@ -94,15 +109,21 @@ function BuyerApplications() {
               </div>
               {a.breeder_response && (
                 <p className="mt-3 rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Breeder: </span>
+                  <span className="font-medium text-foreground">Response: </span>
                   {a.breeder_response}
                 </p>
               )}
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/puppies/$id" params={{ id: a.animal_id }}>
-                    Open puppy
-                  </Link>
+                  {a.application_type === "purchase" ? (
+                    <Link to="/puppies/$id" params={{ id: a.animal_id }}>
+                      Open puppy
+                    </Link>
+                  ) : (
+                    <Link to="/adoptions/$id" params={{ id: a.animal_id }}>
+                      Open listing
+                    </Link>
+                  )}
                 </Button>
                 <Button
                   size="sm"
@@ -110,7 +131,8 @@ function BuyerApplications() {
                   disabled={messageMutation.isPending}
                   onClick={() => messageMutation.mutate(a.animal_id)}
                 >
-                  <MessageCircle className="mr-1 size-3.5" /> Message breeder
+                  <MessageCircle className="mr-1 size-3.5" />{" "}
+                  {a.application_type === "purchase" ? "Message breeder" : "Message organisation"}
                 </Button>
                 {withdrawable.includes(a.status) && (
                   <Button

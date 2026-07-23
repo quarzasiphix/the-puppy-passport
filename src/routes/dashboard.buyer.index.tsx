@@ -84,7 +84,9 @@ function BuyerOverview() {
           <div className="font-display text-3xl font-semibold">
             {applicationsQuery.data?.length ?? "—"}
           </div>
-          <div className="text-sm text-muted-foreground">Puppy applications you've sent</div>
+          <div className="text-sm text-muted-foreground">
+            Puppy applications and adoption enquiries you've sent
+          </div>
         </Card>
         <Card title="Saved" icon={<Heart className="size-5" />}>
           <div className="font-display text-3xl font-semibold">
@@ -104,6 +106,7 @@ function BuyerOverview() {
           </Button>
         </div>
         {transportQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {transportQuery.isError && <SectionError onRetry={() => transportQuery.refetch()} />}
         {transportQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
             No transport requests yet.{" "}
@@ -140,6 +143,8 @@ function BuyerOverview() {
             <Link to="/dashboard/buyer/applications">View all</Link>
           </Button>
         </div>
+        {applicationsQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {applicationsQuery.isError && <SectionError onRetry={() => applicationsQuery.refetch()} />}
         {applicationsQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
             No applications yet.{" "}
@@ -168,9 +173,15 @@ function BuyerOverview() {
                   {applicationStatusLabels[a.status]}
                 </Badge>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/puppies/$id" params={{ id: a.animal_id }}>
-                    Open puppy
-                  </Link>
+                  {a.application_type === "purchase" ? (
+                    <Link to="/puppies/$id" params={{ id: a.animal_id }}>
+                      Open puppy
+                    </Link>
+                  ) : (
+                    <Link to="/adoptions/$id" params={{ id: a.animal_id }}>
+                      Open listing
+                    </Link>
+                  )}
                 </Button>
               </div>
             </li>
@@ -185,6 +196,8 @@ function BuyerOverview() {
             <Link to="/dashboard/buyer/saved">View all</Link>
           </Button>
         </div>
+        {savedQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {savedQuery.isError && <SectionError onRetry={() => savedQuery.refetch()} />}
         {savedQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
             Nothing saved yet — tap the heart on any listing to save it here.
@@ -222,6 +235,17 @@ function statusLabelFor(status: string) {
   if (isOnHold(status)) return "On hold — action needed";
   const milestone = milestoneIndexForStatus(status);
   return transportMilestones[milestone ?? 0] ?? status.replace(/_/g, " ");
+}
+
+function SectionError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm">
+      <p className="font-medium">Couldn't load this — try again</p>
+      <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
+  );
 }
 
 function Card({
