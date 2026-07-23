@@ -8,9 +8,12 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/queries/notifications";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export function NotificationBell() {
   const { userId } = useAuth();
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["my-notifications", userId],
@@ -63,28 +66,33 @@ export function NotificationBell() {
           ) : (
             notifications.map((n) => {
               const content = (
-                <div
-                  className={`border-b border-border/40 p-3 text-sm last:border-0 ${n.is_read ? "" : "bg-accent/5"}`}
-                  onClick={() => !n.is_read && markRead.mutate(n.id)}
-                >
+                <>
                   <div className="font-medium">{n.title}</div>
                   {n.body && <div className="mt-0.5 text-xs text-muted-foreground">{n.body}</div>}
                   <div className="mt-1 text-[11px] text-muted-foreground">
-                    {new Date(n.created_at).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+                    {formatDate(n.created_at, locale, { day: "numeric", month: "short" })}
                   </div>
-                </div>
+                </>
               );
+              const rowClass = `border-b border-border/40 p-3 text-left text-sm last:border-0 ${n.is_read ? "" : "bg-accent/5"}`;
               return n.link_url ? (
-                <a key={n.id} href={n.link_url} className="block hover:bg-secondary/50">
+                <a
+                  key={n.id}
+                  href={n.link_url}
+                  onClick={() => !n.is_read && markRead.mutate(n.id)}
+                  className={`block ${rowClass} hover:bg-secondary/50`}
+                >
                   {content}
                 </a>
               ) : (
-                <div key={n.id} className="cursor-pointer hover:bg-secondary/50">
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => !n.is_read && markRead.mutate(n.id)}
+                  className={`block w-full ${rowClass} hover:bg-secondary/50`}
+                >
                   {content}
-                </div>
+                </button>
               );
             })
           )}
