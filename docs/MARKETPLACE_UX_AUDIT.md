@@ -671,3 +671,44 @@ Nine commits on branch `ux-marketplace-frontend-pass` (worktree branched from th
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, and this public-profile pass.
+
+## Phase 9 — Community feed quality
+
+Reviewed `/community` (the main feed) against `/community/groups/$slug` (which already has a
+report control) for consistency, plus general accessibility of the feed's interactive controls.
+
+### Findings
+
+- **The main community feed had no report control on posts at all**, even though `ReportDialog`
+  already supports `targetType="post"` and is already used identically on the group-post feed
+  (`_public.community.groups.$slug.tsx`) — an inconsistency between the two post-feed surfaces, not
+  a missing capability.
+- **Like and "show comments" buttons were icon+count only, with no accessible name** — a screen
+  reader had nothing to announce beyond "button."
+- Images/media in posts: confirmed the `posts` table has no image/media column at all (checked
+  `src/lib/supabase/types.ts`) — there's no data to display, so this isn't a gap to fix, and adding
+  one would be a schema change (out of bounds for this pass anyway). The existing code comment
+  already documents this honestly.
+- "Saved posts": no such feature exists anywhere in the app (no query, no UI, no schema column) —
+  not fabricated.
+- Post-type labelling, timestamps (fixed to the active locale in the Phase 1 hardening pass),
+  followed-content ranking, and the empty state were all already solid.
+
+### Fixes applied
+
+- **Added `ReportDialog` (`targetType="post"`) to every post in the main feed**, matching the groups
+  feed exactly.
+- **Added `aria-label`/`aria-pressed`/`aria-expanded`** to the like and comment-toggle buttons.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on the changed file, `npm run test:unit` (13/13, unaffected),
+`npm run build` — all clean.
+
+## Commit
+
+Ten commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, and this community-feed pass.

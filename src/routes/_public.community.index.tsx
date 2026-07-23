@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import {
   createComment,
@@ -302,6 +303,8 @@ function PostCard({
           type="button"
           disabled={!userId || likeMutation.isPending}
           onClick={() => likeMutation.mutate()}
+          aria-label={liked ? "Unlike this post" : "Like this post"}
+          aria-pressed={liked}
           className={`inline-flex items-center gap-1.5 hover:text-accent disabled:opacity-50 ${liked ? "text-accent" : ""}`}
         >
           <Heart className={`size-4 ${liked ? "fill-accent" : ""}`} /> {likeCount || ""}
@@ -309,10 +312,13 @@ function PostCard({
         <button
           type="button"
           onClick={() => setShowComments((v) => !v)}
+          aria-expanded={showComments}
+          aria-label={showComments ? "Hide comments" : "Show comments"}
           className="inline-flex items-center gap-1.5 hover:text-foreground"
         >
           <MessageCircle className="size-4" /> {commentCount || ""}
         </button>
+        <ReportDialog targetType="post" targetId={post.id} triggerLabel="Report" />
       </div>
 
       {showComments && (
