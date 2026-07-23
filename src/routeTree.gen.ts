@@ -112,6 +112,7 @@ import { Route as DashboardAdminAchievementVerificationRouteImport } from './rou
 import { Route as PublicTransportRequestRouteImport } from './routes/_public.transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public.puppies.$id'
 import { Route as PublicProfileProfileIdRouteImport } from './routes/_public.profile.$profileId'
+import { Route as PublicInvitationsTokenRouteImport } from './routes/_public.invitations.$token'
 import { Route as PublicFundraisingIdRouteImport } from './routes/_public.fundraising.$id'
 import { Route as PublicCommunityGroupsRouteImport } from './routes/_public.community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public.breeders.$slug'
@@ -685,6 +686,11 @@ const PublicProfileProfileIdRoute = PublicProfileProfileIdRouteImport.update({
   path: '/profile/$profileId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicInvitationsTokenRoute = PublicInvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicFundraisingIdRoute = PublicFundraisingIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -794,6 +800,7 @@ export interface FileRoutesByFullPath {
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/community/groups': typeof PublicCommunityGroupsRouteWithChildren
   '/fundraising/$id': typeof PublicFundraisingIdRoute
+  '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -899,6 +906,7 @@ export interface FileRoutesByTo {
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/fundraising/$id': typeof PublicFundraisingIdRoute
+  '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -1015,6 +1023,7 @@ export interface FileRoutesById {
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/community/groups': typeof PublicCommunityGroupsRouteWithChildren
   '/_public/fundraising/$id': typeof PublicFundraisingIdRoute
+  '/_public/invitations/$token': typeof PublicInvitationsTokenRoute
   '/_public/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
@@ -1134,6 +1143,7 @@ export interface FileRouteTypes {
     | '/breeders/$slug'
     | '/community/groups'
     | '/fundraising/$id'
+    | '/invitations/$token'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1239,6 +1249,7 @@ export interface FileRouteTypes {
     | '/adoptions/$id'
     | '/breeders/$slug'
     | '/fundraising/$id'
+    | '/invitations/$token'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1354,6 +1365,7 @@ export interface FileRouteTypes {
     | '/_public/breeders/$slug'
     | '/_public/community/groups'
     | '/_public/fundraising/$id'
+    | '/_public/invitations/$token'
     | '/_public/profile/$profileId'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
@@ -2171,6 +2183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProfileProfileIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/invitations/$token': {
+      id: '/_public/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof PublicInvitationsTokenRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/fundraising/$id': {
       id: '/_public/fundraising/$id'
       path: '/$id'
@@ -2373,6 +2392,7 @@ interface PublicRouteChildren {
   PublicTermsRoute: typeof PublicTermsRoute
   PublicTransportRoute: typeof PublicTransportRouteWithChildren
   PublicIndexRoute: typeof PublicIndexRoute
+  PublicInvitationsTokenRoute: typeof PublicInvitationsTokenRoute
   PublicProfileProfileIdRoute: typeof PublicProfileProfileIdRoute
   PublicPuppiesIdRoute: typeof PublicPuppiesIdRoute
 }
@@ -2401,6 +2421,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicTermsRoute: PublicTermsRoute,
   PublicTransportRoute: PublicTransportRouteWithChildren,
   PublicIndexRoute: PublicIndexRoute,
+  PublicInvitationsTokenRoute: PublicInvitationsTokenRoute,
   PublicProfileProfileIdRoute: PublicProfileProfileIdRoute,
   PublicPuppiesIdRoute: PublicPuppiesIdRoute,
 }

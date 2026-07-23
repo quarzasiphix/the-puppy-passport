@@ -92,6 +92,55 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["organisations"]["Row"]>;
         Relationships: [];
       };
+      organisation_members: {
+        Row: {
+          id: string;
+          org_id: string;
+          profile_id: string;
+          member_role:
+            | "owner"
+            | "administrator"
+            | "employee"
+            | "breeder"
+            | "volunteer"
+            | "driver"
+            | "viewer"
+            | "adoption_coordinator"
+            | "transport_coordinator"
+            | "animal_care_member";
+          status: "active" | "suspended";
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["organisation_members"]["Row"]> & {
+          org_id: string;
+          profile_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["organisation_members"]["Row"]>;
+        Relationships: [];
+      };
+      organisation_invitations: {
+        Row: {
+          id: string;
+          org_id: string;
+          invited_email: string;
+          invited_role: Database["public"]["Tables"]["organisation_members"]["Row"]["member_role"];
+          token: string;
+          status: "pending" | "accepted" | "declined" | "revoked" | "expired";
+          invited_by: string;
+          expires_at: string;
+          accepted_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["organisation_invitations"]["Row"]> & {
+          org_id: string;
+          invited_email: string;
+          invited_role: Database["public"]["Tables"]["organisation_members"]["Row"]["member_role"];
+          invited_by: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["organisation_invitations"]["Row"]>;
+        Relationships: [];
+      };
       user_verifications: {
         Row: {
           id: string;
@@ -1361,6 +1410,54 @@ export interface Database {
       convert_welfare_case_to_transport_draft: {
         Args: { p_case_id: string };
         Returns: string;
+      };
+      invite_org_member: {
+        Args: {
+          p_org_id: string;
+          p_email: string;
+          p_role: Database["public"]["Tables"]["organisation_members"]["Row"]["member_role"];
+        };
+        Returns: string;
+      };
+      revoke_org_invitation: {
+        Args: { p_invitation_id: string };
+        Returns: undefined;
+      };
+      get_invitation_by_token: {
+        Args: { p_token: string };
+        Returns: {
+          org_name: string;
+          org_type: string;
+          invited_role: Database["public"]["Tables"]["organisation_members"]["Row"]["member_role"];
+          expires_at: string;
+        }[];
+      };
+      accept_org_invitation: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
+      decline_org_invitation: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
+      remove_org_member: {
+        Args: { p_member_id: string };
+        Returns: undefined;
+      };
+      set_org_member_status: {
+        Args: { p_member_id: string; p_status: "active" | "suspended" };
+        Returns: undefined;
+      };
+      change_org_member_role: {
+        Args: {
+          p_member_id: string;
+          p_new_role: Database["public"]["Tables"]["organisation_members"]["Row"]["member_role"];
+        };
+        Returns: undefined;
+      };
+      leave_organisation: {
+        Args: { p_org_id: string };
+        Returns: undefined;
       };
     };
   };
