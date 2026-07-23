@@ -3,6 +3,8 @@
     "findADog": "Znajdź psa",
     "breederMap": "Mapa hodowców",
     "breeders": "Hodowcy",
+    "foundations": "Fundacje",
+    "plannedLitters": "Planowane mioty",
     "adoptions": "Adopcje",
     "community": "Społeczność",
     "transport": "Transport",
@@ -23,6 +25,7 @@
     "meetBreeders": "Poznaj zweryfikowanych hodowców",
     "dogsForAdoption": "Psy do adopcji",
     "foundationsRescues": "Fundacje i schroniska",
+    "community": "Społeczność",
     "requestTransport": "Zamów transport",
     "plannedRoutes": "Planowane trasy"
   },

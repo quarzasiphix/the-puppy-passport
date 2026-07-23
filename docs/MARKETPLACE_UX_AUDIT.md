@@ -344,8 +344,51 @@ integrated. No new broad feature was added in this pass — everything below is 
   not-found-vs-real-row behaviour (that needs an actual reachable database with real rows), and it
   is not a substitute for a real browser check — no visual/layout verification happened this way.
 
+## Phase 2 — Public marketplace information architecture
+
+Audited the full public nav/footer/homepage hierarchy against the product's actual priority list
+(primary: find an animal, browse breeders, browse foundations, planned litters, adoptions,
+community; secondary: publish, request transport, planned routes, sign in, create account).
+
+### Findings
+
+- **Top-level header/mobile nav under-represented two primary destinations and over-represented
+  transport.** The nav had 8 slots: Find a dog, Breeder map, Breeders, Adoptions, Community,
+  Transport, Planned routes, How it works. Two primary destinations — **Foundations** and
+  **Planned litters** — had no top-level slot at all (footer-only), while transport-adjacent pages
+  occupied 2 of 8 slots (Transport, Planned routes) plus a third arguably-secondary item (Breeder
+  map, a filtered view of the Breeders page, not a distinct primary destination).
+- **The homepage had no entry point to Community at all.** Every other primary destination
+  (animal discovery, breeders, adoptions, foundations, planned litters) is reachable from the
+  homepage; Community — a primary destination per the hierarchy — was reachable only via the
+  persistent header nav, never from any homepage section or quick-link row.
+- No stub/incomplete pages were found in the current top-level navigation (the one stub,
+  `/foundations`, was already made real in the previous commit/phase) — so no entry needed removing
+  or honesty-labelling on that front.
+
+### Fixes applied
+
+- **Reordered the primary nav** (`src/components/site-chrome.tsx`, shared by desktop header and the
+  mobile Sheet menu — one array, so both stay in sync): Find a dog, Breeders, **Foundations**,
+  **Planned litters**, Adoptions, Community, Transport. "Breeder map," "Planned routes" and "How it
+  works" move to footer-only (where they already existed) — still one click away, just not
+  competing with the six primary destinations for top-level attention. New `nav.foundations`/
+  `nav.plannedLitters` translation keys added (en + pl).
+- **Added a "Community" quick-link on the homepage hero** (`_public.index.tsx`), replacing the
+  secondary "Planned routes" quick-link (which remains reachable from the dedicated Transport
+  section further down the same page) with the previously-homepage-absent primary destination. New
+  `home.community` translation key (en + pl).
+- Mobile Sheet menu reviewed for clarity — already single-column, clearly separated (nav links →
+  divider → account actions → primary CTA button), touch targets at `py-2.5 px-3`; no structural
+  change needed beyond the reordered array it shares with the desktop header.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on both changed files, `npm run test:unit` (13/13, unaffected
+by this phase), `npm run build` — all clean.
+
 ## Commit
 
-Two commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Three commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
-feature commit (1444e35), and this hardening pass.
+feature commit (1444e35), the hardening pass, and this navigation-hierarchy pass.

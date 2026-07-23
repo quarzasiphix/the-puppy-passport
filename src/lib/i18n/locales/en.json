@@ -3,6 +3,8 @@
     "findADog": "Find a dog",
     "breederMap": "Breeder map",
     "breeders": "Breeders",
+    "foundations": "Foundations",
+    "plannedLitters": "Planned litters",
     "adoptions": "Adoptions",
     "community": "Community",
     "transport": "Transport",
@@ -23,6 +25,7 @@
     "meetBreeders": "Meet verified breeders",
     "dogsForAdoption": "Dogs for adoption",
     "foundationsRescues": "Foundations & rescues",
+    "community": "Community",
     "requestTransport": "Request transport",
     "plannedRoutes": "Planned routes"
   },

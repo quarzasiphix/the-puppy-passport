@@ -117,8 +117,8 @@ function Hero() {
             {[
               [t("home.dogsForAdoption"), "/adoptions"],
               [t("home.foundationsRescues"), "/foundations"],
+              [t("home.community"), "/community"],
               [t("home.requestTransport"), "/transport/request"],
-              [t("home.plannedRoutes"), "/planned-routes"],
             ].map(([label, href]) => (
               <Link
                 key={label}
