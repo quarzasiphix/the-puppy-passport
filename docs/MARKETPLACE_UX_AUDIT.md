@@ -627,3 +627,47 @@ Eight commits on branch `ux-marketplace-frontend-pass` (worktree branched from t
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, and this foundation-
 experience pass.
+
+## Phase 8 — Public user profiles
+
+Reviewed `/profile/$profileId` as the shared identity layer for every account type.
+
+### Findings
+
+- **Report-a-user is a real, existing capability** (`ReportDialog`'s `reasonLabels.user` already
+  covers "scam or payment fraud"/"prohibited behaviour"/"something else") **but wasn't wired up
+  anywhere a stranger would actually encounter another person's profile** — the one page this
+  matters most for had no report entry point at all.
+- Generic user-to-user messaging does not exist anywhere in this app (`messaging.ts` only supports
+  `startApplicationConversation`/`startTransportConversation`, both tied to a specific
+  animal/transport request) — so *not* showing a "Message" button on a public profile is the
+  correct, honest choice, not a gap. Product rules already establish "first contact happens through
+  Havenpaw" via an application, not an open DM.
+- `PublicProfile` already selects every genuinely-available public column (`display_name`,
+  `avatar_url`, `city`, `country`) — the `profiles` table has no bio/description or cover-image
+  column at all, so their absence on this page is correct, not missing data.
+- Professional-profile linking (kennel → `/breeders/$slug`, foundation/shelter/rescue →
+  `/foundations/$slug`) was already fixed correctly in the Phase 1 hardening pass.
+
+### Fixes applied
+
+- **Added `ReportDialog` (`targetType="user"`)** to the profile header for any profile that isn't
+  the signed-in user's own, next to (not blocking) the Follow button — using the exact same,
+  already-existing report infrastructure the rest of the app relies on, wired to the one place it
+  was missing.
+- Restructured the header's action area so Follow (sign-in-gated) and Report (available to anyone,
+  signed in or not, viewing someone else's profile) sit correctly: Follow only renders when signed
+  in, Report renders for any visitor viewing another person's profile.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on the changed file, `npm run test:unit` (13/13, unaffected),
+`npm run build` — all clean.
+
+## Commit
+
+Nine commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, and this public-profile pass.
