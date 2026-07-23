@@ -806,6 +806,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
         Relationships: [];
       };
+      notification_preferences: {
+        Row: {
+          id: string;
+          profile_id: string;
+          category: "applications" | "adoption" | "moderation" | "security";
+          in_app_enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]> & {
+          profile_id: string;
+          category: "applications" | "adoption" | "moderation" | "security";
+        };
+        Update: Partial<Database["public"]["Tables"]["notification_preferences"]["Row"]>;
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;
@@ -1519,6 +1535,21 @@ export interface Database {
           p_internal_notes?: string | null;
         };
         Returns: undefined;
+      };
+      get_notification_preference: {
+        Args: { p_profile_id: string; p_category: string };
+        Returns: boolean;
+      };
+      create_notification_if_enabled: {
+        Args: {
+          p_profile_id: string;
+          p_category: string;
+          p_notification_type: string;
+          p_title: string;
+          p_body?: string | null;
+          p_link_url?: string | null;
+        };
+        Returns: string;
       };
     };
   };

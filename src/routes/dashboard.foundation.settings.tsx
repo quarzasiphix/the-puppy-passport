@@ -4,12 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Construction } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { NotificationPreferences } from "@/components/notification-preferences";
 
 export const Route = createFileRoute("/dashboard/foundation/settings")({
   component: SettingsPage,
@@ -84,14 +84,7 @@ function SettingsPage() {
         </div>
         <div className="rounded-2xl border border-border/70 bg-card p-6">
           <h3 className="mb-3 font-display text-lg font-semibold">Notifications</h3>
-          <div className="rounded-xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center">
-            <Construction className="mx-auto size-6 text-muted-foreground" />
-            <p className="mt-2 text-sm font-medium">Per-notification preferences coming soon</p>
-            <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
-              You currently receive all account notifications — review and mark them read from the
-              bell menu.
-            </p>
-          </div>
+          {userId && <NotificationPreferences userId={userId} />}
         </div>
       </div>
     </div>

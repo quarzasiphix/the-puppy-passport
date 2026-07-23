@@ -94,6 +94,7 @@ export async function approveRehomingReview(id: string, animalId: string, ownerP
   await notifyUser({
     profileId: ownerProfileId,
     type: "rehoming_approved",
+    category: "adoption",
     title: "Your rehoming listing was approved",
     body: "It's now visible to people looking to adopt on Havenpaw.",
     linkUrl: `/adoptions/${animalId}`,
@@ -111,6 +112,7 @@ export async function rejectRehomingReview(id: string, notes: string, ownerProfi
   await notifyUser({
     profileId: ownerProfileId,
     type: "rehoming_rejected",
+    category: "adoption",
     title: "Your rehoming submission wasn't approved",
     body: notes,
   });

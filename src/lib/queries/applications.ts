@@ -211,6 +211,7 @@ export async function respondToApplication(params: {
   await notifyUser({
     profileId: params.buyerId,
     type: "application_status_change",
+    category: "applications",
     title: `Update on your application for ${params.animalName}`,
     body: applicationStatusLabels[params.status],
     linkUrl: "/dashboard/buyer/applications",

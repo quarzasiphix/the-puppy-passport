@@ -142,6 +142,7 @@ export async function notifyAffectedUserOfDecision(caseId: string, affectedProfi
   await notifyUser({
     profileId: affectedProfileId,
     type: "moderation_decision",
+    category: "moderation",
     title: "A moderation decision affects you",
     body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
     linkUrl: `/moderation/${caseId}`,
