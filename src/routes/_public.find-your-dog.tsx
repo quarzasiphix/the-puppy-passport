@@ -169,7 +169,7 @@ function FindYourDogPage() {
 
       {step === "transport" && (
         <StepCard title="Will you need transport arranged?" onBack={back}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <OptionButton
               selected={answers.transportNeeded === true}
               onClick={() => {

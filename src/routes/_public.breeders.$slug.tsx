@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ShieldCheck, Truck, MessageCircle, MapPin, Trophy, Heart } from "lucide-react";
+import { ShieldCheck, Truck, Dog, MapPin, Trophy, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -119,9 +119,9 @@ function BreederProfile() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button size="lg" onClick={() => setTab("puppies")}>
-                  <MessageCircle className="mr-1 size-4" /> Contact breeder
+                  <Dog className="mr-1 size-4" /> View available puppies
                 </Button>
                 <Button
                   size="lg"

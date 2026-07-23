@@ -926,3 +926,69 @@ feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the
 pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
 experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
 dashboard pass, the localisation-audit pass, and this accessibility pass.
+
+## Phase 14 — Mobile/responsive pass
+
+Code-level review (Explore-agent pass + manual verification) of all 17 files touched across this
+branch for concrete Tailwind responsive-layout risks: missing `flex-wrap` on multi-item rows, fixed
+pixel widths outside a scroll container, non-wrapping long text next to fixed-width siblings, and
+grids without a mobile column step.
+
+### Findings and fixes applied
+
+- **`find-a-dog.tsx`'s results toolbar** (sort dropdown + separator + grid/list/map-view buttons)
+  had no `flex-wrap` on the inner row — on a 320–375px screen the ~180px sort select plus four more
+  controls doesn't fit on one line. Added `flex-wrap` and narrowed the select to `w-[150px]
+  sm:w-[180px]`.
+- **`find-your-dog.tsx`'s transport-preference step** used the same `grid-cols-2` as the other three
+  guided-search steps, but its two options are full sentences ("Yes, show only puppies with
+  transport available") rather than short labels — cramped into ~140px columns on a narrow phone.
+  Changed to `grid-cols-1 sm:grid-cols-2`; left the other three steps (short labels/names) as
+  `grid-cols-2`, which fit fine.
+- **`breeders.$slug.tsx`'s hero action-button row** ("Contact breeder" + "Follow kennel," both
+  `size="lg"` icon+text) had no `flex-wrap` — the exact gap already fixed on the equivalent
+  foundation-profile row in the Phase 1 hardening pass, just not carried over to breeders at the
+  time. Fixed identically. While in this exact row, also fixed the same misleading-action pattern
+  Phase 1 fixed for foundations and explicitly deferred for breeders as out of that commit's scope:
+  "Contact breeder" didn't contact anyone, it only switched the active tab — reworded to "View
+  available puppies" with a matching icon (`Dog`, replacing the messaging-implying `MessageCircle`).
+- **`cards.tsx`: `PuppyCard`, `AdoptionCard` and `BreederCard`'s name+price/response-time header row**
+  had no `min-w-0`/`break-words` on the name side or `shrink-0` on the fixed-content side —
+  `FoundationCard` already had this guard (added when it was built in the original commit) but the
+  other three, older cards didn't. Applied the same guard to all three for a long, real kennel/
+  breed/animal name.
+- **`dashboard.buyer.followed.tsx`'s `OrgTile`** (name + optional org-type badge) had the identical
+  gap — added `flex-wrap`, `min-w-0`/`break-words` on the name, `shrink-0` on the badge, matching the
+  sibling `AnimalTile` in `dashboard.buyer.saved.tsx`, which already had this guard.
+
+### Manual review checklist (routes/viewports still needing an actual browser check)
+
+Browser execution was not available in this environment (see Phase 1's note); every fix above was
+verified by reading the rendered Tailwind classes, not by measuring a real layout. The following
+routes are the highest-value candidates for a manual pass at 320px, 360px, 390px, tablet and desktop
+before this branch ships:
+
+- `/find-a-dog` — mobile filter Sheet open/close, results-toolbar wrapping, list-view row at 320px.
+- `/find-your-dog` — all four guided-search steps, especially the now-single-column transport step.
+- `/breeders/$slug` and `/foundations/$slug` — hero action-button row wrapping, `TabsList` overflow
+  with the fullest tab set (Champions present, Updates tab, long kennel/foundation name).
+- `/adoptions/$id` — image gallery + sidebar stacking order at narrow widths.
+- `dashboard/buyer/followed` and `dashboard/buyer/saved` — tile grid at 320px with a genuinely long
+  real name.
+- Community feed and group post composer inputs — on-screen keyboard behavior with the new
+  `aria-label`s (Phase 13) and existing `rows={1}`/`rows={3}` textareas.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all five changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
+## Commit
+
+Fifteen commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
+pass, the card-system pass, the detail-page pass, the breeder-profile pass, the foundation-
+experience pass, the public-profile pass, the community-feed pass, the groups pass, the buyer-
+dashboard pass, the localisation-audit pass, the accessibility pass, and this mobile/responsive
+pass.

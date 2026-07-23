@@ -108,13 +108,15 @@ export function PuppyCard({ p }: { p: Puppy }) {
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-xl font-semibold leading-tight">{p.name}</h3>
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-xl font-semibold leading-tight">
+              {p.name}
+            </h3>
             <p className="text-sm text-muted-foreground">
               {p.breed} · {p.sex} · {p.ageWeeks} wks
             </p>
           </div>
-          <div className="text-right">
+          <div className="shrink-0 text-right">
             <div className="font-display text-lg font-semibold">
               {p.pricePLN.toLocaleString()} PLN
             </div>
@@ -174,14 +176,16 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-xl font-semibold leading-tight">{a.name}</h3>
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-xl font-semibold leading-tight">
+              {a.name}
+            </h3>
             <p className="text-sm text-muted-foreground">
               {a.breed} · {a.sex} · {a.approxAge}
             </p>
           </div>
           {a.adoptionFee != null && (
-            <div className="text-right">
+            <div className="shrink-0 text-right">
               <div className="font-display text-lg font-semibold">
                 {a.adoptionFee.toLocaleString()} {a.currency}
               </div>
@@ -391,14 +395,14 @@ export function BreederCard({ b }: { b: Breeder }) {
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-lg font-semibold">{b.kennel}</h3>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-lg font-semibold">{b.kennel}</h3>
+            <p className="break-words text-sm text-muted-foreground">
               {b.name} · {b.city}, {b.country}
             </p>
           </div>
           {b.responseTime && (
-            <div className="text-right text-sm">
+            <div className="shrink-0 text-right text-sm">
               <div className="text-xs text-muted-foreground">Responds</div>
               <div className="font-medium">{b.responseTime}</div>
             </div>
