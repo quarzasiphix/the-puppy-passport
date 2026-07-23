@@ -42,9 +42,10 @@ function FollowedOrganisations() {
   });
 
   const isLoading = breedersQuery.isLoading || foundationsQuery.isLoading;
+  const isError = breedersQuery.isError || foundationsQuery.isError;
   const breeders = breedersQuery.data ?? [];
   const foundations = foundationsQuery.data ?? [];
-  const isEmpty = !isLoading && breeders.length === 0 && foundations.length === 0;
+  const isEmpty = !isLoading && !isError && breeders.length === 0 && foundations.length === 0;
 
   return (
     <div>
@@ -57,6 +58,23 @@ function FollowedOrganisations() {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : isError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <p className="font-medium">Couldn't load who you follow</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Something went wrong — this isn't the same as not following anyone. Please try again.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => {
+              breedersQuery.refetch();
+              foundationsQuery.refetch();
+            }}
+          >
+            Try again
+          </Button>
+        </div>
       ) : isEmpty ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <p className="font-medium">Not following anyone yet</p>
