@@ -225,3 +225,29 @@ continue. Recorded here rather than edited away, since it was accurate at the ti
 - **Remaining work**: continuing through the rest of the overnight queue (Phases 3–30 + the
   after-Phase-30 continuation), finding and fixing only genuinely new issues per phase rather than
   redoing prior verified work.
+
+### Phase 3 — Navigation (commit `6b30cbf`)
+
+- **Real bug found**: `SiteFooter` (`src/components/site-chrome.tsx`) was already on the i18n path
+  (section titles/tagline/disclaimer translated) but every individual footer link label was
+  hardcoded English — a partial-translation mix the branch's own Phase 12 rule explicitly rules out
+  elsewhere. Added `footer.link*` keys (EN+PL, `src/lib/i18n/locales/{en,pl}.json`) for every footer
+  link and the three legal links, wired via `t()`.
+- Added `activeProps` to the mobile nav sheet's links (previously only the desktop nav highlighted
+  the current section).
+- Checks: tsc, eslint, `npm run i18n:check` (3/3), test:unit (37/37), build — all clean.
+
+### Phase 4 / 22 — Homepage + SEO (commit `7b84742`)
+
+- **Real bug found**: the root route's fallback `<title>`/description/`og:*` tags (used by every
+  page without its own `head()`, including the homepage, which had none at all) still read
+  "Havenpaw — Professional animal transport across Europe" — the exact pre-correction framing
+  `docs/PRODUCT_VISION.md`'s own header says was superseded on 2026-07-22. The single most visible
+  SEO/share surface for the whole site contradicted the platform's actual current positioning.
+- Fixed the root fallback meta to lead with discovery/breeders/foundations/community (transport as
+  an available later step, not the identity), and added a dedicated `head()` to the homepage route
+  itself (previously missing).
+- Checks: tsc, eslint, test:unit (37/37), build — all clean.
+- No other homepage issues found this pass — no mock animals, no fake org/testimonial counts (the
+  hero stats are real Supabase counts), every CTA resolves to a real page, empty sections already
+  correctly hide themselves (`if (...length === 0) return null`) rather than showing a placeholder.
