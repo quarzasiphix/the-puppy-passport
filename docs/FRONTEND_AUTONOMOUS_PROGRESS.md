@@ -314,3 +314,44 @@ frontend worktree, branch `ux-marketplace-frontend-pass`, clean status, main wor
 - Checks: tsc, eslint (0 errors), test:unit (41/41), i18n:check (3/3), build — clean.
 - A third overnight instruction (stages DA–EP) arrived mid-stage-A; per its own "finish the current
   unit first" rule, stage A/D was completed and committed before continuing.
+
+### Stages K/M/O/Z (commits `761a6a6`, `990b63a`, `31a28ea`, `0157baf`)
+
+- **Real bugs fixed**: global `prefers-reduced-motion` support was entirely missing (added); two raw
+  Postgres-error exposures (`create-breeder.tsx`, `dashboard.buyer.profile.tsx` both did
+  `toast.error(error.message)` on a raw driver error — replaced with safe generic messages);
+  `NotificationBell` had the same hardcoded-locale bug found everywhere else (missed since it lives
+  outside `src/routes`) plus a keyboard-inaccessible notification row (fixed → real `<button>`);
+  "Withdraw application" fired destructively on a single click with zero confirmation, unlike the
+  equivalent draft-delete flow elsewhere — added an `AlertDialog`.
+- Checks: tsc, eslint (0 errors), test:unit (41/41), build — clean at every commit.
+
+### Documentation stages (commits `a32121c`, `93f57bb`, plus `FRONTEND_OVERNIGHT_FINAL_REPORT.md`)
+
+Delivered `FRONTEND_QUERY_CACHE_MAP.md`, `FRONTEND_MERGE_CONFLICT_PLAN.md`,
+`FRONTEND_OBSERVABILITY.md`, `FRONTEND_ANALYTICS_EVENTS.md`, `FRONTEND_ACCESSIBILITY_MATRIX.md`,
+`FRONTEND_USER_JOURNEYS.md`, `FRONTEND_MANUAL_QA_MASTER.md`, `FRONTEND_PERFORMANCE_BUDGET.md`, and
+`FRONTEND_OVERNIGHT_FINAL_REPORT.md` — all grounded in this session's real commits/code/build output,
+not generic template content. Every unverifiable claim (browser checks, screen-reader behavior)
+explicitly marked as blocked rather than asserted.
+
+## Session status: all three appended queues substantially complete
+
+20 commits this session on top of the prior session's 30 (50 total on this branch). Real,
+proven bugs found and fixed across every area audited: RLS-adjacent scoping, i18n (dates, numbers,
+footer), SEO/product-identity, cache-key consistency, image resilience, raw-enum/raw-error exposure
+to customers, motion preference, notification accessibility, destructive-action confirmation. Design
+system consolidated (empty/error states). Every mandated documentation deliverable produced with
+real, specific content. `git status --short` clean; `tsc`/eslint/test:unit (41/41)/i18n:check (3/3)/
+build all pass at this checkpoint. No forbidden/backend-owned file touched (re-verified via
+`git diff --name-only 54f95da HEAD`); zero new routes (`routeTree.gen.ts` unchanged since session
+start). Worktree isolation re-confirmed at every appended-queue boundary. Ready for the same
+cherry-pick integration plan as before, now 20 commits longer — see
+`docs/FRONTEND_MERGE_CONFLICT_PLAN.md` for the updated per-file guidance.
+
+Remaining honestly-open items (not backend-blocked, just not reached this session, or deliberately
+scoped out): a full pull-request-style re-review pass of this session's own 20 commits (the "review
+every commit as a PR" instruction repeated at the end of each queue) has not yet been run as its own
+dedicated pass — worth doing if the session continues further. `dashboard.breeder.*`/
+`dashboard.foundation.*` routes still have the same hardcoded-locale pattern fixed everywhere else,
+left alone as outside this session's agreed scope boundary (not "buyer-facing dashboards").
