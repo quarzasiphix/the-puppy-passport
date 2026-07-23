@@ -113,6 +113,18 @@
   }
 }
 
+/* Respect the OS-level motion preference — none of the app's own transitions/animations (card
+   hover lift, image zoom, dialog/sheet enter-exit) carry information on their own, so removing them
+   is always safe for a visitor who has asked for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @utility container-page {
   max-width: 1280px;
   margin-inline: auto;
