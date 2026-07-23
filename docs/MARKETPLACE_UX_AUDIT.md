@@ -1359,3 +1359,43 @@ session's boundary, not fixed opportunistically.
 No code changed this phase — `npx tsc --noEmit`/`npm run test:unit`/`npm run build` all remain at
 their previous clean state (last verified in the transport-handoff commit immediately before this
 one).
+
+## Phase 22 — Branch self-review (whole diff as a PR)
+
+Re-reviewed the complete diff from base (`02e6416`) to current HEAD as if it were one incoming pull
+request, specifically for: duplicate code, accidental business logic, stale comments, wrong entity
+routes, generated-file noise, and every forbidden-file/boundary rule.
+
+### Verified clean
+
+- **No forbidden file touched, checked by direct grep against the full boundary list**: no
+  `supabase/**`, `tests/db/**`, `src/lib/supabase/types.ts`, `src/lib/queries/{transport,
+  operations,driver,admin}.ts`, operations/driver/admin routes, `transport-document-checklist.tsx`,
+  `.github/workflows/**`, or any `docs/BACKEND_*`/`docs/DATABASE_TESTING.md`/`docs/DOMAIN_MODEL.md`/
+  `docs/FINALISATION_REPORT.md`/`docs/IMPLEMENTATION_PLAN.md`/`docs/TRANSPORT_INTEGRATION_CONTRACT.md`
+  anywhere in the 40-file diff.
+- **`package-lock.json` untouched**; `package.json`'s only change is the two new test scripts added
+  in the localisation/test-coverage phases — no dependency version changed.
+- **`routeTree.gen.ts` has zero diff between `1444e35` and current HEAD** — confirms no new routes
+  were added in any of the 21 commits since the original foundations feature commit, matching the
+  "avoid adding new routes" instruction exactly (the route-tree changes that exist all predate this
+  autonomous pass, from `1444e35`'s real, fully-implemented foundation pages).
+- **No stale references to removed/renamed functions**: grepped for every old name from this
+  session's refactors (`listSavedPuppies`, the pre-consolidation local `FOUNDATION_ORG_TYPES` copy,
+  `getPublicKennelSlugForOwner`, the old two-argument-free `mapOrgToBreeder`/`mapOrgToFoundation`
+  signatures) — none remain anywhere.
+- **One combined final lint pass across all 34 changed TS/TSX files** (not just per-commit,
+  individually): 0 errors, only the same 8 pre-existing `react-refresh/only-export-components`
+  warnings already noted in earlier phases (from `cards.tsx` and `i18n/index.tsx` each exporting a
+  small number of constants/functions alongside components — a reasonable choice for files this
+  small and cohesive, not worth splitting purely to silence a style warning).
+- Spot-checked for accidental business-logic drift: every mutation this session added or changed
+  still only performs the same category of write the surrounding code already did (insert into
+  `saved_animals`/`follows`/`buyer_applications`, never anything touching transport, fundraising, or
+  moderation tables) — confirmed by re-reading each mutation's `.from(...)` target against the
+  boundary list.
+
+### Checks run
+
+`npx tsc --noEmit`, `npm run test:unit` (29/29), `npm run i18n:check` (3/3), `npm run build` — all
+clean, re-run fresh for this review rather than assumed from the prior phase.
