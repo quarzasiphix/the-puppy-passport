@@ -116,7 +116,9 @@ function CreateBreeder() {
       },
     });
     if (error) {
-      toast.error(error.message);
+      // Never surface a raw Postgres/RLS error (constraint names, column names, policy text) to the
+      // applicant — a generic, honest message plus a retry is the safe customer-facing behavior.
+      toast.error("Could not submit your application — please try again.");
       return;
     }
     toast.success("Application submitted for review.");

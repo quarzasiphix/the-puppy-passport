@@ -129,7 +129,9 @@ function BuyerProfile() {
       })
       .eq("id", userId);
     if (error) {
-      toast.error(error.message);
+      // Never surface a raw Postgres/RLS error to the user — a generic, honest message is the safe
+      // customer-facing behavior.
+      toast.error("Could not update your profile — please try again.");
       return;
     }
     toast.success("Profile updated.");
