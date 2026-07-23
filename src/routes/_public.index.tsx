@@ -27,6 +27,16 @@ import hero from "@/assets/hero-breeder.jpg";
 import transportImg from "@/assets/transport.jpg";
 
 export const Route = createFileRoute("/_public/")({
+  head: () => ({
+    meta: [
+      { title: "Havenpaw — Find, adopt and welcome a dog, the right way" },
+      {
+        name: "description",
+        content:
+          "Search verified breeders and foundations across Europe, apply with confidence, and — when it's time — arrange trusted transport from pickup to handover.",
+      },
+    ],
+  }),
   loader: async () => {
     const supabase = getSupabaseBrowserClient();
     const [orgs, animals, litters, featuredPuppies, upcomingLitters, verifiedBreeders] =

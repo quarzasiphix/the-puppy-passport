@@ -84,17 +84,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Havenpaw — Professional animal transport across Europe" },
+      { title: "Havenpaw — Find, adopt and welcome a dog, the right way" },
       {
         name: "description",
         content:
-          "Request individual, express, VIP or shared transport for a dog. We verify the required information, plan the journey and handle transport from pickup to handover. Also home to verified breeders, foundations and adoption listings.",
+          "A dedicated European animal ecosystem: verified breeders, foundation and rescue adoptions, and a trusted community — with safe, professional transport available once a purchase or adoption is agreed.",
       },
-      { property: "og:title", content: "Havenpaw — Professional animal transport across Europe" },
+      { property: "og:title", content: "Havenpaw — Find, adopt and welcome a dog, the right way" },
       {
         property: "og:description",
         content:
-          "Request animal transport across Poland and Europe, or find a dog from a verified breeder or foundation.",
+          "Verified breeders, foundation and rescue adoptions, and a trusted community across Europe — with safe transport available once a purchase or adoption is agreed.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
