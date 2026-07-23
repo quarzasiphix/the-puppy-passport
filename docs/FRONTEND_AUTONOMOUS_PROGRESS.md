@@ -122,12 +122,23 @@ unless the audit finds a real problem").
    while documenting the existing `?animalId=` handoff contract: `/adoptions/$id` showed a
    "Transport available" badge with no way to act on it, unlike `/puppies/$id`'s existing Transport
    tab + button. Added the same CTA, honestly worded for adoption vs. private rehoming.
-4. ⏳ Phase 26 — TODO/FIXME/mock/placeholder scan across touched surfaces. **Next.**
-5. ⏳ Phase 27 — design-consistency pass.
-6. ⏳ Phase 28 — branch self-review (re-reading the full diff from `02e6416` as a PR).
-7. ⏳ `docs/FRONTEND_BROWSER_QA.md` — consolidate every "needs a real browser" note already
-   scattered through `MARKETPLACE_UX_AUDIT.md` into one checklist.
-8. ⏳ `docs/FRONTEND_INTEGRATION_REPORT.md` — final integration-readiness report.
-9. ⏳ Final verification pass + closing commit.
+4. ✅ Phase 26 — TODO/FIXME/mock/placeholder scan across touched surfaces (commit `47373fb`) —
+   genuinely clean, `mock-data.ts` re-verified type-only.
+5. ✅ Phase 27 — design-consistency pass, folded into the same commit (`47373fb`) — all error/empty
+   states verified visually consistent, no drift found.
+6. ✅ Phase 28 — branch self-review (commit `769d205`) — full diff re-checked as a PR, forbidden-file
+   boundary re-verified, `package-lock.json`/`routeTree.gen.ts` confirmed clean, one combined lint
+   pass across all 34 changed TS/TSX files.
+7. ✅ `docs/FRONTEND_BROWSER_QA.md` — done (commit `bb93596`), including a genuinely-attempted (and
+   genuinely-failed, exact error recorded) real Chromium launch.
+8. ✅ `docs/FRONTEND_INTEGRATION_REPORT.md` — done, this commit.
+9. ⏳ Final verification pass + closing commit — **next.**
 
-This file will be updated after each remaining step.
+## Session status: Phase 30 next, then continuing into the continuation queue
+
+All 30 phases of the expanded brief are done or honestly documented as blocked (browser
+verification — see `FRONTEND_BROWSER_QA.md`), except the final verification pass itself (next).
+Per explicit user instruction to continue through everything, this session continues into the
+continuation queue after Phase 30 closes: (A) second-pass product critique, (B) copy-quality audit,
+(C) image resilience, (D) mutation resilience, (E) final documentation correction, (F) final clean
+checkpoint. Each remains its own focused commit, same discipline as every phase before it.
