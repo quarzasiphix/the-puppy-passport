@@ -20,6 +20,7 @@ import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-
 import { listPublicPostsByOrg } from "@/lib/queries/profile";
 import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
+import { AnimalImage } from "@/components/marketplace/animal-image";
 
 export const Route = createFileRoute("/_public/breeders/$slug")({
   loader: async ({ params }) => {
@@ -84,14 +85,14 @@ function BreederProfile() {
   return (
     <div>
       <div className="relative h-64 bg-secondary md:h-80">
-        <img src={b.cover} alt="" className="size-full object-cover" />
+        <AnimalImage src={b.cover} alt="" className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
       </div>
 
       <div className="container-page -mt-24 pb-16">
         <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-start gap-6">
-            <img
+            <AnimalImage
               src={b.logo}
               alt=""
               className="size-24 rounded-2xl border-4 border-background object-cover shadow-md"
@@ -217,7 +218,7 @@ function BreederProfile() {
               kParents.map((p, i) => (
                 <Card key={i}>
                   <div className="flex gap-4">
-                    <img src={p.image} alt="" className="size-24 rounded-xl object-cover" />
+                    <AnimalImage src={p.image} alt="" className="size-24 rounded-xl object-cover" />
                     <div>
                       <div className="text-xs uppercase tracking-wide text-accent">
                         {p.sex === "female" ? "Female" : "Male"}
