@@ -30,6 +30,7 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `cca8f02` | G (Phase 15) | Real user-facing moderation decisions and appeals: `affected_profile_id` (auto-populated for user/animal_listing targets), `public_decision_summary`, `appeal_deadline` (14 days, fixed a bug where it only fired on UPDATE not INSERT), `my_moderation_case_view` (fixed a bug where `security_invoker=true` inherited an always-false RLS result — switched to a definer-style view like `public_transport_requests`), `moderation_appeals` with a same-moderator-conflict check. New `_public.moderation.$caseId.tsx` + extended `dashboard.admin.moderation.tsx`. `tests/db/moderation-appeals.test.ts`. 299/299 tests. |
 | `3026f22` | H (Phase 16) | Real notification preferences (`notification_preferences`, opt-out default, mandatory `security` category, `get_notification_preference()`/`create_notification_if_enabled()`), scoped to the 4 notification types that actually exist in the codebase (not a fabricated full category list). Replaced the "coming soon" placeholder on both breeder/foundation settings pages. `tests/db/notification-preferences.test.ts`. 320/320 tests. |
 | `229cb35` | I (Phase 17) | Real `dashboard.admin.organisations.tsx` (suspend/restore + new `is_featured` flag, with a lock-trigger fix for owner self-featuring), real `dashboard.admin.settings.tsx` (markets table, previously zero UI), real `dashboard.buyer.scheduled.tsx` (scheduled-or-later transport list + timeline). Left 3 document-library placeholders honest (no backing schema, out of Stage I's priority list). `tests/db/admin-placeholders.test.ts`. 335/335 tests. |
+| `77c4252` | J (Phase 18) | Real per-actor rate limiting (`rate_limit_events` + `enforce_rate_limit()`) applied to 7 previously-unprotected abuse vectors (reports/messages/welfare_cases/applications via triggers; transport-draft/amendment/invitation via RPC calls). Found + fixed a missing GRANT (same `auto_expose_new_tables=false` class as before) and — found by actually running the suite twice — initial thresholds tighter than legitimate test-fixture usage, breaking repeatability; raised with margin. `docs/RATE_LIMITING_AND_ABUSE_PROTECTION.md`. `tests/db/rate-limiting.test.ts`. 358/358 tests, verified on 3 consecutive runs without reset. |
 
 ## Supplemental queue appended mid-session
 
@@ -58,8 +59,8 @@ finished first, in order, before this one starts.
 
 ## Remaining stages (not started this session)
 
-**Original queue**: J (abuse prevention), K (CI), L (full DB/Storage audit), M (scenario suite), N
-(performance), O (privacy/lifecycle), P (launch reconciliation), Q (final verification + report).
+**Original queue**: K (CI), L (full DB/Storage audit), M (scenario suite), N (performance), O
+(privacy/lifecycle), P (launch reconciliation), Q (final verification + report).
 
 **First supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
 lifecycle), U (multi-species), V (taxonomy), W (search/discovery), X (application/handover state
