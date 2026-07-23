@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "@/lib/queries/buyer-activity";
+import { pluralCategory, useTranslation } from "@/lib/i18n";
 
 // Shared across every card on a page — react-query dedupes identical keys, so this is one query
 // per page, not one per card.
@@ -27,7 +28,14 @@ export function useIsSaved(animalId: string) {
       if (isSaved) await unsaveAnimal(userId, animalId);
       else await saveAnimal(userId, animalId);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-animal-ids", userId] }),
+    onSuccess: () => {
+      // Two query keys represent the same "what has this buyer saved" server state — the id-only
+      // list read by every card, and the fully-mapped list read by the saved-animals dashboard
+      // page and the buyer overview preview. Both must invalidate together or saving/unsaving from
+      // a card leaves the dashboard showing stale data until a full reload.
+      queryClient.invalidateQueries({ queryKey: ["saved-animal-ids", userId] });
+      queryClient.invalidateQueries({ queryKey: ["my-saved-animals", userId] });
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
   });
   return { isSaved, toggle: () => toggle.mutate(), pending: toggle.isPending };
@@ -191,7 +199,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
             to="/foundations/$slug"
             params={{ slug: a.orgSlug }}
             onClick={(e) => e.stopPropagation()}
-            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+            className="w-fit break-words text-sm text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {a.orgName}
           </Link>
@@ -269,13 +277,28 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
   );
 }
 
+// English-language fallback map, used only where a translation context isn't available (currently
+// only dashboard.buyer.followed.tsx, which stays English like the rest of that untranslated
+// dashboard zone — FoundationCard itself uses useTranslation() below).
 export const foundationOrgTypeLabel: Record<Foundation["orgType"], string> = {
   foundation: "Foundation",
   shelter: "Shelter",
   rescue: "Rescue",
 };
 
+const cardDogsKey = {
+  one: "cardDogsForAdoptionOne",
+  few: "cardDogsForAdoptionFew",
+  many: "cardDogsForAdoptionMany",
+} as const;
+
 export function FoundationCard({ f }: { f: Foundation }) {
+  const { t, locale } = useTranslation();
+  const orgTypeLabel = {
+    foundation: t("foundations.orgTypeFoundation"),
+    shelter: t("foundations.orgTypeShelter"),
+    rescue: t("foundations.orgTypeRescue"),
+  }[f.orgType];
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
@@ -283,39 +306,44 @@ export function FoundationCard({ f }: { f: Foundation }) {
         <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
           {f.verified && (
             <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-              <ShieldCheck className="mr-1 size-3" /> Verified
+              <ShieldCheck className="mr-1 size-3" /> {t("foundations.verified")}
             </Badge>
           )}
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-display text-lg font-semibold">{f.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              {foundationOrgTypeLabel[f.orgType]}
+          <div className="min-w-0">
+            <h3 className="break-words font-display text-lg font-semibold">{f.name}</h3>
+            <p className="break-words text-sm text-muted-foreground">
+              {orgTypeLabel}
               {f.city || f.country ? ` · ${[f.city, f.country].filter(Boolean).join(", ")}` : ""}
             </p>
           </div>
           {f.transportAvailable && (
             <Badge variant="secondary" className="shrink-0">
-              <Truck className="mr-1 size-3" /> Transport
+              <Truck className="mr-1 size-3" /> {t("foundations.transport")}
             </Badge>
           )}
         </div>
         <p className="line-clamp-3 text-sm text-muted-foreground">
-          {f.description || "This organisation hasn't added a description yet."}
+          {f.description || t("foundations.noDescription")}
         </p>
-        <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border/60 pt-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <HeartHandshake className="size-3.5" />
-            {f.availableForAdoption} dog{f.availableForAdoption === 1 ? "" : "s"} for adoption
+            {f.availableForAdoption}{" "}
+            {t(`foundations.${cardDogsKey[pluralCategory(locale, f.availableForAdoption)]}`)}
           </span>
-          {f.responseTime && <span>Responds {f.responseTime}</span>}
+          {f.responseTime && (
+            <span>
+              {t("foundations.respondsPrefix")} {f.responseTime}
+            </span>
+          )}
         </div>
         <Button asChild variant="outline" className="mt-1">
           <Link to="/foundations/$slug" params={{ slug: f.slug }}>
-            View profile
+            {t("foundations.viewProfile")}
           </Link>
         </Button>
       </div>

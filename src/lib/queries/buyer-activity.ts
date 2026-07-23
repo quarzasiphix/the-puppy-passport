@@ -4,10 +4,12 @@ import {
   mapAnimalToPuppy,
   mapOrgToBreeder,
   mapOrgToFoundation,
+  orgAvailableAdoptionCounts,
   orgSelect,
   type AnimalRow,
   type OrgRow,
 } from "@/lib/queries/marketplace";
+import { classifySavedAnimalKind } from "@/lib/saved-animal-classification";
 
 // Superset of animalSelect (adds listing_category, approximate_age and the owner-profile join) so a
 // single query can tell a saved breeder puppy apart from a saved adoption/rehoming animal and map
@@ -51,11 +53,9 @@ type SavedAnimalRow = AnimalRow & {
 
 export type SavedAnimal =
   | { kind: "puppy"; puppy: ReturnType<typeof mapAnimalToPuppy> }
-  | { kind: "adoption"; adoption: ReturnType<typeof mapAnimalToAdoption> };
+  | { kind: "adoption"; adoption: ReturnType<typeof mapAnimalToAdoption> }
+  | { kind: "private_rehoming"; adoption: ReturnType<typeof mapAnimalToAdoption> };
 
-// A saved animal can be a breeder puppy OR an adoption/private-rehoming listing (the heart button
-// on AdoptionCard and the puppy detail page both write to the same saved_animals table) — each
-// needs its own shape/framing/detail route, not "puppy" for everything saved.
 export async function listSavedAnimals(buyerId: string): Promise<SavedAnimal[]> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -66,17 +66,11 @@ export async function listSavedAnimals(buyerId: string): Promise<SavedAnimal[]> 
   if (error) throw error;
   const rows = (data ?? []) as unknown as { saved_at: string; animals: SavedAnimalRow | null }[];
   const animals = rows.map((r) => r.animals).filter((a): a is SavedAnimalRow => !!a);
-  return animals.map((a) =>
-    a.listing_category === "breeder_puppy"
-      ? { kind: "puppy" as const, puppy: mapAnimalToPuppy(a) }
-      : {
-          kind: "adoption" as const,
-          adoption: mapAnimalToAdoption({
-            ...a,
-            listing_category: a.listing_category as "adoption" | "private_rehoming",
-          }),
-        },
-  );
+  return animals.map((a) => {
+    const kind = classifySavedAnimalKind(a.listing_category);
+    if (kind === "puppy") return { kind, puppy: mapAnimalToPuppy(a) };
+    return { kind, adoption: mapAnimalToAdoption({ ...a, listing_category: kind }) };
+  });
 }
 
 export async function listFollowedOrgIds(buyerId: string): Promise<string[]> {
@@ -138,9 +132,9 @@ export async function listFollowedBreeders(buyerId: string) {
 
 export async function listFollowedFoundations(buyerId: string) {
   const orgs = await listFollowedOrgRows(buyerId);
-  return Promise.all(
-    orgs
-      .filter((o) => (FOUNDATION_ORG_TYPES as readonly string[]).includes(o.org_type))
-      .map(mapOrgToFoundation),
+  const foundations = orgs.filter((o) =>
+    (FOUNDATION_ORG_TYPES as readonly string[]).includes(o.org_type),
   );
+  const counts = await orgAvailableAdoptionCounts(foundations.map((o) => o.id));
+  return foundations.map((o) => mapOrgToFoundation(o, counts.get(o.id) ?? 0));
 }

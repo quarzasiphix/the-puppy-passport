@@ -187,7 +187,165 @@ verified by an actual browser render. Please manually check, ideally at a narrow
 - Community feed organisation-author links (`/community`) — needs a real post authored by an
   organisation in seed/dev data to click-test; this session could not confirm one exists.
 
+## Hardening pass — review of commit 1444e35 as a pull request
+
+A second pass treating the previous commit as a PR from another developer: read the full diff,
+found and fixed real correctness/performance/accessibility problems before the branch is
+integrated. No new broad feature was added in this pass — everything below is a fix to code that
+1444e35 already introduced.
+
+### Issues found in 1444e35
+
+1. **N+1 query in the foundations directory.** `listApprovedFoundations()` mapped every org through
+   `mapOrgToFoundation`, which fired its own `orgAvailableAdoptionCount` query per organisation —
+   one count query per foundation on every directory page load, and the same pattern again in
+   `listFollowedFoundations`.
+2. **A failed count query silently read as "zero available."** `orgAvailableAdoptionCount` didn't
+   check `error` from the count query at all — a real failure and a genuine zero looked identical.
+3. **`getFoundationBySlug` had no `verification_status`/`is_public` filter.** Unlike
+   `listApprovedFoundations`, the by-slug lookup could return a pending or private organisation if
+   someone (typically its own owner/member, who RLS lets read their own org regardless of status)
+   guessed or was given its slug directly — rendered as a live public profile with no "pending"
+   indicator.
+4. **`getFoundationBySlug`'s loader swallowed every error into a fake 404.** `.catch(() => null)`
+   then `notFound()` meant a real network/RLS failure looked exactly like "this foundation doesn't
+   exist," even though the root route already has a working `errorComponent` this could have used
+   instead (same anti-pattern the rest of the codebase already has on `breeders.$slug.tsx`/
+   `puppies.$id.tsx`/`adoptions.$id.tsx` — not fixed there, out of this pass's scope, but not
+   compounded further either).
+5. **A misleading "Contact foundation" button.** It didn't start a conversation or contact anyone —
+   it just switched the active tab to "Available for adoption," using a `MessageCircle` icon that
+   implied messaging.
+6. **Private rehoming listings were saved and displayed as "foundation adoptions."**
+   `dashboard.buyer.saved.tsx` grouped every non-puppy saved animal under one "Dogs for adoption"
+   header, with no distinction from a genuine foundation/shelter/rescue listing — a private owner's
+   rehoming listing isn't a foundation adoption and shouldn't read as one.
+7. **Stale cache after saving/following from a card or detail page.** `saved-animal-ids` (read by
+   every card) and `my-saved-animals` (read by the saved-animals dashboard page and the buyer
+   overview) are two keys for one piece of server state, but only the first was invalidated on
+   save/unsave. Same gap between `followed-org-ids` and `my-followed-breeders`/
+   `my-followed-foundations` on both the breeder and foundation profile pages' follow buttons.
+8. **Community feed timestamps were hardcoded to `en-GB`** regardless of the active UI locale.
+9. **Two i18n keys (`foundations.viewProfile`, `foundations.respondsPrefix`, `foundations.transport`)
+   were defined but never used** — `FoundationCard` had the equivalent strings hardcoded in English
+   instead, and the foundations-count sentence used a naive 2-form (singular/plural) composition
+   that reads as ungrammatical Polish for counts of 2–4 (Polish has three plural forms, not two).
+10. Minor: unused `MessageCircle` import left after removing its only usage; foundation logo `alt=""`
+    (a real logo, not decorative); the foundation profile's action-button row and card header row
+    had no `flex-wrap`/`min-w-0`, risking overflow with a long organisation name on narrow phones;
+    several plain `<Link>` elements (not wrapped in the shared `Button` component, which already has
+    focus-visible styling) had no visible keyboard-focus ring of their own.
+
+### Fixes applied
+
+- **Batched adoption counts.** Added `orgAvailableAdoptionCounts(orgIds: string[])` — one query for
+  however many organisations are being mapped, using `.in("organization_id", orgIds)` and counting
+  client-side per id. `mapOrgToFoundation` is now a plain sync function taking the count as a
+  parameter instead of querying inside the mapper; `listApprovedFoundations`, `getFoundationBySlug`
+  and `listFollowedFoundations` all fetch their counts in one batched call. The count query's own
+  `error` is now checked and thrown, not swallowed into `0`.
+- **`getFoundationBySlug` now filters `verification_status = 'approved'` and `is_public = true`**,
+  matching `listApprovedFoundations` exactly, and uses `.maybeSingle()` instead of `.single()` so it
+  returns `null` only for a genuine absence — a real query error now throws and reaches the route's
+  loader un-caught, propagating to the existing root `errorComponent` instead of a fake 404 (verified
+  live — see Checks run below).
+- **Honest action wording.** The hero button is now "View animals available for adoption"
+  (`foundations.viewAnimalsCta`) with a `HeartHandshake` icon, doing exactly what it says (switching
+  to the Animals tab) — no icon or copy implies a conversation starts.
+- **Saved animals now split into three groups**, not two: `SavedAnimal`'s `kind` is
+  `"puppy" | "adoption" | "private_rehoming"` (previously just `"puppy" | "adoption"`, which folded
+  private rehoming into the foundation-adoption bucket). `dashboard.buyer.saved.tsx` now renders
+  "Puppies," "Dogs for adoption," and "Private rehoming" as three separate, correctly-labelled
+  sections sharing one `AnimalTile`/`SavedSection` component instead of three near-duplicate blocks.
+- **Cache invalidation fixed at every mutation site that changes save/follow state**: `cards.tsx`'s
+  `useIsSaved` toggle now invalidates both `saved-animal-ids` and `my-saved-animals`; both
+  `_public.breeders.$slug.tsx`'s and `_public.foundations.$slug.tsx`'s follow mutations now
+  invalidate `followed-org-ids`, `my-followed-breeders` and `my-followed-foundations` together. This
+  required touching `_public.breeders.$slug.tsx`, which is outside 1444e35's diff — justified because
+  it shares the exact same follow-state keys as the new foundation page and was left with the
+  identical gap; not fixing it would have left half the symmetric feature broken. The underlying
+  three-keys-for-one-state naming duplication itself is not restructured in this pass (see "not
+  changed" below) — the fix is comprehensive invalidation, not a key-namespace rename.
+- **Locale-aware timestamps.** The community feed's `<time>` now formats with `en-GB` or `pl-PL`
+  based on the active `useTranslation()` locale, not a hardcoded string.
+- **Correct Polish pluralisation.** Added `pluralCategory(locale, n)` to `src/lib/i18n/index.tsx`
+  (CLDR-style `one`/`few`/`many`, matching Polish's real plural rules — 1; 2–4 except 12–14; else) and
+  rewired both the foundations-count sentence and a new `FoundationCard` "N dogs for adoption"
+  sentence through it, with 3-form key sets in both `en.json` (English only needs 2 real forms, so
+  `few`/`many` share a value) and `pl.json` (all 3 grammatically distinct).
+- **`FoundationCard` now uses the previously-dead translation keys** (org type badge, "Transport"
+  badge, description fallback, "Responds," "View profile") instead of hardcoded English — the first
+  shared card component in `cards.tsx` to use `useTranslation()` (the rest of that file stays
+  hardcoded, matching the rest of the pre-existing marketplace pages — documented, not silently
+  left).
+- **Accessibility**: foundation logo now gets a real `alt` (`"Logo of {name}"` / `"Logo organizacji
+  {name}"`); the action-button row and `FoundationCard`'s header row got `flex-wrap`/`min-w-0`/
+  `break-words` so a long organisation name can't overflow; every plain `<Link>` introduced in this
+  branch (`AdoptionCard`'s org-name link, the public profile's kennel/foundation links, the community
+  feed's author links, the new saved-animals tile) now has an explicit `focus-visible:ring-2` to
+  match the design system's ring token, on top of the browser's own default outline.
+- **Extracted pure, unit-tested logic** instead of leaving route-selection/classification inline and
+  duplicated:
+  - `src/lib/org-routing.ts` — `orgProfileRoute(orgType)`, used identically by the community feed
+    (organisation-authored posts) and the public profile page (linked professional profile), so the
+    two can't silently diverge on which org types go to `/breeders/$slug` vs `/foundations/$slug`.
+  - `src/lib/saved-animal-classification.ts` — `classifySavedAnimalKind(listingCategory)`, used by
+    `listSavedAnimals`.
+  - `src/lib/i18n/completeness.ts` — the translation-completeness checker (`checkTranslationCompleteness`,
+    previously real but never actually invoked anywhere) split out of `index.tsx` into a file with no
+    React/JSX dependency, so it can run under plain `node --test` (index.tsx contains JSX, which
+    Node's native TS type-stripping cannot parse without a bundler).
+  - All three are covered by `tests/unit/*.test.ts` (new `npm run test:unit` script, `node --test`,
+    no new dependency) — 13 tests, all passing (see Checks run).
+
+### Issues deliberately not changed in this pass
+
+- **The three-keys-for-one-state query-key duplication** (`saved-animal-ids`/`my-saved-animals`,
+  `followed-org-ids`/`my-followed-breeders`/`my-followed-foundations`) is fixed functionally
+  (comprehensive invalidation everywhere) but not restructured into a single hierarchical key
+  namespace — that's a naming/architecture cleanup, not a correctness bug once invalidation is
+  comprehensive, and doing it now would mean touching more pre-existing files than this pass's scope
+  justifies. Left as a named follow-up.
+- **`breeders.$slug.tsx`/`puppies.$id.tsx`/`adoptions.$id.tsx`'s identical "swallow every error into
+  `.catch(() => null)` then `notFound()`" pattern** was not changed — only the new
+  `getFoundationBySlug`/`_public.foundations.$slug.tsx` pair was fixed. The other three pages have
+  the same latent issue (a real failure reads as "not found") but weren't introduced by 1444e35 and
+  are a larger, separate cleanup.
+- **Followed-profile (person) cache keys** (`followed-profile-ids`, `is-following-profile`) have the
+  same kind of gap as the org-follow keys did, but that feature predates 1444e35 entirely and wasn't
+  touched by it — flagged, not fixed, to keep this pass to what 1444e35 actually introduced plus its
+  direct, unavoidable consequences (like the breeder-profile follow-mutation fix above).
+- **`cards.tsx`'s other components** (`PuppyCard`, `AdoptionCard`, `LitterCard`, `BreederCard`,
+  `statusLabel`) remain hardcoded English — only `FoundationCard` was moved onto `useTranslation()`,
+  since it's the only one of these introduced by 1444e35.
+
+### Checks run
+
+- `npx tsc --noEmit` — clean.
+- `npx eslint --fix` on every file touched in this pass — clean (only pre-existing
+  `react-refresh/only-export-components` warnings remain, from exporting constants alongside
+  components in files that already did this before this pass).
+- `npm run build` — succeeds; confirms the new `with { type: "json" }` import-attribute syntax in
+  `src/lib/i18n/completeness.ts` works under both Vite and (separately) plain Node.
+- `npm run test:unit` (new script, `node --test tests/unit/*.test.ts`) — 13/13 passing: org-type →
+  route selection, saved-animal classification (specifically that private rehoming never classifies
+  as `"adoption"`), and en/pl translation key parity (running the previously-dead
+  `checkTranslationCompleteness` for the first time anywhere in the project).
+- **Live smoke check without a database.** No local Supabase instance was started from this
+  worktree — doing so risked colliding with the other session's live transport-backend work in the
+  main worktree (shared Docker/port state), which the task explicitly listed as a reason to stop.
+  Instead, `vite dev` was run standalone (no `.env`, so every Supabase call fails at the client-
+  construction step) and `/foundations`, `/foundations/$slug` (both a plausible and a clearly invalid
+  slug), `/adoptions`, `/adoptions/$id`, `/breeders/$slug`, `/dashboard/buyer/saved` and
+  `/dashboard/buyer/followed` were all requested directly. Every one returned HTTP 500 with the
+  shared root error page ("This page didn't load") — confirming that a genuine backend failure
+  reaches the error boundary instead of rendering a fake empty/not-found/success state, which is
+  exactly what the `getFoundationBySlug` fix set out to guarantee. This does **not** confirm real
+  not-found-vs-real-row behaviour (that needs an actual reachable database with real rows), and it
+  is not a substitute for a real browser check — no visual/layout verification happened this way.
+
 ## Commit
 
-One commit on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
-`ux-marketplace-polish` HEAD, not from stale `origin/main`).
+Two commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+`ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
+feature commit (1444e35), and this hardening pass.
