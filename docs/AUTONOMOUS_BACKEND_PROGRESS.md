@@ -27,13 +27,13 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `7bac2c0` | D (Phase 12) | Real urgent welfare/rescue workflow: `welfare_cases` + `welfare_case_documents` tables, eligibility gated to verified foundation/shelter/rescue orgs, ops acknowledge/review actions, `convert_welfare_case_to_transport_draft()` reusing `create_transport_draft()`. `dashboard.foundation.urgent.tsx` (real) + new `dashboard.operations.welfare-cases.tsx`. `tests/db/welfare-cases.test.ts`. 221/221 tests. |
 | `f40ac47` | E (Phase 13) | Real organisation team/invitation management (`organisation_invitations`, 3 new member roles, `status` active/suspended on `organisation_members`, tier-protected invite/remove/suspend/role-change RPCs). Found + fixed a real gap: `owner_user_id` could be changed by any org owner via a plain update, silently transferring/orphaning ownership — locked to admin-only via trigger. `dashboard.foundation.team.tsx` (real) + new `_public.invitations.$token.tsx`. `tests/db/organisation-team.test.ts`. 255/255 tests. |
 | `d52da87` | F (Phase 14) | Completed the adoption questionnaire on `buyer_applications` (landlord permission, veterinary plan, consent metadata, org supplemental answers jsonb, `internal_notes`, `draft`/`interview_planned`/`expired` statuses). Found + fixed a real gap: buyers had unrestricted `for all` RLS on their own application row, so could self-approve/forge `breeder_response`/forge `internal_notes` — added a default-deny lock trigger. `dashboard.foundation.applications.tsx` now renders the full questionnaire + internal notes + a transport-draft action on approval. `tests/db/adoption-questionnaire.test.ts`. 273/273 tests. |
+| `cca8f02` | G (Phase 15) | Real user-facing moderation decisions and appeals: `affected_profile_id` (auto-populated for user/animal_listing targets), `public_decision_summary`, `appeal_deadline` (14 days, fixed a bug where it only fired on UPDATE not INSERT), `my_moderation_case_view` (fixed a bug where `security_invoker=true` inherited an always-false RLS result — switched to a definer-style view like `public_transport_requests`), `moderation_appeals` with a same-moderator-conflict check. New `_public.moderation.$caseId.tsx` + extended `dashboard.admin.moderation.tsx`. `tests/db/moderation-appeals.test.ts`. 299/299 tests. |
 
 ## Remaining stages (not started this session)
 
-G (moderation appeals), H (notification preferences), I (admin placeholder audit), J (abuse
-prevention), K (CI), L (full DB/Storage audit), M (scenario suite), N (performance), O
-(privacy/lifecycle), P (launch reconciliation), Q (final verification + report), plus the post-Q
-continuation queue.
+H (notification preferences), I (admin placeholder audit), J (abuse prevention), K (CI), L (full
+DB/Storage audit), M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
+reconciliation), Q (final verification + report), plus the post-Q continuation queue.
 
 ## Known open items carried forward
 
