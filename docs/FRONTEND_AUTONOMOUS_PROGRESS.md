@@ -251,3 +251,24 @@ continue. Recorded here rather than edited away, since it was accurate at the ti
 - No other homepage issues found this pass — no mock animals, no fake org/testimonial counts (the
   hero stats are real Supabase counts), every CTA resolves to a real page, empty sections already
   correctly hide themselves (`if (...length === 0) return null`) rather than showing a placeholder.
+
+### Phase 11 — followed-profile cache fix (commit `c19c271`)
+
+- **Real bug found**: following/unfollowing a person from their public profile page only
+  invalidated `is-following-profile`, not `followed-profile-ids` (read by the community feed to
+  decide whether a post's author is followed, used to surface posts from followed people first) —
+  documented as a known-but-deferred gap in `docs/FRONTEND_BACKEND_GAPS.md`, now actually fixed
+  since this is purely a frontend cache-invalidation fix with no backend dependency. Both keys now
+  invalidate together, matching the identical fix already applied to followed organisations.
+- Checks: tsc, eslint, test:unit (37/37), build — clean.
+
+### Phase 6 / 20 / continuation queue C — image-load-failure fallback (commit `4b438c8`)
+
+- **Real, previously-documented gap closed**: added `src/components/marketplace/animal-image.tsx`
+  (`<AnimalImage>`, an `<img>` wrapper with `onError` swapping to the existing local placeholder)
+  and wired it into every animal/org image this branch touches: the whole card system, puppy/
+  adoption detail galleries, breeder/foundation profile cover/logo/parent-dog images.
+- Implemented and type/build-verified, but **not visually confirmed** — no working Chromium in this
+  sandbox to actually trigger a broken image URL and watch the swap happen. Documented honestly in
+  `docs/FRONTEND_BACKEND_GAPS.md` rather than claimed as fully verified.
+- Checks: tsc, eslint (0 errors after one `--fix` pass), test:unit (37/37), build — clean.
