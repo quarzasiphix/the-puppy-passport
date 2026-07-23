@@ -86,14 +86,14 @@ locale-preference cookie read server-side (a `createServerFn`/session-adjacent c
 not introduced by this branch, not attempted here since it touches the auth/session layer this
 session was not scoped to change.
 
-### Followed-profile (person) cache keys
+### Followed-profile (person) cache keys — fixed
 `followed-profile-ids` (read by the community feed) and `is-following-profile` (read by the public
-profile page) represent the same underlying "who does this user follow" state under two different
-keys, with no mutation site invalidating both — the same class of bug this session fixed for
-followed *organisations* (`followed-org-ids`/`my-followed-breeders`/`my-followed-foundations`, now
-all invalidated together). The person-follow feature predates this branch and wasn't touched by it;
-flagged here rather than fixed, to keep this session's diff to what it actually introduced or
-directly regressed.
+profile page) represented the same underlying "who does this user follow" state under two different
+keys, with no mutation site invalidating both — the same class of bug an earlier session fixed for
+followed *organisations* (`followed-org-ids`/`my-followed-breeders`/`my-followed-foundations`).
+Fixed in the overnight continuation session: `_public.profile.$profileId.tsx`'s follow mutation now
+invalidates both keys, so following someone from their profile immediately reflects in the community
+feed's "posts from people you follow" surfacing, not just after a full reload.
 
 ## How to use this file
 

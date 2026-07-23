@@ -59,7 +59,12 @@ function ProfilePage() {
         ? unfollowProfile(userId!, profile.id)
         : followProfile(userId!, profile.id),
     onSuccess: () => {
+      // Two query keys represent the same "who does this user follow" server state — this page's
+      // own is-following check, and the community feed's followed-profile-ids list (used to surface
+      // posts from followed people first). Both must invalidate together or following someone here
+      // leaves the community feed treating them as not-followed until a full reload.
       queryClient.invalidateQueries({ queryKey: ["is-following-profile", userId, profile.id] });
+      queryClient.invalidateQueries({ queryKey: ["followed-profile-ids", userId] });
       toast.success(followingQuery.data ? "Unfollowed." : "Following.");
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update follow."),
