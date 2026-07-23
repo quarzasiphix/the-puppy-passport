@@ -17,19 +17,21 @@ import { PuppyCard, LitterCard } from "@/components/cards";
 import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
+import { listPublicPostsByOrg } from "@/lib/queries/profile";
 
 import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/breeders/$slug")({
   loader: async ({ params }) => {
     const b = await getKennelBySlug(params.slug).catch(() => null);
     if (!b) throw notFound();
-    const [kPuppies, kPlanned, kParents, kChampions] = await Promise.all([
+    const [kPuppies, kPlanned, kParents, kChampions, kPosts] = await Promise.all([
       listPuppiesForKennel(b.id),
       listLittersForKennel(b.id, "planned"),
       listParentDogsForKennel(b.id),
       listVerifiedChampionsForKennel(b.id),
+      listPublicPostsByOrg(b.id),
     ]);
-    return { b, kPuppies, kPlanned, kParents, kChampions };
+    return { b, kPuppies, kPlanned, kParents, kChampions, kPosts };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -46,7 +48,7 @@ export const Route = createFileRoute("/_public/breeders/$slug")({
 });
 
 function BreederProfile() {
-  const { b, kPuppies, kPlanned, kParents, kChampions } = Route.useLoaderData();
+  const { b, kPuppies, kPlanned, kParents, kChampions, kPosts } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("about");
@@ -152,6 +154,7 @@ function BreederProfile() {
             <TabsTrigger value="parents">Parent dogs</TabsTrigger>
             {kChampions.length > 0 && <TabsTrigger value="champions">Champions</TabsTrigger>}
             <TabsTrigger value="health">Health & living</TabsTrigger>
+            <TabsTrigger value="updates">Updates</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
             <TabsTrigger value="transport">Transport</TabsTrigger>
             <TabsTrigger value="contact">Contact</TabsTrigger>
@@ -261,6 +264,32 @@ function BreederProfile() {
                 Parent dogs tab above.
               </p>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="updates" className="mt-6 space-y-3">
+            {kPosts.length ? (
+              kPosts.map((post) => (
+                <Card key={post.id}>
+                  {post.content && <p className="whitespace-pre-wrap text-sm">{post.content}</p>}
+                  <time
+                    dateTime={post.created_at}
+                    className="mt-2 block text-xs text-muted-foreground"
+                  >
+                    {new Date(post.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </time>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <p className="text-muted-foreground">
+                  This kennel hasn't posted any public updates yet.
+                </p>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-6">

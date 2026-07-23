@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { listApprovedKennels } from "@/lib/queries/marketplace";
 import { BreederCard } from "@/components/cards";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/_public/breeders/")({
@@ -12,6 +14,18 @@ export const Route = createFileRoute("/_public/breeders/")({
 
 function BreedersList() {
   const breeders = Route.useLoaderData();
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return breeders;
+    return breeders.filter((b) => {
+      const haystack =
+        `${b.kennel} ${b.name} ${b.breeds.join(" ")} ${b.city} ${b.country}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [breeders, search]);
+
   return (
     <div className="container-page py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -28,18 +42,30 @@ function BreedersList() {
         </div>
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search kennel or breed" />
+          <Input
+            className="pl-9"
+            placeholder="Search kennel, breeder or breed"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </header>
-      {breeders.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <p className="text-sm text-muted-foreground">
-            No verified kennels yet — check back soon.
+            {breeders.length === 0
+              ? "No verified kennels yet — check back soon."
+              : "No kennels match your search — try a different kennel, breeder or breed name."}
           </p>
+          {breeders.length > 0 && (
+            <Button variant="outline" className="mt-4" onClick={() => setSearch("")}>
+              Clear search
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {breeders.map((b) => (
+          {filtered.map((b) => (
             <BreederCard key={b.id} b={b} />
           ))}
         </div>

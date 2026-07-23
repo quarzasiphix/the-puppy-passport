@@ -44,6 +44,22 @@ export async function listPublicPostsByAuthor(profileId: string): Promise<Profil
   return data ?? [];
 }
 
+// Same shape/query as listPublicPostsByAuthor, scoped to an organisation instead of an individual
+// profile — used by breeder/foundation profile pages to show that org's own public updates, which
+// previously had no home outside the general community feed.
+export async function listPublicPostsByOrg(orgId: string): Promise<ProfilePostRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, content, post_type, created_at")
+    .eq("author_organization_id", orgId)
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export type PublicOrgLink = {
   slug: string;
   orgType: "kennel" | "foundation" | "shelter" | "rescue";

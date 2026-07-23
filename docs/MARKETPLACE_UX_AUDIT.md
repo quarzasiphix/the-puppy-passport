@@ -549,9 +549,46 @@ private rehoming through one component) for trust presentation and honest action
 `npx tsc --noEmit`, `npx eslint --fix` on all four changed files, `npm run test:unit` (13/13,
 unaffected), `npm run build` — all clean.
 
+## Phase 6 — Breeder profile prestige pass
+
+Reviewed `/breeders` and `/breeders/$slug` against the "professional portfolio, not classifieds
+seller page" bar.
+
+### Findings
+
+- **`/breeders`' search box was completely fake.** The `<Input placeholder="Search kennel or
+  breed">` had no `value`, no `onChange`, and nothing in the component filtered on it — typing into
+  it did literally nothing. This is exactly the "do not add fake filters" anti-pattern, found on a
+  page I hadn't touched before this phase.
+- **A kennel's own public updates had no home on its own profile** — organisations can author
+  public posts (`posts.author_organization_id`), visible in the general community feed, but a
+  breeder's public profile page had no "Updates"/"Posts" section at all, so a visitor Browse-ing
+  straight to a kennel's profile (not via the feed) would never see any of its announcements.
+- Everything else on the breeder profile was already strong: verification, association, experience,
+  breeds, parent dogs, current/planned litters, champions (achievements), and correctly-worded
+  empty states for every section ("No puppies available right now — check planned litters," "No
+  planned litters yet," "No parent dogs listed yet," honest "Reviews aren't available yet — they
+  open up once transports through Havenpaw start completing").
+
+### Fixes applied
+
+- **`/breeders`' search now actually filters** — matches kennel name, breeder name, breed list, city
+  or country (same case-insensitive substring approach as `/find-a-dog`), with a distinct empty
+  state ("no kennels yet" vs. "no kennels match your search," the latter with a "Clear search"
+  button).
+- **Added a real "Updates" tab to the breeder profile**, backed by a new `listPublicPostsByOrg(orgId)`
+  query (`src/lib/queries/profile.ts`, mirroring the existing `listPublicPostsByAuthor` for
+  individual profiles) — shows that kennel's own public posts with a correctly-empty "hasn't posted
+  any public updates yet" state, not a missing/broken-looking gap.
+
+### Checks run
+
+`npx tsc --noEmit`, `npx eslint --fix` on all three changed files, `npm run test:unit` (13/13,
+unaffected), `npm run build` — all clean.
+
 ## Commit
 
-Six commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
+Seven commits on branch `ux-marketplace-frontend-pass` (worktree branched from the current local
 `ux-marketplace-polish` HEAD, not from stale `origin/main`): the original foundations/saved/followed
 feature commit (1444e35), the hardening pass, the navigation-hierarchy pass, the discovery/search UX
-pass, the card-system pass, and this detail-page pass.
+pass, the card-system pass, the detail-page pass, and this breeder-profile pass.
