@@ -51,6 +51,7 @@ function AdoptionDetail() {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [activePhoto, setActivePhoto] = useState(0);
 
   const existingApplicationQuery = useQuery({
     queryKey: ["my-adoption-application", a.id, userId],
@@ -116,8 +117,30 @@ function AdoptionDetail() {
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <div>
           <div className="overflow-hidden rounded-2xl bg-secondary">
-            <img src={a.image} alt={a.name} className="aspect-[4/3] w-full object-cover" />
+            <img
+              src={a.gallery[activePhoto] ?? a.image}
+              alt={a.name}
+              className="aspect-[4/3] w-full object-cover"
+            />
           </div>
+          {a.gallery.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pt-3">
+              {a.gallery.map((g, i) => (
+                <button
+                  key={g + i}
+                  type="button"
+                  onClick={() => setActivePhoto(i)}
+                  aria-label={`Photo ${i + 1} of ${a.gallery.length} of ${a.name}`}
+                  aria-pressed={activePhoto === i}
+                  className={`aspect-square w-20 shrink-0 overflow-hidden rounded-lg border-2 ${
+                    activePhoto === i ? "border-primary" : "border-transparent"
+                  }`}
+                >
+                  <img src={g} alt="" className="size-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
           <div className="mt-6">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-3xl font-medium">{a.name}</h1>
