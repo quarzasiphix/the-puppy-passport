@@ -1647,6 +1647,14 @@ export interface Database {
         };
         Returns: undefined;
       };
+      assign_request_to_route: {
+        Args: {
+          p_route_id: string;
+          p_transport_request_id: string;
+          p_compatibility_notes?: string | null;
+        };
+        Returns: string;
+      };
     };
   };
 }

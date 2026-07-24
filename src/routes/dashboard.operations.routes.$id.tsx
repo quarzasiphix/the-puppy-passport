@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 import { listOpsTransportRequests } from "@/lib/queries/operations";
 import {
   assignRequestToRoute,
@@ -27,7 +26,6 @@ export const Route = createFileRoute("/dashboard/operations/routes/$id")({
 
 function RouteDetail() {
   const { id } = useParams({ from: "/dashboard/operations/routes/$id" });
-  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [pickerRequestId, setPickerRequestId] = useState<string>("");
 
@@ -46,7 +44,6 @@ function RouteDetail() {
       assignRequestToRoute({
         routeId: id,
         transportRequestId: pickerRequestId,
-        assignedBy: userId!,
       }),
     onSuccess: () => {
       toast.success("Request assigned to route.");

@@ -59,7 +59,7 @@ function MatchingPage() {
       score: number;
       outcome: MatchOutcome;
     }) => {
-      await assignRequestToRoute({ routeId, transportRequestId: requestId, assignedBy: userId! });
+      await assignRequestToRoute({ routeId, transportRequestId: requestId });
       await logMatchDecision({
         actorId: userId!,
         requestId,

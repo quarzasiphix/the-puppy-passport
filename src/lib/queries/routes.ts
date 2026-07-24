@@ -70,26 +70,22 @@ export function checkRouteCompatibility(
   return warnings;
 }
 
+// Both the route_assignments insert and the transport_requests.assigned_route_id update used to
+// be separate client-side calls (the second one's error wasn't even checked -- a failure there
+// silently left the two tables inconsistent), and assigned_by trusted a client-supplied id.
+// assign_request_to_route() does both writes in one transaction with a server-stamped actor.
 export async function assignRequestToRoute(input: {
   routeId: string;
   transportRequestId: string;
-  assignedBy: string;
   compatibilityNotes?: string;
 }) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("route_assignments").insert({
-    route_id: input.routeId,
-    transport_request_id: input.transportRequestId,
-    compatibility_checked: true,
-    compatibility_notes: input.compatibilityNotes || null,
-    assigned_by: input.assignedBy,
+  const { error } = await supabase.rpc("assign_request_to_route", {
+    p_route_id: input.routeId,
+    p_transport_request_id: input.transportRequestId,
+    p_compatibility_notes: input.compatibilityNotes || null,
   });
   if (error) throw error;
-
-  await supabase
-    .from("transport_requests")
-    .update({ assigned_route_id: input.routeId })
-    .eq("id", input.transportRequestId);
 }
 
 export type RouteWaitlistRow = Database["public"]["Tables"]["route_waitlist"]["Row"];
