@@ -71,16 +71,15 @@ finished first, in order, before this one starts.
 
 ## Next up
 
-Stage S (attachments) — first supplemental-queue stage started is R (messaging/conversation
-security, complete, see table below); continue into S onward per the standing instruction. Re-run
-the Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before
-starting, per the "how to resume" section below.
+Stage T (listing lifecycle). Re-run the Stage A baseline checks (`git status`, `db reset`,
+`test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 
 ## First supplemental queue: stages completed
 
 | Commit | Stage | Summary |
 |---|---|---|
 | `6f8717a` | R | Messaging/conversation security. Found and closed a real gap: "participants send messages in their conversations" (`20260101002000_messaging.sql`) checked `sender_profile_id`/conversation membership but never restricted `is_internal` — an ordinary participant's INSERT could set `is_internal = true` on their own message, spoofing what's meant to be a trusted ops-only annotation channel (`is_internal` is the actual visibility gate: the SELECT policy filters `not is_internal`). Not reachable through the real UI today (`chat-thread.tsx`'s only `sendMessage()` call site never passes `isInternal`, and no route yet renders internal-note content), only via a raw API call. Fixed with `20260101008600_messages_internal_flag_lock.sql` (`is_internal = false` added to the participant WITH CHECK; ops staff unaffected, they write through a separate broad policy). Also closed a real coverage gap: no prior test touched `messages`/`conversations`/`conversation_participants` at all. New `tests/db/messaging-security.test.ts` covers the lock, normal message round-trip, internal-note visibility (ops only), and cross-tenant isolation (an unrelated third party has zero read/write access). 405/405 tests, verified on a fresh reset plus one more run without reset. |
+| _pending_ | S | Attachments. `messages.attachment_url` existed on the schema since the original messaging migration but was completely unwired — no Storage bucket, no RLS, no upload UI (confirmed by grep: zero references anywhere in `src/` before this stage). Added the missing backend layer following the established private-bucket-plus-signed-URL pattern (`transport-documents`/`welfare-case-documents`): new `message-attachments` bucket, RLS scoped via the existing `is_conversation_participant()` helper so an attachment is exactly as protected as its conversation (`20260101008700_message_attachments_storage.sql`). Wired a real, minimal UI in the shared `src/components/chat-thread.tsx` (attach-a-file button, upload on send, signed-URL-on-demand rendering — never a bare link) since it was genuinely unbuilt, not just unwired at the DB layer; `chat-thread.tsx` is a shared component outside the frontend-worktree's excluded-file list. `tests/db/message-attachments.test.ts`: upload + signed URL for the uploader and the other participant, ops access, and two negative cases (an unrelated user can neither read nor upload into someone else's conversation folder). 413/413 tests, verified on a fresh reset plus one more run without reset. |
 
 **First supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
 lifecycle), U (multi-species), V (taxonomy), W (search/discovery), X (application/handover state
