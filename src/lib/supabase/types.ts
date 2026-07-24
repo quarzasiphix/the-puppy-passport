@@ -871,6 +871,19 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["markets"]["Row"]>;
         Relationships: [];
       };
+      app_maintenance_mode: {
+        Row: {
+          id: boolean;
+          enabled: boolean;
+          message: string;
+          enabled_by: string | null;
+          enabled_at: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["app_maintenance_mode"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["app_maintenance_mode"]["Row"]>;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;

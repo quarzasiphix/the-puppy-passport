@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { renderMaintenancePage } from "./lib/maintenance-page";
 import { getSupabaseBrowserClient } from "./lib/supabase/browser";
 
 type ServerEntry = {
@@ -84,10 +85,12 @@ async function handleHealthCheck(): Promise<Response> {
   } catch {
     databaseReachable = false;
   }
+  const maintenance = await getMaintenanceState();
 
   const body = {
     status: databaseReachable ? "ok" : "degraded",
     database: databaseReachable ? "reachable" : "unreachable",
+    maintenance: maintenance.enabled,
   };
   return new Response(JSON.stringify(body), {
     status: databaseReachable ? 200 : 503,
@@ -95,11 +98,58 @@ async function handleHealthCheck(): Promise<Response> {
   });
 }
 
+// Stage BZ (supplemental queue): maintenance mode. No mechanism existed to take the app down for a
+// planned migration/deploy without a code change and redeploy. `app_maintenance_mode`
+// (20260101011000_maintenance_mode.sql) is a real, admin-toggleable, single-row table; checked
+// here in the same raw-request-intercept layer as the health check above, before any SSR rendering
+// happens, so a broken app state can never block the maintenance page itself from rendering.
+// Cached briefly per Worker isolate (matching this file's existing lazy-singleton pattern for
+// `serverEntryPromise`) so normal traffic doesn't add a DB round-trip to every single request —
+// worst case a stale read for a few seconds, which only matters at the exact moment maintenance
+// mode is toggled, not during steady-state operation either way.
+const MAINTENANCE_CACHE_TTL_MS = 15_000;
+let maintenanceCache: { enabled: boolean; message: string; checkedAt: number } | undefined;
+
+async function getMaintenanceState(): Promise<{ enabled: boolean; message: string }> {
+  const now = Date.now();
+  if (maintenanceCache && now - maintenanceCache.checkedAt < MAINTENANCE_CACHE_TTL_MS) {
+    return maintenanceCache;
+  }
+  // Fails open: if the maintenance-mode check itself can't reach the database, don't let that
+  // become an outage on top of whatever's already wrong — the real DB-down case is already
+  // surfaced honestly through /health's own separate probe.
+  let state = { enabled: false, message: "" };
+  try {
+    const { data } = await getSupabaseBrowserClient()
+      .from("app_maintenance_mode")
+      .select("enabled, message")
+      .eq("id", true)
+      .single();
+    if (data) state = { enabled: data.enabled, message: data.message };
+  } catch {
+    state = { enabled: false, message: "" };
+  }
+  maintenanceCache = { ...state, checkedAt: now };
+  return state;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const url = new URL(request.url);
     if (url.pathname === "/health" && request.method === "GET") {
       return handleHealthCheck();
+    }
+
+    const maintenance = await getMaintenanceState();
+    if (maintenance.enabled) {
+      return new Response(renderMaintenancePage(maintenance.message), {
+        status: 503,
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-store",
+          "retry-after": "60",
+        },
+      });
     }
 
     try {

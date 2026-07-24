@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { listMarketsForAdmin, setMarketEnabled } from "@/lib/queries/markets";
+import { getMaintenanceMode, setMaintenanceMode } from "@/lib/queries/maintenance";
 
 export const Route = createFileRoute("/dashboard/admin/settings")({
   component: SettingsPage,
@@ -22,6 +23,10 @@ const stateLabels: Record<string, string> = {
 function SettingsPage() {
   const queryClient = useQueryClient();
   const marketsQuery = useQuery({ queryKey: ["admin-markets"], queryFn: listMarketsForAdmin });
+  const maintenanceQuery = useQuery({
+    queryKey: ["admin-maintenance-mode"],
+    queryFn: getMaintenanceMode,
+  });
 
   const toggleMarket = useMutation({
     mutationFn: (input: { id: string; enabled: boolean }) =>
@@ -30,6 +35,15 @@ function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-markets"] });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+  });
+
+  const toggleMaintenance = useMutation({
+    mutationFn: (enabled: boolean) => setMaintenanceMode(enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-maintenance-mode"] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not update maintenance mode."),
   });
 
   return (
@@ -44,6 +58,38 @@ function SettingsPage() {
           page.
         </p>
       </header>
+
+      <section>
+        <h2 className="mb-1 font-display text-lg font-semibold">Maintenance mode</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          When enabled, every visitor sees a plain "down for maintenance" page instead of the app —
+          use this before a risky migration or deploy, not as a general outage indicator.
+        </p>
+        {maintenanceQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          maintenanceQuery.data && (
+            <div className="rounded-2xl border border-border/70 bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="font-medium">
+                    {maintenanceQuery.data.enabled ? "Maintenance mode is ON" : "App is live"}
+                  </div>
+                  {maintenanceQuery.data.enabled && maintenanceQuery.data.enabled_at && (
+                    <div className="text-xs text-muted-foreground">
+                      Enabled {new Date(maintenanceQuery.data.enabled_at).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+                <Switch
+                  checked={maintenanceQuery.data.enabled}
+                  onCheckedChange={(checked) => toggleMaintenance.mutate(checked)}
+                />
+              </div>
+            </div>
+          )
+        )}
+      </section>
 
       <section>
         <h2 className="mb-1 font-display text-lg font-semibold">Markets</h2>
