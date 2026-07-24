@@ -403,6 +403,48 @@ test("workflow: a suspended role's effect depends on ownership vs. role-gated ac
     assert.equal(restored.error, null);
   });
 
+  // Found at Stage BD: is_my_driver_id()/is_assigned_driver_for_request() (and the
+  // transport_documents/Storage driver-access policies built directly on the same shape) checked
+  // only drivers.profile_id = auth.uid(), never user_roles.status -- the exact same bug class
+  // 20260101006100_owns_org_checks_active_role.sql already fixed for organisation ownership, just
+  // never applied to drivers. Fixed by 20260101009800_driver_id_checks_active_role.sql.
+  await t.test("suspending a driver's role revokes their assigned-job access", async () => {
+    const admin = await as("admin");
+    const suspend = await admin
+      .from("user_roles")
+      .update({ status: "suspended" })
+      .eq("user_id", ids.driver)
+      .eq("role", "driver")
+      .select("status");
+    assert.equal(suspend.error, null);
+
+    try {
+      const driver = await as("driver");
+      const attempt = await driver
+        .from("transport_requests")
+        .select("id")
+        .eq("id", ids.transportWarsawAmsterdam);
+      assert.ok(
+        isBlocked(attempt.data, attempt.error),
+        "a suspended driver must lose access to their assigned request",
+      );
+    } finally {
+      await admin
+        .from("user_roles")
+        .update({ status: "active" })
+        .eq("user_id", ids.driver)
+        .eq("role", "driver");
+    }
+
+    // Confirm the revert actually took: driver access must be restored for every later test.
+    const driver = await as("driver");
+    const restored = await driver
+      .from("transport_requests")
+      .select("id")
+      .eq("id", ids.transportWarsawAmsterdam);
+    assert.equal(restored.error, null);
+  });
+
   // Fixed by 20260101006100_owns_org_checks_active_role.sql. Root cause: owns_org()-gated policies
   // (organisations, animals, litters, parent_dogs, buyer_applications-as-org-owner) checked only
   // organisations.owner_user_id, never user_roles.status — suspending the exact role that earned
