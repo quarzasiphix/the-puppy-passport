@@ -1709,6 +1709,14 @@ export interface Database {
         Args: { p_case_id: string };
         Returns: undefined;
       };
+      mark_risk_signal_reviewed: {
+        Args: {
+          p_signal_id: string;
+          p_is_false_positive: boolean;
+          p_resolution_notes?: string | null;
+        };
+        Returns: undefined;
+      };
     };
   };
 }
