@@ -1661,6 +1661,15 @@ export interface Database {
         Args: { p_request_id: string };
         Returns: undefined;
       };
+      advance_transport_job_status: {
+        Args: {
+          p_request_id: string;
+          p_new_status: string;
+          p_evidence_object_path?: string | null;
+          p_customer_note?: string | null;
+        };
+        Returns: undefined;
+      };
     };
   };
 }

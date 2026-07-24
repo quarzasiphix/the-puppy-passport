@@ -56,7 +56,7 @@ function DriverHome() {
 
   const advanceMutation = useMutation({
     mutationFn: (input: { transportRequestId: string; newStatus: string }) =>
-      advanceJobStatus({ ...input, driverProfileId: userId! }),
+      advanceJobStatus(input),
     onSuccess: () => {
       toast.success("Updated.");
       queryClient.invalidateQueries({ queryKey: ["my-route-jobs"] });

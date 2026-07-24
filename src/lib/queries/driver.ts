@@ -100,24 +100,62 @@ export const driverStatusSteps = [
   "handover_confirmed",
 ] as const;
 
+const TRANSPORT_EVIDENCE_BUCKET = "transport-evidence";
+
+function sanitizeFilenameForStoragePath(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+// The status update, history insert and (optional) evidence upload used to be separate
+// client-side writes with a client-supplied driverProfileId trusted as the actor -- the same
+// non-atomic + forgeable-actor shape already fixed for changeOpsRequestStatus() and
+// assignRequestToRoute(). advance_transport_job_status() does the status/history write
+// atomically with a server-stamped auth.uid() actor; the evidence photo (if provided) is
+// uploaded first since Storage and Postgres are separate systems here, same pattern as
+// submitDocument()/sendMessage()'s attachment handling.
 export async function advanceJobStatus(input: {
   transportRequestId: string;
   newStatus: string;
-  driverProfileId: string;
+  evidencePhoto?: File;
+  customerNote?: string;
 }) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase
-    .from("transport_requests")
-    .update({ status: input.newStatus })
-    .eq("id", input.transportRequestId);
-  if (error) throw error;
 
-  const { error: historyError } = await supabase.from("transport_status_history").insert({
-    transport_request_id: input.transportRequestId,
-    status: input.newStatus,
-    changed_by: input.driverProfileId,
+  let evidenceObjectPath: string | null = null;
+  if (input.evidencePhoto) {
+    const objectPath = `${input.transportRequestId}/${input.newStatus}-${Date.now()}-${sanitizeFilenameForStoragePath(input.evidencePhoto.name)}`;
+    const { error: uploadError } = await supabase.storage
+      .from(TRANSPORT_EVIDENCE_BUCKET)
+      .upload(objectPath, input.evidencePhoto, {
+        contentType: input.evidencePhoto.type || undefined,
+      });
+    if (uploadError) throw uploadError;
+    evidenceObjectPath = objectPath;
+  }
+
+  const { error } = await supabase.rpc("advance_transport_job_status", {
+    p_request_id: input.transportRequestId,
+    p_new_status: input.newStatus,
+    p_evidence_object_path: evidenceObjectPath,
+    p_customer_note: input.customerNote || null,
   });
-  if (historyError) throw historyError;
+  if (error) {
+    if (evidenceObjectPath) {
+      await supabase.storage.from(TRANSPORT_EVIDENCE_BUCKET).remove([evidenceObjectPath]);
+    }
+    throw error;
+  }
+}
+
+// The bucket is private -- a stored object path is only ever useful through a short-lived signed
+// URL generated on demand, same pattern as getSignedDocumentUrl()/getSignedAttachmentUrl().
+export async function getSignedEvidenceUrl(objectPath: string): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.storage
+    .from(TRANSPORT_EVIDENCE_BUCKET)
+    .createSignedUrl(objectPath, 300);
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 // Driver-minimum timeline (Stage C): the same status_history rows a driver already has RLS access
