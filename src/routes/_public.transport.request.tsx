@@ -22,6 +22,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   classifyComplianceResult,
   createTransportRequest,
@@ -540,7 +541,7 @@ function TransportRequestPage() {
       setDraftId(saved.id);
       toast.success("Draft saved — resume it any time from your dashboard.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save the draft.");
+      toast.error(getFriendlyErrorMessage(err, "Could not save the draft."));
     } finally {
       setSavingDraft(false);
     }
@@ -574,7 +575,7 @@ function TransportRequestPage() {
       setResult({ requestNumber: created.request_number, status: created.status });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not submit the request.");
+      toast.error(getFriendlyErrorMessage(err, "Could not submit the request."));
     }
   }
 
