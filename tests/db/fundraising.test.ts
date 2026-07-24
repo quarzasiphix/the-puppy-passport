@@ -65,6 +65,78 @@ async function buildEligibleFixture() {
   };
 }
 
+test("fundraising: an org cannot self-declare target_reached or partially_funded (20260101009100)", async (t) => {
+  const fixture = await buildEligibleFixture();
+  const foundation1 = await as("foundation1");
+  const admin = await as("admin");
+  let campaignId: string | undefined;
+
+  await t.test("setup: an active campaign owned by the eligible org", async () => {
+    const created = await foundation1
+      .from("fundraising_campaigns")
+      .insert({
+        organisation_id: ids.orgFundacja,
+        animal_id: ids.animalReksio,
+        buyer_application_id: fixture.applicationId,
+        transport_request_id: ids.transportReksio,
+        quotation_id: fixture.quotationId,
+        title: "Outcome-status lock test",
+        target_amount: 300,
+        currency: "EUR",
+      })
+      .select("id")
+      .single();
+    assert.equal(created.error, null);
+    campaignId = created.data!.id as string;
+
+    const activated = await foundation1
+      .from("fundraising_campaigns")
+      .update({ status: "active" })
+      .eq("id", campaignId)
+      .select("status")
+      .single();
+    assert.equal(activated.error, null);
+    assert.equal(activated.data?.status, "active");
+  });
+
+  await t.test("the org cannot self-declare its own campaign target_reached", async () => {
+    const attempt = await foundation1
+      .from("fundraising_campaigns")
+      .update({ status: "target_reached" })
+      .eq("id", campaignId!)
+      .select();
+    assert.ok(
+      isBlocked(attempt.data, attempt.error),
+      "an organisation must not be able to publicly claim its own fundraiser reached its target",
+    );
+  });
+
+  await t.test("the org cannot self-declare its own campaign partially_funded either", async () => {
+    const attempt = await foundation1
+      .from("fundraising_campaigns")
+      .update({ status: "partially_funded" })
+      .eq("id", campaignId!)
+      .select();
+    assert.ok(isBlocked(attempt.data, attempt.error));
+  });
+
+  await t.test("an admin can still set either outcome status", async () => {
+    const set = await admin
+      .from("fundraising_campaigns")
+      .update({ status: "target_reached" })
+      .eq("id", campaignId!)
+      .select("status")
+      .single();
+    assert.equal(set.error, null);
+    assert.equal(set.data?.status, "target_reached");
+  });
+
+  await t.test("cleanup", async () => {
+    await admin.from("fundraising_campaigns").delete().eq("id", campaignId!);
+    await fixture.cleanup();
+  });
+});
+
 test("fundraising: only an approved foundation/shelter/rescue org can create a campaign", async () => {
   const fixture = await buildEligibleFixture();
   try {
