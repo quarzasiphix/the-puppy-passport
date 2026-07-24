@@ -88,7 +88,7 @@ after BA–CI, per its own stated precedence ("previously assigned order remains
 
 ## Next up
 
-Stage CE (data-access consolidation). Re-run the Stage A baseline checks (`git status`, `db
+Stage CF (tech-debt register). Re-run the Stage A baseline checks (`git status`, `db
 reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 
 ## Second supplemental queue: stages completed
@@ -126,6 +126,7 @@ reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" 
 | `b22f6f6` | CB | Database invariant catalogue. New `docs/DATABASE_INVARIANTS.md`, complementary to `docs/DOMAIN_MODEL.md` (which describes what tables *mean*; this describes what's *guaranteed to always be true*, and exactly where). Catalogues real, currently-enforced invariants by category — uniqueness ("at most one X"), server-stamped actors (every non-forgeable actor column this session locked down, with its enforcement mechanism and migration reference), state locks ("once X, Y can never change again"), role/suspension behavior, referential/business-value constraints (currency, simulated-only fundraising, self-pruning rate limits), deletion/lifecycle rules, and visibility guarantees. Every entry cites the real migration file it comes from — nothing aspirational. Docs-only, no code change. |
 | `c55ff99` | CC | Driver status state machine + chaos tests. Closed the gap Stage M/BF both found and deliberately deferred to this dedicated stage: `prevent_non_staff_operational_field_changes()` (Stage L) exempted the assigned driver entirely, so a raw-API UPDATE could set `status` to *any* enum value (skip straight to `completed`, move backwards, or set an ops-only hold state) and reassign `assigned_route_id`/`assigned_vehicle_id`/`assigned_driver_id`/`compliance_review_result`/`visibility` — none reachable through the real driver UI, real via a raw API call (`20260101011100_driver_status_state_machine.sql`). The legal transition graph isn't invented — it matches exactly what the app already treats as canonical in two places (`driverStatusSteps`, the UI's own linear sequence, and the full-journey scenario test, which additionally exercises the `rest_or_care_stop` detour the UI array skips). `veterinary_hold`/`compliance_hold` deliberately stay unreachable by a driver — no real code path sets either from that side yet. Ops staff remain completely unconstrained (Stage BF's own reasoning: the override-with-reason path is IR-8's scope). New `tests/db/driver-status-state-machine.test.ts`: every illegal jump rejected, the new field lock, the legal detour both directions, and two `Promise.all` chaos passes firing many invalid concurrent transitions from the same state — proving none sneaks through regardless of ordering. **Fixed a real regression this surfaced**: `tests/db/pickup-delivery-evidence.test.ts`'s fixture jumped `driver_assigned` straight to `delivered` in one call, only ever possible because this exact gap existed — updated to advance through the real intermediate steps first. 635/635 tests, verified on a fresh reset plus two more runs without reset (a third given the chaos tests' concurrency). |
 | `f2e4490` | CD | Permission inventory. New `docs/PERMISSION_INVENTORY.md` — a role-first, practical "what can this kind of user actually do" reference grounded in real RLS/RPCs, complementing Stage CB's invariant catalogue. Covers `anon`, `customer`, `buyer`, `animal_owner`, `breeder`, `foundation_member`/`shelter_member`, `operations`, `driver`, `moderator`, `admin`, and organisation sub-roles, each entry citing the real enforcement mechanism (a specific RPC, RLS policy, or Stage CC's state machine) rather than restating every policy verbatim. Deliberately not a full table×role matrix or exhaustive automated coverage — that's IR-6's dedicated later scope. Docs-only, no code change. |
+| `8743f91` | CE | Data-access consolidation. Surveyed every route file calling Supabase directly (24 files) for repeated query shapes and found real, exact duplication: two pairs of route files independently reimplemented the "get my organisation" query byte-for-byte (`dashboard.breeder.reservations.tsx`/`dashboard.breeder.transport.tsx` identical; `dashboard.breeder.tsx`/`dashboard.foundation.tsx` near-identical variants) — while `src/lib/queries/breeder.ts`/`foundation.ts` already had canonical `getMyKennel()`/`getMyKennelProfile()`/`getMyFoundation()`/`getMyFoundationProfile()` functions doing the exact same thing, unused by these four files. Also found `dashboard.breeder.settings.tsx`/`dashboard.foundation.settings.tsx` duplicated both the `get_my_profile()` RPC read and the phone-update mutation byte-for-byte with no shared function at all — added `getMyProfile()`/`updateMyPhone()` to `src/lib/queries/profile.ts` (clearly separated from that file's existing public-profile functions, which deliberately never return private fields). No behavior change — every replacement returns a superset or exact match of what was inline before. `tsc`/lint/build clean, 635/635 DB tests unaffected (no migration this stage), and a real smoke test against a running dev server confirms all six changed routes still resolve correctly (307 to sign-in, no 500s). |
 
 ## First supplemental queue: stages completed
 
@@ -219,13 +220,15 @@ anonymisation execution), AJ (support tooling), AK (backup/DR docs), AL (migrati
 ## Files likely to conflict with `ux-marketplace-frontend-pass`
 
 `_public.transport.request.tsx` (transport-specific, explicitly carved out of the frontend
-session's excluded-file list — touched again in Stage BQ for error-message translation) and
-`dashboard.driver.index.tsx`/`src/lib/queries/driver.ts` (Stage BG, evidence upload wiring) are
-the only frontend-adjacent files touched this session; both are transport-domain, not marketplace
-UX, so low real conflict risk with `ux-marketplace-frontend-pass`'s stated scope
-(`src/components/cards.tsx`, `site-chrome.tsx`, `src/routes/_public.*` marketplace pages,
-`dashboard.buyer.*`, `src/lib/i18n/**`, `docs/MARKETPLACE_UX_AUDIT.md`). No other frontend-owned
-file has been touched.
+session's excluded-file list — touched again in Stage BQ for error-message translation),
+`dashboard.driver.index.tsx`/`src/lib/queries/driver.ts` (Stage BG, evidence upload wiring), and
+`dashboard.breeder.{reservations,transport,settings,index}.tsx`/`dashboard.foundation.
+{settings,index}.tsx`/`src/lib/queries/profile.ts` (Stage CE, data-access consolidation — swapped
+a duplicated inline query for an existing shared function, no behavioural change) are the only
+frontend-adjacent files touched this session; none are marketplace UX, so low real conflict risk
+with `ux-marketplace-frontend-pass`'s stated scope (`src/components/cards.tsx`, `site-chrome.tsx`,
+`src/routes/_public.*` marketplace pages, `dashboard.buyer.*`, `src/lib/i18n/**`,
+`docs/MARKETPLACE_UX_AUDIT.md`). No other frontend-owned file has been touched.
 
 ## How to resume if this session stops mid-stage
 
