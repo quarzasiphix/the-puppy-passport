@@ -88,10 +88,14 @@ after BA–CI, per its own stated precedence ("previously assigned order remains
 
 ## Next up
 
-First supplemental queue (R–AP) is now **complete**. Continuing into the second supplemental
-queue: Stage BA (background jobs/scheduler foundation). Re-run the Stage A baseline checks (`git
-status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume"
-section below.
+Stage BB (document requirements/expiry engine). Re-run the Stage A baseline checks (`git status`,
+`db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
+
+## Second supplemental queue: stages completed
+
+| Commit | Stage | Summary |
+|---|---|---|
+| _(no commit — audit only, see below)_ | BA | Background jobs/scheduler foundation. Confirmed no background-job or scheduler infrastructure exists at all (no `pg_cron` extension enabled, no job/queue table, no cron config in `supabase/config.toml`). Considered building the abstract queue/claim foundation (a `background_jobs` table with atomic `FOR UPDATE SKIP LOCKED` claim, stale-lock recovery, bounded retries) independent of what triggers processing — and rejected it: unlike Stage AC (blocked by needing real provider credentials) or Stage Y (blocked by a missing prerequisite business action), this isn't blocked by anything external, it's that **no current operation in this codebase actually needs deferred/async processing yet**. The one candidate considered (`rate_limit_events` cleanup) was already deliberately designed in Stage J to not need one ("cheap enough to prune opportunistically... rather than needing a scheduled job"). Building the queue/claim mechanism with nothing real to enqueue into it would be exactly the "speculative infrastructure with no reachable product use" this stage's own brief says not to build. No code change; revisit once a real deferred-processing need exists (e.g. once Stage AC's email delivery is real and needs retry-safe async sending). |
 
 ## First supplemental queue: stages completed
 
