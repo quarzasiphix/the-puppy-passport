@@ -107,9 +107,8 @@ own stated precedence, after all of the above.
 
 ## Next up
 
-Stage CJA (authorization matrix — first stage of the third/fourth supplemental queue). Re-run the
-Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting,
-per the "how to resume" section below.
+Stage CJB (public/private projection layer). Re-run the Stage A baseline checks (`git status`, `db
+reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 
 ## Second supplemental queue: stages completed
 
@@ -155,8 +154,7 @@ per the "how to resume" section below.
 
 | Commit | Stage | Summary |
 |---|---|---|
-
-(Empty — Stage CJA starts next.)
+| `PENDING_CJA_HASH` | CJA | Authorization matrix. A systematic, table-centric sweep distinct from Stage CD's role-first permission inventory: (1) grepped every RLS policy for `using (true)`/`with check (true)` on a non-SELECT operation (the classic "accidentally grants unrestricted write access" red flag) — found 6 `using (true)` policies, all genuinely `for select` on legitimately public data (profiles' public columns, breeds, legal document versions, maintenance-mode status, group membership lists), zero `with check (true)` anywhere. (2) Cross-referenced every `alter table ... enable row level security` against every `create policy` — zero tables have RLS enabled with no policy at all (which would fully lock the table, even for admins, via the Data API). (3) Checked every table for an admin/staff override policy and manually verified each apparent gap (a quick grep heuristic false-flagged `reports`/`moderation_cases` as missing one — they use `is_moderator()`, not `is_admin()`/`is_ops_staff()`, confirmed by reading the actual policy text) — the real, remaining gaps (`follows`, `reactions`, `saved_posts`, `notification_preferences`) are uniformly low-stakes, purely personal, user-owned preference/social-graph data where no admin override is a reasonable, intentional design choice, not a bug; nothing security- or moderation-relevant lacks one. No code change — a genuine, verified "no gap found" outcome. |
 
 ## First supplemental queue: stages completed
 
