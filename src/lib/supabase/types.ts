@@ -1118,6 +1118,7 @@ export interface Database {
             | "other";
           evidence_url: string | null;
           description: string | null;
+          status: "open" | "dismissed" | "escalated";
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["reports"]["Row"]> & {

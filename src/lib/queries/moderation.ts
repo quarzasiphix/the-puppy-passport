@@ -44,6 +44,9 @@ export type ReportRow = {
   profiles: { display_name: string | null } | null;
 };
 
+// Only 'open' (untriaged) reports -- dismissed/escalated reports are kept (Stage CJG: soft
+// dismissal, not a hard delete) but deliberately excluded from the active queue, matching the
+// admin's original observable experience (a dismissed report used to just vanish from this list).
 export async function listReports() {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -51,6 +54,7 @@ export async function listReports() {
     .select(
       "id, reporter_profile_id, target_type, target_id, reason, evidence_url, description, created_at, profiles!reports_reporter_profile_id_fkey(display_name)",
     )
+    .eq("status", "open")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as ReportRow[];
@@ -65,9 +69,16 @@ export async function listOpenCaseReportIds() {
   return new Set((data ?? []).map((c) => c.report_id).filter((id): id is string => !!id));
 }
 
+// Soft dismissal (Stage CJG) -- never a hard delete. A permanently-deleted report can never
+// contribute to detecting a real abuse pattern (e.g. one reporter filing many reports that all get
+// dismissed), the exact "repeated reports" signal risk_signals.multiple_independent_reports
+// (Stage BN) was left unwired for.
 export async function dismissReport(reportId: string) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("reports").delete().eq("id", reportId);
+  const { error } = await supabase
+    .from("reports")
+    .update({ status: "dismissed" })
+    .eq("id", reportId);
   if (error) throw error;
 }
 
@@ -85,6 +96,12 @@ export async function escalateReportToCase(report: {
     status: "open",
   });
   if (error) throw error;
+
+  const { error: statusError } = await supabase
+    .from("reports")
+    .update({ status: "escalated" })
+    .eq("id", report.id);
+  if (statusError) throw statusError;
 }
 
 export type ModerationCaseRow = {
