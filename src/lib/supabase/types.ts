@@ -21,6 +21,8 @@ export interface Database {
           preferred_currency: string;
           country: string | null;
           city: string | null;
+          is_deleted: boolean;
+          deleted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1654,6 +1656,10 @@ export interface Database {
           p_compatibility_notes?: string | null;
         };
         Returns: string;
+      };
+      execute_account_deletion: {
+        Args: { p_request_id: string };
+        Returns: undefined;
       };
     };
   };

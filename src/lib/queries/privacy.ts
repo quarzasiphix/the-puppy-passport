@@ -116,12 +116,21 @@ export async function listDeletionRequests() {
   return (data ?? []) as unknown as DeletionRequestRow[];
 }
 
+// "processed" now actually executes the deletion (anonymises the profile via
+// execute_account_deletion(), which also stamps the request row itself) — it used to only flip
+// this row's own status flag while leaving the account fully intact. "declined" stays a plain
+// status update; nothing to execute for a declined request.
 export async function markDeletionRequestProcessed(
   id: string,
   status: "processed" | "declined",
   processedBy: string,
 ) {
   const supabase = getSupabaseBrowserClient();
+  if (status === "processed") {
+    const { error } = await supabase.rpc("execute_account_deletion", { p_request_id: id });
+    if (error) throw error;
+    return;
+  }
   const { error } = await supabase
     .from("account_deletion_requests")
     .update({ status, processed_at: new Date().toISOString(), processed_by: processedBy })

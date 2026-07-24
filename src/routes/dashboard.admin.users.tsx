@@ -81,9 +81,13 @@ function UsersPage() {
           </div>
         )}
         <p className="mt-3 text-xs text-muted-foreground">
-          "Mark deleted" only records that the account was actually removed — the auth account and
-          its data still need to be deleted directly (Supabase Studio or the admin API), since that
-          requires the service-role key, which this app never has access to from the browser.
+          "Mark deleted" anonymises the account (name, email, phone, avatar, city/country are
+          cleared; the row itself stays so past transport/order history and audit records remain
+          intact). It's blocked if the account still has an active transport request, reservation,
+          application, or organisation ownership that hasn't been transferred yet. The Supabase auth
+          identity itself (sign-in credentials) is not removed by this action and still needs
+          Supabase Studio or the admin API, since that requires the service-role key, which this app
+          never has access to from the browser.
         </p>
       </section>
 
