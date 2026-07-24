@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { getSupabaseBrowserClient } from "./lib/supabase/browser";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -61,8 +62,46 @@ function withSecurityHeaders(response: Response): Response {
   });
 }
 
+// Stage BW (supplemental queue): health checks. No liveness/readiness endpoint existed anywhere —
+// a real, standard gap for a production deployment (Cloudflare's own health checks, an external
+// uptime monitor, a deploy-verification step all need a plain GET a monitoring tool can hit without
+// going through TanStack Start's RPC-style server-function protocol). Handled directly in this
+// file — the actual Worker `fetch` entry point already customized for error handling and security
+// headers — rather than a TanStack Start file-route, since this Start version doesn't expose a
+// file-based server-route API (`grep`-confirmed against the installed package), and a raw fetch
+// intercept here is the standard, reliable way to answer a health check without depending on SSR
+// rendering succeeding at all. A real DB probe (not just "the worker process responded") since a
+// worker that's up but can't reach Supabase is not actually healthy from a user's perspective;
+// against `legal_document_versions`, a small, always-populated, publicly-readable table (Stage BK)
+// — a `head: true` count costs nothing beyond a single index lookup, no row data transferred.
+async function handleHealthCheck(): Promise<Response> {
+  let databaseReachable = false;
+  try {
+    const { error } = await getSupabaseBrowserClient()
+      .from("legal_document_versions")
+      .select("id", { count: "exact", head: true });
+    databaseReachable = !error;
+  } catch {
+    databaseReachable = false;
+  }
+
+  const body = {
+    status: databaseReachable ? "ok" : "degraded",
+    database: databaseReachable ? "reachable" : "unreachable",
+  };
+  return new Response(JSON.stringify(body), {
+    status: databaseReachable ? 200 : 503,
+    headers: { "content-type": "application/json", "cache-control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const url = new URL(request.url);
+    if (url.pathname === "/health" && request.method === "GET") {
+      return handleHealthCheck();
+    }
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
