@@ -95,6 +95,9 @@ Every one of these columns is set from `auth.uid()` inside a `SECURITY DEFINER` 
   account can't be hard-deleted out from under the trail it left, by design (Stage L's audit).
 - User-owned content FKs (an animal's owner, a message's sender) correctly `ON DELETE CASCADE`,
   the opposite choice, because that content has no meaning once its owner is truly gone.
+- `transport_status_history` and `audit_logs` are append-only for everyone, including ops/admin —
+  no UPDATE or DELETE policy exists for either table at all, at the Data API layer, for any role
+  (`20260101011300`, matching `audit_logs`' own precedent since Stage AE).
 
 ## Visibility invariants (never exposed beyond their real audience)
 
