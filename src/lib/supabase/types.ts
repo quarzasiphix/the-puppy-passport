@@ -1705,6 +1705,10 @@ export interface Database {
         Args: { p_case_id: string };
         Returns: undefined;
       };
+      claim_support_case: {
+        Args: { p_case_id: string };
+        Returns: undefined;
+      };
     };
   };
 }
