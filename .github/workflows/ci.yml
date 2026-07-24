@@ -42,6 +42,14 @@ jobs:
             exit 1
           fi
 
+      # Stage CA: static, offline scan for the concrete unsafe-migration patterns this session has
+      # actually hit (a table with RLS but no matching GRANT anywhere, a NOT NULL column added with
+      # no DEFAULT, an enum value added and used in the same file, a bare destructive drop) — turns
+      # Stage AL's one-time manual audit into a check every future migration passes through
+      # automatically. Needs no Docker/database, so it runs here in the fast job.
+      - name: Migration preflight (unsafe-pattern scan)
+        run: npm run db:preflight
+
       - name: Build
         run: npm run build
         env:

@@ -16,7 +16,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:status": "supabase status",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts",
+    "db:preflight": "node scripts/migration-preflight.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
