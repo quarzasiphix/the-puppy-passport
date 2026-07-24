@@ -61,8 +61,8 @@ webhooks (disabled), bulk import, archival, Storage cleanup, health checks, SLOs
 runbooks, maintenance mode, a migration preflight command, a database invariant catalogue,
 state-machine/chaos tests, a permission inventory, data-access consolidation, a tech-debt register,
 a final backend PR review, and a second release-candidate report) was appended on top of the
-original and first supplemental queues. Per its own instruction, all earlier queues are being
-finished first, in order, before this one starts.
+original and first supplemental queues. **Complete as of Stage CH** — see the table above and
+`docs/BACKEND_RELEASE_CANDIDATE_REPORT_2.md`.
 
 A fourth and fifth instruction set ("THIRD AND FOURTH LONG-RUN AUTONOMOUS BACKEND QUEUE") was
 appended mid-session, ahead of stages BA–CI above: Stages CJA–CJZ (a deep security/compliance
@@ -78,21 +78,38 @@ queue were never received). Per its own instruction and the standing rule throug
 with no reachable product use"), each CJ stage is being treated with the same discipline as every
 earlier stage: real audits close with a documented "no fix needed" outcome when the design is
 already correct, and only demonstrated, reachable gaps get an actual code change — not a
-mechanical checklist run through regardless of findings. This queue is being worked in order
-after BA–CI, per its own stated precedence ("previously assigned order remains authoritative").
+mechanical checklist run through regardless of findings. This queue starts now that BA–CH is
+complete, per its own stated precedence ("previously assigned order remains authoritative").
 
 ## Remaining stages (not started this session)
 
 **Original queue**: complete (Stages A–Q, see table above and
 `docs/BACKEND_FINALISATION_REPORT.md`).
 
+**First supplemental queue**: complete (Stages R–AP, see table above and
+`docs/BACKEND_RELEASE_CANDIDATE_REPORT.md`).
+
+**Second supplemental queue**: complete (Stages BA–CH, see table above and
+`docs/BACKEND_RELEASE_CANDIDATE_REPORT_2.md`).
+
+**Third/fourth supplemental queue**: not started. Stages CJA through part of CJS have a full
+definition already in context (a deep security/compliance sweep — authorization matrix, data
+classification, actor-attribution audit, cross-tenant fuzzing, immutable history, soft-deletion
+semantics, legal holds, deletion-blocker graph, export manifest, support-access justification,
+impersonation policy, admin command log, reauthentication hooks, secrets/config audit, rate-limit
+config, messaging abuse controls, notification dedup, and more); the message that defined this
+queue was truncated mid-transmission at "CJS: notification/email template versioning" — the rest
+of CJS onward and the entire CKA–CKZ queue were never received and cannot be executed without
+further detail from the user.
+
+**IR-1 through IR-18** (integration-readiness/scale/release-hardening queue): not started, per its
+own stated precedence, after all of the above.
+
 ## Next up
 
-Stage CH (second release-candidate report — closes the second supplemental queue, BA through CH).
-Re-run the Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before
-starting, per the "how to resume" section below. After CH closes, continue into the third/fourth
-supplemental queue (CJA onward, as far as content was actually received) per standing instruction,
-then the IR-1 through IR-18 queue.
+Stage CJA (authorization matrix — first stage of the third/fourth supplemental queue). Re-run the
+Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting,
+per the "how to resume" section below.
 
 ## Second supplemental queue: stages completed
 
@@ -132,6 +149,14 @@ then the IR-1 through IR-18 queue.
 | `8743f91` | CE | Data-access consolidation. Surveyed every route file calling Supabase directly (24 files) for repeated query shapes and found real, exact duplication: two pairs of route files independently reimplemented the "get my organisation" query byte-for-byte (`dashboard.breeder.reservations.tsx`/`dashboard.breeder.transport.tsx` identical; `dashboard.breeder.tsx`/`dashboard.foundation.tsx` near-identical variants) — while `src/lib/queries/breeder.ts`/`foundation.ts` already had canonical `getMyKennel()`/`getMyKennelProfile()`/`getMyFoundation()`/`getMyFoundationProfile()` functions doing the exact same thing, unused by these four files. Also found `dashboard.breeder.settings.tsx`/`dashboard.foundation.settings.tsx` duplicated both the `get_my_profile()` RPC read and the phone-update mutation byte-for-byte with no shared function at all — added `getMyProfile()`/`updateMyPhone()` to `src/lib/queries/profile.ts` (clearly separated from that file's existing public-profile functions, which deliberately never return private fields). No behavior change — every replacement returns a superset or exact match of what was inline before. `tsc`/lint/build clean, 635/635 DB tests unaffected (no migration this stage), and a real smoke test against a running dev server confirms all six changed routes still resolve correctly (307 to sign-in, no 500s). |
 | `f18668b` | CF | Tech-debt register. New `docs/TECH_DEBT_REGISTER.md` consolidates every real, currently-open item this session found and deliberately deferred — the "Known open items" section plus several per-stage deferred notes never promoted there (Stage BT's bulk-add UI gap, Stage BV's delete-photo/document feature gap) — organized by kind rather than chronology: missing features (nothing to fix, something to build on real need), known-incomplete hardening (a real fix exists but was deliberately narrower than the whole problem), and scale/UX limitations. Each item cites the stage that found it and what should trigger picking it up. Docs-only, no code change. |
 | `8c98caa` | CG | Final backend PR review — second supplemental queue (BA–CF). A genuine review pass over the whole queue (61 commits, 58 files, ~4580 insertions), not a re-statement of per-stage summaries. Re-ran the full verification chain fresh: `db reset` + `test:db` ×3 (635/635 every run), `npm run db:preflight` against the real 113-file migration set, full-repo `eslint` (38/13, matching the documented baseline exactly), `tsc`, `build`, route-tree consistency. Additionally checked things only visible looking at the whole range together: no function redefined twice within this range in a way that could silently contradict an earlier stage's fix (`enforce_rate_limit()`/`prevent_non_staff_operational_field_changes()` each legitimately redefined once — read both final bodies directly to confirm), no secrets anywhere in the diff, nothing pushed, frozen frontend branches confirmed untouched. New `docs/BACKEND_PR_REVIEW_SECOND_SUPPLEMENTAL_QUEUE.md`. Verdict: clean, no blocking issues. |
+| `def9b72` | CH | Second release-candidate report — closes the second supplemental queue (Stages BA–CH, 34 stages total). Verification re-run fresh: 113 migrations no duplicate prefixes, `npm run db:preflight` clean, fresh `db reset`, 635/635 tests on three consecutive runs, `tsc` clean, `build` clean, full-repo lint at the same 38/13 baseline with no new regressions across the whole range, nothing pushed, frozen frontend branches untouched. Test suite grew 576 → 635 (+59) from 14 new test files. Categorizes all 34 stages: 17 real code/schema fixes, 9 audits confirming an already-correct design or a genuinely unbuilt feature correctly deferred, 1 test-coverage-only stage, 1 new CI/tooling command (`db:preflight`), and 6 documentation deliverables. New `docs/BACKEND_RELEASE_CANDIDATE_REPORT_2.md`. **This closes the second supplemental queue.** Continuing directly into the third/fourth supplemental queue (Stage CJA onward, as far as content was actually received) and then IR-1 through IR-18, per standing instruction. |
+
+## Third/fourth supplemental queue: stages completed
+
+| Commit | Stage | Summary |
+|---|---|---|
+
+(Empty — Stage CJA starts next.)
 
 ## First supplemental queue: stages completed
 
