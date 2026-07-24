@@ -126,44 +126,24 @@ export async function listOpsDocuments(transportRequestId: string) {
 }
 
 // Every status change goes through here: updates the request, writes a status_history row, and
-// an audit_logs row — "every important status change needs an audit history."
+// an audit_logs row — "every important status change needs an audit history." All three used to
+// be separate client-side round-trips (not atomic, and the audit_logs write trusted a
+// client-supplied actor id); change_ops_request_status() does all three in one Postgres
+// transaction with a server-stamped auth.uid() actor.
 export async function changeOpsRequestStatus(input: {
   id: string;
   newStatus: string;
-  actorId: string;
   customerNote?: string;
   internalNote?: string;
 }) {
   const supabase = getSupabaseBrowserClient();
-  const { data: before } = await supabase
-    .from("transport_requests")
-    .select("status")
-    .eq("id", input.id)
-    .single();
-
-  const { error: updateError } = await supabase
-    .from("transport_requests")
-    .update({ status: input.newStatus })
-    .eq("id", input.id);
-  if (updateError) throw updateError;
-
-  const { error: historyError } = await supabase.from("transport_status_history").insert({
-    transport_request_id: input.id,
-    status: input.newStatus,
-    changed_by: input.actorId,
-    customer_note: input.customerNote || null,
-    internal_note: input.internalNote || null,
+  const { error } = await supabase.rpc("change_ops_request_status", {
+    p_request_id: input.id,
+    p_new_status: input.newStatus,
+    p_customer_note: input.customerNote || null,
+    p_internal_note: input.internalNote || null,
   });
-  if (historyError) throw historyError;
-
-  await supabase.from("audit_logs").insert({
-    actor_profile_id: input.actorId,
-    action: "transport_request.status_changed",
-    target_type: "transport_requests",
-    target_id: input.id,
-    before: before ?? null,
-    after: { status: input.newStatus },
-  });
+  if (error) throw error;
 }
 
 export type OpsQuotationRow = {

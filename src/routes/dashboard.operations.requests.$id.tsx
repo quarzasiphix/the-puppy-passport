@@ -85,7 +85,6 @@ function OpsRequestDetail() {
       changeOpsRequestStatus({
         id,
         newStatus: dialogStatus!,
-        actorId: userId!,
         internalNote,
         customerNote,
       }),

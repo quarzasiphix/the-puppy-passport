@@ -1638,6 +1638,15 @@ export interface Database {
         Args: { p_action_key: string; p_max_count: number; p_window: string };
         Returns: undefined;
       };
+      change_ops_request_status: {
+        Args: {
+          p_request_id: string;
+          p_new_status: string;
+          p_customer_note?: string | null;
+          p_internal_note?: string | null;
+        };
+        Returns: undefined;
+      };
     };
   };
 }
