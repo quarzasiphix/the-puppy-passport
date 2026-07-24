@@ -85,7 +85,6 @@ function QuotationsPage() {
         totalPrice: Number(values.totalPrice),
         currency: values.currency,
         expiryDate: values.expiryDate || null,
-        createdBy: userId!,
       }),
     onSuccess: () => {
       toast.success("Quotation drafted.");

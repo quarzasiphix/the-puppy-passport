@@ -193,7 +193,6 @@ export async function createQuotation(input: {
   totalPrice: number;
   currency: string;
   expiryDate: string | null;
-  createdBy: string;
 }) {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("quotations").insert({
@@ -204,7 +203,6 @@ export async function createQuotation(input: {
     currency: input.currency,
     expiry_date: input.expiryDate,
     status: "draft",
-    created_by: input.createdBy,
   });
   if (error) throw error;
 }
