@@ -61,6 +61,25 @@ export const signUp = createServerFn({ method: "POST" })
     });
     if (roleError) return { error: roleError.message };
 
+    // The signup page's own copy already says "By creating an account, you agree to Havenpaw's
+    // Terms and Privacy" -- record it as a real, versioned fact rather than just UI text with
+    // nothing behind it. Best-effort: a consent-recording failure must never block account
+    // creation itself, which has already succeeded by this point.
+    const { data: currentVersions } = await supabase
+      .from("legal_document_versions")
+      .select("document_type, version")
+      .in("document_type", ["terms", "privacy"])
+      .eq("is_current", true);
+    if (currentVersions?.length) {
+      await supabase.from("user_consents").insert(
+        currentVersions.map((v) => ({
+          profile_id: signUpData.user!.id,
+          document_type: v.document_type,
+          version: v.version,
+        })),
+      );
+    }
+
     return { error: null, intent: data.intent };
   });
 

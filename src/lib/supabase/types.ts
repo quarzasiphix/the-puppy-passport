@@ -1399,6 +1399,37 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["fundraising_contributions"]["Row"]>;
         Relationships: [];
       };
+      legal_document_versions: {
+        Row: {
+          id: string;
+          document_type: "terms" | "privacy" | "cookies";
+          version: string;
+          published_at: string;
+          is_current: boolean;
+        };
+        Insert: Partial<Database["public"]["Tables"]["legal_document_versions"]["Row"]> & {
+          document_type: "terms" | "privacy" | "cookies";
+          version: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["legal_document_versions"]["Row"]>;
+        Relationships: [];
+      };
+      user_consents: {
+        Row: {
+          id: string;
+          profile_id: string;
+          document_type: "terms" | "privacy" | "cookies";
+          version: string;
+          consented_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["user_consents"]["Row"]> & {
+          profile_id: string;
+          document_type: "terms" | "privacy" | "cookies";
+          version: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_consents"]["Row"]>;
+        Relationships: [];
+      };
       // Every other table exists in the database (see supabase/migrations) but doesn't have a
       // hand-written type yet — `npm run db:types` replaces this whole file once Docker is
       // running locally. (Deliberately no catch-all index signature here: mixing one in with the
