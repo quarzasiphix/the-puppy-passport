@@ -24,6 +24,24 @@ test("advance_transport_job_status: atomic write with evidence, server-stamped a
     });
   });
 
+  await t.test(
+    "setup: advance through the real intermediate steps (Stage CC's state machine)",
+    async () => {
+      for (const status of [
+        "pickup_confirmed",
+        "animal_collected",
+        "in_transport",
+        "approaching_destination",
+      ]) {
+        const step = await driver.rpc("advance_transport_job_status", {
+          p_request_id: requestId!,
+          p_new_status: status,
+        });
+        assert.equal(step.error, null, `expected the real ${status} step to succeed`);
+      }
+    },
+  );
+
   await t.test("the driver uploads a real evidence photo and logs delivered with it", async () => {
     objectPath = `${requestId}/delivered-${Date.now()}.txt`;
     const upload = await driver.storage
