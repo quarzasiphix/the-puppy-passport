@@ -98,6 +98,10 @@ Every one of these columns is set from `auth.uid()` inside a `SECURITY DEFINER` 
 - `transport_status_history` and `audit_logs` are append-only for everyone, including ops/admin —
   no UPDATE or DELETE policy exists for either table at all, at the Data API layer, for any role
   (`20260101011300`, matching `audit_logs`' own precedent since Stage AE).
+- `reports` are soft-dismissed, never hard-deleted, by the normal application flow — `status`
+  moves to `dismissed`/`escalated`, the row and its content survive (`20260101011400`). Ops/admin
+  retain raw DELETE capability at the RLS layer for a rare genuine removal need; only the
+  everyday dismiss workflow is non-destructive by default.
 
 ## Visibility invariants (never exposed beyond their real audience)
 
