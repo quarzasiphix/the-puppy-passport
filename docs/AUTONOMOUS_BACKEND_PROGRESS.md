@@ -32,6 +32,7 @@ Phase-10-onward numbering mid-session — same content, renamed.)
 | `229cb35` | I (Phase 17) | Real `dashboard.admin.organisations.tsx` (suspend/restore + new `is_featured` flag, with a lock-trigger fix for owner self-featuring), real `dashboard.admin.settings.tsx` (markets table, previously zero UI), real `dashboard.buyer.scheduled.tsx` (scheduled-or-later transport list + timeline). Left 3 document-library placeholders honest (no backing schema, out of Stage I's priority list). `tests/db/admin-placeholders.test.ts`. 335/335 tests. |
 | `77c4252` | J (Phase 18) | Real per-actor rate limiting (`rate_limit_events` + `enforce_rate_limit()`) applied to 7 previously-unprotected abuse vectors (reports/messages/welfare_cases/applications via triggers; transport-draft/amendment/invitation via RPC calls). Found + fixed a missing GRANT (same `auto_expose_new_tables=false` class as before) and — found by actually running the suite twice — initial thresholds tighter than legitimate test-fixture usage, breaking repeatability; raised with margin. `docs/RATE_LIMITING_AND_ABUSE_PROTECTION.md`. `tests/db/rate-limiting.test.ts`. 358/358 tests, verified on 3 consecutive runs without reset. |
 | `545972d` | K (Phase 19) | CI hardening: duplicate-migration-prefix check, route-tree consistency check, and a repeated `test:db` run for repeatability in CI — all matching real gaps found this session. A full-repo `eslint .` surfaced ~38 pre-existing errors in untouched files (several `_public.*`, frontend-owned) — left alone deliberately. |
+| _pending_ | L (Phase 20) | Full database consistency/security audit via `npx supabase db dump --local --schema public` + grep (no `psql`/`pg` available in this sandbox). Systematic checks run against all 63 `public` tables: (1) every table has `ROW LEVEL SECURITY` enabled — 63/63, clean; (2) every table with at least one policy also has a `GRANT` reaching `authenticated` — 100% clean (Supabase's default privileges cover new tables automatically; the two earlier `auto_expose_new_tables=false` incidents this session were about the Data API schema cache, not this); (3) every `SECURITY DEFINER` function pins `search_path` — 57/57 clean, no search_path-hijack exposure; (4) view security model (`security_invoker` vs. definer-style) reviewed against the established convention — consistent; (5) foreign keys to `profiles(id)` reviewed: user-owned content correctly `ON DELETE CASCADE`s, audit-trail columns (`reviewed_by`/`assigned_moderator_id`/`uploaded_by`/etc.) correctly have no `ON DELETE` action (`RESTRICT`) so a moderator/ops account can't be hard-deleted out from under the trail it left — by design, consistent with account deletion being its own workflow (`account_deletion_requests`), not a raw `DELETE FROM profiles`; real execution of that workflow is still the deferred Stage AI. Closed the one concrete, already-documented gap found: quotation RLS was row-level only — `"requesters accept or reject their own quotation"` restricted `WITH CHECK (status in (...))` but nothing stopped the same UPDATE from also changing `total_price`/other columns. Added `prevent_requester_writes_to_ops_controlled_quotation_fields()` trigger (`20260101008400_quotation_requester_field_lock.sql`), not reachable through the real UI (`respondToQuotation()` only ever sends `{ status }`) but real via a raw API call. `tests/db/quotation-field-lock.test.ts`. 364/364 tests, verified on 2 consecutive runs without reset. |
 
 ## Supplemental queue appended mid-session
 
@@ -60,8 +61,8 @@ finished first, in order, before this one starts.
 
 ## Remaining stages (not started this session)
 
-**Original queue**: L (full DB/Storage audit), M (scenario suite), N (performance), O
-(privacy/lifecycle), P (launch reconciliation), Q (final verification + report).
+**Original queue**: M (scenario suite), N (performance), O (privacy/lifecycle), P (launch
+reconciliation), Q (final verification + report). (L is complete — see table above.)
 
 **First supplemental queue**: R (messaging/conversation security), S (attachments), T (listing
 lifecycle), U (multi-species), V (taxonomy), W (search/discovery), X (application/handover state
@@ -75,21 +76,12 @@ anonymisation execution), AJ (support tooling), AK (backup/DR docs), AL (migrati
 
 ## Known open items carried forward
 
-- Quotation RLS column-scoping gap (see above) — candidate for Stage L.
 - `driver_transport_job_view` and the new timeline queries don't yet expose the multi-animal list
   (`transport_request_animals`) — a driver/timeline viewer still only ever sees the primary/first
   animal snapshot on multi-animal requests. Documented as a known non-goal in
   `docs/adr/TRANSPORT_DATA_MODEL.md`; candidate for a future pass if multi-animal requests become
   common in practice.
-
-## Known open items carried from the previous session (not yet fixed)
-
-- **Quotation RLS column-scoping gap** (found during the transport-data-model ADR audit,
-  `docs/adr/TRANSPORT_DATA_MODEL.md` §"Quotations, routes, assignments"): `"requesters accept or
-  reject their own quotation"` only restricts `WITH CHECK (status in ('accepted', 'rejected'))`,
-  not which *other* columns (e.g. `total_price`) change alongside it. Not exploitable through the
-  real UI (`respondToQuotation()` never does this), only via a raw API call. Candidate for the
-  Stage L database audit.
+- Quotation RLS column-scoping gap: **fixed in Stage L** (see table above). No longer open.
 
 ## Files likely to conflict with `ux-marketplace-frontend-pass`
 
