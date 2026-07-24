@@ -79,6 +79,29 @@ mistake this separation prevents.
   window during a low-traffic deploy, or apply that specific index manually via `CONCURRENTLY`
   outside the normal migration flow (documented here so it isn't rediscovered mid-incident).
 
+## 3b. Bounded query readiness (Stage AN, autonomous backend session)
+
+Audited every ops/admin/moderation list query (`listOpsTransportRequests()`, `listReports()`,
+`listModerationCases()`, and similar functions in `src/lib/queries/operations.ts`/`moderation.ts`)
+for the obvious "this will return the entire table as data grows" risk — none of them call
+`.limit()` explicitly. **They are not actually unbounded**: `supabase/config.toml`'s
+`api.max_rows = 1000` caps every PostgREST response at 1000 rows platform-wide, regardless of
+application code, and all of these queries are already ordered by `created_at desc` (most-recent-
+first), so the cap degrades gracefully rather than returning an arbitrary slice. Confirmed by
+reading the config directly, not assumed.
+
+**This is a `supabase/config.toml` setting — it does not automatically carry over to a hosted
+production project.** A real Supabase project's PostgREST `max-rows` setting is configured through
+the Supabase dashboard (Project Settings → API), separately from this repo's local `config.toml`.
+Before going live: confirm the production project has an equivalent row cap configured (Supabase's
+own hosted default is also 1000, but this should be verified against the actual project settings
+at creation time, not assumed to match local).
+
+Marketplace-facing (not ops/admin) list queries have the same implicit 1000-row cap, but that's a
+much less adequate safety net for public browse pages at real scale — see the known gap already
+documented in Stage W (`listPublishedPuppies()` fetches the full result set and filters client-
+side, with no real pagination), which is a frontend-owned page outside this session's scope.
+
 ## 4. Seed data — must never touch production
 
 - `supabase/seed.sql` (449 lines) contains demo accounts, sample animals/litters/transport
