@@ -1701,6 +1701,10 @@ export interface Database {
         };
         Returns: undefined;
       };
+      claim_moderation_case: {
+        Args: { p_case_id: string };
+        Returns: undefined;
+      };
     };
   };
 }

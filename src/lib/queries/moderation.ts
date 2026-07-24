@@ -135,6 +135,17 @@ export async function updateModerationCase(
   if (error) throw error;
 }
 
+// The plain update above used to also be how a moderator "claimed" a case (setting
+// assigned_moderator_id + status = 'investigating' as a client-side UPDATE) -- a real race (two
+// moderators claiming the same case at once) and a forgeable actor (assigned_moderator_id was
+// just whatever id the client sent). claim_moderation_case() does both atomically with a
+// server-stamped auth.uid() actor, and gives a clear error if someone else already has it.
+export async function claimModerationCase(id: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("claim_moderation_case", { p_case_id: id });
+  if (error) throw error;
+}
+
 // Notifies the affected user once a case resolves, with a link to the safe case view — the only
 // current discovery path for `_public.moderation.$caseId.tsx`, matching how transport-conversation
 // links already work elsewhere in this codebase (direct link, not a separate list page yet).

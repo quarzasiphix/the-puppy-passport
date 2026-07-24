@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   listModerationCases,
   updateModerationCase,
+  claimModerationCase,
   notifyAffectedUserOfDecision,
   listAppealsForCase,
   reviewModerationAppeal,
@@ -56,7 +57,6 @@ function ModerationPage() {
         decision,
         decision_explanation: notesById[id] || null,
         public_decision_summary: summaryById[id] || null,
-        assigned_moderator_id: userId,
         resolved_at: new Date().toISOString(),
       });
       const affected = query.data?.find((c) => c.id === id)?.affected_profile_id;
@@ -70,12 +70,12 @@ function ModerationPage() {
   });
 
   const investigate = useMutation({
-    mutationFn: (id: string) =>
-      updateModerationCase(id, { status: "investigating", assigned_moderator_id: userId }),
+    mutationFn: (id: string) => claimModerationCase(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update case."),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not claim this case."),
   });
 
   const reviewAppeal = useMutation({
