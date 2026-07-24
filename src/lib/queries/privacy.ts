@@ -2,7 +2,13 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 // Real data export (GDPR Art. 20 portability) — every query here reads only the caller's own rows
 // (enforced by RLS regardless of what this function requests), so this can never leak another
-// user's data even if called incorrectly.
+// user's data even if called incorrectly. Deliberately excludes: reporter identity on reports
+// filed by others, internal moderation notes, another user's private data, and any organisation
+// data not owned by the caller — none of those tables/columns are queried here at all, not just
+// filtered after the fact. Messages are limited to non-internal ones (an ordinary user can never
+// have sent an internal note anyway, per the is_internal lock in
+// 20260101008600_messages_internal_flag_lock.sql, but this stays explicit rather than relying on
+// that alone).
 export async function exportMyData(userId: string) {
   const supabase = getSupabaseBrowserClient();
   const [
@@ -14,6 +20,8 @@ export async function exportMyData(userId: string) {
     savedAnimals,
     waitlist,
     posts,
+    sentMessages,
+    notifications,
   ] = await Promise.all([
     supabase.rpc("get_my_profile"),
     supabase.from("user_roles").select("role, status, created_at").eq("user_id", userId),
@@ -35,6 +43,15 @@ export async function exportMyData(userId: string) {
       .select("origin_country, destination_country, status, created_at")
       .eq("profile_id", userId),
     supabase.from("posts").select("content, post_type, created_at").eq("author_profile_id", userId),
+    supabase
+      .from("messages")
+      .select("conversation_id, body, message_kind, created_at")
+      .eq("sender_profile_id", userId)
+      .eq("is_internal", false),
+    supabase
+      .from("notifications")
+      .select("notification_type, title, body, is_read, created_at")
+      .eq("profile_id", userId),
   ]);
 
   return {
@@ -47,6 +64,8 @@ export async function exportMyData(userId: string) {
     saved_animals: savedAnimals.data ?? [],
     route_waitlist_entries: waitlist.data ?? [],
     community_posts: posts.data ?? [],
+    sent_messages: sentMessages.data ?? [],
+    notifications: notifications.data ?? [],
   };
 }
 
