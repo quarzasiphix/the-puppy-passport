@@ -41,13 +41,26 @@ mistake this separation prevents.
 
 ## 3. Migration order and rollback risk
 
-- 54 migration files exist, timestamp-ordered (`supabase/migrations/2026...sql`), applied in
-  filename order by both `db reset` (local) and `db push` (remote).
+- 96 migration files exist as of the Stage AL migration-quality pass (2026-07-24; re-verify the
+  count before pushing, it grows every session — `ls supabase/migrations/*.sql | wc -l`),
+  timestamp-ordered (`supabase/migrations/2026...sql`), applied in filename order by both
+  `db reset` (local) and `db push` (remote).
 - **No down-migrations exist anywhere in this repo.** Every migration is forward-only. Before the
   first `db push` to a real production project:
   - Review the full migration set once for anything genuinely destructive (`drop table`, `drop
-    column`) — a scan at the time of writing found none; all 54 files are additive
-    (create table/column/function/policy). Re-confirm this hasn't changed before the actual push.
+    column`) — re-scanned at Stage AL, still none; every file is additive (create table/column/
+    function/policy) or a non-destructive `drop policy`/`drop trigger`/`drop function` immediately
+    followed by `create` in the same file (the "redefine a policy" pattern used throughout this
+    session — never a data-destroying drop). Re-confirm this hasn't changed before the actual push.
+  - Every `add column ... not null` across all 96 files was re-checked at Stage AL and always
+    pairs with a `default` — the safe pattern for adding a required column to a table that might
+    already have rows. An `add column ... not null` with no default would fail outright against
+    any existing production data; there are currently zero such migrations.
+  - Every `alter type ... add value` (there are two: `org_member_role`,
+    `buyer_application_status`) was re-checked at Stage AL to confirm the new enum value is never
+    referenced elsewhere in the *same* migration file — Postgres forbids using a newly-added enum
+    value within the transaction that added it, so this would otherwise fail loudly at push time,
+    not silently.
   - Because there's no rollback path, the practical safety net is: push to **staging first**, run
     the same manual verification pass documented in `docs/MVP_TEST_REPORT.md` §4 against staging,
     and only push to production after that passes.
@@ -55,6 +68,16 @@ mistake this separation prevents.
   but a hand-written policy/function bug (this project has already found several — see
   `MVP_TEST_REPORT.md` §3) could still land and need a *new forward migration* to fix, not a revert.
   Plan for "fix forward," not "roll back."
+- **`CREATE INDEX CONCURRENTLY` is not usable here.** Every migration in this repo runs inside a
+  transaction (both `db reset` and `db push`), and Postgres refuses `CREATE INDEX CONCURRENTLY`
+  inside a transaction — this repo's several plain `CREATE INDEX` statements (Stages N and W of
+  the autonomous backend session, indexing hot marketplace-query columns) are correspondingly
+  full-table-locking for their duration. Against the *empty* database `db push` targets on day
+  one, or against any of these tables' current small local-dev row counts, this is not a real
+  concern. It becomes one only for a **future** migration adding an index to a table that by then
+  holds real production rows at meaningful volume — at that point, either accept a short lock
+  window during a low-traffic deploy, or apply that specific index manually via `CONCURRENTLY`
+  outside the normal migration flow (documented here so it isn't rediscovered mid-incident).
 
 ## 4. Seed data — must never touch production
 
