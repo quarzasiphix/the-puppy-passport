@@ -2,7 +2,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
   animalSelect,
   mapAnimalToPuppy,
-  mapOrgToBreeder,
+  mapOrgsToBreeders,
   orgSelect,
   type AnimalRow,
   type OrgRow,
@@ -92,5 +92,5 @@ export async function listFollowedBreeders(buyerId: string) {
     organisations: OrgRow | null;
   }[];
   const orgs = rows.filter((r) => r.organisations).map((r) => r.organisations!);
-  return Promise.all(orgs.map(mapOrgToBreeder));
+  return mapOrgsToBreeders(orgs);
 }

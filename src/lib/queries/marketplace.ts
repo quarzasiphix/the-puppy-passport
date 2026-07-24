@@ -157,11 +157,7 @@ async function countAnimalsByStatus(litterId: string, statuses: string[]) {
   return count ?? 0;
 }
 
-async function mapLitterRow(l: LitterRow): Promise<Litter> {
-  const [available, reserved] = await Promise.all([
-    countAnimalsByStatus(l.id, ["available", "applications_open"]),
-    countAnimalsByStatus(l.id, ["reserved"]),
-  ]);
+function buildLitter(l: LitterRow, available: number, reserved: number): Litter {
   return {
     id: l.id,
     code: l.code,
@@ -184,6 +180,50 @@ async function mapLitterRow(l: LitterRow): Promise<Litter> {
   };
 }
 
+async function mapLitterRow(l: LitterRow): Promise<Litter> {
+  const [available, reserved] = await Promise.all([
+    countAnimalsByStatus(l.id, ["available", "applications_open"]),
+    countAnimalsByStatus(l.id, ["reserved"]),
+  ]);
+  return buildLitter(l, available, reserved);
+}
+
+// Batched counterpart to mapLitterRow, for listing pages rendering N litters at once. The
+// per-row version above issues 2 count queries per litter (2N total for a page of N) — fine for
+// a single litter detail page, but a real N+1 pattern on a listing page. This does the same two
+// counts in a single query total (one status-in-array select across every litter id, grouped
+// client-side), independent of how many litters are on the page.
+async function countAnimalsByStatusForLitters(
+  litterIds: string[],
+): Promise<Map<string, { available: number; reserved: number }>> {
+  const counts = new Map<string, { available: number; reserved: number }>();
+  if (litterIds.length === 0) return counts;
+
+  const supabase = getSupabaseBrowserClient();
+  const { data } = await supabase
+    .from("animals")
+    .select("litter_id, availability_status")
+    .in("litter_id", litterIds)
+    .in("availability_status", ["available", "applications_open", "reserved"]);
+
+  for (const row of (data ?? []) as { litter_id: string | null; availability_status: string }[]) {
+    if (!row.litter_id) continue;
+    const entry = counts.get(row.litter_id) ?? { available: 0, reserved: 0 };
+    if (row.availability_status === "reserved") entry.reserved += 1;
+    else entry.available += 1;
+    counts.set(row.litter_id, entry);
+  }
+  return counts;
+}
+
+async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
+  const counts = await countAnimalsByStatusForLitters(rows.map((l) => l.id));
+  return rows.map((l) => {
+    const entry = counts.get(l.id) ?? { available: 0, reserved: 0 };
+    return buildLitter(l, entry.available, entry.reserved);
+  });
+}
+
 const litterSelect =
   "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, name)";
 
@@ -193,7 +233,7 @@ export async function listPublishedLitters(status?: string) {
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as LitterRow[]).map(mapLitterRow));
+  return mapLitterRows((data ?? []) as unknown as LitterRow[]);
 }
 
 type OrgRow = {
@@ -234,11 +274,7 @@ async function orgAvailablePuppyCount(orgId: string) {
   return count ?? 0;
 }
 
-export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
-  const [breeds, availablePuppies] = await Promise.all([
-    orgBreeds(o.id),
-    orgAvailablePuppyCount(o.id),
-  ]);
+function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Breeder {
   return {
     id: o.id,
     name: o.profiles?.display_name ?? o.name,
@@ -262,6 +298,67 @@ export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
   };
 }
 
+export async function mapOrgToBreeder(o: OrgRow): Promise<Breeder> {
+  const [breeds, availablePuppies] = await Promise.all([
+    orgBreeds(o.id),
+    orgAvailablePuppyCount(o.id),
+  ]);
+  return buildBreeder(o, breeds, availablePuppies);
+}
+
+// Batched counterpart to mapOrgToBreeder, for listing pages rendering N organisations at once —
+// same N+1 reasoning as countAnimalsByStatusForLitters above: 2 queries total instead of 2N.
+async function orgBreedsAndCountsBatch(
+  orgIds: string[],
+): Promise<Map<string, { breeds: string[]; availablePuppies: number }>> {
+  const result = new Map<string, { breeds: string[]; availablePuppies: number }>();
+  if (orgIds.length === 0) return result;
+
+  const supabase = getSupabaseBrowserClient();
+  const [breedsResult, puppiesResult] = await Promise.all([
+    supabase.from("parent_dogs").select("kennel_id, breeds(name)").in("kennel_id", orgIds),
+    supabase
+      .from("animals")
+      .select("organization_id")
+      .in("organization_id", orgIds)
+      .eq("is_published", true)
+      .in("availability_status", ["available", "applications_open"]),
+  ]);
+
+  const breedSets = new Map<string, Set<string>>();
+  for (const row of (breedsResult.data ?? []) as unknown as {
+    kennel_id: string | null;
+    breeds: { name: string } | null;
+  }[]) {
+    if (!row.kennel_id) continue;
+    const set = breedSets.get(row.kennel_id) ?? new Set<string>();
+    if (row.breeds?.name) set.add(row.breeds.name);
+    breedSets.set(row.kennel_id, set);
+  }
+
+  const puppyCounts = new Map<string, number>();
+  for (const row of (puppiesResult.data ?? []) as { organization_id: string | null }[]) {
+    if (!row.organization_id) continue;
+    puppyCounts.set(row.organization_id, (puppyCounts.get(row.organization_id) ?? 0) + 1);
+  }
+
+  for (const orgId of orgIds) {
+    result.set(orgId, {
+      breeds: Array.from(breedSets.get(orgId) ?? []),
+      availablePuppies: puppyCounts.get(orgId) ?? 0,
+    });
+  }
+  return result;
+}
+
+export async function mapOrgsToBreeders(rows: OrgRow[]): Promise<Breeder[]> {
+  const byOrg = await orgBreedsAndCountsBatch(rows.map((o) => o.id));
+  return rows.map((o) => {
+    const entry = byOrg.get(o.id) ?? { breeds: [], availablePuppies: 0 };
+    return buildBreeder(o, entry.breeds, entry.availablePuppies);
+  });
+}
+
 export const orgSelect =
   "id, name, slug, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name)";
 export type { OrgRow };
@@ -275,7 +372,7 @@ export async function listApprovedKennels() {
     .eq("verification_status", "approved")
     .eq("is_public", true);
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as OrgRow[]).map(mapOrgToBreeder));
+  return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
 }
 
 export async function getKennelBySlug(slug: string) {
@@ -311,7 +408,7 @@ export async function listLittersForKennel(kennelId: string, status?: string) {
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw error;
-  return Promise.all(((data ?? []) as unknown as LitterRow[]).map(mapLitterRow));
+  return mapLitterRows((data ?? []) as unknown as LitterRow[]);
 }
 
 export async function getLitterById(id: string) {
