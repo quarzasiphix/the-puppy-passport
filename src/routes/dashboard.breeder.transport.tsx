@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "./dashboard.breeder.index";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getMyKennel } from "@/lib/queries/breeder";
 import {
   listTransportRequestsForKennel,
   transportMilestones,
@@ -22,14 +22,8 @@ function BreederTransportPage() {
     queryKey: ["my-kennel-id", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("organisations")
-        .select("id")
-        .eq("owner_user_id", userId!)
-        .eq("org_type", "kennel")
-        .maybeSingle();
-      return data?.id ?? null;
+      const kennel = await getMyKennel(userId!);
+      return kennel?.id ?? null;
     },
   });
   const { data: requests, isLoading } = useQuery({

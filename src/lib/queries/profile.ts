@@ -101,3 +101,20 @@ export async function unfollowProfile(followerId: string, profileId: string) {
     .eq("followed_profile_id", profileId);
   if (error) throw error;
 }
+
+// Stage CE: data-access consolidation. Distinct from the public-profile functions above — these
+// return/change the caller's own full row (including private fields like phone), never another
+// user's. Was duplicated byte-for-byte between dashboard.breeder.settings.tsx and
+// dashboard.foundation.settings.tsx before being consolidated here.
+export async function getMyProfile() {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("get_my_profile");
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMyPhone(userId: string, phone: string | null) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("profiles").update({ phone }).eq("id", userId);
+  if (error) throw error;
+}

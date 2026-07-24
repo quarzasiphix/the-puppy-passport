@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { requireRole } from "@/lib/auth/guards";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getMyFoundationProfile } from "@/lib/queries/foundation";
 import { DashboardShell, type DashboardNavItem } from "@/components/dashboard-shell";
 
 export const Route = createFileRoute("/dashboard/foundation")({
@@ -43,17 +43,7 @@ function FoundationDashboardLayout() {
   const orgQuery = useQuery({
     queryKey: ["my-foundation", userId],
     enabled: !!userId,
-    queryFn: async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from("organisations")
-        .select("name, verification_status")
-        .eq("owner_user_id", userId!)
-        .in("org_type", ["foundation", "shelter", "rescue"])
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getMyFoundationProfile(userId!),
   });
 
   return (

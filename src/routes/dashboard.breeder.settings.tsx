@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getMyProfile, updateMyPhone } from "@/lib/queries/profile";
 import { NotificationPreferences } from "@/components/notification-preferences";
 
 export const Route = createFileRoute("/dashboard/breeder/settings")({
@@ -25,12 +25,7 @@ function SettingsPage() {
   const profileQuery = useQuery({
     queryKey: ["my-profile", userId],
     enabled: !!userId,
-    queryFn: async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase.rpc("get_my_profile");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: getMyProfile,
   });
 
   const form = useForm<FormValues>({
@@ -39,14 +34,7 @@ function SettingsPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ phone: values.phone || null })
-        .eq("id", userId!);
-      if (error) throw error;
-    },
+    mutationFn: (values: FormValues) => updateMyPhone(userId!, values.phone || null),
     onSuccess: () => {
       toast.success("Saved.");
       queryClient.invalidateQueries({ queryKey: ["my-profile", userId] });

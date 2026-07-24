@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { requireRole } from "@/lib/auth/guards";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getMyKennelProfile } from "@/lib/queries/breeder";
 import { DashboardShell, type DashboardNavItem } from "@/components/dashboard-shell";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -50,17 +50,7 @@ function BreederDashboardLayout() {
   const kennelQuery = useQuery({
     queryKey: ["my-kennel", userId],
     enabled: !!userId,
-    queryFn: async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from("organisations")
-        .select("name, verification_status")
-        .eq("owner_user_id", userId!)
-        .eq("org_type", "kennel")
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => getMyKennelProfile(userId!),
   });
 
   return (
