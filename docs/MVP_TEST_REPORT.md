@@ -19,6 +19,15 @@ afterwards. Treat this file as a living document that can itself drift from the 
 doubt, grep for `mock-data` imports and `NotImplemented`/`Construction` usage to see the real
 current state rather than trusting any prose summary, including this one.
 
+**Reconciled 2026-07-24** (Stage P, `docs/AUTONOMOUS_BACKEND_PROGRESS.md`): this document's own
+snapshot is now itself over a week stale relative to `docs/PRODUCTION_READINESS_REPORT.md`, which
+was reconciled the same day against everything the autonomous backend-hardening session (calendar,
+notification preferences, welfare-urgent flow, team management, admin org/settings pages, CI,
+~395 automated DB/API tests, rate limiting, moderation appeals, database/privacy audits) actually
+built. Prefer that report for current "what's ready to launch" status; this file remains useful for
+its detailed frontend-integration test narrative (§1–§4 below), which the reconciliation pass did
+not re-verify line by line.
+
 **Correction, 2026-07-22**: this document's "verified end-to-end" claims below for `/breeders/$slug`
 (breeder profile), `/adoptions/$id` (adoption detail) and `/transport/request` (the 7-step form)
 were true for the *data layer* (real Supabase queries, correct RLS) but **not for the actual

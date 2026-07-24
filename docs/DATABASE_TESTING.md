@@ -107,6 +107,18 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   must belong to the same request, and the real document upload flow (a private Storage object, not
   a public link; a signed URL only the requester can generate).
 
+**Reconciled 2026-07-24** (Stage P, `docs/AUTONOMOUS_BACKEND_PROGRESS.md`): the file list above is
+frozen as of 2026-07-22 and is no longer complete — the autonomous backend-hardening session
+(Stages B–N) added 11 more test files, growing the suite from the ~170 tests this document
+originally described to ~395. Each new file carries its own header comment explaining what it
+covers and why (the same convention as the files above), so they aren't re-described here:
+`calendar-scheduling.test.ts`, `welfare-cases.test.ts`, `organisation-team.test.ts`,
+`adoption-questionnaire.test.ts`, `moderation-appeals.test.ts`, `notification-preferences.test.ts`,
+`admin-placeholders.test.ts`, `rate-limiting.test.ts`, `quotation-field-lock.test.ts`,
+`transport-lifecycle-scenarios.test.ts`, `marketplace-listing-batching.test.ts`. Everything else in
+this document (setup, running the suite, mechanics/gotchas, repeatability discipline) remains
+accurate and was re-verified as part of every one of those stages.
+
 ## Previously-open findings, now fixed
 
 Building this suite surfaced **four real bugs**, each reproduced independently via raw `curl` (or,
