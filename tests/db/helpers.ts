@@ -136,3 +136,46 @@ export function isBlocked(
 ): boolean {
   return isForbidden(error) || isEmpty(data);
 }
+
+/**
+ * Stage AM: test factories/deterministic fixtures. Five different test files had converged on
+ * the same ~10-line "insert a fresh transport_requests row with standard Poland->Germany fields"
+ * block, each with its own slightly different request_number scheme. Centralising it here means
+ * new tests get a deterministic, collision-free request_number for free (a random suffix, not
+ * just Date.now(), so two calls in the same millisecond from a fast test run never collide) and a
+ * single place to update if the required-columns shape ever changes. Throws on failure (a setup
+ * helper failing should fail the test loudly, not be silently swallowed) rather than returning a
+ * {data, error} tuple like the raw client does — callers that need to assert the insert error
+ * itself (as opposed to just needing a valid fixture row to exist) should keep using a raw
+ * `.insert()` call instead of this helper.
+ */
+export async function createTestTransportRequest(
+  client: SupabaseClient,
+  input: {
+    requesterProfileId: string;
+    tag?: string;
+    status?: string;
+    [column: string]: unknown;
+  },
+): Promise<string> {
+  const { requesterProfileId, tag = "TEST", ...overrides } = input;
+  const requestNumber = `TR-${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const { data, error } = await client
+    .from("transport_requests")
+    .insert({
+      requester_profile_id: requesterProfileId,
+      request_number: requestNumber,
+      request_purpose: "own_dog",
+      animal_name: "Test Dog",
+      pickup_country: "Poland",
+      pickup_city: "Warsaw",
+      destination_country: "Germany",
+      destination_city: "Berlin",
+      status: "draft",
+      ...overrides,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`createTestTransportRequest failed: ${error.message}`);
+  return data!.id as string;
+}

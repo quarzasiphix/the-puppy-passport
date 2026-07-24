@@ -7,7 +7,7 @@
 // not a client-supplied id alone.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { as, ids } from "./helpers.ts";
+import { as, createTestTransportRequest, ids } from "./helpers.ts";
 
 test("data export: returns the caller's own transport requests, messages and notifications", async (t) => {
   const customer = await as("customer");
@@ -40,23 +40,10 @@ test("data export: a forged userId argument cannot pull another user's data", as
   await t.test(
     "setup: a fresh, private transport request with no named parties beyond the requester",
     async () => {
-      const created = await customer
-        .from("transport_requests")
-        .insert({
-          requester_profile_id: ids.customer,
-          request_number: `TR-EXPORT-ISOLATION-${Date.now()}`,
-          request_purpose: "own_dog",
-          animal_name: "Export Isolation Test Dog",
-          pickup_country: "Poland",
-          pickup_city: "Warsaw",
-          destination_country: "Germany",
-          destination_city: "Berlin",
-          status: "draft",
-        })
-        .select("id")
-        .single();
-      assert.equal(created.error, null);
-      requestId = created.data!.id as string;
+      requestId = await createTestTransportRequest(customer, {
+        requesterProfileId: ids.customer,
+        tag: "EXPORT-ISOLATION",
+      });
     },
   );
 

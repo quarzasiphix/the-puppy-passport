@@ -4,7 +4,7 @@
 // a real resource conflict, or the same result reused for an idempotent lookup-or-create.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { as, ids } from "./helpers.ts";
+import { as, createTestTransportRequest, ids } from "./helpers.ts";
 
 test("reservations: two approved applications for the same animal cannot both become active reservations", async (t) => {
   const breeder1 = await as("breeder1");
@@ -89,23 +89,11 @@ test("start_transport_conversation: concurrent calls converge on one conversatio
   let requestId: string | undefined;
 
   await t.test("setup: a fresh transport request owned by the customer", async () => {
-    const created = await customer
-      .from("transport_requests")
-      .insert({
-        requester_profile_id: ids.customer,
-        request_number: `TR-CONCURRENCY-${Date.now()}`,
-        request_purpose: "own_dog",
-        animal_name: "Concurrency Test Dog",
-        pickup_country: "Poland",
-        pickup_city: "Warsaw",
-        destination_country: "Germany",
-        destination_city: "Berlin",
-        status: "submitted",
-      })
-      .select("id")
-      .single();
-    assert.equal(created.error, null);
-    requestId = created.data!.id as string;
+    requestId = await createTestTransportRequest(customer, {
+      requesterProfileId: ids.customer,
+      tag: "CONCURRENCY",
+      status: "submitted",
+    });
   });
 
   await t.test("two concurrent start_transport_conversation calls return the same id", async () => {
