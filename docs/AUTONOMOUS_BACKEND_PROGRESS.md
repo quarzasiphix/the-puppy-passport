@@ -64,6 +64,23 @@ a final backend PR review, and a second release-candidate report) was appended o
 original and first supplemental queues. Per its own instruction, all earlier queues are being
 finished first, in order, before this one starts.
 
+A fourth and fifth instruction set ("THIRD AND FOURTH LONG-RUN AUTONOMOUS BACKEND QUEUE") was
+appended mid-session, ahead of stages BA–CI above: Stages CJA–CJZ (a deep security/compliance
+sweep — authorization matrix, public/private projection layer, data-classification catalogue,
+server-controlled actor attribution audit, cross-tenant fuzz testing, immutable lifecycle
+history, soft-deletion/archival semantics, legal-hold mechanism, deletion-blocker graph,
+versioned export manifest, support-access justification, impersonation-policy decision, admin
+command log, privileged-reauthentication hooks, secrets/config boundary audit, rate-limit policy
+config, messaging abuse controls, notification deduplication, and — cut off mid-transmission at
+"CJS: notification/email template versioning" — the rest of CJS onward and the entire CKA–CKZ
+queue were never received). Per its own instruction and the standing rule throughout this session
+("do not manufacture schema merely to create a commit," "do not build speculative infrastructure
+with no reachable product use"), each CJ stage is being treated with the same discipline as every
+earlier stage: real audits close with a documented "no fix needed" outcome when the design is
+already correct, and only demonstrated, reachable gaps get an actual code change — not a
+mechanical checklist run through regardless of findings. This queue is being worked in order
+after BA–CI, per its own stated precedence ("previously assigned order remains authoritative").
+
 ## Remaining stages (not started this session)
 
 **Original queue**: complete (Stages A–Q, see table above and
