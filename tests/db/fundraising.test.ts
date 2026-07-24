@@ -12,7 +12,12 @@ import { anon, as, ids, isBlocked } from "./helpers.ts";
 async function buildEligibleFixture() {
   const customer = await as("customer");
   const ops = await as("ops");
+  const admin = await as("admin");
 
+  // A buyer's INSERT must start as 'submitted' (locked by
+  // prevent_buyer_writes_to_org_controlled_fields, 20260101008900) -- realistic fixture setup goes
+  // through the real workflow: submit as the customer, then have an admin approve it, rather than
+  // self-inserting an already-"approved" row.
   const application = await customer
     .from("buyer_applications")
     .insert({
@@ -20,12 +25,20 @@ async function buildEligibleFixture() {
       buyer_id: ids.customer,
       organization_id: ids.orgFundacja,
       application_type: "adoption",
-      status: "approved",
     })
     .select("id")
     .single();
   assert.equal(application.error, null);
   const applicationId = application.data!.id as string;
+
+  const approved = await admin
+    .from("buyer_applications")
+    .update({ status: "approved" })
+    .eq("id", applicationId)
+    .select("status")
+    .single();
+  assert.equal(approved.error, null);
+  assert.equal(approved.data?.status, "approved");
 
   const quotation = await ops
     .from("quotations")
@@ -111,10 +124,12 @@ test("fundraising: cannot create a campaign for a purchase application, an unacc
   // collide with itself rather than actually testing anything.
   const buyer = await as("buyer");
   const ops = await as("ops");
+  const admin = await as("admin");
   const foundation1 = await as("foundation1");
 
   // A purchase-type application must never be usable to back a fundraiser (never fund buying an
-  // animal — docs/FUNDRAISING_POLICY.md).
+  // animal — docs/FUNDRAISING_POLICY.md). Realistic fixture: submit as the buyer, then admin
+  // approves (a buyer's own INSERT must start as 'submitted', see buildEligibleFixture above).
   const purchaseApplication = await buyer
     .from("buyer_applications")
     .insert({
@@ -122,12 +137,17 @@ test("fundraising: cannot create a campaign for a purchase application, an unacc
       buyer_id: ids.buyer,
       organization_id: ids.orgFundacja,
       application_type: "purchase",
-      status: "approved",
     })
     .select("id")
     .single();
   assert.equal(purchaseApplication.error, null);
   const purchaseApplicationId = purchaseApplication.data!.id as string;
+
+  const approvedPurchase = await admin
+    .from("buyer_applications")
+    .update({ status: "approved" })
+    .eq("id", purchaseApplicationId);
+  assert.equal(approvedPurchase.error, null);
 
   const sentQuotation = await ops
     .from("quotations")
