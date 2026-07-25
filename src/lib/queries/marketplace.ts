@@ -102,20 +102,88 @@ export function mapAnimalToPuppy(a: AnimalRow): PuppyWithExtras {
 export const animalSelect =
   "id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time)";
 
-export async function listPublishedPuppies(filters?: { breed?: string; country?: string }) {
+// Stage IR-2: the search filters below are applied server-side (SQL WHERE, not a post-fetch JS
+// .filter() over every published row) so they scale independently of how many puppies are
+// published — the pre-IR-2 version fetched every published row unconditionally and filtered
+// breed/country in memory (Stage BP's own audit finding, deliberately deferred to this dedicated
+// stage rather than fixed speculatively ahead of it). `page`/`pageSize` are optional and additive:
+// every existing call site (`_public.index.tsx`, `_public.find-your-dog.tsx`,
+// `_public.find-a-dog.tsx`) calls this with no arguments at all and keeps returning a plain array
+// exactly as before -- nothing about this change requires a frontend update. `countPublishedPuppies`
+// is the paired total-count query a future paginated search UI would need alongside a page of
+// results (kept as a separate lightweight query rather than changing this function's return shape,
+// matching the existing `countAnimalsByStatus`/`mapLitterRows` split above).
+export type PuppySearchFilters = {
+  breed?: string;
+  country?: string;
+  sex?: "male" | "female";
+  priceMin?: number;
+  priceMax?: number;
+  page?: number;
+  pageSize?: number;
+};
+
+// Both breeds and organisations are nullable FKs on animals (a listing can genuinely have no
+// breed set, or -- in principle -- no organisation). PostgREST only excludes a parent row whose
+// embedded resource fails an embedded-column filter when that relation is marked `!inner` in the
+// select string; without it, a non-matching row is still returned with the embedded object simply
+// null instead of being filtered out (confirmed empirically against this local instance before
+// relying on it -- a `breeds(name)` select with `.eq("breeds.name", "X")` returned every row,
+// each with `breeds: null`, not just the matching ones). So `!inner` is only ever added to the
+// specific relation actually being filtered on, never unconditionally -- otherwise a listing with
+// no breed set would silently vanish from an unfiltered "all puppies" query.
+function animalSelectFor(filters?: PuppySearchFilters): string {
+  const breedsPart = filters?.breed ? "breeds!inner(name)" : "breeds(name)";
+  const orgsPart = filters?.country
+    ? "organisations!animals_organization_id_fkey!inner(id, name, slug, city, country, verification_status, response_time)"
+    : "organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time)";
+  return `id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, ${breedsPart}, animal_images(image_url, is_cover), litters(ready_date), ${orgsPart}`;
+}
+
+// breed/country join through related tables (breeds.name, organisations.country) -- PostgREST
+// filters a joined column with `related.column=eq.value` dot notation, not a plain .eq() (which
+// only applies to columns on animals itself); everything else genuinely is a direct column. Not
+// factored into a shared generic helper: supabase-js's query builder type narrows on each chained
+// call in a way a generic wrapper can't cleanly express, and the two real call sites are short
+// enough that duplicating these five lines is clearer than fighting the type checker for it.
+export async function listPublishedPuppies(filters?: PuppySearchFilters) {
   const supabase = getSupabaseBrowserClient();
-  const query = supabase
+  let query = supabase
     .from("animals")
-    .select(animalSelect)
+    .select(animalSelectFor(filters))
     .eq("listing_category", "breeder_puppy")
-    .eq("is_published", true)
-    .order("created_at", { ascending: false });
+    .eq("is_published", true);
+  if (filters?.breed) query = query.eq("breeds.name", filters.breed);
+  if (filters?.country) query = query.eq("organisations.country", filters.country);
+  if (filters?.sex) query = query.eq("sex", filters.sex);
+  if (filters?.priceMin !== undefined) query = query.gte("price", filters.priceMin);
+  if (filters?.priceMax !== undefined) query = query.lte("price", filters.priceMax);
+  query = query.order("created_at", { ascending: false });
+  if (filters?.page !== undefined && filters?.pageSize !== undefined) {
+    const from = filters.page * filters.pageSize;
+    query = query.range(from, from + filters.pageSize - 1);
+  }
   const { data, error } = await query;
   if (error) throw error;
-  let rows = (data ?? []) as unknown as AnimalRow[];
-  if (filters?.breed) rows = rows.filter((r) => r.breeds?.name === filters.breed);
-  if (filters?.country) rows = rows.filter((r) => r.organisations?.country === filters.country);
+  const rows = (data ?? []) as unknown as AnimalRow[];
   return rows.map(mapAnimalToPuppy);
+}
+
+export async function countPublishedPuppies(filters?: PuppySearchFilters): Promise<number> {
+  const supabase = getSupabaseBrowserClient();
+  let query = supabase
+    .from("animals")
+    .select(animalSelectFor(filters), { count: "exact", head: true })
+    .eq("listing_category", "breeder_puppy")
+    .eq("is_published", true);
+  if (filters?.breed) query = query.eq("breeds.name", filters.breed);
+  if (filters?.country) query = query.eq("organisations.country", filters.country);
+  if (filters?.sex) query = query.eq("sex", filters.sex);
+  if (filters?.priceMin !== undefined) query = query.gte("price", filters.priceMin);
+  if (filters?.priceMax !== undefined) query = query.lte("price", filters.priceMax);
+  const { count, error } = await query;
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function getPuppyById(id: string) {
