@@ -103,9 +103,9 @@ versioning" in an earlier message); those definitions have now all been executed
 the entire CKA–CKZ queue were never transmitted with real content and are correctly not invented,
 per standing instruction ("do not invent CKA–CKZ because their definitions were never received").
 
-**IR-1 through IR-18** (integration-readiness/scale/release-hardening queue): next up. Per its own
-stated precedence, this starts now that every earlier-assigned stage (original queue, both
-supplemental queues, and the full CJ-series) is complete.
+**IR-1 through IR-18** (integration-readiness/scale/release-hardening queue): in progress. IR-1
+(contract snapshot) complete — see table above. Next: IR-2 (server-side marketplace search
+contract).
 
 **XR-1 through XR-24** (append-only queue, recorded earlier this session): still deferred until
 IR-1–IR-18 completes, per its own explicit precedence ("starts only after every earlier-assigned
@@ -136,9 +136,9 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage IR-1 (backend/frontend contract snapshot — first stage of the integration-readiness queue,
-now that the entire CJ-series is complete). Re-run the Stage A baseline checks (`git status`, `db
-reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
+Stage IR-2 (server-side marketplace search contract). Re-run the Stage A baseline checks (`git
+status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section
+below.
 
 ## Second supplemental queue: stages completed
 
@@ -179,6 +179,12 @@ reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" 
 | `f18668b` | CF | Tech-debt register. New `docs/TECH_DEBT_REGISTER.md` consolidates every real, currently-open item this session found and deliberately deferred — the "Known open items" section plus several per-stage deferred notes never promoted there (Stage BT's bulk-add UI gap, Stage BV's delete-photo/document feature gap) — organized by kind rather than chronology: missing features (nothing to fix, something to build on real need), known-incomplete hardening (a real fix exists but was deliberately narrower than the whole problem), and scale/UX limitations. Each item cites the stage that found it and what should trigger picking it up. Docs-only, no code change. |
 | `8c98caa` | CG | Final backend PR review — second supplemental queue (BA–CF). A genuine review pass over the whole queue (61 commits, 58 files, ~4580 insertions), not a re-statement of per-stage summaries. Re-ran the full verification chain fresh: `db reset` + `test:db` ×3 (635/635 every run), `npm run db:preflight` against the real 113-file migration set, full-repo `eslint` (38/13, matching the documented baseline exactly), `tsc`, `build`, route-tree consistency. Additionally checked things only visible looking at the whole range together: no function redefined twice within this range in a way that could silently contradict an earlier stage's fix (`enforce_rate_limit()`/`prevent_non_staff_operational_field_changes()` each legitimately redefined once — read both final bodies directly to confirm), no secrets anywhere in the diff, nothing pushed, frozen frontend branches confirmed untouched. New `docs/BACKEND_PR_REVIEW_SECOND_SUPPLEMENTAL_QUEUE.md`. Verdict: clean, no blocking issues. |
 | `def9b72` | CH | Second release-candidate report — closes the second supplemental queue (Stages BA–CH, 34 stages total). Verification re-run fresh: 113 migrations no duplicate prefixes, `npm run db:preflight` clean, fresh `db reset`, 635/635 tests on three consecutive runs, `tsc` clean, `build` clean, full-repo lint at the same 38/13 baseline with no new regressions across the whole range, nothing pushed, frozen frontend branches untouched. Test suite grew 576 → 635 (+59) from 14 new test files. Categorizes all 34 stages: 17 real code/schema fixes, 9 audits confirming an already-correct design or a genuinely unbuilt feature correctly deferred, 1 test-coverage-only stage, 1 new CI/tooling command (`db:preflight`), and 6 documentation deliverables. New `docs/BACKEND_RELEASE_CANDIDATE_REPORT_2.md`. **This closes the second supplemental queue.** Continuing directly into the third/fourth supplemental queue (Stage CJA onward, as far as content was actually received) and then IR-1 through IR-18, per standing instruction. |
+
+## Integration-readiness queue (IR-1 through IR-18): stages completed
+
+| Commit | Stage | Summary |
+|---|---|---|
+| `b3a7efd` | IR-1 | Backend/frontend contract snapshot. New `docs/BACKEND_API_CONTRACT_SNAPSHOT.md` — exactly what the Data API exposes today, queried directly from the live instance's `information_schema`/`pg_proc` (not transcribed from migration files or memory, the same standard this session applies everywhere): every table's real SELECT/INSERT/UPDATE/DELETE grants to `anon`/`authenticated`, every RPC's real signature (35 RPCs, all `authenticated`-only, none callable by `anon`), every public view. Deliberately narrower than `docs/PERMISSION_INVENTORY.md` (role-first) — this is the literal verb-level Data API surface PostgREST evaluates RLS against, not a role-capability narrative. Explicitly not duplicating XR-17's later "public contract drift scanner" stage — this is the snapshot that tool would later diff against, not the diffing tool itself. **Found and fixed a real gap while cross-referencing this snapshot's RPC list against the hand-written `src/lib/supabase/types.ts` stub** (via `comm` against two real name lists, not eyeballed): `require_recent_auth()`/`last_auth_at()` (Stage CJN) were granted to `authenticated` but never added to the stub — neither is called from `src/` app code directly (both are used internally by other SECURITY DEFINER functions), so not a live bug, but real, demonstrated staleness against the actual grant surface, matching the existing convention of stubbing every granted RPC (`enforce_rate_limit` was already stubbed on the same basis despite no direct app-code caller either). `tsc`/lint/build clean, 743/743 DB tests unaffected (no migration this stage). |
 
 ## Third/fourth supplemental queue: stages completed
 
