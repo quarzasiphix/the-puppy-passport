@@ -1689,6 +1689,14 @@ export interface Database {
         Args: { p_action_key: string; p_max_count: number; p_window: string };
         Returns: undefined;
       };
+      require_recent_auth: {
+        Args: { p_operation: string; p_max_age?: string };
+        Returns: undefined;
+      };
+      last_auth_at: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
       change_ops_request_status: {
         Args: {
           p_request_id: string;
