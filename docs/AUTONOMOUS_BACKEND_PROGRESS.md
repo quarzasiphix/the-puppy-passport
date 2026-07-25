@@ -104,8 +104,8 @@ the entire CKA–CKZ queue were never transmitted with real content and are corr
 per standing instruction ("do not invent CKA–CKZ because their definitions were never received").
 
 **IR-1 through IR-18** (integration-readiness/scale/release-hardening queue): in progress. IR-1
-(contract snapshot) complete — see table above. Next: IR-2 (server-side marketplace search
-contract).
+(contract snapshot), IR-2 (marketplace search contract) complete — see table above. Next: IR-3
+(public read-model privacy).
 
 **XR-1 through XR-24** (append-only queue, recorded earlier this session): still deferred until
 IR-1–IR-18 completes, per its own explicit precedence ("starts only after every earlier-assigned
@@ -136,9 +136,8 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage IR-2 (server-side marketplace search contract). Re-run the Stage A baseline checks (`git
-status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section
-below.
+Stage IR-3 (public read-model privacy). Re-run the Stage A baseline checks (`git status`, `db
+reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 
 ## Second supplemental queue: stages completed
 
@@ -184,6 +183,7 @@ below.
 
 | Commit | Stage | Summary |
 |---|---|---|
+| `737de44` | IR-2 | Server-side marketplace search contract. Explicitly deferred to this dedicated stage by Stage BP's own earlier audit ("already scoped as its own dedicated later stage (IR-2)... building read-model infrastructure ahead of that stage would be speculative"). `listPublishedPuppies()` fetched every published row unconditionally and filtered breed/country in memory (Stage BP's own finding) — extended with genuine server-side filtering (breed, country, sex, price range) and optional `page`/`pageSize` via `.range()`, plus a new `countPublishedPuppies()` for the paired total count a future paginated search UI would need (kept as a separate lightweight query, matching the existing `countAnimalsByStatus`/`mapLitterRows` split already in this file, rather than changing the main function's return shape). Fully additive: every real call site (`_public.index.tsx`, `_public.find-your-dog.tsx`, `_public.find-a-dog.tsx`) calls this with no arguments and gets back the same plain array as before — verified against a live dev server with Playwright, not just `tsc`, since this touches a function 3 real pages depend on (all 3 rendered real puppy data, zero console errors). **Found and fixed a real correctness bug in my own first draft before committing it**: filtering a joined column (`breeds.name`, `organisations.country`) with a plain `.eq()` only excludes non-matching parent rows when that relation is marked `!inner` in the select string — without it, PostgREST silently returns every row with the embedded object simply `null` instead of narrowing the result set at all (confirmed empirically against the live local instance: an `.eq("breeds.name", "X")` filter without `!inner` returned all 6 published puppies, not just matches). Fixed by adding `!inner` only to the specific relation actually being filtered (never unconditionally — `breed_id`/`organization_id` are both nullable, so an unconditional `!inner` would silently drop any listing with no breed set from an otherwise-unfiltered query). New `tests/db/marketplace-search-contract.test.ts` proves the `!inner` requirement directly (a filter without it demonstrably returns every row unfiltered), server-side price/sex filtering, and that `.range()`-based pagination is stable and gapless across pages (run 4 times total to rule out ordering flakiness). 752/752 tests (+9 from IR-1's 743), verified on a fresh reset plus two more runs without reset. |
 | `b3a7efd` | IR-1 | Backend/frontend contract snapshot. New `docs/BACKEND_API_CONTRACT_SNAPSHOT.md` — exactly what the Data API exposes today, queried directly from the live instance's `information_schema`/`pg_proc` (not transcribed from migration files or memory, the same standard this session applies everywhere): every table's real SELECT/INSERT/UPDATE/DELETE grants to `anon`/`authenticated`, every RPC's real signature (35 RPCs, all `authenticated`-only, none callable by `anon`), every public view. Deliberately narrower than `docs/PERMISSION_INVENTORY.md` (role-first) — this is the literal verb-level Data API surface PostgREST evaluates RLS against, not a role-capability narrative. Explicitly not duplicating XR-17's later "public contract drift scanner" stage — this is the snapshot that tool would later diff against, not the diffing tool itself. **Found and fixed a real gap while cross-referencing this snapshot's RPC list against the hand-written `src/lib/supabase/types.ts` stub** (via `comm` against two real name lists, not eyeballed): `require_recent_auth()`/`last_auth_at()` (Stage CJN) were granted to `authenticated` but never added to the stub — neither is called from `src/` app code directly (both are used internally by other SECURITY DEFINER functions), so not a live bug, but real, demonstrated staleness against the actual grant surface, matching the existing convention of stubbing every granted RPC (`enforce_rate_limit` was already stubbed on the same basis despite no direct app-code caller either). `tsc`/lint/build clean, 743/743 DB tests unaffected (no migration this stage). |
 
 ## Third/fourth supplemental queue: stages completed
