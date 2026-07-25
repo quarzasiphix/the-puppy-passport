@@ -5,7 +5,11 @@ import { Construction, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { listDeletionRequests, markDeletionRequestProcessed } from "@/lib/queries/privacy";
+import {
+  getAccountDeletionBlockers,
+  listDeletionRequests,
+  markDeletionRequestProcessed,
+} from "@/lib/queries/privacy";
 
 export const Route = createFileRoute("/dashboard/admin/users")({
   component: UsersPage,
@@ -61,6 +65,7 @@ function UsersPage() {
                     Requested {new Date(r.requested_at).toLocaleDateString("en-GB")}
                   </div>
                   {r.reason && <p className="mt-1 text-xs text-muted-foreground">{r.reason}</p>}
+                  {r.status === "pending" && <DeletionBlockers profileId={r.profile_id} />}
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={statusStyles[r.status]}>{r.status}</Badge>
@@ -101,4 +106,17 @@ function UsersPage() {
       </div>
     </div>
   );
+}
+
+// Stage CJI: shows every real blocker that currently applies to this profile, not just the first
+// one a failed "Mark deleted" attempt would report -- lets the admin see the whole picture upfront.
+function DeletionBlockers({ profileId }: { profileId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["deletion-blockers", profileId],
+    queryFn: () => getAccountDeletionBlockers(profileId),
+  });
+
+  if (isLoading || !data?.length) return null;
+
+  return <p className="mt-1 text-xs text-destructive">Blocked by: {data.join(", ")}</p>;
 }

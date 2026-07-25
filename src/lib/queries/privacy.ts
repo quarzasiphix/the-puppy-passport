@@ -137,3 +137,16 @@ export async function markDeletionRequestProcessed(
     .eq("id", id);
   if (error) throw error;
 }
+
+// Stage CJI: deletion-blocker graph. Read-only, admin-only preview of every real blocker that
+// currently applies to this profile (not just the first one execute_account_deletion() would
+// raise on) -- lets an admin see the whole picture before attempting the real deletion instead of
+// discovering blockers one at a time via repeated failed attempts.
+export async function getAccountDeletionBlockers(profileId: string): Promise<string[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("get_account_deletion_blockers", {
+    p_profile_id: profileId,
+  });
+  if (error) throw error;
+  return (data ?? []).map((row: { blocker: string }) => row.blocker);
+}

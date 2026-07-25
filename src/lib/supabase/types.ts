@@ -1739,6 +1739,10 @@ export interface Database {
         Args: { p_hold_id: string; p_release_reason?: string | null };
         Returns: undefined;
       };
+      get_account_deletion_blockers: {
+        Args: { p_profile_id: string };
+        Returns: { blocker: string }[];
+      };
     };
   };
 }
