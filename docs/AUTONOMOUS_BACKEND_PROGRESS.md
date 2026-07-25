@@ -92,22 +92,46 @@ complete, per its own stated precedence ("previously assigned order remains auth
 **Second supplemental queue**: complete (Stages BA–CH, see table above and
 `docs/BACKEND_RELEASE_CANDIDATE_REPORT_2.md`).
 
-**Third/fourth supplemental queue**: not started. Stages CJA through part of CJS have a full
-definition already in context (a deep security/compliance sweep — authorization matrix, data
-classification, actor-attribution audit, cross-tenant fuzzing, immutable history, soft-deletion
-semantics, legal holds, deletion-blocker graph, export manifest, support-access justification,
-impersonation policy, admin command log, reauthentication hooks, secrets/config audit, rate-limit
-config, messaging abuse controls, notification dedup, and more); the message that defined this
-queue was truncated mid-transmission at "CJS: notification/email template versioning" — the rest
-of CJS onward and the entire CKA–CKZ queue were never received and cannot be executed without
-further detail from the user.
+**Third/fourth supplemental queue**: in progress. Stages CJA through CJI complete (see table
+above). Stages CJA through part of CJS have a full definition already in context (a deep
+security/compliance sweep — authorization matrix, data classification, actor-attribution audit,
+cross-tenant fuzzing, immutable history, soft-deletion semantics, legal holds, deletion-blocker
+graph, export manifest, support-access justification, impersonation policy, admin command log,
+reauthentication hooks, secrets/config audit, rate-limit config, messaging abuse controls,
+notification dedup, and more); the message that defined this queue was truncated mid-transmission
+at "CJS: notification/email template versioning" — the rest of CJS onward and the entire CKA–CKZ
+queue were never received and cannot be executed without further detail from the user. Next stage:
+CJJ (versioned export manifest).
 
 **IR-1 through IR-18** (integration-readiness/scale/release-hardening queue): not started, per its
 own stated precedence, after all of the above.
 
+**A restated "FOUR-HOUR AUTONOMOUS BACKEND QUEUE FOR CLAUDE CODE BOT 2" message arrived mid-session
+a second time**, describing an "expected current state" of "Stages BA through BK completed, next
+stage BL" — stale by the message's own admission ("this state may now be stale. Trust the real
+repository") and superseded by real progress (BA–CH long since closed, CJA–CJI in progress at time
+of receipt). Correctly not acted on as a restart signal; its stage-workflow/testing/security-
+invariant rules are the same standing rules already being followed, not new instructions.
+
+**A genuinely new "NEXT 6 HOURS AUTONOMOUS BACKEND QUEUE" arrived immediately after**, explicitly
+append-only ("first finish every stage already assigned... do not restart completed stages... do
+not overwrite newer repository reality with old prompt assumptions"). Adds Stages XR-1 through
+XR-24 — protected-field mutation matrix, SECURITY DEFINER/privilege-escalation audit, grant/Data-
+API exposure audit, Storage path canonicalisation, signed-URL revocation safety, immutable
+history/evidence preservation (overlaps CJF — will be treated as a revalidation pass if still
+needed by the time it's reached, not a duplicate build), transactional workflow boundaries,
+optimistic concurrency/stale-write protection, idempotency key registry, dead-letter/poison-job
+handling, backpressure/bounded workers, outbox payload versioning, notification/email template
+versioning, data export object security, anonymisation referential integrity, legal-hold
+propagation (overlaps CJH — same revalidation approach), pagination drift/cursor stability, public
+contract drift scanner, seed/fixture determinism, schema snapshot/migration drift detection,
+query performance budget audit, backend integration manifest, a final adversarial matrix, and a
+six-hour closeout report. Per its own explicit precedence, this queue starts only after every
+earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
+
 ## Next up
 
-Stage CJI (deletion-blocker graph). Re-run the Stage A baseline checks (`git status`, `db
+Stage CJJ (versioned export manifest). Re-run the Stage A baseline checks (`git status`, `db
 reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 
 ## Second supplemental queue: stages completed
@@ -162,6 +186,7 @@ reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" 
 | `044f507` | CJF | Immutable lifecycle history. `transport_status_history` is meant to be the permanent record of what actually happened during a delivery — both existing write policies were `for all`, not `for insert` ("ops staff manage all status history", "assigned drivers view and log status on their own requests"), so both ops/admin and the assigned driver could UPDATE or DELETE an existing historical row, not just append new ones. Grepped every real call site in `src/lib/queries/*.ts`: every single one is either `.insert(` or `.select(` — zero UPDATE/DELETE anywhere in the real app — so narrowing this (`20260101011300_immutable_status_history.sql`, splitting both `for all` policies into separate `select`/`insert` policies with the same predicates, then revoking update/delete at the table-grant level too) closes a real, reachable-via-raw-API gap with zero effect on any real code path. Matches `audit_logs`' own existing precedent exactly — no update/delete policy for anyone, not even admin, since Stage AE. New `tests/db/immutable-status-history.test.ts`. 658/658 tests, verified on a fresh reset plus two more runs without reset. |
 | `2ff2b06` | CJG | Soft-deletion/archival semantics. Audited every table for a consistent soft-delete/archival pattern: `profiles` already has real soft-deletion (Stage AI), organisations use suspend/restore (Stage I), animals use status transitions, and every real `.delete()` call elsewhere targets genuinely ephemeral records with no audit value. One real inconsistency found: `dismissReport()` hard-deleted a `reports` row — permanently destroying evidence for detecting a real abuse pattern (repeated reports from one reporter), the exact signal `risk_signals.multiple_independent_reports` (Stage BN) was deliberately left unwired for exactly this future need. `reports` had no status column at all. New `report_status` enum (`20260101011400_reports_soft_dismissal.sql`); `dismissReport()` now updates status instead of deleting, `escalateReportToCase()` also marks the source report escalated, `listReports()` filters to `status='open'` so the admin queue's observable contents stay identical to before. Ops/admin's raw DELETE capability is deliberately left intact at the RLS layer (a rare real removal need is still legitimate) — only the normal dismiss workflow is now non-destructive by default. New `tests/db/reports-soft-dismissal.test.ts`. 663/663 tests, verified on a fresh reset plus two more runs without reset; smoke-tested the admin reports page against a running dev server. |
 | `584be04` | CJH | Legal-hold mechanism. `execute_account_deletion()` (Stage AI) already refuses while a real business obligation is unresolved — a legal hold is the same shape of blocker for a different reason (litigation/investigation/regulatory need to preserve a specific account's data). No UI exists to place one yet — explicitly requested by name in this queue regardless, the same "build the backend mechanism on explicit instruction" precedent as Stage BL-addendum's support cases. New `legal_holds` table (`20260101011500_legal_holds.sql`), admin-only (`is_admin()`, narrower than the usual `is_ops_staff()` since this overrides someone's deletion rights entirely); `place_legal_hold()`/`release_legal_hold()` server-stamp the real actor; released holds are never deleted, only marked `released_at`/`released_by`, matching Stage CJG's own just-established discipline. `execute_account_deletion()` extended (not rewritten) with one more blocker check — carefully diffed line-by-line against the original migration to confirm the rest of the function body (the `processed_by` stamp, the closing `audit_logs` insert) carried over exactly unchanged. New `tests/db/legal-holds.test.ts`. 674/674 tests, verified on a fresh reset plus two more runs without reset. |
+| `b1e1b59` | CJI | Deletion-blocker graph. `execute_account_deletion()` only ever reports the first blocker it finds via an `elsif` chain — an admin discovers blockers one at a time, by repeatedly attempting and re-reading the error after fixing each one. New `get_account_deletion_blockers(profile_id)` RPC (`20260101011600_deletion_blocker_graph.sql`) reuses the exact same conditions but returns every one that currently applies at once — read-only, admin-only. Wired into `dashboard.admin.users.tsx`: each pending deletion request now shows its current blockers inline (new `getAccountDeletionBlockers()` in `src/lib/queries/privacy.ts`, new `DeletionBlockers` subcomponent) — a real, already-existing admin page was the natural place to wire this in immediately rather than deferring the UI. New `tests/db/deletion-blocker-graph.test.ts` proves admin-only access and that multiple real blockers (a transport request + a legal hold) are reported together, not just the first. 679/679 tests, verified on a fresh reset plus two more runs without reset. |
 
 ## First supplemental queue: stages completed
 
