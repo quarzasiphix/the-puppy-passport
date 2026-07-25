@@ -102,6 +102,9 @@ Every one of these columns is set from `auth.uid()` inside a `SECURITY DEFINER` 
   moves to `dismissed`/`escalated`, the row and its content survive (`20260101011400`). Ops/admin
   retain raw DELETE capability at the RLS layer for a rare genuine removal need; only the
   everyday dismiss workflow is non-destructive by default.
+- An active `legal_holds` row (`released_at is null`) blocks `execute_account_deletion()` the same
+  way an unresolved business obligation does — checked as one more condition in the same function,
+  not a separate gate (`20260101011500`). Released holds are never deleted either, only marked.
 
 ## Visibility invariants (never exposed beyond their real audience)
 
