@@ -1,4 +1,9 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import {
+  notificationTemplates,
+  type NotificationTemplateId,
+  type NotificationTemplatePayloads,
+} from "@/lib/notification-templates";
 
 export type NotificationRow = {
   id: string;
@@ -59,6 +64,10 @@ export async function notifyUser(payload: {
   // database returns the original notification instead of creating a duplicate. Omit for a
   // notification with no natural retry risk.
   dedupKey?: string | null;
+  // Stage CJS: the version of the template that produced this title/body, recorded as an audit
+  // trail (see src/lib/notification-templates.ts) — never re-resolved at read time, so it can never
+  // cause a rendering failure for a reader of an already-stored notification.
+  templateVersion?: number | null;
 }) {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.rpc("create_notification_if_enabled", {
@@ -69,8 +78,39 @@ export async function notifyUser(payload: {
     p_body: payload.body ?? null,
     p_link_url: payload.linkUrl ?? null,
     p_dedup_key: payload.dedupKey ?? null,
+    p_template_version: payload.templateVersion ?? null,
   });
   if (error) throw error;
+}
+
+// Stage CJS: the templated path every real call site should use. Renders title/body/linkUrl
+// deterministically from `notificationTemplates` (a pure function of `payload`, no ambient state)
+// instead of constructing the strings inline at each call site, and stamps the exact template
+// version that produced them.
+export async function notifyUserFromTemplate<T extends NotificationTemplateId>(args: {
+  profileId: string;
+  templateId: T;
+  category: NotificationCategory;
+  dedupKey?: string | null;
+  payload: NotificationTemplatePayloads[T];
+}) {
+  const template = notificationTemplates[args.templateId];
+  const render = template.render as (payload: NotificationTemplatePayloads[T]) => {
+    title: string;
+    body: string | null;
+    linkUrl?: string | null;
+  };
+  const rendered = render(args.payload);
+  await notifyUser({
+    profileId: args.profileId,
+    type: args.templateId,
+    category: args.category,
+    title: rendered.title,
+    body: rendered.body,
+    linkUrl: rendered.linkUrl ?? null,
+    dedupKey: args.dedupKey,
+    templateVersion: template.version,
+  });
 }
 
 export type NotificationPreferenceRow = {

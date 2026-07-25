@@ -896,6 +896,7 @@ export interface Database {
           created_at: string;
           actor_profile_id: string | null;
           dedup_key: string | null;
+          template_version: number | null;
         };
         Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> & {
           profile_id: string;
@@ -1680,6 +1681,7 @@ export interface Database {
           p_body?: string | null;
           p_link_url?: string | null;
           p_dedup_key?: string | null;
+          p_template_version?: number | null;
         };
         Returns: string;
       };

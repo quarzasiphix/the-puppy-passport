@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { notifyUser } from "@/lib/queries/notifications";
+import { notifyUserFromTemplate } from "@/lib/queries/notifications";
 
 // Private rehoming is a separate moderated workflow (CLAUDE.md rule #5): a private_rehoming
 // animal only becomes publicly visible once an admin approves the corresponding rehoming_reviews
@@ -91,14 +91,12 @@ export async function approveRehomingReview(id: string, animalId: string, ownerP
     .eq("id", animalId);
   if (animalError) throw animalError;
 
-  await notifyUser({
+  await notifyUserFromTemplate({
     profileId: ownerProfileId,
-    type: "rehoming_approved",
+    templateId: "rehoming_approved",
     category: "adoption",
-    title: "Your rehoming listing was approved",
-    body: "It's now visible to people looking to adopt on Havenpaw.",
-    linkUrl: `/adoptions/${animalId}`,
     dedupKey: `rehoming_review:${id}:approved`,
+    payload: { animalId },
   });
 }
 
@@ -110,12 +108,11 @@ export async function rejectRehomingReview(id: string, notes: string, ownerProfi
     .eq("id", id);
   if (error) throw error;
 
-  await notifyUser({
+  await notifyUserFromTemplate({
     profileId: ownerProfileId,
-    type: "rehoming_rejected",
+    templateId: "rehoming_rejected",
     category: "adoption",
-    title: "Your rehoming submission wasn't approved",
-    body: notes,
     dedupKey: `rehoming_review:${id}:rejected`,
+    payload: { notes },
   });
 }

@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { notifyUser } from "@/lib/queries/notifications";
+import { notifyUserFromTemplate } from "@/lib/queries/notifications";
 
 export type ApplicationStatus =
   | "submitted"
@@ -208,15 +208,13 @@ export async function respondToApplication(params: {
     })
     .eq("id", params.id);
   if (error) throw error;
-  await notifyUser({
+  await notifyUserFromTemplate({
     profileId: params.buyerId,
-    type: "application_status_change",
+    templateId: "application_status_change",
     category: "applications",
-    title: `Update on your application for ${params.animalName}`,
-    body: applicationStatusLabels[params.status],
-    linkUrl: "/dashboard/buyer/applications",
     // Keyed on the specific status reached, not just the application -- a retry of *this*
     // transition dedupes, but a genuinely later, different status change still notifies.
     dedupKey: `application:${params.id}:${params.status}`,
+    payload: { animalName: params.animalName, statusLabel: applicationStatusLabels[params.status] },
   });
 }

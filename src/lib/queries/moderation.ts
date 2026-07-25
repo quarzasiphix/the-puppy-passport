@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { notifyUser } from "@/lib/queries/notifications";
+import { notifyUserFromTemplate } from "@/lib/queries/notifications";
 
 export type ReportTargetType = "animal_listing" | "organisation" | "post" | "message" | "user";
 export type ReportReason =
@@ -167,14 +167,12 @@ export async function claimModerationCase(id: string) {
 // current discovery path for `_public.moderation.$caseId.tsx`, matching how transport-conversation
 // links already work elsewhere in this codebase (direct link, not a separate list page yet).
 export async function notifyAffectedUserOfDecision(caseId: string, affectedProfileId: string) {
-  await notifyUser({
+  await notifyUserFromTemplate({
     profileId: affectedProfileId,
-    type: "moderation_decision",
+    templateId: "moderation_decision",
     category: "moderation",
-    title: "A moderation decision affects you",
-    body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
-    linkUrl: `/moderation/${caseId}`,
     dedupKey: `moderation_case:${caseId}:decision`,
+    payload: { caseId },
   });
 }
 
