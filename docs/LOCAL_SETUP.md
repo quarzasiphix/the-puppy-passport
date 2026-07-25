@@ -37,7 +37,13 @@ Studio URL: http://127.0.0.1:54323
 ```
 
 Copy the **anon key** into `.env` as `VITE_SUPABASE_ANON_KEY` (the URL in `.env.example` already
-matches the default local API URL — leave it unless you changed `supabase/config.toml`).
+matches the default local API URL — leave it unless you changed `supabase/config.toml`). Never
+copy the **service_role key** anywhere in this app — nothing in `src/` should ever use it.
+
+Run `npm run config:check` any time to verify `.env` is filled in correctly (it only reports
+which variables are set, never their values, and warns if `VITE_SUPABASE_URL` doesn't look like a
+local instance — a safeguard against accidentally pointing the app at a real Supabase project,
+since none is configured for this repo).
 
 Then start the app:
 
