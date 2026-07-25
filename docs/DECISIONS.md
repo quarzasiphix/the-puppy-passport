@@ -45,6 +45,21 @@ whole thing before making a conflicting choice.
 - **AI (when introduced) produces recommendations only.** Matching, pricing, and scheduling
   suggestions must be explainable and deterministic-by-default; a human (ops/admin) makes every
   binding decision. Don't wire an LLM into a decision path that skips human confirmation.
+- **No staff "sign in as user" impersonation feature exists, and none should be built without a
+  deliberate, separate design pass — decided 2026-07-25 (Stage CJL of the autonomous backend-
+  hardening session).** Confirmed nothing of the kind exists anywhere in this codebase today
+  (grepped `src/`, `supabase/migrations/*.sql`, and every doc). Havenpaw's own domain is animal
+  ownership/trust relationships — a support agent silently browsing the app as a real user (seeing
+  their private messages, exact addresses, saved animals, draft applications) is a materially
+  different, much larger trust concession than the operational `is_ops_staff()` "manage all" access
+  ops already has on transport/quotation/moderation tables, and shouldn't be added as a side effect
+  of a support-tooling stage. If a real, demonstrated support need for this ever arises, any future
+  implementation must, at minimum: notify the user their account is being viewed (not silent),
+  never allow a *mutating* action while impersonating without a second, explicit staff
+  confirmation, time-box the session, and produce a real `audit_logs` entry for every single
+  impersonated request, not just the start of the session. None of that exists today because the
+  feature doesn't exist today — this entry is the policy decision (don't build it speculatively),
+  not a spec for building it later.
 
 ## Data model
 
