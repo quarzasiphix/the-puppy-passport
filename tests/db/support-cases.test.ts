@@ -71,7 +71,8 @@ test("support_cases: a customer can create and read their own case", async (t) =
 
   await t.test("cleanup", async () => {
     const admin = await as("admin");
-    await admin.from("support_cases").delete().eq("id", caseId!);
+    const deleted = await admin.from("support_cases").delete().eq("id", caseId!);
+    assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
 });
 
@@ -156,7 +157,8 @@ test("support_case_messages: customer-visible messages, internal notes stay hidd
 
   await t.test("cleanup", async () => {
     const admin = await as("admin");
-    await admin.from("support_cases").delete().eq("id", caseId!);
+    const deleted = await admin.from("support_cases").delete().eq("id", caseId!);
+    assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
 });
 
@@ -205,7 +207,8 @@ test("claim_support_case: atomic claim, audited, no silent steal", async (t) => 
   });
 
   await t.test("cleanup", async () => {
-    await admin.from("support_cases").delete().eq("id", caseId!);
+    const deleted = await admin.from("support_cases").delete().eq("id", caseId!);
+    assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
 });
 
@@ -287,6 +290,7 @@ test("support_cases: reopening preserves message history", async (t) => {
   );
 
   await t.test("cleanup", async () => {
-    await admin.from("support_cases").delete().eq("id", caseId!);
+    const deleted = await admin.from("support_cases").delete().eq("id", caseId!);
+    assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
 });
