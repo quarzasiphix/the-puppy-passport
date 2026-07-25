@@ -16,7 +16,16 @@ import {
   type ApplicationStatus,
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
-import { CheckCircle2, XCircle, Info, Phone, ListPlus, MessageCircle } from "lucide-react";
+import { convertApplicationToReservation } from "@/lib/queries/reservations";
+import {
+  CheckCircle2,
+  XCircle,
+  Info,
+  Phone,
+  ListPlus,
+  MessageCircle,
+  BadgeCheck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/breeder/applications")({
   component: ApplicationsPage,
@@ -78,6 +87,20 @@ function ApplicationsPage() {
     },
     onError: (err) =>
       toast.error(err instanceof Error ? err.message : "Could not open conversation."),
+  });
+
+  const reserveMutation = useMutation({
+    mutationFn: () => {
+      if (!active) throw new Error("No application selected");
+      return convertApplicationToReservation({ applicationId: active.id });
+    },
+    onSuccess: () => {
+      toast.success("Reservation created — the puppy is now marked reserved.");
+      queryClient.invalidateQueries({ queryKey: ["kennel-applications", kennel?.id] });
+      setOpenId(null);
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not create the reservation."),
   });
 
   return (
@@ -215,6 +238,22 @@ function ApplicationsPage() {
                   />
                 </div>
               </div>
+              {active.status === "approved" && (
+                <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-4">
+                  <p className="text-sm font-medium">Ready to reserve this puppy?</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Creates a reservation for {active.animals?.name ?? "this puppy"} and marks it
+                    reserved — the buyer will see it in their own reservations.
+                  </p>
+                  <Button
+                    className="mt-3 w-full"
+                    disabled={reserveMutation.isPending}
+                    onClick={() => reserveMutation.mutate()}
+                  >
+                    <BadgeCheck className="mr-1 size-4" /> Mark as reserved
+                  </Button>
+                </div>
+              )}
               <div className="mt-6 grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"

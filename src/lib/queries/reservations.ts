@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { CollectionMethod } from "@/lib/supabase/enums";
 
 type ReservationRow = {
   id: string;
@@ -77,4 +78,32 @@ export async function listReservationsForMyKennel(orgId: string): Promise<Reserv
     .order("created_at", { ascending: false });
   if (error) throw error;
   return ((data ?? []) as unknown as ReservationRow[]).map(mapReservation);
+}
+
+// Stage IR-6: the one real way to create a reservation -- convert_application_to_reservation()
+// does the reservation insert, the application status flip, and the animal availability update
+// atomically in one transaction (see the migration for why: a plain client-side multi-write here
+// carries the same "one write succeeds, the next fails, data is left inconsistent" risk this
+// session has closed for every other multi-table write). Only callable by the organisation the
+// application was submitted to (or an admin), and only from an application that's genuinely
+// status='approved' -- both enforced server-side, not just by which UI action is shown.
+export async function convertApplicationToReservation(input: {
+  applicationId: string;
+  agreedPrice?: number | null;
+  currency?: string;
+  plannedCollectionDate?: string | null;
+  collectionMethod?: CollectionMethod | null;
+  notes?: string | null;
+}): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("convert_application_to_reservation", {
+    p_application_id: input.applicationId,
+    p_agreed_price: input.agreedPrice ?? undefined,
+    p_currency: input.currency ?? undefined,
+    p_planned_collection_date: input.plannedCollectionDate ?? undefined,
+    p_collection_method: input.collectionMethod ?? undefined,
+    p_notes: input.notes ?? undefined,
+  });
+  if (error) throw error;
+  return data as string;
 }

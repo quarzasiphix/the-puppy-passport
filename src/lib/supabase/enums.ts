@@ -10,3 +10,4 @@ export type LitterStatus = Database["public"]["Enums"]["litter_status"];
 export type AnimalAvailabilityStatus = Database["public"]["Enums"]["animal_availability_status"];
 export type TransportServiceType = Database["public"]["Enums"]["transport_service_type"];
 export type TransportDocumentCategory = Database["public"]["Enums"]["transport_document_category"];
+export type CollectionMethod = Database["public"]["Enums"]["collection_method"];

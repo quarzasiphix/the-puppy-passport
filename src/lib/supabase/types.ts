@@ -4978,6 +4978,17 @@ export type Database = {
       }
       claim_moderation_case: { Args: { p_case_id: string }; Returns: undefined }
       claim_support_case: { Args: { p_case_id: string }; Returns: undefined }
+      convert_application_to_reservation: {
+        Args: {
+          p_agreed_price?: number
+          p_application_id: string
+          p_collection_method?: Database["public"]["Enums"]["collection_method"]
+          p_currency?: string
+          p_notes?: string
+          p_planned_collection_date?: string
+        }
+        Returns: string
+      }
       convert_welfare_case_to_transport_draft: {
         Args: { p_case_id: string }
         Returns: string
