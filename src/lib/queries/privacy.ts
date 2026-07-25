@@ -54,18 +54,45 @@ export async function exportMyData(userId: string) {
       .eq("profile_id", userId),
   ]);
 
+  // Stage CJJ: versioned export manifest. Without a self-describing manifest, an export file
+  // downloaded today is indistinguishable from one downloaded after this function's shape changes
+  // -- a future reader (the user, or this app re-importing/displaying an old export) has no way to
+  // know which categories were actually included at generation time, or what schema it follows.
+  // `schema_version` bumps only when the *shape* of `data` changes in a way that would break a
+  // consumer written against an earlier version (a field renamed/removed/retyped) -- adding a new
+  // category is additive and doesn't require a bump.
+  const categories = [
+    "profile",
+    "roles",
+    "transport_requests",
+    "reservations",
+    "buyer_applications",
+    "saved_animals",
+    "route_waitlist_entries",
+    "community_posts",
+    "sent_messages",
+    "notifications",
+  ] as const;
+
   return {
-    exported_at: new Date().toISOString(),
-    profile: profile.data ?? null,
-    roles: roles.data ?? [],
-    transport_requests: transportRequests.data ?? [],
-    reservations: reservations.data ?? [],
-    buyer_applications: applications.data ?? [],
-    saved_animals: savedAnimals.data ?? [],
-    route_waitlist_entries: waitlist.data ?? [],
-    community_posts: posts.data ?? [],
-    sent_messages: sentMessages.data ?? [],
-    notifications: notifications.data ?? [],
+    manifest: {
+      schema_version: "1.0",
+      generated_at: new Date().toISOString(),
+      subject_profile_id: userId,
+      categories,
+    },
+    data: {
+      profile: profile.data ?? null,
+      roles: roles.data ?? [],
+      transport_requests: transportRequests.data ?? [],
+      reservations: reservations.data ?? [],
+      buyer_applications: applications.data ?? [],
+      saved_animals: savedAnimals.data ?? [],
+      route_waitlist_entries: waitlist.data ?? [],
+      community_posts: posts.data ?? [],
+      sent_messages: sentMessages.data ?? [],
+      notifications: notifications.data ?? [],
+    },
   };
 }
 
