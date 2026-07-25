@@ -16,7 +16,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
-import { listMyQuotations, respondToQuotation } from "@/lib/queries/transport";
+import {
+  documentExpiryWarning,
+  listMyQuotations,
+  respondToQuotation,
+} from "@/lib/queries/transport";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -78,85 +82,98 @@ function BuyerQuotationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {query.data.map((q) => (
-            <div key={q.id} className="rounded-2xl border border-border/70 bg-card p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="font-medium">
-                    {q.transport_requests?.animal_name ?? "Animal"}{" "}
-                    <span className="text-sm text-muted-foreground">
-                      · {q.transport_requests?.request_number}
-                    </span>
-                  </div>
-                  <div className="mt-1 font-display text-2xl font-semibold">
-                    {q.total_price?.toLocaleString()} {q.currency}
-                  </div>
-                  {q.expiry_date && (
-                    <p className="text-xs text-muted-foreground">
-                      Valid until {new Date(q.expiry_date).toLocaleDateString("en-GB")}
+          {query.data.map((q) => {
+            const isExpired = documentExpiryWarning(q.expiry_date) === "expired";
+            return (
+              <div key={q.id} className="rounded-2xl border border-border/70 bg-card p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="font-medium">
+                      {q.transport_requests?.animal_name ?? "Animal"}{" "}
+                      <span className="text-sm text-muted-foreground">
+                        · {q.transport_requests?.request_number}
+                      </span>
+                    </div>
+                    <div className="mt-1 font-display text-2xl font-semibold">
+                      {q.total_price?.toLocaleString()} {q.currency}
+                    </div>
+                    {q.expiry_date && (
+                      <p
+                        className={
+                          documentExpiryWarning(q.expiry_date) === "expired"
+                            ? "text-xs font-medium text-destructive"
+                            : "text-xs text-muted-foreground"
+                        }
+                      >
+                        {documentExpiryWarning(q.expiry_date) === "expired"
+                          ? `This quote expired on ${new Date(q.expiry_date).toLocaleDateString("en-GB")} — ask us for an updated price.`
+                          : `Valid until ${new Date(q.expiry_date).toLocaleDateString("en-GB")}`}
+                      </p>
+                    )}
+                    {q.assumptions && (
+                      <p className="mt-2 max-w-md text-xs text-muted-foreground">{q.assumptions}</p>
+                    )}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      This is an estimate based on the details you provided — final confirmation
+                      happens after acceptance.
                     </p>
-                  )}
-                  {q.assumptions && (
-                    <p className="mt-2 max-w-md text-xs text-muted-foreground">{q.assumptions}</p>
-                  )}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    This is an estimate based on the details you provided — final confirmation
-                    happens after acceptance.
-                  </p>
+                  </div>
+                  <Badge className={statusStyles[q.status] ?? "bg-muted text-muted-foreground"}>
+                    {q.status}
+                  </Badge>
                 </div>
-                <Badge className={statusStyles[q.status] ?? "bg-muted text-muted-foreground"}>
-                  {q.status}
-                </Badge>
+                {(q.status === "sent" || q.status === "viewed") && (
+                  <div className="mt-4 flex gap-2">
+                    {!isExpired && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm">Accept quotation</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This confirms you agree to {q.total_price?.toLocaleString()}{" "}
+                              {q.currency} for this transport. Operations will follow up on
+                              scheduling and remaining documents.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() =>
+                                respondMutation.mutate({
+                                  id: q.id,
+                                  transportRequestId: q.transport_request_id,
+                                  response: "accepted",
+                                })
+                              }
+                            >
+                              Accept
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={respondMutation.isPending}
+                      onClick={() =>
+                        respondMutation.mutate({
+                          id: q.id,
+                          transportRequestId: q.transport_request_id,
+                          response: "rejected",
+                        })
+                      }
+                    >
+                      {isExpired ? "Dismiss" : "Decline"}
+                    </Button>
+                  </div>
+                )}
               </div>
-              {(q.status === "sent" || q.status === "viewed") && (
-                <div className="mt-4 flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm">Accept quotation</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This confirms you agree to {q.total_price?.toLocaleString()} {q.currency}{" "}
-                          for this transport. Operations will follow up on scheduling and remaining
-                          documents.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() =>
-                            respondMutation.mutate({
-                              id: q.id,
-                              transportRequestId: q.transport_request_id,
-                              response: "accepted",
-                            })
-                          }
-                        >
-                          Accept
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={respondMutation.isPending}
-                    onClick={() =>
-                      respondMutation.mutate({
-                        id: q.id,
-                        transportRequestId: q.transport_request_id,
-                        response: "rejected",
-                      })
-                    }
-                  >
-                    Decline
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
