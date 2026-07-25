@@ -22,7 +22,7 @@ export type MatchResult = {
 const unassignedStatuses = [
   "submitted", "initial_review", "documents_under_review", "ready_for_scheduling",
   "quotation_sent", "accepted_by_customer",
-];
+] as const;
 
 export async function listUnmatchedRequests() {
   const supabase = getSupabaseBrowserClient();

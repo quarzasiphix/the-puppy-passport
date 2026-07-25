@@ -234,7 +234,7 @@ export async function submitModerationAppeal(input: {
   const { data, error } = await supabase.rpc("submit_moderation_appeal", {
     p_case_id: input.caseId,
     p_statement: input.statement,
-    p_supporting_document_url: input.supportingDocumentUrl ?? null,
+    p_supporting_document_url: input.supportingDocumentUrl ?? undefined,
   });
   if (error) throw error;
   return data as string;
@@ -261,8 +261,8 @@ export async function reviewModerationAppeal(input: {
   const { error } = await supabase.rpc("review_moderation_appeal", {
     p_appeal_id: input.appealId,
     p_decision: input.decision,
-    p_outcome_notes: input.outcomeNotes || null,
-    p_internal_notes: input.internalNotes || null,
+    p_outcome_notes: input.outcomeNotes || undefined,
+    p_internal_notes: input.internalNotes || undefined,
   });
   if (error) throw error;
 }

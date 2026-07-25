@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import type { TransportDocumentCategory } from "@/lib/supabase/enums";
 
 export type TransportRequestRow = Database["public"]["Tables"]["transport_requests"]["Row"];
 export type TransportRequestInsert = Database["public"]["Tables"]["transport_requests"]["Insert"];
@@ -237,7 +238,7 @@ const SCHEDULED_OR_LATER_STATUSES = [
   "delivered",
   "handover_confirmed",
   "completed",
-];
+] as const;
 
 export async function listMyScheduledTransportRequests(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -463,7 +464,7 @@ function sanitizeFilenameForStoragePath(name: string): string {
 
 export async function submitDocument(input: {
   transportRequestId: string;
-  category: string;
+  category: TransportDocumentCategory;
   file: File;
   expiryDate: string | null;
   uploadedBy: string;
@@ -823,7 +824,7 @@ export async function reviewTransportAmendment(input: {
   const { error } = await supabase.rpc("review_transport_amendment", {
     p_amendment_id: input.amendmentId,
     p_approve: input.approve,
-    p_review_note: input.reviewNote ?? null,
+    p_review_note: input.reviewNote ?? undefined,
   });
   if (error) throw error;
 }

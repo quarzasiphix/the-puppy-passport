@@ -13,6 +13,7 @@ import {
   listMyJobsForRoute,
   listRouteStops,
 } from "@/lib/queries/driver";
+import type { TransportStatus } from "@/lib/supabase/enums";
 import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 
 export const Route = createFileRoute("/dashboard/driver/")({
@@ -55,7 +56,7 @@ function DriverHome() {
   });
 
   const advanceMutation = useMutation({
-    mutationFn: (input: { transportRequestId: string; newStatus: string }) =>
+    mutationFn: (input: { transportRequestId: string; newStatus: TransportStatus }) =>
       advanceJobStatus(input),
     onSuccess: () => {
       toast.success("Updated.");

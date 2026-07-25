@@ -28,6 +28,7 @@ import {
   reviewDocument,
   submitDocument,
 } from "@/lib/queries/transport";
+import type { TransportDocumentCategory } from "@/lib/supabase/enums";
 
 // The transport-documents Storage bucket is private — there is no public URL to link to, only a
 // short-lived signed URL generated on demand right before opening it (never persisted or shown as
@@ -92,7 +93,8 @@ export function TransportDocumentChecklist({
     mutationFn: () =>
       submitDocument({
         transportRequestId,
-        category,
+        // The select control only ever offers real transport_document_category option values.
+        category: category as TransportDocumentCategory,
         file: file!,
         expiryDate: expiryDate || null,
         uploadedBy: userId,

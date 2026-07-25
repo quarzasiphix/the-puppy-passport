@@ -29,6 +29,7 @@ import {
   listRequestsNeedingQuotation,
   sendQuotation,
 } from "@/lib/queries/operations";
+import type { TransportServiceType } from "@/lib/supabase/enums";
 
 export const Route = createFileRoute("/dashboard/operations/quotations")({
   component: QuotationsPage,
@@ -80,7 +81,9 @@ function QuotationsPage() {
     mutationFn: (values: FormValues) =>
       createQuotation({
         transportRequestId: values.transportRequestId,
-        serviceType: values.serviceType,
+        // The select control only ever offers real transport_service_type option values -- TS
+        // can't statically prove that through react-hook-form's plain string field type.
+        serviceType: values.serviceType as TransportServiceType,
         basePrice: Number(values.basePrice),
         totalPrice: Number(values.totalPrice),
         currency: values.currency,

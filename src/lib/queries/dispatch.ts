@@ -10,7 +10,7 @@ const activeJobStatuses = [
   "rest_or_care_stop",
   "approaching_destination",
   "delivered",
-];
+] as const;
 
 export type DriverWorkload = {
   id: string;

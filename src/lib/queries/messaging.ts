@@ -121,7 +121,7 @@ export async function startApplicationConversation(animalId: string, buyerId?: s
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("start_application_conversation", {
     p_animal_id: animalId,
-    p_buyer_id: buyerId ?? null,
+    p_buyer_id: buyerId,
   });
   if (error) throw error;
   return data as string;

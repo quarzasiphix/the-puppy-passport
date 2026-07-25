@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listOpsTransportRequests } from "@/lib/queries/operations";
+import type { TransportStatus, TransportServiceType } from "@/lib/supabase/enums";
 
 const statusOptions = [
   "submitted",
@@ -63,13 +64,17 @@ export function OpsRequestTable({
     queryKey: ["ops-requests", fixedStatuses, statusFilter, serviceFilter],
     queryFn: () =>
       listOpsTransportRequests({
-        status:
-          fixedStatuses?.length === 1
-            ? fixedStatuses[0]
-            : statusFilter === "all"
-              ? undefined
-              : statusFilter,
-        serviceType: serviceFilter === "all" ? undefined : serviceFilter,
+        // These come from a live dropdown backed by real enum-valued option lists (a status the
+        // page was given via fixedStatuses, or an option literally rendered from the same status
+        // set) -- TS can't statically prove a runtime string equals one of the literal union
+        // members, but the actual values populating these controls always do.
+        status: (fixedStatuses?.length === 1
+          ? fixedStatuses[0]
+          : statusFilter === "all"
+            ? undefined
+            : statusFilter) as TransportStatus | undefined,
+        serviceType: (serviceFilter === "all" ? undefined : serviceFilter) as
+          TransportServiceType | undefined,
       }),
   });
 

@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Puppy, Litter, Breeder, PuppyStatus } from "@/lib/mock-data";
+import type { AnimalAvailabilityStatus, LitterStatus } from "@/lib/supabase/enums";
 import placeholderImg from "@/assets/puppy-1.jpg";
 
 // Maps real Supabase rows onto the existing mock-data.ts shapes so the already-built
@@ -215,7 +216,7 @@ function toLitterStatus(status: string): Litter["status"] {
   return "ready";
 }
 
-async function countAnimalsByStatus(litterId: string, statuses: string[]) {
+async function countAnimalsByStatus(litterId: string, statuses: AnimalAvailabilityStatus[]) {
   const supabase = getSupabaseBrowserClient();
   const { count } = await supabase
     .from("animals")
@@ -295,7 +296,7 @@ async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
 const litterSelect =
   "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, name)";
 
-export async function listPublishedLitters(status?: string) {
+export async function listPublishedLitters(status?: LitterStatus) {
   const supabase = getSupabaseBrowserClient();
   let query = supabase.from("litters").select(litterSelect).eq("is_published", true);
   if (status) query = query.eq("status", status);
@@ -466,7 +467,7 @@ export async function listPuppiesForKennel(kennelId: string) {
   return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
 }
 
-export async function listLittersForKennel(kennelId: string, status?: string) {
+export async function listLittersForKennel(kennelId: string, status?: LitterStatus) {
   const supabase = getSupabaseBrowserClient();
   let query = supabase
     .from("litters")

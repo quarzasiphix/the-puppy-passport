@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { TransportStatus } from "@/lib/supabase/enums";
 
 export async function getMyDriverRecord(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -115,13 +116,13 @@ function sanitizeFilenameForStoragePath(name: string): string {
 // submitDocument()/sendMessage()'s attachment handling.
 export async function advanceJobStatus(input: {
   transportRequestId: string;
-  newStatus: string;
+  newStatus: TransportStatus;
   evidencePhoto?: File;
   customerNote?: string;
 }) {
   const supabase = getSupabaseBrowserClient();
 
-  let evidenceObjectPath: string | null = null;
+  let evidenceObjectPath: string | undefined;
   if (input.evidencePhoto) {
     const objectPath = `${input.transportRequestId}/${input.newStatus}-${Date.now()}-${sanitizeFilenameForStoragePath(input.evidencePhoto.name)}`;
     const { error: uploadError } = await supabase.storage
@@ -137,7 +138,7 @@ export async function advanceJobStatus(input: {
     p_request_id: input.transportRequestId,
     p_new_status: input.newStatus,
     p_evidence_object_path: evidenceObjectPath,
-    p_customer_note: input.customerNote || null,
+    p_customer_note: input.customerNote || undefined,
   });
   if (error) {
     if (evidenceObjectPath) {

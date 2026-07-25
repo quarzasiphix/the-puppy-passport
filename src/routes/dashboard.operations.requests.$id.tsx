@@ -29,12 +29,13 @@ import { amendableFieldLabels } from "@/lib/queries/transport";
 import { TransportDocumentChecklist } from "@/components/transport-document-checklist";
 import { ChatThread } from "@/components/chat-thread";
 import { startTransportConversation } from "@/lib/queries/messaging";
+import type { TransportStatus } from "@/lib/supabase/enums";
 
 export const Route = createFileRoute("/dashboard/operations/requests/$id")({
   component: OpsRequestDetail,
 });
 
-const quickActions = [
+const quickActions: { status: TransportStatus; label: string }[] = [
   { status: "missing_information", label: "Request missing information" },
   { status: "documents_under_review", label: "Mark documents under review" },
   { status: "quotation_prepared", label: "Begin quotation" },
@@ -43,13 +44,13 @@ const quickActions = [
   { status: "ready_for_scheduling", label: "Mark ready for scheduling" },
   { status: "rejected", label: "Reject request" },
   { status: "cancelled_by_operations", label: "Cancel request" },
-] as const;
+];
 
 function OpsRequestDetail() {
   const { id } = useParams({ from: "/dashboard/operations/requests/$id" });
   const { userId } = useAuth();
   const queryClient = useQueryClient();
-  const [dialogStatus, setDialogStatus] = useState<string | null>(null);
+  const [dialogStatus, setDialogStatus] = useState<TransportStatus | null>(null);
   const [internalNote, setInternalNote] = useState("");
   const [customerNote, setCustomerNote] = useState("");
 

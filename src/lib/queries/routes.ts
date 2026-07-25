@@ -83,7 +83,7 @@ export async function assignRequestToRoute(input: {
   const { error } = await supabase.rpc("assign_request_to_route", {
     p_route_id: input.routeId,
     p_transport_request_id: input.transportRequestId,
-    p_compatibility_notes: input.compatibilityNotes || null,
+    p_compatibility_notes: input.compatibilityNotes || undefined,
   });
   if (error) throw error;
 }

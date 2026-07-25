@@ -75,10 +75,10 @@ export async function notifyUser(payload: {
     p_category: payload.category,
     p_notification_type: payload.type,
     p_title: payload.title,
-    p_body: payload.body ?? null,
-    p_link_url: payload.linkUrl ?? null,
-    p_dedup_key: payload.dedupKey ?? null,
-    p_template_version: payload.templateVersion ?? null,
+    p_body: payload.body ?? undefined,
+    p_link_url: payload.linkUrl ?? undefined,
+    p_dedup_key: payload.dedupKey ?? undefined,
+    p_template_version: payload.templateVersion ?? undefined,
   });
   if (error) throw error;
 }

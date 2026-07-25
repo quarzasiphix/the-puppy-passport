@@ -175,7 +175,7 @@ export async function reviewWelfareCase(input: {
   const { error } = await supabase.rpc("review_welfare_case", {
     p_case_id: input.caseId,
     p_decision: input.decision,
-    p_review_notes: input.reviewNotes || null,
+    p_review_notes: input.reviewNotes || undefined,
   });
   if (error) throw error;
 }

@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { TransportStatus, TransportServiceType } from "@/lib/supabase/enums";
 
 // Ops/admin-only queries — protected by RLS (public.is_ops_staff()) on every table touched here,
 // not by anything in this file. A customer or breeder calling these gets an empty/error result
@@ -28,7 +29,10 @@ export type OpsRequestListRow = {
   created_at: string;
 };
 
-export async function listOpsTransportRequests(filter?: { status?: string; serviceType?: string }) {
+export async function listOpsTransportRequests(filter?: {
+  status?: TransportStatus;
+  serviceType?: TransportServiceType;
+}) {
   const supabase = getSupabaseBrowserClient();
   let query = supabase
     .from("transport_requests")
@@ -36,10 +40,7 @@ export async function listOpsTransportRequests(filter?: { status?: string; servi
     .order("created_at", { ascending: false });
   if (filter?.status) query = query.eq("status", filter.status);
   if (filter?.serviceType) {
-    query = query.eq(
-      "requested_service_type",
-      filter.serviceType as "shared" | "individual" | "express" | "vip" | "recommend_best",
-    );
+    query = query.eq("requested_service_type", filter.serviceType);
   }
   const { data, error } = await query;
   if (error) throw error;
@@ -48,7 +49,7 @@ export async function listOpsTransportRequests(filter?: { status?: string; servi
 
 export async function getOpsKpiCounts() {
   const supabase = getSupabaseBrowserClient();
-  const countFor = (statuses: string[]) =>
+  const countFor = (statuses: TransportStatus[]) =>
     supabase
       .from("transport_requests")
       .select("*", { count: "exact", head: true })
@@ -132,7 +133,7 @@ export async function listOpsDocuments(transportRequestId: string) {
 // transaction with a server-stamped auth.uid() actor.
 export async function changeOpsRequestStatus(input: {
   id: string;
-  newStatus: string;
+  newStatus: TransportStatus;
   customerNote?: string;
   internalNote?: string;
 }) {
@@ -140,8 +141,8 @@ export async function changeOpsRequestStatus(input: {
   const { error } = await supabase.rpc("change_ops_request_status", {
     p_request_id: input.id,
     p_new_status: input.newStatus,
-    p_customer_note: input.customerNote || null,
-    p_internal_note: input.internalNote || null,
+    p_customer_note: input.customerNote || undefined,
+    p_internal_note: input.internalNote || undefined,
   });
   if (error) throw error;
 }
@@ -188,7 +189,7 @@ export async function listRequestsNeedingQuotation() {
 
 export async function createQuotation(input: {
   transportRequestId: string;
-  serviceType: string;
+  serviceType: TransportServiceType;
   basePrice: number;
   totalPrice: number;
   currency: string;
@@ -283,7 +284,7 @@ export async function reviewAmendment(input: {
   const { error } = await supabase.rpc("review_transport_amendment", {
     p_amendment_id: input.amendmentId,
     p_approve: input.approve,
-    p_review_note: input.reviewNote || null,
+    p_review_note: input.reviewNote || undefined,
   });
   if (error) throw error;
 }

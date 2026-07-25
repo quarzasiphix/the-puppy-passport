@@ -71,6 +71,7 @@ async function withAmountCollected(rows: CampaignJoinRow[]): Promise<CampaignSum
       .in("campaign_id", ids);
     if (error) throw error;
     for (const row of data ?? []) {
+      if (!row.campaign_id) continue;
       amounts.set(row.campaign_id, Number(row.total_collected));
     }
 
@@ -81,6 +82,7 @@ async function withAmountCollected(rows: CampaignJoinRow[]): Promise<CampaignSum
       .in("id", requestIds);
     if (routesError) throw routesError;
     for (const route of routes ?? []) {
+      if (!route.id) continue;
       routeByRequestId.set(route.id, route);
     }
   }
@@ -308,7 +310,14 @@ export async function listPublicContributions(
     .eq("campaign_id", campaignId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  // The view's columns are nullable at the type level (PostgREST/views can't prove a NOT NULL
+  // constraint survives the projection), but a real contribution row always has these set --
+  // filtering out the type-theoretically-possible-but-never-real null case keeps this function's
+  // own return type strict and simple for its two real callers.
+  return (data ?? []).filter(
+    (row): row is PublicContributionRow =>
+      row.id !== null && row.amount !== null && row.currency !== null && row.created_at !== null,
+  );
 }
 
 // Development-only simulated contribution — is_simulated defaults to true at the database level

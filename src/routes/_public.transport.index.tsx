@@ -96,7 +96,7 @@ function TransportPage() {
               scheduling and communication — not a higher minimum standard of care; every animal we
               transport travels in a suitable crate with water, ventilation and required breaks.
             </p>
-            {rating && rating.review_count > 0 && (
+            {rating && (rating.review_count ?? 0) > 0 && (
               <div className="mt-3 flex items-center gap-1.5 text-sm">
                 <Star className="size-4 fill-warning text-warning" />
                 <span className="font-medium">{rating.average_rating}</span>

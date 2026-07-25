@@ -460,7 +460,7 @@ function TransportRequestPage() {
           setLinkedAnimal({ name: puppy.name, kennel: puppy.kennel });
 
           const duplicate = await findActiveTransportRequestForAnimal(userId, id);
-          if (duplicate) setDuplicateWarning({ requestNumber: duplicate.request_number });
+          if (duplicate) setDuplicateWarning({ requestNumber: duplicate.request_number ?? "" });
 
           // Only fill the destination from "my profile" when the buyer themselves is submitting —
           // a breeder submitting on the buyer's behalf doesn't have the buyer's home address to
@@ -572,7 +572,7 @@ function TransportRequestPage() {
         const supabase = getSupabaseBrowserClient();
         await supabase.from("transport_requests").delete().eq("id", draftId).eq("status", "draft");
       }
-      setResult({ requestNumber: created.request_number, status: created.status });
+      setResult({ requestNumber: created.request_number ?? "", status: created.status });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, "Could not submit the request."));

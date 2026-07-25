@@ -71,7 +71,9 @@ function PlannedRoutesPage() {
               <div className="flex items-center gap-2 text-sm font-medium">
                 {r.origin_country ?? r.origin_region ?? "?"}
                 <ArrowRight className="size-4 text-muted-foreground" />
-                {r.destination_countries.join(", ") || r.destination_regions.join(", ") || "?"}
+                {(r.destination_countries ?? []).join(", ") ||
+                  (r.destination_regions ?? []).join(", ") ||
+                  "?"}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <Badge variant="secondary">{r.route_number}</Badge>
@@ -91,7 +93,7 @@ function PlannedRoutesPage() {
                 <div>
                   <dt>Places</dt>
                   <dd className="font-medium text-foreground">
-                    {r.available_capacity > 0
+                    {(r.available_capacity ?? 0) > 0
                       ? `${r.available_capacity} may be available`
                       : "Likely full"}
                   </dd>
