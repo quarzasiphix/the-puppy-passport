@@ -174,6 +174,7 @@ export async function notifyAffectedUserOfDecision(caseId: string, affectedProfi
     title: "A moderation decision affects you",
     body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
     linkUrl: `/moderation/${caseId}`,
+    dedupKey: `moderation_case:${caseId}:decision`,
   });
 }
 

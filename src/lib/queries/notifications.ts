@@ -53,6 +53,12 @@ export async function notifyUser(payload: {
   title: string;
   body?: string | null;
   linkUrl?: string | null;
+  // Stage CJR: an optional, caller-chosen key identifying the real-world event this notification
+  // is *about* (e.g. "a specific review's approval", "a specific application's status change") —
+  // when two calls for the same recipient share a dedup key (a retry, a double-click, a race), the
+  // database returns the original notification instead of creating a duplicate. Omit for a
+  // notification with no natural retry risk.
+  dedupKey?: string | null;
 }) {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.rpc("create_notification_if_enabled", {
@@ -62,6 +68,7 @@ export async function notifyUser(payload: {
     p_title: payload.title,
     p_body: payload.body ?? null,
     p_link_url: payload.linkUrl ?? null,
+    p_dedup_key: payload.dedupKey ?? null,
   });
   if (error) throw error;
 }

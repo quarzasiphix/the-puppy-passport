@@ -98,6 +98,7 @@ export async function approveRehomingReview(id: string, animalId: string, ownerP
     title: "Your rehoming listing was approved",
     body: "It's now visible to people looking to adopt on Havenpaw.",
     linkUrl: `/adoptions/${animalId}`,
+    dedupKey: `rehoming_review:${id}:approved`,
   });
 }
 
@@ -115,5 +116,6 @@ export async function rejectRehomingReview(id: string, notes: string, ownerProfi
     category: "adoption",
     title: "Your rehoming submission wasn't approved",
     body: notes,
+    dedupKey: `rehoming_review:${id}:rejected`,
   });
 }

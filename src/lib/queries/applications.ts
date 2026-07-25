@@ -215,5 +215,8 @@ export async function respondToApplication(params: {
     title: `Update on your application for ${params.animalName}`,
     body: applicationStatusLabels[params.status],
     linkUrl: "/dashboard/buyer/applications",
+    // Keyed on the specific status reached, not just the application -- a retry of *this*
+    // transition dedupes, but a genuinely later, different status change still notifies.
+    dedupKey: `application:${params.id}:${params.status}`,
   });
 }
