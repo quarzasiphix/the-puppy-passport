@@ -1731,6 +1731,14 @@ export interface Database {
         };
         Returns: undefined;
       };
+      place_legal_hold: {
+        Args: { p_subject_profile_id: string; p_reason: string };
+        Returns: string;
+      };
+      release_legal_hold: {
+        Args: { p_hold_id: string; p_release_reason?: string | null };
+        Returns: undefined;
+      };
     };
   };
 }
