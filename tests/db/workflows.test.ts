@@ -759,4 +759,83 @@ test("workflow: a suspended role's effect depends on ownership vs. role-gated ac
       "admins manage all organisations regardless of ownership/role status",
     );
   });
+
+  // Stage IR-7: no seeded user anywhere in supabase/seed.sql has the 'moderator' role -- every
+  // other test in this whole session that exercises is_moderator()-gated access (reports/
+  // moderation_cases/appeals) does so as `admin`, which also always satisfies is_moderator() via
+  // its own `or is_admin()` clause. That means the *moderator* half of that OR has never actually
+  // been exercised by any test, and specifically its suspension behaviour (does suspending a
+  // *moderator* role, as opposed to an admin, actually revoke moderation access?) has zero
+  // coverage. has_role() itself (checked `status = 'active'`) is the same shared helper already
+  // proven correct for every other role in this file, so this is expected to already work -- this
+  // closes the coverage gap, the same "already correct, just untested" shape as Stage BH.
+  await t.test(
+    "suspending a moderator's role revokes moderation-case access (ad-hoc fixture: no moderator is seeded)",
+    async (t) => {
+      let caseId: string | undefined;
+
+      await t.test("setup: grant an active moderator role and a real moderation case", async () => {
+        const role = await admin
+          .from("user_roles")
+          .upsert(
+            { user_id: ids.breederPending, role: "moderator", status: "active" },
+            { onConflict: "user_id,role" },
+          )
+          .select("status");
+        assert.equal(role.error, null);
+
+        const created = await admin
+          .from("moderation_cases")
+          .insert({
+            case_type: "report_review",
+            target_type: "user",
+            target_id: ids.buyer,
+          })
+          .select("id")
+          .single();
+        assert.equal(created.error, null);
+        caseId = created.data!.id as string;
+      });
+
+      await t.test("an active moderator can manage the case", async () => {
+        const moderatorAccount = await as("breederPending");
+        const attempt = await moderatorAccount
+          .from("moderation_cases")
+          .update({ status: "investigating" })
+          .eq("id", caseId!)
+          .select();
+        assert.equal(attempt.error, null, "an active moderator must be able to manage cases");
+        assert.equal(attempt.data?.length, 1);
+      });
+
+      await t.test("suspending the moderator role blocks case management", async () => {
+        const suspend = await admin
+          .from("user_roles")
+          .update({ status: "suspended" })
+          .eq("user_id", ids.breederPending)
+          .eq("role", "moderator");
+        assert.equal(suspend.error, null);
+
+        const moderatorAccount = await as("breederPending");
+        const attempt = await moderatorAccount
+          .from("moderation_cases")
+          .update({ status: "resolved" })
+          .eq("id", caseId!)
+          .select();
+        assert.ok(
+          isBlocked(attempt.data, attempt.error),
+          "a suspended moderator must not retain moderation-case access",
+        );
+      });
+
+      await t.test("cleanup", async () => {
+        if (caseId) await admin.from("moderation_cases").delete().eq("id", caseId);
+        await admin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", ids.breederPending)
+          .eq("role", "moderator");
+      });
+    },
+  );
 });
