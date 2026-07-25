@@ -119,16 +119,27 @@ whole thing before making a conflicting choice.
   every data query — loaders and client components alike) and `src/lib/supabase/server.ts`
   (cookie-aware via `@tanstack/react-start/server`, used *only* inside `createServerFn` for
   session lookup and sign-in/up/out). Don't introduce a third pattern.
-- **`src/lib/supabase/types.ts` is a hand-written stub**, covering only the tables actually
-  queried so far, because this sandbox can't run `supabase start` (no Docker) to generate real
-  types. It's structured to match what `supabase gen types typescript --local` outputs, so
-  `npm run db:types` is a drop-in replacement once a developer runs it locally — **do not** add a
-  catch-all string index signature to the `Tables` map; mixing one in with explicit keys collapses
-  supabase-js's generic inference to `never` for every table (learned the hard way this session).
-- **Migrations are edited in place, not layered as ALTER patches, until the project has actually
-  been deployed once.** Nothing has run against a live database yet in this session (no Docker) —
-  once a developer runs `supabase db reset` for the first time against real data, this stops being
-  true and future schema changes should become additive migrations instead.
+- **`src/lib/supabase/types.ts` is real, generated output — not a hand-written stub.** This was
+  true for a long stretch of this project's history (an early sandbox genuinely couldn't run
+  `supabase start`, no Docker), and the stub was deliberately kept structured to match what
+  `npm run db:types` would eventually output. That constraint stopped applying well before this
+  note was corrected — Docker/the Supabase CLI has worked in this sandbox for the entire very long
+  autonomous backend-hardening session (hundreds of `supabase db reset`/`test:db` runs against a
+  real live local database), and Stage IR-5 finally ran `npm run db:types` for real, confirming it
+  works cleanly and retiring the hand-written stub for good. Reusable enum type aliases
+  (`TransportStatus`, etc.) live in the separate, still-hand-written `src/lib/supabase/enums.ts`
+  specifically so they survive a future regeneration — don't add them back into `types.ts` itself.
+  Re-run `npm run db:types` after any migration that adds/changes a table, column, or RPC signature
+  the app actually uses, the same as any other generated-artifact convention. Still **do not** add
+  a catch-all string index signature anywhere in this file if hand-editing it — mixing one in with
+  explicit keys collapses supabase-js's generic inference to `never` for every table (learned the
+  hard way earlier in this session, before the swap).
+- **Migrations are additive (`alter table`/new files), not edited in place.** An earlier note here
+  claimed the opposite ("nothing has run against a live database yet... edit in place until
+  deployed") — stale by a very wide margin; a real local Supabase instance has been running
+  continuously for the vast majority of this project's history. Every schema change is now its own
+  new migration file, numbered after the last one, never a rewrite of an already-committed
+  migration.
 
 ## Environment / tooling (specific to this sandbox — may not apply to a normal dev machine)
 
