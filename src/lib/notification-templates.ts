@@ -18,6 +18,7 @@
 export type RehomingDecisionPayload = { animalId: string };
 export type ApplicationStatusChangePayload = { animalName: string; statusLabel: string };
 export type ModerationDecisionPayload = { caseId: string };
+export type ModerationAppealDecisionPayload = { caseId: string; decision: "upheld" | "overturned" };
 
 export const notificationTemplates = {
   rehoming_approved: {
@@ -49,6 +50,20 @@ export const notificationTemplates = {
     render: (payload: ModerationDecisionPayload) => ({
       title: "A moderation decision affects you",
       body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
+      linkUrl: `/moderation/${payload.caseId}`,
+    }),
+  },
+  moderation_appeal_decision: {
+    version: 1,
+    render: (payload: ModerationAppealDecisionPayload) => ({
+      title:
+        payload.decision === "overturned"
+          ? "Your appeal was successful"
+          : "Your appeal was reviewed",
+      body:
+        payload.decision === "overturned"
+          ? "A different moderator reviewed your appeal and overturned the original decision."
+          : "A different moderator reviewed your appeal. The original decision stands.",
       linkUrl: `/moderation/${payload.caseId}`,
     }),
   },

@@ -266,3 +266,24 @@ export async function reviewModerationAppeal(input: {
   });
   if (error) throw error;
 }
+
+// review_moderation_appeal() itself never notifies (same "the client makes a second call after
+// the write succeeds" shape as notifyAffectedUserOfDecision above) -- found missing entirely:
+// an appellant previously had no way to learn their appeal was resolved short of revisiting their
+// case page. dedupKey is scoped to the appeal, not the case, since a case can have at most one
+// appeal (moderation_appeals.moderation_case_id is unique) but this keeps the key's meaning
+// self-evident without relying on that constraint.
+export async function notifyAppellantOfAppealDecision(
+  appealId: string,
+  caseId: string,
+  appellantProfileId: string,
+  decision: "upheld" | "overturned",
+) {
+  await notifyUserFromTemplate({
+    profileId: appellantProfileId,
+    templateId: "moderation_appeal_decision",
+    category: "moderation",
+    dedupKey: `moderation_appeal:${appealId}:decision`,
+    payload: { caseId, decision },
+  });
+}

@@ -236,6 +236,166 @@ test("appeal eligibility: own resolved case, within deadline, once only", async 
   });
 });
 
+// Stage IR-10 (outbox/notification soak): review_moderation_appeal() itself never notifies (same
+// "client makes a second call after the write succeeds" shape as the other 3 real notification
+// producers) -- found genuinely missing entirely: an appellant previously had no way to learn
+// their appeal was resolved short of revisiting their case page. notifyAppellantOfAppealDecision()
+// (src/lib/queries/moderation.ts) closes it by routing through the same create_notification_if_
+// enabled() primitive every other producer uses. This proves that primitive integrates correctly
+// with real appeal data: exactly-once delivery, safe retries, and honouring the 'moderation'
+// category preference the same as the sibling moderation_decision notification.
+test("appellant is notified once their appeal is reviewed, with real dedup/preference behaviour", async (t) => {
+  const admin = await as("admin");
+  const buyer = await as("buyer");
+  let caseId: string | undefined;
+  let appealId: string | undefined;
+  const dedupKey = () => `moderation_appeal:${appealId}:decision`;
+
+  await t.test(
+    "setup: admin resolves a case, buyer appeals it, a second moderator overturns it",
+    async () => {
+      const created = await admin
+        .from("moderation_cases")
+        .insert({
+          case_type: "test",
+          target_type: "user",
+          target_id: ids.buyer,
+          status: "resolved",
+          assigned_moderator_id: ids.admin,
+          resolved_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+      assert.equal(created.error, null);
+      caseId = created.data!.id as string;
+
+      const appeal = await buyer.rpc("submit_moderation_appeal", {
+        p_case_id: caseId,
+        p_statement: "Please review this.",
+      });
+      assert.equal(appeal.error, null);
+      appealId = appeal.data as string;
+
+      const grant = await admin
+        .from("user_roles")
+        .insert({ user_id: ids.driver, role: "moderator", status: "active" })
+        .select("id")
+        .single();
+      assert.equal(grant.error, null);
+      try {
+        const driver = await as("driver");
+        const review = await driver.rpc("review_moderation_appeal", {
+          p_appeal_id: appealId!,
+          p_decision: "overturned",
+        });
+        assert.equal(review.error, null);
+      } finally {
+        await admin.from("user_roles").delete().eq("user_id", ids.driver).eq("role", "moderator");
+      }
+    },
+  );
+
+  await t.test("review_moderation_appeal() itself never creates a notification row", async () => {
+    const rows = await admin
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("dedup_key", dedupKey());
+    assert.equal(rows.count ?? 0, 0);
+  });
+
+  await t.test(
+    "the client's follow-up call (what notifyAppellantOfAppealDecision does) creates exactly one notification for the appellant",
+    async () => {
+      const call = await buyer.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "moderation",
+        p_notification_type: "moderation_appeal_decision",
+        p_title: "Your appeal was successful",
+        p_body: "A different moderator reviewed your appeal and overturned the original decision.",
+        p_link_url: `/moderation/${caseId}`,
+        p_dedup_key: dedupKey(),
+        p_template_version: 1,
+      });
+      assert.equal(call.error, null);
+      assert.ok(call.data, "expected a real notification id");
+
+      const row = await admin
+        .from("notifications")
+        .select("profile_id, notification_type, dedup_key")
+        .eq("id", call.data as string)
+        .single();
+      assert.equal(row.data?.profile_id, ids.buyer);
+      assert.equal(row.data?.notification_type, "moderation_appeal_decision");
+    },
+  );
+
+  await t.test(
+    "a retried call (dropped response, double-click) does not duplicate it",
+    async () => {
+      const before = await admin
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("dedup_key", dedupKey());
+
+      const retry = await buyer.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "moderation",
+        p_notification_type: "moderation_appeal_decision",
+        p_title: "Your appeal was successful",
+        p_dedup_key: dedupKey(),
+        p_template_version: 1,
+      });
+      assert.equal(retry.error, null);
+
+      const after = await admin
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("dedup_key", dedupKey());
+      assert.equal(
+        (after.count ?? 0) - (before.count ?? 0),
+        0,
+        "a retry must never create a second row",
+      );
+    },
+  );
+
+  await t.test(
+    "muting the 'moderation' category suppresses it, same as moderation_decision",
+    async () => {
+      const mute = await buyer
+        .from("notification_preferences")
+        .upsert(
+          { profile_id: ids.buyer, category: "moderation", in_app_enabled: false },
+          { onConflict: "profile_id,category" },
+        );
+      assert.equal(mute.error, null);
+
+      const muted = await buyer.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "moderation",
+        p_notification_type: "moderation_appeal_decision",
+        p_title: "Should be muted",
+        p_dedup_key: `${dedupKey()}-muted-check`,
+      });
+      assert.equal(muted.error, null);
+      assert.equal(muted.data, null, "a muted category must return null, not create a row");
+
+      await buyer
+        .from("notification_preferences")
+        .delete()
+        .eq("profile_id", ids.buyer)
+        .eq("category", "moderation");
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    // admin can INSERT/SELECT any recipient's notifications (Stage 3900/4000) but not DELETE --
+    // only the recipient's own "manage their own notifications" (for all) policy allows that.
+    await buyer.from("notifications").delete().like("dedup_key", `${dedupKey()}%`);
+    if (caseId) await admin.from("moderation_cases").delete().eq("id", caseId);
+  });
+});
+
 test("appeal review: moderator-only, and a moderator cannot review their own original decision", async (t) => {
   const admin = await as("admin");
   const buyer = await as("buyer");

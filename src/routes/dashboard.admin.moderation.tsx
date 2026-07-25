@@ -13,6 +13,7 @@ import {
   notifyAffectedUserOfDecision,
   listAppealsForCase,
   reviewModerationAppeal,
+  notifyAppellantOfAppealDecision,
   type ModerationCaseRow,
 } from "@/lib/queries/moderation";
 import { useAuth } from "@/hooks/use-auth";
@@ -79,15 +80,27 @@ function ModerationPage() {
   });
 
   const reviewAppeal = useMutation({
-    mutationFn: (input: { appealId: string; decision: "upheld" | "overturned" }) =>
-      reviewModerationAppeal({
+    mutationFn: async (input: {
+      appealId: string;
+      caseId: string;
+      submittedBy: string;
+      decision: "upheld" | "overturned";
+    }) => {
+      await reviewModerationAppeal({
         appealId: input.appealId,
         decision: input.decision,
         outcomeNotes:
           input.decision === "upheld"
             ? "After review, the original decision stands."
             : "After review, the original decision has been overturned.",
-      }),
+      });
+      await notifyAppellantOfAppealDecision(
+        input.appealId,
+        input.caseId,
+        input.submittedBy,
+        input.decision,
+      );
+    },
     onSuccess: () => {
       toast.success("Appeal reviewed.");
       queryClient.invalidateQueries({ queryKey: ["case-appeals", appealsOpenFor] });
@@ -235,7 +248,12 @@ function ModerationPage() {
                                   size="sm"
                                   disabled={reviewAppeal.isPending}
                                   onClick={() =>
-                                    reviewAppeal.mutate({ appealId: a.id, decision: "overturned" })
+                                    reviewAppeal.mutate({
+                                      appealId: a.id,
+                                      caseId: c.id,
+                                      submittedBy: a.submitted_by,
+                                      decision: "overturned",
+                                    })
                                   }
                                 >
                                   Overturn decision
@@ -245,7 +263,12 @@ function ModerationPage() {
                                   variant="outline"
                                   disabled={reviewAppeal.isPending}
                                   onClick={() =>
-                                    reviewAppeal.mutate({ appealId: a.id, decision: "upheld" })
+                                    reviewAppeal.mutate({
+                                      appealId: a.id,
+                                      caseId: c.id,
+                                      submittedBy: a.submitted_by,
+                                      decision: "upheld",
+                                    })
                                   }
                                 >
                                   Uphold decision

@@ -21,6 +21,21 @@ test("notification templates: rendering is a pure, deterministic function of the
   assert.equal(notificationTemplates.rehoming_approved.version, 1);
 });
 
+test("notification templates: moderation_appeal_decision renders distinctly per decision", () => {
+  const payload = { caseId: "11111111-1111-1111-1111-111111111111" } as const;
+  const overturned = notificationTemplates.moderation_appeal_decision.render({
+    ...payload,
+    decision: "overturned",
+  });
+  const upheld = notificationTemplates.moderation_appeal_decision.render({
+    ...payload,
+    decision: "upheld",
+  });
+  assert.notEqual(overturned.title, upheld.title);
+  assert.notEqual(overturned.body, upheld.body);
+  assert.equal(overturned.linkUrl, `/moderation/${payload.caseId}`);
+});
+
 test("notifications.template_version: stored alongside the rendered text, and validated", async (t) => {
   const buyer = await as("buyer");
 
