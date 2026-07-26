@@ -294,3 +294,100 @@ test("support_cases: reopening preserves message history", async (t) => {
     assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
 });
+
+// Stage XR-1 (protected-field mutation matrix): the reopen policy's `with check` only ever
+// verified the new status was 'reopened' -- nothing stopped the same UPDATE statement from also
+// changing priority/category/subject/assigned_staff_id, every one of which this table's own
+// header comment says is staff-only. 20260101012700_support_case_reopen_field_lock.sql closes it.
+test("support_cases: reopening cannot smuggle in a staff-only field change", async (t) => {
+  const customer = await as("customer");
+  const ops = await as("ops");
+  const admin = await as("admin");
+  let caseId: string | undefined;
+
+  await t.test("setup: a resolved case with known priority/category/no assignee", async () => {
+    const created = await customer
+      .from("support_cases")
+      .insert({
+        subject: "Protected-field reopen test",
+        requester_profile_id: ids.customer,
+        priority: "low",
+        category: "other",
+      })
+      .select("id")
+      .single();
+    assert.equal(created.error, null);
+    caseId = created.data!.id as string;
+
+    const resolved = await ops
+      .from("support_cases")
+      .update({ status: "resolved", resolved_at: new Date().toISOString() })
+      .eq("id", caseId)
+      .select("status")
+      .single();
+    assert.equal(resolved.error, null);
+    assert.equal(resolved.data?.status, "resolved");
+  });
+
+  await t.test(
+    "reopening while also bumping priority to 'urgent' in the same call is rejected",
+    async () => {
+      const attempt = await customer
+        .from("support_cases")
+        .update({ status: "reopened", priority: "urgent" })
+        .eq("id", caseId!)
+        .select();
+      assert.ok(attempt.error, "expected the staff-only field lock to reject this");
+
+      const check = await admin
+        .from("support_cases")
+        .select("status, priority")
+        .eq("id", caseId!)
+        .single();
+      assert.equal(
+        check.data?.status,
+        "resolved",
+        "the blocked update must not have partially applied",
+      );
+      assert.equal(check.data?.priority, "low");
+    },
+  );
+
+  await t.test("reopening while also self-assigning assigned_staff_id is rejected", async () => {
+    const attempt = await customer
+      .from("support_cases")
+      .update({ status: "reopened", assigned_staff_id: ids.customer })
+      .eq("id", caseId!)
+      .select();
+    assert.ok(attempt.error, "expected the staff-only field lock to reject this");
+  });
+
+  await t.test("a plain reopen with no other field changes still works", async () => {
+    const reopened = await customer
+      .from("support_cases")
+      .update({ status: "reopened" })
+      .eq("id", caseId!)
+      .select("status, priority")
+      .single();
+    assert.equal(reopened.error, null);
+    assert.equal(reopened.data?.status, "reopened");
+    assert.equal(reopened.data?.priority, "low", "priority must be untouched by a plain reopen");
+  });
+
+  await t.test("ops staff can still freely change priority/category/assignment", async () => {
+    const update = await ops
+      .from("support_cases")
+      .update({ priority: "urgent", assigned_staff_id: ids.ops })
+      .eq("id", caseId!)
+      .select("priority, assigned_staff_id")
+      .single();
+    assert.equal(update.error, null);
+    assert.equal(update.data?.priority, "urgent");
+    assert.equal(update.data?.assigned_staff_id, ids.ops);
+  });
+
+  await t.test("cleanup", async () => {
+    const deleted = await admin.from("support_cases").delete().eq("id", caseId!);
+    assert.equal(deleted.error, null);
+  });
+});
