@@ -290,3 +290,145 @@ test("conversion to a real transport draft", async (t) => {
     if (caseId) await ops.from("welfare_cases").delete().eq("id", caseId);
   });
 });
+
+// Stage XR-8 (optimistic concurrency/stale-write protection): review_welfare_case() used to do a
+// plain, unlocked update with no expected-current-state check at all -- a case already converted
+// to a real transport request (or closed) could be silently re-reviewed, contradicting the real
+// transport_requests row it already spawned. 20260101013100_welfare_case_review_concurrency_lock.sql
+// closes it with a `select ... for update` row lock plus a terminal-state guard.
+test("review_welfare_case: terminal states are protected, concurrent reviews serialize safely", async (t) => {
+  const foundation1 = await as("foundation1");
+  const ops = await as("ops");
+  let caseId: string | undefined;
+  let transportRequestId: string | undefined;
+
+  await t.test("setup: a case converted to a real transport draft", async () => {
+    const created = await foundation1
+      .from("welfare_cases")
+      .insert({
+        organisation_id: ids.orgFundacja,
+        created_by: ids.foundation1,
+        reason: "XR-8 concurrency test.",
+        status: "submitted",
+      })
+      .select("id")
+      .single();
+    assert.equal(created.error, null);
+    caseId = created.data!.id as string;
+
+    const review = await ops.rpc("review_welfare_case", {
+      p_case_id: caseId,
+      p_decision: "accepted_for_assessment",
+    });
+    assert.equal(review.error, null);
+
+    const converted = await foundation1.rpc("convert_welfare_case_to_transport_draft", {
+      p_case_id: caseId,
+    });
+    assert.equal(converted.error, null);
+    transportRequestId = converted.data as string;
+  });
+
+  await t.test(
+    "reviewing an already-converted case is rejected -- it can never be silently reset",
+    async () => {
+      const attempt = await ops.rpc("review_welfare_case", {
+        p_case_id: caseId!,
+        p_decision: "declined",
+      });
+      assert.ok(attempt.error, "expected the terminal-state guard to reject this");
+
+      const check = await ops.from("welfare_cases").select("status").eq("id", caseId!).single();
+      assert.equal(
+        check.data?.status,
+        "converted_to_transport",
+        "the case's real status must survive the rejected attempt untouched",
+      );
+    },
+  );
+
+  await t.test(
+    "reconsidering between accepted_for_assessment/declined/information_required stays legitimately allowed",
+    async () => {
+      const secondCase = await foundation1
+        .from("welfare_cases")
+        .insert({
+          organisation_id: ids.orgFundacja,
+          created_by: ids.foundation1,
+          reason: "XR-8 reconsideration test.",
+          status: "submitted",
+        })
+        .select("id")
+        .single();
+      assert.equal(secondCase.error, null);
+      const secondCaseId = secondCase.data!.id as string;
+
+      const declined = await ops.rpc("review_welfare_case", {
+        p_case_id: secondCaseId,
+        p_decision: "declined",
+      });
+      assert.equal(declined.error, null);
+
+      // Ops reconsiders after new information -- a real, legitimate workflow this fix must not
+      // block, unlike the genuinely terminal converted/closed states above.
+      const reconsidered = await ops.rpc("review_welfare_case", {
+        p_case_id: secondCaseId,
+        p_decision: "accepted_for_assessment",
+      });
+      assert.equal(reconsidered.error, null);
+
+      const check = await ops
+        .from("welfare_cases")
+        .select("status")
+        .eq("id", secondCaseId)
+        .single();
+      assert.equal(check.data?.status, "accepted_for_assessment");
+
+      await ops.from("welfare_cases").delete().eq("id", secondCaseId);
+    },
+  );
+
+  await t.test(
+    "10 concurrent review calls on the same non-terminal case all serialize to a real, consistent final state",
+    async () => {
+      const thirdCase = await foundation1
+        .from("welfare_cases")
+        .insert({
+          organisation_id: ids.orgFundacja,
+          created_by: ids.foundation1,
+          reason: "XR-8 race test.",
+          status: "submitted",
+        })
+        .select("id")
+        .single();
+      assert.equal(thirdCase.error, null);
+      const thirdCaseId = thirdCase.data!.id as string;
+
+      const results = await Promise.all(
+        Array.from({ length: 10 }, (_, i) =>
+          ops.rpc("review_welfare_case", {
+            p_case_id: thirdCaseId,
+            p_decision: i % 2 === 0 ? "accepted_for_assessment" : "declined",
+          }),
+        ),
+      );
+      for (const r of results) {
+        assert.equal(r.error, null, "every concurrent call on a non-terminal case must succeed");
+      }
+
+      const check = await ops.from("welfare_cases").select("status").eq("id", thirdCaseId).single();
+      assert.ok(
+        ["accepted_for_assessment", "declined"].includes(check.data?.status as string),
+        "the row lock must leave the case in exactly one real, consistent final state",
+      );
+
+      await ops.from("welfare_cases").delete().eq("id", thirdCaseId);
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    if (transportRequestId)
+      await foundation1.from("transport_requests").delete().eq("id", transportRequestId);
+    if (caseId) await ops.from("welfare_cases").delete().eq("id", caseId);
+  });
+});
