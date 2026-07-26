@@ -284,6 +284,31 @@ test("conversion to a real transport draft", async (t) => {
     },
   );
 
+  await t.test(
+    "retrying the conversion is a true idempotent success -- returns the same transport request, not an error (Stage XR-9)",
+    async () => {
+      const retry = await foundation1.rpc("convert_welfare_case_to_transport_draft", {
+        p_case_id: caseId!,
+      });
+      assert.equal(
+        retry.error,
+        null,
+        "a retry after the case is already converted must succeed, not error",
+      );
+      assert.equal(
+        retry.data,
+        transportRequestId,
+        "must return the original transport request's own id, not create a new one",
+      );
+
+      const count = await foundation1
+        .from("transport_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("id", transportRequestId!);
+      assert.equal(count.count, 1, "the retry must not have created a second transport request");
+    },
+  );
+
   await t.test("cleanup", async () => {
     if (transportRequestId)
       await foundation1.from("transport_requests").delete().eq("id", transportRequestId);

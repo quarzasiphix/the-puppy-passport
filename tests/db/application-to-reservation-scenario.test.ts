@@ -114,18 +114,52 @@ test("scenario: buyer applies, breeder approves, breeder reserves -- the full pu
   });
 
   await t.test(
-    "converting the same application a second time is rejected, not silently duplicated",
+    "converting the same application again with DIFFERENT terms is rejected as a real conflict (Stage XR-9)",
     async () => {
       const attempt = await breeder1.rpc("convert_application_to_reservation", {
         p_application_id: applicationId!,
+        // Omits agreed_price/currency -- defaults to null/'PLN', genuinely different from the
+        // 4500/'PLN' actually recorded, so this must be rejected as a conflicting retry, not
+        // silently accepted or silently ignored.
       });
-      assert.ok(attempt.error, "expected a second conversion attempt to be rejected");
+      assert.ok(attempt.error, "expected a changed-payload retry to be rejected");
 
       const count = await admin
         .from("reservations")
         .select("id", { count: "exact", head: true })
         .eq("application_id", applicationId!);
       assert.equal(count.count, 1, "exactly one reservation must exist, never two");
+    },
+  );
+
+  await t.test(
+    "retrying with the EXACT SAME terms is a true idempotent success -- returns the original reservation, not an error (Stage XR-9)",
+    async () => {
+      const retry = await breeder1.rpc("convert_application_to_reservation", {
+        p_application_id: applicationId!,
+        p_agreed_price: 4500,
+        p_currency: "PLN",
+      });
+      assert.equal(
+        retry.error,
+        null,
+        "a retry with the exact same terms must succeed, not error, matching the original call",
+      );
+      assert.equal(
+        retry.data,
+        reservationId,
+        "must return the original reservation's own id, not create a new one",
+      );
+
+      const count = await admin
+        .from("reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("application_id", applicationId!);
+      assert.equal(
+        count.count,
+        1,
+        "still exactly one reservation, the idempotent retry created nothing new",
+      );
     },
   );
 
@@ -142,5 +176,75 @@ test("scenario: buyer applies, breeder approves, breeder reserves -- the full pu
       .update({ availability_status: "available" })
       .eq("id", ids.animalMaja);
     assert.equal(restoredAnimal.error, null);
+  });
+});
+
+// Stage XR-9 (idempotency key registry): genuinely concurrent retries -- not just sequential
+// "call again after the first already returned" -- must still converge on exactly one reservation.
+test("convert_application_to_reservation: genuinely concurrent identical calls converge on one reservation", async (t) => {
+  const customer = await as("customer");
+  const breeder2 = await as("breeder2");
+  const admin = await as("admin");
+  let applicationId: string | undefined;
+
+  await t.test("setup: an approved application", async () => {
+    // Uses the `customer` persona (not `buyer`) and `breeder2`/orgWolnaDolina (the org that
+    // actually owns animalRico) specifically to avoid colliding with seed.sql's own existing
+    // active application for buyer_id=ids.buyer on this same animal
+    // (buyer_applications_active_unique) -- a genuinely fresh, uncontended application.
+    const created = await customer
+      .from("buyer_applications")
+      .insert({
+        animal_id: ids.animalRico,
+        buyer_id: ids.customer,
+        organization_id: ids.orgWolnaDolina,
+        application_type: "purchase",
+        message: "XR-9 concurrency test application.",
+      })
+      .select("id")
+      .single();
+    assert.equal(created.error, null);
+    applicationId = created.data!.id as string;
+
+    const approved = await admin
+      .from("buyer_applications")
+      .update({ status: "approved" })
+      .eq("id", applicationId);
+    assert.equal(approved.error, null);
+  });
+
+  await t.test(
+    "10 simultaneous identical conversion calls all succeed and agree on the same reservation id",
+    async () => {
+      const results = await Promise.all(
+        Array.from({ length: 10 }, () =>
+          breeder2.rpc("convert_application_to_reservation", {
+            p_application_id: applicationId!,
+            p_agreed_price: 2000,
+            p_currency: "PLN",
+          }),
+        ),
+      );
+      for (const r of results) {
+        assert.equal(r.error, null, "every concurrent call must succeed, never fail outright");
+      }
+      const distinctIds = new Set(results.map((r) => r.data));
+      assert.equal(distinctIds.size, 1, "every concurrent call must resolve to the exact same id");
+
+      const count = await admin
+        .from("reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("application_id", applicationId!);
+      assert.equal(count.count, 1, "the race must never leave more than one reservation behind");
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    await admin.from("reservations").delete().eq("application_id", applicationId!);
+    await admin.from("buyer_applications").delete().eq("id", applicationId!);
+    await admin
+      .from("animals")
+      .update({ availability_status: "available" })
+      .eq("id", ids.animalRico);
   });
 });
