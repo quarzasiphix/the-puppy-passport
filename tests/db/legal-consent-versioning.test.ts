@@ -10,7 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { anon, as, ids } from "./helpers.ts";
+import { anon, as, ids, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -115,7 +115,7 @@ test("signup consent recording: the exact sequence signUp() performs works end t
   const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  const email = `consent-signup-test-${Date.now()}@havenpaw.test`;
+  const email = uniqueTestEmail("consent-signup-test");
   const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
   assert.equal(signUp.error, null);
   const userId = signUp.data.user!.id;

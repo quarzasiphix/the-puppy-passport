@@ -18,7 +18,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, ids, isBlocked, isForbidden } from "./helpers.ts";
+import { as, ids, isBlocked, isForbidden, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -36,7 +36,7 @@ test("risk_signals: repeatedly crossing a real rate-limit threshold produces a s
     const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const email = `risk-signal-${Date.now()}@havenpaw.test`;
+    const email = uniqueTestEmail("risk-signal");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);
     subjectId = signUp.data.user!.id;

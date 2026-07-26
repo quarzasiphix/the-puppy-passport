@@ -179,3 +179,20 @@ export async function createTestTransportRequest(
   if (error) throw new Error(`createTestTransportRequest failed: ${error.message}`);
   return data!.id as string;
 }
+
+/**
+ * Stage XR-19: fixture determinism audit. Several test files independently generate a disposable
+ * `auth.signUp()` email as `` `prefix-test-${Date.now()}@havenpaw.test` `` with no random
+ * component — the exact "theoretically collision-prone in a fast run" shape Stage AM's own
+ * `createTestTransportRequest()` comment already named and fixed for request numbers, just never
+ * re-applied here. A collision here is more severe than most: `auth.signUp()` fails outright with
+ * "email already registered" (an infrastructure-level setup failure, not a clean assertion
+ * failure), and two Date.now() calls landing in the same millisecond, while empirically never
+ * observed across this whole session's many consecutive `test:db` runs, is not actually
+ * impossible — Node's clock resolution is coarser than the wall-clock time a fast synchronous
+ * `Date.now()` call can complete in. Centralised here, matching the transport-request factory's
+ * own precedent, rather than fixing each call site's ad hoc template string individually.
+ */
+export function uniqueTestEmail(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@havenpaw.test`;
+}

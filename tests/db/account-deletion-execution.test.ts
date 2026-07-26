@@ -15,7 +15,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, createTestTransportRequest, ids } from "./helpers.ts";
+import { as, createTestTransportRequest, ids, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -31,7 +31,7 @@ test("execute_account_deletion: real anonymisation, on a disposable throwaway ac
   });
 
   await t.test("setup: a fresh throwaway account requests its own deletion", async () => {
-    const email = `deletion-test-${Date.now()}@havenpaw.test`;
+    const email = uniqueTestEmail("deletion-test");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);
     disposableId = signUp.data.user?.id;
@@ -168,7 +168,7 @@ test("anonymisation consistency: the dry-run predicts the real outcome, and hist
   await t.test(
     "setup: a fresh throwaway account with a real public post, and one real blocker",
     async () => {
-      const email = `anon-consistency-${Date.now()}@havenpaw.test`;
+      const email = uniqueTestEmail("anon-consistency");
       const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
       assert.equal(signUp.error, null);
       disposableId = signUp.data.user?.id;

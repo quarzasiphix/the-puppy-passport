@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, ids } from "./helpers.ts";
+import { as, ids, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -146,7 +146,7 @@ test("execute_account_deletion: refuses while an active legal hold exists", asyn
   let holdId: string | undefined;
 
   await t.test("setup: a fresh throwaway account requests its own deletion", async () => {
-    const email = `legal-hold-test-${Date.now()}@havenpaw.test`;
+    const email = uniqueTestEmail("legal-hold-test");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);
     disposableId = signUp.data.user?.id;

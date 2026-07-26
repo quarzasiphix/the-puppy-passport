@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, ids, createTestTransportRequest } from "./helpers.ts";
+import { as, ids, createTestTransportRequest, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -29,7 +29,7 @@ test("get_account_deletion_blockers: admin-only, reports every applicable blocke
   });
 
   await t.test("a genuinely unblocked disposable account has zero blockers", async () => {
-    const email = `blockers-test-${Date.now()}@havenpaw.test`;
+    const email = uniqueTestEmail("blockers-test");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);
     disposableId = signUp.data.user?.id;

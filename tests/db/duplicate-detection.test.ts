@@ -8,7 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, ids, isBlocked } from "./helpers.ts";
+import { as, ids, isBlocked, uniqueTestEmail } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -119,7 +119,7 @@ test("transport_requests: submitting a lookalike request twice raises an advisor
   let secondId: string | undefined;
 
   await t.test("setup: a disposable account", async () => {
-    const email = `dup-request-${Date.now()}@havenpaw.test`;
+    const email = uniqueTestEmail("dup-request");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);
     subjectId = signUp.data.user!.id;
