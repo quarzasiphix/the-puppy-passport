@@ -3,9 +3,14 @@
 // legal_requirements.created_by were both still client-insertable with no trigger tying them to
 // the real caller -- quotations.created_by is the real, demonstrated gap (createQuotation() in
 // src/lib/queries/operations.ts inserted a client-supplied value, called from a real, live UI).
+//
+// Stage XR-7 found a real straggler CJD's own re-grep missed: transport_status_history.changed_by
+// (20260101013000_transport_status_history_actor_lock.sql) -- respondToQuotation()/
+// createTransportRequest() (src/lib/queries/transport.ts) both insert a client-supplied
+// changed_by with no server check at all.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { as, ids } from "./helpers.ts";
+import { as, createTestTransportRequest, ids } from "./helpers.ts";
 
 test("quotations.created_by is always server-stamped, never forgeable", async (t) => {
   const ops = await as("ops");
@@ -73,5 +78,47 @@ test("legal_requirements.created_by is always server-stamped, never forgeable", 
 
   await t.test("cleanup", async () => {
     await admin.from("legal_requirements").delete().eq("id", requirementId!);
+  });
+});
+
+test("transport_status_history.changed_by is always server-stamped, never forgeable", async (t) => {
+  const ops = await as("ops");
+  const customer = await as("customer");
+  let requestId: string | undefined;
+
+  await t.test("setup: a real request the customer owns", async () => {
+    requestId = await createTestTransportRequest(ops, {
+      requesterProfileId: ids.customer,
+      tag: "XR7-ACTOR",
+      status: "submitted",
+    });
+  });
+
+  await t.test(
+    "the customer logs a status change while trying to forge changed_by to a different profile",
+    async () => {
+      const logged = await customer
+        .from("transport_status_history")
+        .insert({
+          transport_request_id: requestId!,
+          status: "submitted",
+          changed_by: ids.ops,
+          customer_note: "XR-7 forged-actor test.",
+        })
+        .select("id, changed_by")
+        .single();
+      assert.equal(logged.error, null);
+      assert.equal(
+        logged.data?.changed_by,
+        ids.customer,
+        "the trigger must stamp the real caller, not the forged value",
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    // transport_status_history has no DELETE policy for anyone (genuinely append-only, matching
+    // audit_logs) -- deleting the parent request cascades and removes the history row with it.
+    await ops.from("transport_requests").delete().eq("id", requestId!);
   });
 });
