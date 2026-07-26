@@ -1,0 +1,430 @@
+{
+  "tables": {
+    "account_deletion_requests": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "achievements": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "animal_images": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "animal_ownership_history": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "animals": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "app_maintenance_mode": {
+      "anon": "SELECT",
+      "authenticated": "SELECT,UPDATE"
+    },
+    "audit_logs": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "breeds": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "buyer_applications": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "comments": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "compliance_reviews": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "conversation_participants": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "conversations": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "drivers": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "follows": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "fundraising_campaigns": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "fundraising_contributions": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "group_members": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "groups": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "handover_protocols": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "legal_document_versions": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "legal_holds": {
+      "anon": "",
+      "authenticated": "INSERT,SELECT,UPDATE"
+    },
+    "legal_requirements": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "litters": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "markets": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "messages": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "moderation_appeals": {
+      "anon": "",
+      "authenticated": "SELECT"
+    },
+    "moderation_cases": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "notification_preferences": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "notifications": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "organisation_invitations": {
+      "anon": "",
+      "authenticated": "INSERT,SELECT,UPDATE"
+    },
+    "organisation_members": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "organisations": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "parent_dogs": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "posts": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "pricing_rules": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "private_addresses": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "product_service_categories": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "profiles": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,UPDATE"
+    },
+    "quotations": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "rate_limit_events": {
+      "anon": "",
+      "authenticated": "SELECT"
+    },
+    "reactions": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "rehoming_reviews": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "reports": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "reservations": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "risk_signals": {
+      "anon": "",
+      "authenticated": "SELECT"
+    },
+    "route_assignments": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "route_stops": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "route_waitlist": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "routes": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "saved_animals": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "saved_posts": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "species": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "support_case_messages": {
+      "anon": "",
+      "authenticated": "INSERT,SELECT"
+    },
+    "support_cases": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_documents": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_incidents": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_operator_authorisations": {
+      "anon": "SELECT",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_parties": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_request_amendments": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_request_animals": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_requests": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_reviews": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "transport_status_history": {
+      "anon": "",
+      "authenticated": "INSERT,SELECT"
+    },
+    "user_consents": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "user_roles": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "user_verifications": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "vehicles": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "welfare_case_documents": {
+      "anon": "",
+      "authenticated": "DELETE,INSERT,SELECT,UPDATE"
+    },
+    "welfare_cases": {
+      "anon": "",
+      "authenticated": "INSERT,SELECT,UPDATE"
+    }
+  },
+  "rpcs": {
+    "accept_org_invitation(p_token uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "acknowledge_welfare_case(p_case_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "advance_transport_job_status(p_request_id uuid, p_new_status transport_status, p_evidence_object_path text, p_customer_note text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "approve_user_verification(p_verification_id uuid, p_admin_notes text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "assign_request_to_route(p_route_id uuid, p_transport_request_id uuid, p_compatibility_notes text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "change_ops_request_status(p_request_id uuid, p_new_status transport_status, p_customer_note text, p_internal_note text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "change_org_member_role(p_member_id uuid, p_new_role org_member_role)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "claim_moderation_case(p_case_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "claim_support_case(p_case_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "convert_application_to_reservation(p_application_id uuid, p_agreed_price numeric, p_currency text, p_planned_collection_date date, p_collection_method collection_method, p_notes text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "convert_welfare_case_to_transport_draft(p_case_id uuid)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "create_notification_if_enabled(p_profile_id uuid, p_category text, p_notification_type text, p_title text, p_body text, p_link_url text, p_dedup_key text, p_template_version integer)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "create_transport_draft(p_request jsonb, p_animals jsonb, p_parties jsonb)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "decline_org_invitation(p_token uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "enforce_rate_limit(p_action_key text, p_max_count integer, p_window interval)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "execute_account_deletion(p_request_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "get_account_deletion_blockers(p_profile_id uuid)": {
+      "returns": "TABLE(blocker text)",
+      "grantees": "authenticated"
+    },
+    "get_invitation_by_token(p_token uuid)": {
+      "returns": "TABLE(org_name text, org_type org_type, invited_role org_member_role, expires_at timestamp with time zone)",
+      "grantees": "authenticated"
+    },
+    "get_my_profile()": {
+      "returns": "profiles",
+      "grantees": "authenticated"
+    },
+    "invite_org_member(p_org_id uuid, p_email text, p_role org_member_role)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "last_auth_at()": {
+      "returns": "timestamp with time zone",
+      "grantees": "authenticated"
+    },
+    "leave_organisation(p_org_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "mark_risk_signal_reviewed(p_signal_id uuid, p_is_false_positive boolean, p_resolution_notes text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "place_legal_hold(p_subject_profile_id uuid, p_reason text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "release_legal_hold(p_hold_id uuid, p_release_reason text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "remove_org_member(p_member_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "request_transport_amendment(p_transport_request_id uuid, p_field_name text, p_new_value text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "require_recent_auth(p_operation text, p_max_age interval)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "review_moderation_appeal(p_appeal_id uuid, p_decision moderation_appeal_status, p_outcome_notes text, p_internal_notes text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "review_transport_amendment(p_amendment_id uuid, p_approve boolean, p_review_note text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "review_welfare_case(p_case_id uuid, p_decision welfare_case_status, p_review_notes text)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "revoke_org_invitation(p_invitation_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "set_org_member_status(p_member_id uuid, p_status org_member_status)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "start_application_conversation(p_animal_id uuid, p_buyer_id uuid)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "start_transport_conversation(p_transport_request_id uuid)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    },
+    "submit_moderation_appeal(p_case_id uuid, p_statement text, p_supporting_document_url text)": {
+      "returns": "uuid",
+      "grantees": "authenticated"
+    }
+  }
+}

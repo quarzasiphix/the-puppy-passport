@@ -16,9 +16,15 @@ readable; it means the Data API layer doesn't reject the query outright before R
 
 **How to regenerate**: the queries below (adjust table/schema filters as needed) against the local
 Postgres instance (`docker exec -i supabase_db_the-puppy-passport psql -U postgres -d postgres`)
-reproduce this snapshot exactly. No persisted automation exists yet for this specific stage — a
-future drift-detection tool comparing two such snapshots is XR-17's separate, later scope, so as
-not to duplicate it here.
+reproduce this snapshot exactly. **Update (Stage XR-18)**: this prose snapshot is now backed by a
+real, automated drift scanner — `npm run db:contract-check` (`scripts/contract-drift-check.mjs`)
+queries the live database for exactly these two contracts and diffs them against a committed,
+machine-readable baseline (`docs/backend-api-contract-baseline.json`), failing loudly on any
+undocumented drift. Run `node scripts/contract-drift-check.mjs --write` to refresh the baseline
+after a deliberate, reviewed contract change — this prose doc is a human-readable snapshot of that
+same baseline at generation time, not a substitute for re-running the scanner. (An earlier draft of
+this note miscited the scanner as "XR-17's" scope — corrected here; XR-17 was cursor stability,
+XR-18 is this stage.)
 
 ```sql
 -- Table grants (SELECT/INSERT/UPDATE/DELETE only, anon + authenticated)
