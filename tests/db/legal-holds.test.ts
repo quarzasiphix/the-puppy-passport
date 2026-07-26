@@ -83,6 +83,59 @@ test("place_legal_hold/release_legal_hold: admin-only, server-stamped actor", as
   });
 });
 
+// Stage XR-16 (legal-hold propagation): revalidating CJH found place_legal_hold()/
+// release_legal_hold() never wrote an audit_logs entry at all, unlike every other comparably
+// consequential admin action -- 20260101013300_legal_hold_audit_trail.sql closes it.
+test("place_legal_hold/release_legal_hold: both transitions are recorded in the shared audit trail", async (t) => {
+  const admin = await as("admin");
+  let holdId: string | undefined;
+
+  await t.test("placing a hold writes a real audit_logs entry", async () => {
+    const call = await admin.rpc("place_legal_hold", {
+      p_subject_profile_id: ids.customer,
+      p_reason: "XR-16 audit trail test.",
+    });
+    assert.equal(call.error, null);
+    holdId = call.data as string;
+
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, target_type, target_id, after")
+      .eq("action", "legal_hold.placed")
+      .eq("target_id", ids.customer)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.admin, "the real caller must be the actor");
+    assert.equal(audit.data?.target_type, "profiles");
+    assert.equal((audit.data?.after as { hold_id: string })?.hold_id, holdId);
+  });
+
+  await t.test("releasing it writes a real, separate audit_logs entry", async () => {
+    const call = await admin.rpc("release_legal_hold", {
+      p_hold_id: holdId!,
+      p_release_reason: "XR-16 test cleanup.",
+    });
+    assert.equal(call.error, null);
+
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, target_type, target_id, after")
+      .eq("action", "legal_hold.released")
+      .eq("target_id", ids.customer)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.admin);
+    assert.equal(
+      (audit.data?.after as { release_reason: string })?.release_reason,
+      "XR-16 test cleanup.",
+    );
+  });
+});
+
 test("execute_account_deletion: refuses while an active legal hold exists", async (t) => {
   const admin = await as("admin");
   const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
