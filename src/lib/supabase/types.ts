@@ -5089,6 +5089,7 @@ export type Database = {
         }
         Returns: string
       }
+      is_active_driver: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_assigned_driver_for_request: {
         Args: { p_transport_request_id: string }
