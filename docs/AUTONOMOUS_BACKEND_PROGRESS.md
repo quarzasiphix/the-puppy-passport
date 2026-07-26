@@ -150,7 +150,8 @@ this via CJS, `audit_logs` confirmed to need no version field since nothing pars
 see table above, XR-13 (template revalidation — proved CJS's "unknown version" safety claim
 empirically, no duplicate implementation), XR-14 (export object lifecycle — audit only, confirmed
 not applicable, `exportMyData()` is a synchronous JSON response with no export file/object to
-manage) complete. Next: XR-15 (anonymisation consistency).
+manage), XR-15 (anonymisation consistency — proved the dry-run/execution pairing consistent and
+history-preservation directly) complete. Next: XR-16 (legal-hold propagation).
 
 **A restated "FOUR-HOUR AUTONOMOUS BACKEND QUEUE FOR CLAUDE CODE BOT 2" message arrived mid-session
 a second time**, describing an "expected current state" of "Stages BA through BK completed, next
@@ -177,10 +178,11 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage XR-15 (anonymisation consistency — public identity removal, referential integrity,
-preservation of other users and history; dry-run and execution tests). Re-run the Stage A baseline
-checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to
-resume" section below. **Note for whoever resumes**: candidate follow-up:
+Stage XR-16 (legal-hold propagation — block deletion, anonymisation, archival and Storage cleanup;
+restrict and audit hold transitions; overlaps CJH — treat as a revalidation pass if still needed).
+Re-run the Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before
+starting, per the "how to resume" section below. **Note for whoever resumes**: candidate
+follow-up:
 `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (Stage XR-7) lists 6 multi-write functions still
 needing full atomic-RPC conversion, not this session's
 own next stage but worth picking up whenever convenient.
@@ -258,6 +260,7 @@ many earlier commit messages.
 
 | Commit | Stage | Summary |
 |---|---|---|
+| _pending_ | XR-15 | Anonymisation consistency. New `docs/ANONYMISATION_CONSISTENCY_AUDIT.md`. `execute_account_deletion()` (Stage AI) and `get_account_deletion_blockers()` (its dry-run, Stage CJI) were each already thoroughly tested in isolation but never proven consistent with each other on the same account. New test in `tests/db/account-deletion-execution.test.ts` proves it end-to-end on one real throwaway account: the dry-run reports a real blocker and real execution also refuses, consistently; the blocker resolves, the dry-run reports zero, and real execution then genuinely succeeds. Also proves "preservation of other users and history" directly rather than by construction alone: a real public post the account authored survives anonymisation completely intact (FK, content, existence all untouched) while the author's own identity is genuinely anonymised. Confirmed (not assumed) the frontend already gracefully degrades a since-anonymised author's null `display_name` at every real display site. No migration this stage. 884/884 tests (+6 from XR-14's 878), verified on a fresh reset plus one more run without reset, `tsc`/lint/build clean, 134 migrations unchanged. |
 | `ce38f62` | XR-14 | Export object lifecycle — audit only, not applicable, no new gap. New `docs/EXPORT_OBJECT_LIFECYCLE_AUDIT.md`. `exportMyData()` is the only real export feature in this app — confirmed by reading the full function it performs a set of RLS-scoped DB reads and returns the assembled JSON directly to the caller in the same request, with no Storage bucket, generated file, signed URL, or async flow anywhere. Every concern this stage names (object ownership, signed access, expiry, duplicate files) describes protecting a generated file that outlives its request — there is none here. Cross-referenced (not re-audited) the export's own already-verified real boundary (RLS-scoped queries, no cross-tenant leak, `tests/db/data-export.test.ts`). Documented what a future async/Storage-backed export would need if one is ever built. No code, migration, or test change. |
 | `9cc84f7` | XR-13 | Template revalidation. New `docs/TEMPLATE_REVALIDATION_AUDIT.md`. Revalidated CJS's core safety claim directly instead of trusting the code comment: confirmed by grep that zero code anywhere re-resolves a stored notification against `notificationTemplates` at read time (`listMyNotifications()` only ever selects the stored `title`/`body`). New test in `tests/db/notification-template-versioning.test.ts` proves it empirically — a notification with `template_version: 9999` and a `notification_type` confirmed absent from `notificationTemplates` (via `hasOwnProperty`, not assumed) creates and reads back cleanly, the concrete "current and unknown template versions" compatibility test this stage names. No duplicate implementation — nothing in the CJS migration or `notification-templates.ts` changed. 878/878 tests (+5 from XR-12's 873), verified on a fresh reset plus one more run (hit the same known transient rate-limit flakiness from cumulative session runs on one attempt, confirmed not a real regression via reset), `tsc`/lint/build clean, no migration this stage (134 unchanged). |
 | `3a8a456` | XR-12 | Outbox payload versioning — audit only, no new gap. New `docs/OUTBOX_PAYLOAD_VERSIONING_AUDIT.md`. The one real outbox-shaped producer with a real reader (`notifications`) already has exactly this — Stage CJS's `template_version`, deterministic pure-function rendering, text stored permanently at creation (never re-resolved at read time), stable ids. Not rebuilt (that's Stage XR-13's dedicated revalidation scope). Checked the other candidate, `audit_logs.before`/`after` jsonb payloads, and confirmed no real versioning need: zero code anywhere (including the one real audit-log viewer) ever programmatically reads/parses them — write-only forensic snapshots for direct DB inspection, not a machine-consumed event stream with a reader that could break on shape drift. No other outbox/event-payload system exists (no email/webhook/external integration). No code, migration, or test change. |

@@ -15,7 +15,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as, ids } from "./helpers.ts";
+import { as, createTestTransportRequest, ids } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -148,5 +148,135 @@ test("execute_account_deletion: refuses while a real unresolved obligation exist
       p_request_id: "00000000-0000-0000-0000-000000000000",
     });
     assert.ok(attempt.error);
+  });
+});
+
+// Stage XR-15 (anonymisation consistency): get_account_deletion_blockers() (the read-only dry-run,
+// Stage CJI) and execute_account_deletion() (the real execution, Stage AI) are each already
+// tested in isolation, but never proven consistent with each other on the *same* account -- this
+// proves the dry-run genuinely predicts the real outcome, and that anonymisation preserves other
+// tables' history/referential integrity rather than corrupting or cascading into it.
+test("anonymisation consistency: the dry-run predicts the real outcome, and history survives intact", async (t) => {
+  const admin = await as("admin");
+  let disposableId: string | undefined;
+  let requestId: string | undefined;
+  let postId: string | undefined;
+  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+
+  await t.test(
+    "setup: a fresh throwaway account with a real public post, and one real blocker",
+    async () => {
+      const email = `anon-consistency-${Date.now()}@havenpaw.test`;
+      const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
+      assert.equal(signUp.error, null);
+      disposableId = signUp.data.user?.id;
+      assert.ok(disposableId);
+
+      const post = await disposableClient
+        .from("posts")
+        .insert({
+          author_profile_id: disposableId,
+          content: "XR-15 anonymisation consistency test post.",
+          visibility: "public",
+        })
+        .select("id")
+        .single();
+      assert.equal(post.error, null);
+      postId = post.data!.id as string;
+
+      const request = await disposableClient
+        .from("account_deletion_requests")
+        .insert({ profile_id: disposableId, reason: "XR-15 consistency test" })
+        .select("id")
+        .single();
+      assert.equal(request.error, null);
+      requestId = request.data!.id as string;
+    },
+  );
+
+  await t.test(
+    "dry-run: the blocker (its own pending deletion aside, add a real one) is reported",
+    async () => {
+      const tr = await createTestTransportRequest(admin, {
+        requesterProfileId: disposableId!,
+        tag: "XR15-CONSISTENCY-BLOCKER",
+        status: "submitted",
+      });
+
+      const blocked = await admin.rpc("get_account_deletion_blockers", {
+        p_profile_id: disposableId!,
+      });
+      assert.equal(blocked.error, null);
+      assert.equal(blocked.data?.length, 1);
+      assert.equal(
+        (blocked.data as { blocker: string }[])[0].blocker,
+        "an active transport request",
+      );
+
+      const executeAttempt = await admin.rpc("execute_account_deletion", {
+        p_request_id: requestId!,
+      });
+      assert.ok(
+        executeAttempt.error,
+        "the dry-run reported a blocker -- real execution must also refuse, consistently",
+      );
+
+      await admin.from("transport_requests").delete().eq("id", tr);
+    },
+  );
+
+  await t.test(
+    "dry-run reports zero blockers, and execution now genuinely succeeds -- consistent",
+    async () => {
+      const blocked = await admin.rpc("get_account_deletion_blockers", {
+        p_profile_id: disposableId!,
+      });
+      assert.equal(blocked.error, null);
+      assert.equal(blocked.data?.length, 0, "the blocker was just resolved, dry-run must agree");
+
+      const execute = await admin.rpc("execute_account_deletion", { p_request_id: requestId! });
+      assert.equal(
+        execute.error,
+        null,
+        "the dry-run predicted success -- real execution must also succeed",
+      );
+    },
+  );
+
+  await t.test(
+    "the post the account authored survives anonymisation completely intact -- history preserved",
+    async () => {
+      const post = await admin
+        .from("posts")
+        .select("id, author_profile_id, content")
+        .eq("id", postId!)
+        .single();
+      assert.equal(post.error, null, "the post must not have been deleted or cascaded away");
+      assert.equal(post.data?.author_profile_id, disposableId, "the FK reference must survive");
+      assert.equal(
+        post.data?.content,
+        "XR-15 anonymisation consistency test post.",
+        "the post's own content must be completely untouched by anonymising its author",
+      );
+
+      const author = await admin
+        .from("profiles")
+        .select("display_name, is_deleted")
+        .eq("id", disposableId!)
+        .single();
+      assert.equal(author.error, null);
+      assert.equal(author.data?.is_deleted, true);
+      assert.equal(
+        author.data?.display_name,
+        null,
+        "the author's own identity is genuinely anonymised",
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    if (postId) await admin.from("posts").delete().eq("id", postId);
   });
 });
