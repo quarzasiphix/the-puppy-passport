@@ -19,6 +19,7 @@
     "db:types": "supabase gen types typescript --local > src/lib/supabase/types.ts",
     "db:preflight": "node scripts/migration-preflight.mjs",
     "db:contract-check": "node scripts/contract-drift-check.mjs",
+    "db:schema-drift": "node scripts/schema-drift-check.mjs",
     "config:check": "node scripts/config-check.mjs"
   },
   "dependencies": {
