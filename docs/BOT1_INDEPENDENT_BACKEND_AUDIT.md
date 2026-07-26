@@ -323,6 +323,37 @@ or write another tenant's protected data directly.
   logic against the sibling direct-RLS-insert policy on the same table, which most single-table
   reviews would not think to do.
 
+### 5.4 — `moderation_cases` resolution has no conflict-of-interest check, unlike its own appeal-review sibling
+
+- **Severity**: High.
+- **Exact location**: `supabase/migrations/20260101001800_moderation.sql` lines 57–61, `"moderators
+  and admins manage all moderation cases" for all to authenticated using (is_moderator()) with check
+  (is_moderator())`. Contrast `review_moderation_appeal()`
+  (`supabase/migrations/20260101007900_moderation_appeals.sql` lines 213–217), which explicitly
+  blocks `v_case.assigned_moderator_id = auth.uid()` — a conflict-of-interest check applied one layer
+  up but never to the base case-resolution step it was modeled on.
+- **Reachable actor**: any user holding the `moderator` role who is also the `affected_profile_id` on
+  a case against them. Roles are additive (`public.user_roles`), so the same person can hold
+  `moderator` and also be a breeder/org owner/regular user subject to a report.
+- **Reproduction path**: `updateModerationCase()` (`src/lib/queries/moderation.ts` lines 135–153)
+  does a raw `.from("moderation_cases").update(payload)`. As the reported moderator:
+  `supabase.from('moderation_cases').update({ status: 'dismissed', decision_explanation: 'no issue
+  found' }).eq('id', caseAgainstMe)` succeeds.
+- **Expected invariant**: the same self-dealing guard `review_moderation_appeal()` already enforces
+  one step later in the same workflow.
+- **Observed behavior**: a moderator can resolve/dismiss a case naming themselves as the affected
+  party, with no block, via the real UI.
+- **Smallest fix**: add `and (affected_profile_id is distinct from auth.uid())` to the policy's
+  `with check`, or route resolution through a `SECURITY DEFINER` RPC mirroring
+  `review_moderation_appeal()`'s self-review guard.
+- **Regression test**: as a user who is both moderator and the case's `affected_profile_id`, attempt
+  to resolve/dismiss the case; assert rejection.
+- **Integration-blocker status**: no — pre-existing backend gap, not tied to a frontend integration
+  step.
+- **Overlap risk with Bot 2**: moderate-high — this is the same conflict-of-interest pattern the
+  session already fixed one level up (appeals); a pass specifically checking "does every
+  decision-maker table guard against self-dealing" would likely find it too.
+
 ## 6. Medium findings
 
 ### 6.1 — Quotations' terminal-state gap is only partially fixed
@@ -432,6 +463,176 @@ or write another tenant's protected data directly.
 - **Integration-blocker status**: no.
 - **Overlap risk with Bot 2**: low — easy to miss since the RPC itself is correct in isolation.
 
+### 6.4 — `route_assignments.assigned_by` is forgeable via a raw update despite the RPC stamping it correctly (corrects §13)
+
+- **Severity**: Medium. The actor is ops-staff, not anonymous/cross-tenant, but this directly
+  contradicts §13's earlier "confirmed non-forgeable" claim for this exact column — corrected here.
+- **Exact location**: `assign_request_to_route()`
+  (`supabase/migrations/20260101009300_audit_logs_actor_lock_and_route_assignment_rpc.sql` lines
+  23–61) correctly stamps `assigned_by = auth.uid()`. But the underlying `"ops staff manage route
+  assignments" for all` policy on `public.route_assignments`
+  (`supabase/migrations/20260101001700_routes_and_fleet.sql`) was never restricted to close off
+  direct writes — confirmed live via `select policyname, cmd, qual, with_check from pg_policies
+  where tablename='route_assignments'`, showing only `is_ops_staff()` on both sides, no column
+  restriction.
+- **Reachable actor**: any ops-staff account.
+- **Reproduction path**: `supabase.from('route_assignments').insert({ route_id, request_id,
+  assigned_by: someOtherStaffId })` — bypasses the RPC and its correct stamping entirely.
+- **Expected invariant**: `docs/DATABASE_INVARIANTS.md`'s server-stamped-actor guarantee should hold
+  for every column it implies is covered, not just non-forgeable-through-the-RPC-path.
+- **Observed behavior**: attribution of who assigned a route can be forged by any ops-staff member
+  via a raw insert/update.
+- **Smallest fix**: revoke `insert`/`update` on `route_assignments` from `authenticated` (the RPC is
+  `SECURITY DEFINER` and doesn't need the grant) — same pattern recommended for §5.2/§6.3.
+- **Regression test**: a raw insert/update to `route_assignments` with `assigned_by` different from
+  the caller's own id is rejected; the RPC path still succeeds.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: low — easy to miss since the RPC in isolation is correct, and §13's
+  own summary line stated the opposite before this correction; re-verify before treating it as
+  settled.
+
+### 6.5 — `transport_status_history` INSERT allows forged `changed_by` and unconstrained `status`, poisoning the customer-facing timeline
+
+- **Severity**: Medium.
+- **Exact location**: `"requesters log status on their own request"` and `"assigned drivers log
+  status on their own requests"` INSERT policies
+  (`supabase/migrations/20260101001300_transport_requests.sql` lines 231–238, re-confirmed live
+  after `20260101011300_immutable_status_history.sql`'s append-only lock, lines 34–37) — both `WITH
+  CHECK` clauses verify only request ownership/assignment, never `changed_by = auth.uid()` nor that
+  `status` matches a legal transition.
+- **Reachable actor**: any requester (or assigned driver) on their own transport request.
+- **Reproduction path**: `supabase.from('transport_status_history').insert({ transport_request_id: R,
+  status: 'delivered', changed_by: anyUuid, customer_note: 'fake' })` for a request still in
+  `'submitted'` — succeeds.
+- **Expected invariant**: history rows rendered by `getCustomerTimeline()`
+  (`src/lib/queries/transport.ts`) to every named party (requester/sender/recipient/current_owner)
+  should reflect genuine system events only.
+- **Observed behavior**: a forged row appears identically to a real one in the customer-facing
+  timeline; `transport_requests.status` itself stays correctly protected, but the *displayed history*
+  can lie.
+- **Smallest fix**: add `changed_by = (select auth.uid())` and a legal-status check to both `WITH
+  CHECK` clauses, or route all writes through a `SECURITY DEFINER` RPC and drop the direct insert
+  grants (mirrors the pattern already used for `advance_transport_job_status`).
+- **Regression test**: as requester, insert a status row with `changed_by` set to a different profile
+  id and a status the request hasn't reached; assert rejection.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: moderate — `transport_status_history`'s own append-only *lock* (no
+  update/delete) was already hardened, which could read as "this table is secure" without checking
+  the INSERT `WITH CHECK` specifically.
+
+### 6.6 — `buyer_applications.organization_id` not bound to the animal's real owning org — PII can be misrouted between competing organisations
+
+- **Severity**: Medium.
+- **Exact location**: `supabase/migrations/20260101001000_buyer_applications.sql` lines 9–66 — the
+  buyer's `for all` INSERT/UPDATE policy checks only `buyer_id = auth.uid()`, never that
+  `organization_id` matches `animals.organization_id` for the given `animal_id`. `submitApplication()`
+  (`src/lib/queries/applications.ts` lines 78–100) inserts `organization_id` verbatim from client
+  input. The org-owner SELECT policy (lines 57–66) trusts that same client-writable column.
+- **Reachable actor**: any authenticated buyer submitting an application (or a party who can induce
+  one, e.g. a modified request or a phishing clone of a real listing form).
+- **Reproduction path**: submit an application for `animal_id` belonging to org A, with
+  `organization_id` set to org B (which the buyer isn't applying to) — insert succeeds; org B's owner
+  can then read the buyer's phone, `children_ages`, housing details, and message via their own
+  legitimate org-owner SELECT policy.
+- **Expected invariant**: an application's `organization_id` should always equal the referenced
+  animal's actual owning org.
+- **Observed behavior**: as above — enables lead-poaching between competing verified orgs, not just a
+  display bug.
+- **Smallest fix**: add to the `WITH CHECK`: `exists (select 1 from animals a where a.id = animal_id
+  and a.organization_id = buyer_applications.organization_id)`, or derive `organization_id`
+  server-side inside a `SECURITY DEFINER` RPC instead of trusting the client column.
+- **Regression test**: as buyer, insert with `animal_id` belonging to org A but `organization_id` =
+  org B; assert rejection; assert org B cannot select the row.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: moderate — the bug sits in a column that looks like normal FK data,
+  not an obviously-sensitive actor/status column, so a keyword-driven sweep would likely miss it.
+
+### 6.7 — `transport-evidence` storage bucket doesn't revoke driver access on cancellation, unlike its sibling `transport-documents` bucket
+
+- **Severity**: Medium (corrects/extends §12's storage inventory, which verified
+  reassignment-revocation but not cancellation).
+- **Exact location**: `supabase/migrations/20260101010000_pickup_delivery_evidence.sql` lines 20–41
+  (both `transport-evidence` INSERT and SELECT policies) gate solely on
+  `is_assigned_driver_for_request()`, whose final definition
+  (`supabase/migrations/20260101009800_driver_id_checks_active_role.sql` lines 29–43, confirmed live)
+  has no `transport_requests.status` filter. The sibling `transport-documents` policy in the same
+  file (lines 67–80) explicitly adds `tr.status not in ('draft','submitted','rejected',
+  'cancelled_by_customer','cancelled_by_operations')`; `transport-evidence` never got the equivalent
+  guard.
+- **Reachable actor**: a driver previously assigned to a request later cancelled (by customer or ops)
+  without being reassigned — `cancelMyTransportRequest()` (`src/lib/queries/transport.ts` lines
+  772–776) only updates `status`, never `assigned_driver_id`, and no migration ever nulls it on
+  cancellation.
+- **Reproduction path**: driver assigned to request R; customer cancels R; `assigned_driver_id` still
+  points at the driver; the driver can still `supabase.storage.from('transport-evidence').upload(...)`
+  / `createSignedUrl(...)` for `R/...` indefinitely.
+- **Expected invariant**: matches the already-applied `transport-documents` guard exactly.
+- **Observed behavior**: as above. (Reassignment — as opposed to cancellation-without-reassignment —
+  does correctly revoke access, since the join to the *new* driver's id fails for the old one; only
+  the cancellation path leaks.)
+- **Smallest fix**: add the same `tr.status not in (...)` clause to both `transport-evidence`
+  policies, or centralize the check inside `is_assigned_driver_for_request()` so both sibling buckets
+  inherit it.
+- **Regression test**: assign driver, cancel the request without reassigning, assert the driver's
+  evidence upload/sign calls now fail.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: low-moderate — the correct-looking reassignment behavior could cause a
+  reviewer to conclude driver-access revocation "works" without separately testing cancellation.
+
+### 6.8 — `approve_user_verification()` and the verification-rejection path have no audit trail
+
+- **Severity**: Medium.
+- **Exact location**: `approve_user_verification()`
+  (`supabase/migrations/20260101009700_verification_approval_idempotency.sql` lines 17–90, full
+  current version read) never inserts into `audit_logs`, despite creating an organisation row and
+  activating a platform role — arguably the most consequential admin action in the schema. There is
+  no `reject_user_verification()` RPC at all; rejection goes through a raw client update
+  (`src/components/verification-review-list.tsx` lines 69–77, `.from("user_verifications").update({
+  status: "rejected", notes: reason })`), gated only by the admin `FOR ALL` policy, with no trigger
+  stamping `reviewed_by`/`reviewed_at` for this table.
+- **Reachable actor**: any admin (this is a missing-observability gap, not unauthorized access).
+- **Reproduction path**: approve or reject a verification through the normal admin UI; `select * from
+  audit_logs where target_id = <verification id>` returns zero rows; for a rejection,
+  `user_verifications.reviewed_by`/`reviewed_at` stay `null` permanently.
+- **Expected invariant**: `CLAUDE.md` rule #13, "important status changes need an audit trail," and
+  the pattern already used elsewhere (org-owner transfer, moderation decisions).
+- **Observed behavior**: zero audit trail for approval; permanently-null `reviewed_by`/`reviewed_at`
+  plus zero audit trail for rejection.
+- **Smallest fix**: add an `audit_logs` insert inside `approve_user_verification()`; add a small
+  `reject_user_verification()` RPC that stamps `reviewed_by`/`reviewed_at` and logs to `audit_logs`,
+  replacing the raw client update.
+- **Regression test**: after approval/rejection, assert a matching `audit_logs` row exists and (for
+  rejection) `reviewed_by`/`reviewed_at` are set.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: low — this is an absence, not a bug in existing code, so it requires
+  deliberately checking "is this logged" rather than reading what's already there.
+
+### 6.9 — `uploaded_by` is forgeable on `transport_documents` and `welfare_case_documents`
+
+- **Severity**: Medium.
+- **Exact location**: `transport_documents.uploaded_by`
+  (`supabase/migrations/20260101001400_transport_documents.sql` line 18) — the hardening trigger
+  `prevent_requester_writes_to_document_review_fields()`
+  (`supabase/migrations/20260101009600_transport_document_review_lock.sql` lines 28–76) locks
+  `reviewed_by`/`reviewed_at`/`status` but never references `uploaded_by`. Same gap on
+  `welfare_case_documents.uploaded_by` (`supabase/migrations/20260101007600_welfare_cases.sql` line
+  124) — the org-membership `WITH CHECK` never validates `uploaded_by`.
+- **Reachable actor**: any requester with insert rights to their own transport request's documents
+  (or org member for welfare-case documents).
+- **Reproduction path**: `submitDocument()` (`src/lib/queries/transport.ts` lines 465–490) takes
+  `uploadedBy` as a plain input parameter and inserts it verbatim — a requester can set it to an
+  arbitrary profile id, e.g. misattributing a compliance document's upload to staff.
+- **Expected invariant**: matches the pattern already correctly applied to `reviewed_by`/`reviewed_at`
+  in the same hardening migration.
+- **Observed behavior**: as above.
+- **Smallest fix**: stamp `uploaded_by := auth.uid()` server-side via a `before insert` trigger, same
+  shape as the existing review-lock trigger.
+- **Regression test**: insert a document with `uploaded_by` set to a different profile id; assert
+  it's overridden/rejected.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: moderate — the hardening migration's name ("review lock") could read
+  as "actor attribution on this table is handled" without checking which specific columns it covers.
+
 ## 7. Low findings
 
 ### 7.1 — `convert_application_to_reservation()` leaks a raw Postgres constraint name on the (correctly-prevented) double-sell race
@@ -504,6 +705,50 @@ or write another tenant's protected data directly.
   usage data" decision, independently reasonable given local seed data can't distinguish genuine
   need from a guess. Not re-litigated in depth this pass; flagged only for completeness of the A10
   query/performance area.
+
+### 7.5 — `getFriendlyErrorMessage()` sanitization layer built but wired into only 1 of 4 identified call sites
+
+- **Severity**: Low.
+- **Exact location**: `src/lib/errors.ts` — a real, well-designed Postgres-error-code sanitizer,
+  built (per its own header comment) because several call sites were found doing
+  `toast.error(error.message)` raw. `grep -rln getFriendlyErrorMessage src` shows exactly one
+  consumer (`src/routes/_public.transport.request.tsx`); the three call sites the header comment
+  names as motivation are still raw: `src/routes/_public.create-breeder.tsx:119`,
+  `src/routes/dashboard.buyer.profile.tsx:132`, `src/routes/_public.reset-password.tsx:62`.
+- **Reachable actor**: any user who triggers a constraint violation on those three forms (e.g. a
+  duplicate-phone unique constraint on `profiles`).
+- **Reproduction path**: trigger a unique/check-constraint violation on the buyer-profile-update or
+  create-breeder form; observe the raw Postgres error text surfaced via `toast.error`.
+- **Expected invariant**: the fix's own stated purpose — all three named call sites sanitized.
+- **Observed behavior**: the fix exists but wasn't applied where its own commit said it needed to be.
+- **Smallest fix**: wire `getFriendlyErrorMessage()` into the three remaining call sites.
+- **Regression test**: frontend-only; a component test asserting sanitized text on a simulated
+  constraint error would cover it.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: low — easy to miss since the sanitizer itself, read in isolation,
+  looks complete and correct.
+
+### 7.6 — `rpc-grant-hygiene.test.ts` doesn't assert the specific error it exists to catch
+
+- **Severity**: Low.
+- **Exact location**: `tests/db/rpc-grant-hygiene.test.ts` lines 14–40 — this file exists
+  specifically to prove `revoke all ... from public` on certain RPCs is in place, but its assertions
+  (`assert.ok(attempt.error)`, e.g. lines 19/24/32/39) only check that *some* error occurred, never
+  the grant-level code (`42501`) nor use the suite's own `isForbidden()` helper (used correctly
+  elsewhere, e.g. `recent-auth-step-up.test.ts`).
+- **Reachable actor**: developer/CI — a test-suite integrity gap, not a live app bug.
+- **Reproduction path**: the file's own comment (lines 6–8) notes the function body's internal role
+  check would also reject an anonymous caller "either way" — so if a future migration accidentally
+  dropped the `revoke ... from public`, this test would keep passing for the wrong reason, silently
+  losing its entire purpose.
+- **Expected invariant**: a test named "grant hygiene" should specifically assert the grant-level
+  rejection it's testing for.
+- **Observed behavior**: as above.
+- **Smallest fix**: assert `attempt.error.code === '42501'` (or use `isForbidden()`) instead of a
+  generic truthiness check.
+- **Regression test**: this finding *is* the regression-test fix.
+- **Integration-blocker status**: no.
+- **Overlap risk with Bot 2**: low.
 
 ## 8. Areas verified adequate (with evidence)
 
@@ -629,9 +874,11 @@ insufficient *internal* authorization logic for who it lets you notify.
 `welfare-case-documents` are new since the prior audit pass and were independently verified this
 time: `transport-evidence`'s policies (`20260101010000_pickup_delivery_evidence.sql`) correctly gate
 upload to the currently-assigned driver and read to the assigned driver + the request's own
-requester, re-evaluated live on every call (not a point-in-time snapshot, so reassignment correctly
-revokes/grants access dynamically). `kennel-media` correctly allows public `SELECT` (intentional —
-already-public marketing content) and scopes writes to the owning org's path segment.
+requester, re-evaluated live on every call (not a point-in-time snapshot, so *reassignment*
+correctly revokes/grants access dynamically). **Correction**: *cancellation without reassignment*
+does **not** revoke access — see §6.7, a real gap the reassignment check above does not cover.
+`kennel-media` correctly allows public `SELECT` (intentional — already-public marketing content) and
+scopes writes to the owning org's path segment.
 Storage-object upload rate limiting is a documented, accepted gap (`docs/TECH_DEBT_REGISTER.md`) —
 `BEFORE INSERT` triggers on Postgres tables can't intercept direct Storage API uploads, and no
 abuse has been demonstrated yet; not re-litigated as a new finding here.
@@ -640,15 +887,20 @@ abuse has been demonstrated yet; not re-litigated as a new finding here.
 
 Spot-checked columns confirmed server-stamped and non-forgeable: `audit_logs.actor_profile_id`,
 `notifications.actor_profile_id` (via `stamp_notification_actor()` trigger),
-`route_assignments.assigned_by`, `transport_documents.reviewed_by`/`reviewed_at`,
+`transport_documents.reviewed_by`/`reviewed_at`,
 `moderation_cases.assigned_moderator_id` (via `claim_moderation_case()`'s `for update` lock),
 `support_cases.assigned_staff_id`, `risk_signals.reviewed_by`, `organisations.owner_user_id`/
 `is_featured`/`verification_status` (via `prevent_org_owner_transfer_by_non_admin()`, which also now
 writes a matching `audit_logs` entry atomically in the same trigger — `20260101011700`).
+**Correction**: `route_assignments.assigned_by` was initially listed here as non-forgeable based on
+reading `assign_request_to_route()` alone; it is not — the underlying table's RLS permits a raw
+write that bypasses the RPC's stamping entirely. Moved to the forgeable list below; see §6.4.
 **Confirmed forgeable** (new findings, not previously documented anywhere in this codebase's own
 `DATABASE_INVARIANTS.md`): `legal_holds.placed_by`/`released_by`, `account_deletion_requests.
-processed_by` (§5.2), and `markDeletionRequestProcessed()`'s client-supplied `processedBy` on the
-`declined` path (§7.3).
+processed_by` (§5.2), `markDeletionRequestProcessed()`'s client-supplied `processedBy` on the
+`declined` path (§7.3), `route_assignments.assigned_by` (§6.4),
+`transport_status_history.changed_by` (§6.5), and `transport_documents.uploaded_by` /
+`welfare_case_documents.uploaded_by` (§6.9).
 
 ## 14. State machines
 
@@ -659,6 +911,9 @@ processed_by` (§5.2), and `markDeletionRequestProcessed()`'s client-supplied `p
 - **`user_verifications`**: RPC-correct, RLS-bypassable — §6.3.
 - **`legal_holds`/`account_deletion_requests`**: RPC-correct, RLS-bypassable, with reauth/audit
   consequences — §5.2.
+- **`route_assignments`**: RPC-correct (`assign_request_to_route()`), RLS-bypassable — §6.4.
+- **`moderation_cases`**: no OLD-state issue, but the resolution step has no conflict-of-interest
+  guard, unlike its own appeal-review sibling — §5.4.
 - **Driver transport status**: `prevent_non_staff_operational_field_changes()`
   (`20260101011100_driver_status_state_machine.sql`) enforces an explicit transition graph —
   independently re-read this pass, no skip/reversal path found.
@@ -692,10 +947,14 @@ processed_by` (§5.2), and `markDeletionRequestProcessed()`'s client-supplied `p
 
 ## 16. Privacy
 
-No exact-address, phone/email, reporter-identity, internal-note, application-answer, or
-document-path leak found in any public- or broad-authenticated-reachable policy or view this pass
-(re-verified independently, not solely inherited from the prior pass — see §8's storage/view
-entries). `private_addresses` correctly scoped to owner/org/admin only. `legal_holds`' reason/actor
+No exact-address, phone/email, reporter-identity, internal-note, or document-path leak found in any
+public- or broad-authenticated-reachable policy or view this pass (re-verified independently, not
+solely inherited from the prior pass — see §8's storage/view entries). **Correction**: one
+application-answer leak *was* found and integrated post-commit — `buyer_applications.organization_id`
+is client-writable and not bound to the referenced animal's real owning org, letting a buyer's
+phone/`children_ages`/housing/message answers be routed to a different (competing) organisation than
+the one they applied to — §6.6. `private_addresses` correctly scoped to owner/org/admin only.
+`legal_holds`' reason/actor
 fields are staff-only by RLS (though forgeable at the actor-column level per §5.2). Account
 deletion's `execute_account_deletion()` genuinely anonymises (`display_name`/`first_name`/
 `last_name`/`email`/`phone`/`avatar_url`/`city`/`country` all set `null`), and a legal hold does
@@ -716,7 +975,9 @@ across the schema (a real, deliberate, greppable convention, including a `reauth
 message prefix specifically for step-up failures). The one confirmed raw-error leak found this pass
 is §7.1 (`convert_application_to_reservation()`'s unhandled unique-violation on the animal-level
 double-sell race) — narrow, low-frequency, and does not itself constitute a security issue (only an
-information/polish one).
+information/polish one). A separate, frontend-side error-leakage gap was also found: a sanitization
+layer built specifically to fix this class of issue exists but is only wired into 1 of the 4 call
+sites its own commit message identifies — §7.5.
 
 ## 19. Query/performance
 
@@ -771,7 +1032,10 @@ ratio was not verified file-by-file across all 56 files. 22 files use `Date.now(
 uniqueness (up from 17 at the prior pass's snapshot — expected, given 8 more migrations/test files
 landed since); not independently re-triaged this pass for genuine collision risk vs. the
 `createTestTransportRequest()` shared-helper pattern the prior pass found already closes the one
-concrete case that mattered.
+concrete case that mattered. One concrete weak-assertion instance was confirmed via the delegated
+agent's fuller pass and integrated post-commit: `tests/db/rpc-grant-hygiene.test.ts` asserts only
+generic error truthiness where it specifically needs to check for a `42501` grant-level rejection —
+see §7.6.
 
 ## 22. Background jobs
 
@@ -790,15 +1054,30 @@ correctly not flagged as a missing-background-job bug.
    template in the same file (`target_reached`/`partially_funded`).
 2. **§5.2 — `legal_holds`/`account_deletion_requests` raw-write bypass.** High severity, defeats a
    deliberately-built security control; fix by revoking the unnecessary table grants (smallest
-   change) and sweep the same `FOR ALL`-admin-vs-RPC pattern across `user_verifications` (§6.3) in
-   the same migration, since the fix shape is identical.
+   change) and sweep the same `FOR ALL`-admin-vs-RPC pattern across `user_verifications` (§6.3),
+   `route_assignments` (§6.4), and `user_consents` (§5.2's systemic-pattern note) in the same
+   migration, since the fix shape is identical in every case — revoke the unnecessary
+   `insert`/`update` grant from `authenticated` wherever a `SECURITY DEFINER` RPC already fronts the
+   table.
 3. **§5.3 — `create_notification_if_enabled()` authorization gap.** High severity, real
    phishing/spam vector reachable by every user; fix at the primitive so all 4+ producers inherit it.
-4. **§6.1 — quotation terminal-state guard.** Independent of the above three.
-5. **§6.2 — `animal_ownership_history` immutability**, bundled with **§6.3** (`user_verifications`
+4. **§5.4 — `moderation_cases` self-resolution conflict-of-interest gap.** High severity, live via
+   the real UI today (not behind a feature flag, unlike §5.1); smallest fix mirrors
+   `review_moderation_appeal()`'s existing self-review guard.
+5. **§6.1 — quotation terminal-state guard.** Independent of the above.
+6. **§6.2 — `animal_ownership_history` immutability**, bundled with **§6.3** (`user_verifications`
    grant fix, if not already folded into #2) — low implementation risk, proven pattern.
-6. **§7.1–7.4** — low priority; §7.1 (clean error message) and §7.2 (`rehoming_reviews` OLD-status
-   guard) are cheap wins worth bundling with #4/#5's migration; §7.3/§7.4 opportunistic.
+7. **§6.5 — `transport_status_history` forged `changed_by`/`status`** and **§6.9 — `uploaded_by`
+   forgery** on `transport_documents`/`welfare_case_documents` — same actor-stamping fix shape,
+   worth one combined migration.
+8. **§6.6 — `buyer_applications.organization_id` cross-org binding** and **§6.7 —
+   `transport-evidence` cancellation-revocation gap** — independent of each other but both
+   real, live, currently-reachable gaps; prioritize ahead of the Low-severity items below.
+9. **§6.8 — verification approval/rejection audit-log gap.** Observability-only, no urgency beyond
+   normal backlog.
+10. **§7.1–7.6** — low priority; §7.1 (clean error message) and §7.2 (`rehoming_reviews` OLD-status
+    guard) are cheap wins worth bundling with an earlier migration in this list; §7.3–§7.6
+    opportunistic (§7.5/§7.6 are pure frontend/test-file changes, no migration needed).
 
 ## 24. Reproduction commands
 
@@ -908,6 +1187,17 @@ docker exec supabase_db_the-puppy-passport psql -U postgres -d postgres -c \
   just a coincidence noticed in passing.
 - **No performance/EXPLAIN analysis** — consistent with the prior pass, the backend's own documented
   "wait for real usage data" position on unindexed FKs was read and accepted, not re-litigated.
+- **Post-commit supplemental integration pass.** After this report's first commit, the four
+  delegated research agents' full structured transcripts (which the primary investigator's own note
+  above says were "not confirmed collected" at finalization time) were in fact retrieved by the
+  coordinating session and cross-checked line-by-line against what had already been committed.
+  §5.4, §6.4–§6.9, and §7.5–§7.6 were added as a result — each independently traceable to specific
+  file/line evidence in those transcripts, none invented. §6.4 additionally corrects a factual error
+  in the original §13 (`route_assignments.assigned_by` was wrongly listed as non-forgeable). This
+  means A11/A12's caveat above (§20/§21 reflecting only the primary investigator's narrower checks)
+  still stands as written for those two areas specifically — the supplemental pass focused on
+  concrete, previously-unintegrated findings from the A1/A3/A4/A5/A6/A7/A13/A14/A16 agents, not on
+  redoing the A11/A12 breadth work.
 
 ## 27. Final snapshot hashes
 
