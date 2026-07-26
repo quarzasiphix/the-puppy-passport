@@ -147,7 +147,8 @@ concurrent-insert race), XR-10 (poison-job handling — audit only, confirmed no
 system exists), XR-11 (backpressure/bounded workers — audit only, confirmed not applicable, no
 worker pool exists), XR-12 (outbox payload versioning — audit only, notifications already have
 this via CJS, `audit_logs` confirmed to need no version field since nothing parses it) complete —
-see table above. Next: XR-13 (template revalidation).
+see table above, XR-13 (template revalidation — proved CJS's "unknown version" safety claim
+empirically, no duplicate implementation) complete. Next: XR-14 (export object lifecycle).
 
 **A restated "FOUR-HOUR AUTONOMOUS BACKEND QUEUE FOR CLAUDE CODE BOT 2" message arrived mid-session
 a second time**, describing an "expected current state" of "Stages BA through BK completed, next
@@ -174,9 +175,9 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage XR-13 (template revalidation — revalidate CJS without duplicate implementation; compatibility
-tests for current and unknown template versions). Re-run the Stage A baseline checks (`git status`,
-`db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
+Stage XR-14 (export object lifecycle — ownership, signed access, expiry, forbidden data and
+duplicate files; end-to-end export tests). Re-run the Stage A baseline checks (`git status`, `db
+reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
 **Note for whoever resumes**: candidate follow-up:
 `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (Stage XR-7) lists 6 multi-write functions still
 needing full atomic-RPC conversion, not this session's
@@ -255,6 +256,7 @@ many earlier commit messages.
 
 | Commit | Stage | Summary |
 |---|---|---|
+| _pending_ | XR-13 | Template revalidation. New `docs/TEMPLATE_REVALIDATION_AUDIT.md`. Revalidated CJS's core safety claim directly instead of trusting the code comment: confirmed by grep that zero code anywhere re-resolves a stored notification against `notificationTemplates` at read time (`listMyNotifications()` only ever selects the stored `title`/`body`). New test in `tests/db/notification-template-versioning.test.ts` proves it empirically — a notification with `template_version: 9999` and a `notification_type` confirmed absent from `notificationTemplates` (via `hasOwnProperty`, not assumed) creates and reads back cleanly, the concrete "current and unknown template versions" compatibility test this stage names. No duplicate implementation — nothing in the CJS migration or `notification-templates.ts` changed. 878/878 tests (+5 from XR-12's 873), verified on a fresh reset plus one more run (hit the same known transient rate-limit flakiness from cumulative session runs on one attempt, confirmed not a real regression via reset), `tsc`/lint/build clean, no migration this stage (134 unchanged). |
 | `3a8a456` | XR-12 | Outbox payload versioning — audit only, no new gap. New `docs/OUTBOX_PAYLOAD_VERSIONING_AUDIT.md`. The one real outbox-shaped producer with a real reader (`notifications`) already has exactly this — Stage CJS's `template_version`, deterministic pure-function rendering, text stored permanently at creation (never re-resolved at read time), stable ids. Not rebuilt (that's Stage XR-13's dedicated revalidation scope). Checked the other candidate, `audit_logs.before`/`after` jsonb payloads, and confirmed no real versioning need: zero code anywhere (including the one real audit-log viewer) ever programmatically reads/parses them — write-only forensic snapshots for direct DB inspection, not a machine-consumed event stream with a reader that could break on shape drift. No other outbox/event-payload system exists (no email/webhook/external integration). No code, migration, or test change. |
 | `bf22a96` | XR-11 | Backpressure and bounded workers — audit only, not applicable, no new gap. New `docs/BACKPRESSURE_BOUNDED_WORKERS_AUDIT.md`. Same real constraint as XR-10: no background worker pool exists to protect. Checked the closest real human-actor analog (`claim_moderation_case()`/`claim_support_case()`) for "stale locks" specifically — already directly investigated at Stage IR-11 and re-confirmed at Stage XR-17: deliberately no lease/TTL, since the broader staff "manage all cases" policy already gives a permanent override, confirmed neither claim RPC has been redefined since. Documented what a real worker pool would need (bounded concurrent claims, `SELECT ... FOR UPDATE SKIP LOCKED`, a real lease/TTL, backpressure) if one is ever built, without speculatively designing it now. No code, migration, or test change. |
 | `f9ad727` | XR-10 | Poison-job handling — audit only, not applicable, no new gap. New `docs/POISON_JOB_HANDLING_AUDIT.md`. Re-confirmed (not assumed) no background job/worker/queue system exists anywhere in this codebase — the same fact independently verified at Stage BA, BU, IR-9, and IR-10; re-grepped for `pg_cron`/scheduler/worker-queue patterns this stage specifically, every hit is a comment referencing the same already-established fact. Poison-job handling (terminal failure after bounded retries, one job not blocking others) only applies to a real job/worker system, which doesn't exist and has no demonstrated need to. Cross-referenced the closest real analogs already built this session (XR-8's terminal-state guards, XR-9's idempotent retry, Stage J's rate limiting) rather than re-explaining them, and documented what a real job system would need to include if one is ever approved, without speculatively designing it now. No code, migration, or test change. |

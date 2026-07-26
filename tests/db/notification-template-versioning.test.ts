@@ -151,3 +151,62 @@ test("a retry with the same dedup_key never changes the stored, already-rendered
     assert.equal(deleted.error, null);
   });
 });
+
+// Stage XR-13 (template revalidation): revalidates CJS's own core safety claim directly, rather
+// than trusting the code comment -- an "unknown" template_version (higher than anything current
+// code defines) or a notification_type no longer present in notificationTemplates (e.g. from a
+// future deploy, or a template later retired) must still create and read back cleanly, since
+// nothing ever re-resolves the stored text against the template at read time.
+test("a notification with an unknown future template_version/type is created and read back safely", async (t) => {
+  const buyer = await as("buyer");
+  let id: string | undefined;
+
+  await t.test(
+    "create_notification_if_enabled accepts a version far ahead of any current template",
+    async () => {
+      const call = await buyer.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "applications",
+        // Deliberately not a key of notificationTemplates -- simulates a notification_type from
+        // a future deploy this current code has never heard of.
+        p_notification_type: "a_future_template_this_code_does_not_know_about",
+        p_title: "From a future template version",
+        p_body: "Rendered by code that doesn't exist yet.",
+        p_template_version: 9999,
+      });
+      assert.equal(call.error, null, "an unrecognized future version/type must not be rejected");
+      assert.ok(call.data);
+      id = call.data as string;
+    },
+  );
+
+  await t.test("reading it back succeeds cleanly, with the stored text untouched", async () => {
+    const row = await buyer
+      .from("notifications")
+      .select("notification_type, title, body, template_version")
+      .eq("id", id!)
+      .single();
+    assert.equal(row.error, null, "reading an unknown-version notification must never fail");
+    assert.equal(row.data?.notification_type, "a_future_template_this_code_does_not_know_about");
+    assert.equal(row.data?.title, "From a future template version");
+    assert.equal(row.data?.template_version, 9999);
+  });
+
+  await t.test(
+    "confirms notificationTemplates genuinely has no entry for this type -- proving the scenario is real, not vacuous",
+    () => {
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(
+          notificationTemplates,
+          "a_future_template_this_code_does_not_know_about",
+        ),
+        false,
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    const deleted = await buyer.from("notifications").delete().eq("id", id!);
+    assert.equal(deleted.error, null);
+  });
+});
