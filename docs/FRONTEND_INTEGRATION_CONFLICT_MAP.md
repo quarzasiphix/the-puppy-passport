@@ -109,11 +109,23 @@ should not resolve by simply picking a side.
   `ops-request-table.tsx`, `transport-document-checklist.tsx`, `transport-timeline.tsx`. The frozen
   branch touched `cards.tsx`, `marketplace/animal-image.tsx`, `notification-bell.tsx`,
   `public/empty-state.tsx`, `public/error-state.tsx`, `site-chrome.tsx`. **Zero filename overlap.**
-- **`src/lib/i18n/**`, `tests/unit/*.test.ts`, `src/lib/presentation/*`,
-  `src/lib/saved-animal-classification.ts`, `src/lib/org-routing.ts`**: entirely new, frontend-only
-  additions with no backend equivalent — safe to bring in wholesale.
-- **`src/routes/__root.tsx`**: frozen-branch-only change (adds i18n context); `main` never touched
-  this file.
+- **`tests/unit/*.test.ts`, `src/lib/presentation/*`, `src/lib/saved-animal-classification.ts`,
+  `src/lib/org-routing.ts`**: entirely new, frontend-only additions with no backend equivalent —
+  safe to bring in wholesale.
+- **`src/lib/i18n/index.tsx` and `locales/{en,pl}.json`** — correction to an earlier draft of this
+  section: these are **not** new. Both already existed at the merge-base itself (added by an
+  original, pre-session commit, `4b54fd2`) and are already actively imported by `main` today
+  (`site-chrome.tsx`, `_public.index.tsx`, `__root.tsx` all import from `@/lib/i18n` right now).
+  `main` never modified the module further after the merge-base; the frozen branch substantially
+  extended it (new `completeness.ts`, `i18n:check` script, +67 lines of translation keys). `git
+  merge-tree` found no conflict because only one side changed it — but "no conflict" here means
+  "the frozen branch's newer version cleanly replaces the merge-base version," not "nothing to
+  review": confirm every real key `main`'s three current importers rely on still exists (under the
+  same name) in the frozen branch's extended version before assuming a silent drop-in swap is safe.
+- **`src/routes/__root.tsx`**: frozen-branch-only change — but only SEO meta copy (page title/
+  description), not i18n wiring (an earlier draft of this line incorrectly guessed it added i18n
+  context; verified directly via `git diff` before this correction — it's meta text only). `main`
+  never touched this file since the merge-base.
 
 ## A real, currently-invisible integration risk: `src/lib/supabase/types.ts`
 
