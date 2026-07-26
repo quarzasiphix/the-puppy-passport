@@ -152,7 +152,9 @@ empirically, no duplicate implementation), XR-14 (export object lifecycle — au
 not applicable, `exportMyData()` is a synchronous JSON response with no export file/object to
 manage), XR-15 (anonymisation consistency — proved the dry-run/execution pairing consistent and
 history-preservation directly), XR-16 (legal-hold propagation — revalidated CJH, closed a real
-missing-audit-trail gap on hold placement/release) complete. Next: XR-17 (cursor stability).
+missing-audit-trail gap on hold placement/release), XR-17 (cursor stability — added an `id`
+tie-breaker to `listPublishedPuppies()`'s pagination, closing a real same-instant tie gap) complete.
+Next: XR-18 (public contract drift scanner).
 
 **A restated "FOUR-HOUR AUTONOMOUS BACKEND QUEUE FOR CLAUDE CODE BOT 2" message arrived mid-session
 a second time**, describing an "expected current state" of "Stages BA through BK completed, next
@@ -179,11 +181,10 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage XR-17 (cursor stability — stable tie-breakers, bounded size and malformed cursor rejection;
-mutation-between-pages tests). Re-run the Stage A baseline checks (`git status`, `db reset`,
-`test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below. **Note for
-whoever resumes**: candidate
-follow-up:
+Stage XR-18 (public contract drift scanner — detect columns, nullability, enum and privilege
+drift; document intentional updates). Re-run the Stage A baseline checks (`git status`, `db
+reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section below.
+**Note for whoever resumes**: candidate follow-up:
 `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (Stage XR-7) lists 6 multi-write functions still
 needing full atomic-RPC conversion, not this session's
 own next stage but worth picking up whenever convenient.
@@ -261,6 +262,7 @@ many earlier commit messages.
 
 | Commit | Stage | Summary |
 |---|---|---|
+| _pending_ | XR-17 | Cursor stability. New `docs/CURSOR_STABILITY_AUDIT.md`. Found and fixed a real gap in `listPublishedPuppies()` (the one real server-side-paginated query, Stage IR-2): `created_at` alone is not a stable sort key, since Postgres evaluates `now()` once per statement, not once per row — several puppies added via one multi-row INSERT (a real, reachable pattern, e.g. a litter added at once) share the exact same timestamp, giving `.range()`-based pagination no guaranteed ordering among the tied rows across separate page requests. Fixed by adding `id` as a secondary, stable sort key (`created_at desc, id asc`), no visible change for the common distinct-timestamp case. New test in `tests/db/marketplace-search-contract.test.ts` proves it against a genuine tie (two animals inserted in one statement, confirmed to share the literal same `created_at`), not a hypothetical one. Checked bounded page size (no reachable attack surface yet — nothing currently calls the paginated path with real arguments) and "malformed cursor rejection" (not applicable — this app uses plain offset pagination, not an opaque cursor token, so there's no token to forge) and confirmed neither needs a fix now. No migration this stage. 891/891 tests (+4 from XR-16's 887), verified on two consecutive runs (no reset needed, no schema change), `tsc`/lint/build clean, 135 migrations unchanged. |
 | `d2d5d62` | XR-16 | Legal-hold propagation. New `docs/LEGAL_HOLD_PROPAGATION_AUDIT.md` — a revalidation pass over Stage CJH per this stage's own explicit precedence, not a duplicate build. Confirmed already correct: deletion/anonymisation blocking, never-hard-deleted hold rows, admin-only gating, server-stamped actors. **Found one real gap, checked literally against this stage's own "restrict and audit hold transitions" wording**: `place_legal_hold()`/`release_legal_hold()` never wrote a single `audit_logs` entry, unlike every other comparably consequential admin action in this schema — a legal hold overrides someone's own deletion rights, tied to litigation/investigation, yet left no trace in the shared ledger ops/admin actually review together. `20260101013300_legal_hold_audit_trail.sql`: both RPCs now insert a real, correctly-attributed `audit_logs` entry. New tests in `tests/db/legal-holds.test.ts` prove both transitions land as separate, real entries. Checked "archival"/"Storage cleanup" propagation and confirmed no real gap — no delete-a-document feature exists anywhere yet to propagate a check into (matching Stage BV's earlier finding, still true). 887/887 tests (+3 from XR-15's 884), verified on a fresh reset plus one more run without reset, `tsc`/lint/build/`db:preflight` clean, 135 migrations, no duplicate prefixes. |
 | `c707b8a` | XR-15 | Anonymisation consistency. New `docs/ANONYMISATION_CONSISTENCY_AUDIT.md`. `execute_account_deletion()` (Stage AI) and `get_account_deletion_blockers()` (its dry-run, Stage CJI) were each already thoroughly tested in isolation but never proven consistent with each other on the same account. New test in `tests/db/account-deletion-execution.test.ts` proves it end-to-end on one real throwaway account: the dry-run reports a real blocker and real execution also refuses, consistently; the blocker resolves, the dry-run reports zero, and real execution then genuinely succeeds. Also proves "preservation of other users and history" directly rather than by construction alone: a real public post the account authored survives anonymisation completely intact (FK, content, existence all untouched) while the author's own identity is genuinely anonymised. Confirmed (not assumed) the frontend already gracefully degrades a since-anonymised author's null `display_name` at every real display site. No migration this stage. 884/884 tests (+6 from XR-14's 878), verified on a fresh reset plus one more run without reset, `tsc`/lint/build clean, 134 migrations unchanged. |
 | `ce38f62` | XR-14 | Export object lifecycle — audit only, not applicable, no new gap. New `docs/EXPORT_OBJECT_LIFECYCLE_AUDIT.md`. `exportMyData()` is the only real export feature in this app — confirmed by reading the full function it performs a set of RLS-scoped DB reads and returns the assembled JSON directly to the caller in the same request, with no Storage bucket, generated file, signed URL, or async flow anywhere. Every concern this stage names (object ownership, signed access, expiry, duplicate files) describes protecting a generated file that outlives its request — there is none here. Cross-referenced (not re-audited) the export's own already-verified real boundary (RLS-scoped queries, no cross-tenant leak, `tests/db/data-export.test.ts`). Documented what a future async/Storage-backed export would need if one is ever built. No code, migration, or test change. |

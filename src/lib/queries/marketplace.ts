@@ -159,7 +159,14 @@ export async function listPublishedPuppies(filters?: PuppySearchFilters) {
   if (filters?.sex) query = query.eq("sex", filters.sex);
   if (filters?.priceMin !== undefined) query = query.gte("price", filters.priceMin);
   if (filters?.priceMax !== undefined) query = query.lte("price", filters.priceMax);
-  query = query.order("created_at", { ascending: false });
+  // Stage XR-17 (cursor stability): `created_at` alone is not a stable sort key -- rows inserted
+  // in the same statement (e.g. several puppies from one litter added at once) share the exact
+  // same `now()` value, since Postgres evaluates it once per statement, not once per row. Without
+  // a secondary, genuinely unique tie-breaker, `.range()`-based pagination has no guaranteed
+  // ordering among tied rows, so a puppy could appear on two pages or be silently skipped
+  // depending on how each separate query happens to resolve the tie. `id` is unique and stable,
+  // closing the gap with no visible behaviour change for the common case (distinct timestamps).
+  query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
   if (filters?.page !== undefined && filters?.pageSize !== undefined) {
     const from = filters.page * filters.pageSize;
     query = query.range(from, from + filters.pageSize - 1);

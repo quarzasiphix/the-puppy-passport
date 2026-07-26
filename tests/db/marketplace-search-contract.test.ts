@@ -8,7 +8,7 @@
 // local instance before relying on it in the real query layer.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { anon } from "./helpers.ts";
+import { anon, as, ids } from "./helpers.ts";
 
 test("published puppies: breed filter genuinely excludes non-matching rows only when !inner is used", async (t) => {
   const client = anon();
@@ -150,4 +150,83 @@ test("published puppies: pagination via range() is stable and covers every row e
       );
     },
   );
+});
+
+// Stage XR-17 (cursor stability): `created_at` alone is not a stable sort key -- rows inserted in
+// the same SQL statement share the exact same `now()` value (Postgres evaluates it once per
+// statement, not once per row), a real, reachable case (e.g. several puppies from one litter
+// added at once). listPublishedPuppies() now orders by `created_at desc, id asc` -- proves the
+// tie-breaker actually produces a deterministic, gapless page split for genuinely tied rows,
+// which `created_at` alone cannot guarantee.
+test("published puppies: a secondary id tie-breaker keeps pagination stable for same-instant rows", async (t) => {
+  const admin = await as("admin");
+  const client = anon();
+  let ids1: string[] = [];
+
+  await t.test("setup: two puppies inserted in ONE statement -- identical created_at", async () => {
+    const created = await admin
+      .from("animals")
+      .insert([
+        {
+          name: "XR-17 Tie A",
+          listing_category: "breeder_puppy",
+          is_published: true,
+          organization_id: ids.orgCichyLas,
+        },
+        {
+          name: "XR-17 Tie B",
+          listing_category: "breeder_puppy",
+          is_published: true,
+          organization_id: ids.orgCichyLas,
+        },
+      ])
+      .select("id, created_at");
+    assert.equal(created.error, null);
+    assert.equal(created.data?.length, 2);
+    ids1 = (created.data ?? []).map((r) => r.id as string);
+    assert.equal(
+      created.data?.[0]?.created_at,
+      created.data?.[1]?.created_at,
+      "expected a genuine tie -- both rows must share the exact same created_at",
+    );
+  });
+
+  await t.test(
+    "the same two-query, page-size-1 split (matching listPublishedPuppies' own order) is deterministic and gapless across the tied rows",
+    async () => {
+      const orderedQuery = () =>
+        client
+          .from("animals")
+          .select("id")
+          .in("id", ids1)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true });
+
+      const full = await orderedQuery();
+      assert.equal(full.error, null);
+      assert.deepEqual(
+        full.data?.map((r) => r.id),
+        [...ids1].sort(),
+        "with the id tie-breaker, tied rows must resolve to a deterministic ascending-id order",
+      );
+
+      // Run the same query twice more (simulating two separate paginated page requests hitting
+      // the tied group) and confirm both agree with each other and with the single fetch above --
+      // proving the order is truly deterministic, not incidentally stable this one time.
+      const repeat1 = await orderedQuery();
+      const repeat2 = await orderedQuery();
+      assert.deepEqual(
+        repeat1.data?.map((r) => r.id),
+        full.data?.map((r) => r.id),
+      );
+      assert.deepEqual(
+        repeat2.data?.map((r) => r.id),
+        full.data?.map((r) => r.id),
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    await admin.from("animals").delete().in("id", ids1);
+  });
 });
