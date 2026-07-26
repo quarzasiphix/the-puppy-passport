@@ -1,0 +1,16 @@
+-- Stage XR-2 (append-only queue): SECURITY DEFINER audit, "minimal grants" -- a second instance of
+-- the exact shape Stage IR-13 closed for has_role(): get_notification_preference(p_profile_id
+-- uuid, p_category text) accepts an arbitrary *other* user's profile id, unlike every no-argument
+-- role predicate in this schema, and was granted directly to `authenticated` (never anon) since
+-- its own migration. Its only real caller anywhere in the app is
+-- create_notification_if_enabled() (same file), a SECURITY DEFINER function that executes it under
+-- its own owner privileges regardless of the invoking role's grants — confirmed by the exact same
+-- mechanism already proven safe for has_role()/is_admin() at Stage IR-13, and by grep: zero direct
+-- `.rpc("get_notification_preference", ...)` callers anywhere in src/. The direct `authenticated`
+-- grant meant any logged-in user (not just staff) could call it directly with an arbitrary real
+-- profile id and learn whether that specific person has muted a specific notification category —
+-- lower-sensitivity than a role-membership probe, but the same real, reachable-via-raw-API-call
+-- cross-user information disclosure shape, closed the same way: revoke the grant entirely, since
+-- nothing legitimate ever calls it with anything other than the current notification-creation
+-- flow's own recipient id, from inside a SECURITY DEFINER function that doesn't need the grant.
+revoke execute on function public.get_notification_preference(uuid, text) from authenticated;

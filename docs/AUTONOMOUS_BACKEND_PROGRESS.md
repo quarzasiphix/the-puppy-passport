@@ -129,8 +129,10 @@ its own stated precedence.
 **XR-1 through XR-24** (append-only queue, recorded earlier this session): its own explicit
 precedence ("starts only after every earlier-assigned stage... then IR-1–IR-18... completes") is
 now satisfied — IR-1 through IR-18 closed above. XR-1 (protected-field mutation matrix — closed a
-real `support_cases` reopen-field-smuggling gap) complete — see table above. Next: XR-2 (SECURITY
-DEFINER audit).
+real `support_cases` reopen-field-smuggling gap), XR-2 (SECURITY DEFINER audit — automated the
+search_path check into `db:preflight`, closed a second `has_role()`-shaped minimal-grants gap on
+`get_notification_preference()`) complete — see table above. Next: XR-3 (grant/Data API exposure
+audit).
 
 **A restated "FOUR-HOUR AUTONOMOUS BACKEND QUEUE FOR CLAUDE CODE BOT 2" message arrived mid-session
 a second time**, describing an "expected current state" of "Stages BA through BK completed, next
@@ -157,10 +159,10 @@ earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
 ## Next up
 
-Stage XR-2 (SECURITY DEFINER audit — inventory all functions; pinned search_path, minimal grants,
-server-derived actor and tenant validation; automated drift check). Re-run the Stage A baseline
-checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to
-resume" section below. **Note for whoever resumes**:
+Stage XR-3 (grant/Data API exposure audit — audit SELECT/INSERT/UPDATE/DELETE/EXECUTE separately
+from RLS; find unreachable intended policies and broad grants; document inventory and drift
+tests). Re-run the Stage A baseline checks (`git status`, `db reset`, `test:db` ×2, `tsc`, `build`)
+before starting, per the "how to resume" section below. **Note for whoever resumes**:
 `src/lib/supabase/types.ts` is now real generated output (Stage IR-5), not a hand-written stub —
 re-run `npm run db:types` after any future migration that adds/changes a table, column, or RPC
 signature the app uses, the same as any other generated artifact. **Also note**: `eslint.config.js`
@@ -235,6 +237,7 @@ many earlier commit messages.
 
 | Commit | Stage | Summary |
 |---|---|---|
+| _pending_ | XR-2 | SECURITY DEFINER audit. Extended `scripts/migration-preflight.mjs` (Stage CA) with a 5th automated check: any `SECURITY DEFINER` function whose *latest* definition (correctly tracking `create or replace` redefinitions across files, not just its first appearance) has no pinned `search_path` — turning the manual `psql` audit run by hand at Stages IR-13/IR-17/IR-1(indirectly) into a real, repeatable, offline `npm run db:preflight` check. **Found the script itself had zero test coverage** despite its own Stage CA commit message claiming otherwise — added `tests/db/migration-preflight.test.ts` (9 tests) covering all 5 checks against synthetic SQL, including a real bug caught while writing it: check 4's "safe drop" exemption checks for `if not exists` (which doesn't grammatically apply to DROP), never `if exists` — inert in practice (this schema never uses that phrasing) but a genuine, if harmless, latent defect in a check nobody had tested before. Also found and fixed a second real "minimal grants" instance of the exact shape Stage IR-13 closed for `has_role()`: `get_notification_preference(p_profile_id, p_category)` — the only other function in the schema accepting an arbitrary *other* user's id — was granted directly to `authenticated` with zero direct app-code caller (confirmed by grep) and no internal check of its own; any logged-in user could probe an arbitrary real profile id and learn whether that person muted a specific notification category. Lower severity than a role-membership probe, same reachable-via-raw-API-call shape. Fixed with `20260101012800_notification_preference_execute_lock.sql` (`revoke execute ... from authenticated`) — safe by the same mechanism already proven for `has_role()`: its one real caller, `create_notification_if_enabled()`, is itself `SECURITY DEFINER` and executes it under its own owner privileges regardless of the invoking role's grants. Updated the 2 existing direct-RPC-call tests in `tests/db/notification-preferences.test.ts` to prove the new rejection instead, while the actual preference-logic behavior (default-enabled, security-always-true) stays proven through `create_notification_if_enabled()`'s own already-present observable-outcome tests, unchanged. 832/832 tests (+9 from XR-1's 823), verified on a fresh reset plus two more runs without reset (grant/security-changing stage), `tsc`/lint/build clean, 130 migrations, no duplicate prefixes, `db:preflight`'s own new check confirms zero unpinned `SECURITY DEFINER` functions remain. |
 | `fdd1bfc` | XR-1 | Protected-field mutation matrix. New `docs/PROTECTED_FIELD_MATRIX.md` — a real audit of every `prevent_*`/`*_lock` trigger in `supabase/migrations/` (cross-referenced against each migration file, not guessed), consolidated into one table: 14 tables/buckets with a documented protected-field lock, plus 5 confirmed to structurally need none (single-writer tables where the column-lock bug class can't occur). **Found and fixed one real, previously-uncovered gap while building it**: `support_cases`' "requesters may only reopen their own resolved or closed case" policy's `with check` only ever verified the new `status`, never that every other column stayed equal to `OLD` — a requester's UPDATE could smuggle in a `priority` bump, a `category`/`subject` change, or self-assign `assigned_staff_id` alongside a legitimate reopen, despite this table's own header comment explicitly saying all of those are staff-only. Not reachable through the real UI (`reopenSupportCase`-style call sites only ever send `{status:'reopened'}`), real via a raw API call, the exact same severity tier as every other lock trigger this session has added. Fixed with `20260101012700_support_case_reopen_field_lock.sql`: `prevent_requester_writes_to_staff_controlled_support_fields()`, the same allowlist-diff shape as `prevent_buyer_writes_to_org_controlled_fields()` (only `status`/`updated_at` stay requester-mutable). New tests in `tests/db/support-cases.test.ts` prove: a reopen bundled with a priority bump is rejected and doesn't partially apply, a reopen bundled with self-assignment is rejected, a plain reopen still works, and ops staff retain full unrestricted access throughout. 823/823 tests (+7 from IR-18's 816), verified on a fresh reset plus two more runs without reset (RLS/trigger-changing stage), `tsc`/lint/build clean, 129 migrations, no duplicate prefixes, `SECURITY DEFINER` search_path audit still zero-finding. |
 
 ## Third/fourth supplemental queue: stages completed

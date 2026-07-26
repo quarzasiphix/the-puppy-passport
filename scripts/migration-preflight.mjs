@@ -27,9 +27,19 @@
 // whether a GRANT's columns match intent) — this is a fast, offline, static text scan over
 // `supabase/migrations/*.sql`, meant to run in seconds before a slower `db reset` + `test:db` pass,
 // not a replacement for either.
+//
+// Stage XR-2 (append-only queue): SECURITY DEFINER audit. Adds a 5th check, turning what had been
+// a manual, one-off `psql` query (run by hand at Stages IR-13/IR-17 and, before that, Stage AN)
+// into an automated, repeatable one — the same "a snapshot goes stale the moment the next
+// migration is added" reasoning this whole script already exists for. A `SECURITY DEFINER`
+// function with no pinned `search_path` is exploitable if a lower-privileged role can ever get a
+// malicious same-named object earlier in the resolution order (the exact class of bug Postgres's
+// own docs warn about); this schema has consistently pinned one on every such function since the
+// very first migration, and this check makes sure that stays true automatically going forward.
 
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
 
@@ -131,6 +141,36 @@ function findFailures(filename, rawSql, allGrantedTables) {
   return failures;
 }
 
+// --- Check 5: SECURITY DEFINER without a pinned search_path ---
+// Cross-file, like collectAllGrantedTables(): a function can be `create or replace`'d again in a
+// later migration (this schema does that routinely, e.g. `create_notification_if_enabled()` was
+// redefined 3 times across CJR/CJS to add parameters) — only the *last* definition, in filename
+// order, is what actually governs the function's real behaviour today, so this walks every file
+// in order and lets a later redefinition overwrite an earlier one's recorded status, rather than
+// flagging a function that was fixed in a later file.
+//
+// Matches from `create (or replace)? function public.<name>(` up to the first `$$` (this
+// codebase's own dollar-quote delimiter, used with no tag on every function, confirmed by
+// grepping every `create...function` in the whole migration set) as the function's "header" —
+// language/security/volatility/search_path clauses always live in that header, in whatever order,
+// never inside the body itself.
+function collectSecurityDefinerSearchPathStatus(files, fileContents) {
+  const status = new Map(); // name -> { securityDefiner: boolean, searchPathPinned: boolean }
+  for (const file of files) {
+    const sql = stripSqlComments(fileContents.get(file));
+    for (const match of sql.matchAll(
+      /create\s+(?:or\s+replace\s+)?function\s+public\.(\w+)\s*\(([\s\S]*?)\$\$/gi,
+    )) {
+      const [, name, header] = match;
+      status.set(name, {
+        securityDefiner: /security\s+definer/i.test(header),
+        searchPathPinned: /set\s+search_path\s*=/i.test(header),
+      });
+    }
+  }
+  return status;
+}
+
 function main() {
   const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith(".sql"))
@@ -151,6 +191,18 @@ function main() {
     }
   }
 
+  const searchPathStatus = collectSecurityDefinerSearchPathStatus(files, fileContents);
+  for (const [name, { securityDefiner, searchPathPinned }] of searchPathStatus) {
+    if (securityDefiner && !searchPathPinned) {
+      console.error(
+        `✗ public.${name}(): SECURITY DEFINER with no pinned "set search_path = ..." in its ` +
+          `current (latest) definition — every other SECURITY DEFINER function in this schema pins ` +
+          `one; add it before this function's next migration ships.`,
+      );
+      totalFailures++;
+    }
+  }
+
   console.log(`Scanned ${files.length} migration files.`);
   if (totalFailures > 0) {
     console.error(`\n${totalFailures} potential issue(s) found — review before merging/deploying.`);
@@ -159,4 +211,15 @@ function main() {
   console.log("No known unsafe patterns found.");
 }
 
-main();
+// Guarded so `tests/db/migration-preflight.test.ts` can import the check functions below without
+// triggering a real filesystem scan + `process.exit()` as a side effect of the import itself.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
+
+export {
+  findFailures,
+  collectAllGrantedTables,
+  collectSecurityDefinerSearchPathStatus,
+  stripSqlComments,
+};

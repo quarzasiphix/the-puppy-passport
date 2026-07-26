@@ -8,14 +8,16 @@ import { as, ids, isBlocked } from "./helpers.ts";
 test("no preference row: category defaults to enabled (opt-out, not opt-in)", async (t) => {
   const buyer = await as("buyer");
 
-  await t.test("get_notification_preference returns true with zero rows stored", async () => {
-    const { data, error } = await buyer.rpc("get_notification_preference", {
-      p_profile_id: ids.buyer,
-      p_category: "applications",
-    });
-    assert.equal(error, null);
-    assert.equal(data, true);
-  });
+  await t.test(
+    "get_notification_preference is no longer directly callable (Stage XR-2 grant lock)",
+    async () => {
+      const attempt = await buyer.rpc("get_notification_preference", {
+        p_profile_id: ids.buyer,
+        p_category: "applications",
+      });
+      assert.ok(attempt.error, "expected the direct grant to be revoked");
+    },
+  );
 
   await t.test("create_notification_if_enabled creates a real row by default", async () => {
     const before = await buyer
@@ -110,7 +112,9 @@ test("'security' is always sent regardless of any stored preference", async (t) 
   await t.test("attempt to disable 'security' directly on the table", async () => {
     // No application code ever does this (the UI disables the toggle), but the real security
     // boundary is get_notification_preference() hard-coding true for this category, not merely the
-    // UI declining to offer the control — prove the RPC ignores a stored row entirely.
+    // UI declining to offer the control — proven below via create_notification_if_enabled's own
+    // observable outcome (get_notification_preference itself is no longer directly callable as of
+    // Stage XR-2, so this stored row is read only through that internal call, never a direct RPC).
     const { error } = await buyer
       .from("notification_preferences")
       .upsert(
@@ -120,14 +124,16 @@ test("'security' is always sent regardless of any stored preference", async (t) 
     assert.equal(error, null);
   });
 
-  await t.test("get_notification_preference still returns true for 'security'", async () => {
-    const { data, error } = await buyer.rpc("get_notification_preference", {
-      p_profile_id: ids.buyer,
-      p_category: "security",
-    });
-    assert.equal(error, null);
-    assert.equal(data, true);
-  });
+  await t.test(
+    "get_notification_preference itself stays locked even for the 'security' category",
+    async () => {
+      const attempt = await buyer.rpc("get_notification_preference", {
+        p_profile_id: ids.buyer,
+        p_category: "security",
+      });
+      assert.ok(attempt.error, "expected the direct grant to be revoked regardless of category");
+    },
+  );
 
   await t.test("create_notification_if_enabled still creates the record", async () => {
     const { data, error } = await buyer.rpc("create_notification_if_enabled", {
