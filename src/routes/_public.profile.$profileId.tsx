@@ -5,6 +5,7 @@ import { MapPin, UserPlus, UserCheck, Dog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   followProfile,
   getPublicKennelSlugForOwner,
@@ -57,7 +58,7 @@ function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["is-following-profile", userId, profile.id] });
       toast.success(followingQuery.data ? "Unfollowed." : "Following.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update follow."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update follow.")),
   });
 
   return (

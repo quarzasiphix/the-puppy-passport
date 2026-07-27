@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   deleteDraft,
   getCustomerTimeline,
@@ -68,7 +69,7 @@ function BuyerTransport() {
       toast.success("Draft deleted.");
       queryClient.invalidateQueries({ queryKey: ["my-transport-drafts", userId] });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete draft.");
+      toast.error(getFriendlyErrorMessage(err, "Could not delete draft."));
     }
   }
 

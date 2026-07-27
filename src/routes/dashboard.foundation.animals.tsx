@@ -11,6 +11,7 @@ import {
 } from "@/lib/queries/foundation";
 import { AdoptionFormDialog } from "@/components/adoption-form-dialog";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/animals")({
   component: AnimalsPage,
 });
@@ -40,7 +41,7 @@ function AnimalsPage() {
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });
       toast.success("Updated.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   const adoptedMutation = useMutation({
@@ -49,7 +50,7 @@ function AnimalsPage() {
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });
       toast.success("Marked as adopted.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   return (

@@ -13,6 +13,7 @@ import {
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/buyer/applications")({
   component: BuyerApplications,
 });
@@ -41,7 +42,7 @@ function BuyerApplications() {
       toast.success("Application withdrawn.");
       queryClient.invalidateQueries({ queryKey: ["my-applications", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not withdraw."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not withdraw.")),
   });
 
   const messageMutation = useMutation({
@@ -49,8 +50,7 @@ function BuyerApplications() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/buyer/messages", search: { conversation: conversationId } });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not open conversation."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
   });
 
   return (

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { listFollowedBreeders, unfollowOrg } from "@/lib/queries/buyer-activity";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/buyer/followed")({
   component: FollowedBreeders,
 });
@@ -25,7 +26,7 @@ function FollowedBreeders() {
       queryClient.invalidateQueries({ queryKey: ["my-followed-breeders", userId] });
       queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   return (

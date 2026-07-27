@@ -8,6 +8,7 @@ import { getMyKennel, listKennelParentDogs } from "@/lib/queries/breeder";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ParentDogFormDialog } from "@/components/parent-dog-form-dialog";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/breeder/parent-dogs")({
   component: ParentDogsPage,
 });
@@ -40,7 +41,7 @@ function ParentDogsPage() {
       queryClient.invalidateQueries({ queryKey: ["kennel-parent-dogs"] });
       toast.success("Updated.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   return (

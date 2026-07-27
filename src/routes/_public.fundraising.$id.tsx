@@ -17,6 +17,7 @@ import {
 import { FUNDRAISING_ENABLED } from "@/lib/fundraising-flag";
 import { FundraisingDisabledNotice } from "@/components/fundraising-disabled-notice";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/fundraising/$id")({
   loader: async ({ params }) => {
     if (!FUNDRAISING_ENABLED) return null;
@@ -59,7 +60,7 @@ function CampaignPage() {
       setSubmitted(true);
       queryClient.invalidateQueries({ queryKey: ["campaign-public-contributions", campaign?.id] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not contribute."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not contribute.")),
   });
 
   if (!FUNDRAISING_ENABLED || !campaign) {

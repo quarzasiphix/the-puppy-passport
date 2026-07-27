@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFoundation } from "@/lib/queries/foundation";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   changeOrgMemberRole,
   inviteOrgMember,
@@ -84,13 +85,13 @@ function TeamPage() {
       setRole("volunteer");
       invalidate();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not invite."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not invite.")),
   });
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeOrgInvitation(id),
     onSuccess: invalidate,
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not revoke."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not revoke.")),
   });
 
   const removeMutation = useMutation({
@@ -99,21 +100,21 @@ function TeamPage() {
       toast.success("Member removed.");
       invalidate();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not remove member."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not remove member.")),
   });
 
   const statusMutation = useMutation({
     mutationFn: (input: { id: string; status: "active" | "suspended" }) =>
       setOrgMemberStatus(input.id, input.status),
     onSuccess: invalidate,
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update status."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update status.")),
   });
 
   const roleMutation = useMutation({
     mutationFn: (input: { id: string; role: OrgMemberRole }) =>
       changeOrgMemberRole(input.id, input.role),
     onSuccess: invalidate,
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not change role."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not change role.")),
   });
 
   const pendingInvitations = invitationsQuery.data?.filter((i) => i.status === "pending") ?? [];

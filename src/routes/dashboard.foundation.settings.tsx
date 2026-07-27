@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, updateMyPhone } from "@/lib/queries/profile";
 import { NotificationPreferences } from "@/components/notification-preferences";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/settings")({
   component: SettingsPage,
 });
@@ -38,7 +39,7 @@ function SettingsPage() {
       toast.success("Saved.");
       queryClient.invalidateQueries({ queryKey: ["my-profile", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save.")),
   });
 
   return (

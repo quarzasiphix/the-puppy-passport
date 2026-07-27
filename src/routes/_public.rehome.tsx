@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { listBreeds } from "@/lib/queries/breeder";
 import { submitRehomingRequest } from "@/lib/queries/rehoming";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/rehome")({
   head: () => ({
     meta: [
@@ -81,7 +82,7 @@ function RehomePage() {
       }),
     onSuccess: () => setStep("success"),
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not submit — please try again."),
+      toast.error(getFriendlyErrorMessage(err, "Could not submit — please try again.")),
   });
 
   const canPreview = form.name.trim() && form.reasonForRehoming.trim() && form.ownershipDeclaration;

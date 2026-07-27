@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { createTransportDraftForFoundationAdoption } from "@/lib/queries/transport";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   CheckCircle2,
   XCircle,
@@ -78,7 +79,7 @@ function ApplicationsPage() {
       setReply("");
       setInternalNotes("");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   const transportMutation = useMutation({
@@ -95,7 +96,7 @@ function ApplicationsPage() {
       );
     },
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not start a transport draft."),
+      toast.error(getFriendlyErrorMessage(err, "Could not start a transport draft.")),
   });
 
   const messageMutation = useMutation({
@@ -106,8 +107,7 @@ function ApplicationsPage() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/foundation/messages", search: { conversation: conversationId } });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not open conversation."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
   });
 
   return (

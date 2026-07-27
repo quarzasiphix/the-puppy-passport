@@ -12,6 +12,7 @@ import {
 } from "@/lib/queries/breeder";
 import { PuppyFormDialog } from "@/components/puppy-form-dialog";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/breeder/puppies")({
   component: PuppiesPage,
 });
@@ -46,7 +47,7 @@ function PuppiesPage() {
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
       toast.success("Updated.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update puppy."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update puppy.")),
   });
 
   const reserveMutation = useMutation({
@@ -55,7 +56,7 @@ function PuppiesPage() {
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
       toast.success("Marked reserved.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update puppy."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update puppy.")),
   });
 
   const litterOptions = (litters ?? []).map((l) => ({ id: l.id, code: l.code }));

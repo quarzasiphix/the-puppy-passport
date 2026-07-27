@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,7 +130,7 @@ function BuyerProfile() {
       })
       .eq("id", userId);
     if (error) {
-      toast.error(error.message);
+      toast.error(getFriendlyErrorMessage(error, "Could not update your profile."));
       return;
     }
     toast.success("Profile updated.");

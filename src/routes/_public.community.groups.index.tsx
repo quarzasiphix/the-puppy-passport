@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { joinGroup, leaveGroup, listGroups, listMyGroupIds } from "@/lib/queries/groups";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 const GROUP_TYPE_LABELS: Record<string, string> = {
   breed: "Breed community",
   breeders: "Breeders",
@@ -40,7 +41,7 @@ function GroupsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update group."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update group.")),
   });
 
   return (

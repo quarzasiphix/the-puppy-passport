@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   getMyModerationCase,
   getMyAppealForCase,
@@ -53,8 +54,7 @@ function MyModerationCasePage() {
       toast.success("Your appeal has been submitted.");
       queryClient.invalidateQueries({ queryKey: ["my-moderation-appeal", caseId] });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not submit your appeal."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not submit your appeal.")),
   });
 
   if (!isSignedIn) {

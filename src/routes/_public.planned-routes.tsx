@@ -18,6 +18,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useAuth } from "@/hooks/use-auth";
 import { joinRouteWaitlist } from "@/lib/queries/routes";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/planned-routes")({
   head: () => ({ meta: [{ title: "Planned routes — Havenpaw" }] }),
   loader: async () => {
@@ -134,7 +135,7 @@ function WaitlistDialog() {
         earliestDate: earliestDate || null,
       }),
     onSuccess: () => setSubmitted(true),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not join waitlist."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not join waitlist.")),
   });
 
   return (

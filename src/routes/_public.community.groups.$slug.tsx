@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   countGroupMembers,
   createGroupPost,
@@ -50,7 +51,7 @@ function GroupDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update group."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update group.")),
   });
 
   // Group-scoped posts are only selectable by members (see 20260101005400_groups.sql) — this is
@@ -69,7 +70,7 @@ function GroupDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
       toast.success("Posted to the group.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not post."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not post.")),
   });
 
   const isTransportRouteGroup = group.group_type === "transport_route";

@@ -16,6 +16,7 @@ import {
 import type { TransportStatus } from "@/lib/supabase/enums";
 import { ReportIncidentDialog } from "@/components/report-incident-dialog";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/driver/")({
   component: DriverHome,
 });
@@ -62,7 +63,7 @@ function DriverHome() {
       toast.success("Updated.");
       queryClient.invalidateQueries({ queryKey: ["my-route-jobs"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   if (driverQuery.isLoading || routeQuery.isLoading) {

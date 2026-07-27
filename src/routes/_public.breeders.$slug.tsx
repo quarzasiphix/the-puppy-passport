@@ -18,6 +18,7 @@ import { ReportDialog } from "@/components/report-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { followOrg, listFollowedOrgIds, unfollowOrg } from "@/lib/queries/buyer-activity";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/breeders/$slug")({
   loader: async ({ params }) => {
     const b = await getKennelBySlug(params.slug).catch(() => null);
@@ -62,7 +63,7 @@ function BreederProfile() {
       else await followOrg(userId, b.id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   return (

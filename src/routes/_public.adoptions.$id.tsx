@@ -19,6 +19,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ReportDialog } from "@/components/report-dialog";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
   loader: async ({ params }) => {
     const animal = await getAdoptionById(params.id).catch(() => null);
@@ -63,8 +64,7 @@ function AdoptionDetail() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/buyer/messages", search: { conversation: conversationId } });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not open conversation."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
   });
 
   const mutation = useMutation({
@@ -89,7 +89,7 @@ function AdoptionDetail() {
         toast.error("You've already expressed interest in this dog.");
         return;
       }
-      toast.error(err instanceof Error ? err.message : "Could not send — please try again.");
+      toast.error(getFriendlyErrorMessage(err, "Could not send — please try again."));
     },
   });
 

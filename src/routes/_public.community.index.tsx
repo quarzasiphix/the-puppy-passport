@@ -22,6 +22,7 @@ import {
 import { listFollowedOrgIds } from "@/lib/queries/buyer-activity";
 import { listFollowedProfileIds } from "@/lib/queries/profile";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 // Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
 // hierarchy pillar 3), not a generic feed. No linked-content preview (animal/transport/route) yet
 // — seed data has no posts using those fields, and building an unverified preview against private-
@@ -100,7 +101,7 @@ function CommunityPage() {
       queryClient.invalidateQueries({ queryKey: ["public-posts"] });
       toast.success("Posted.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not post."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not post.")),
   });
 
   return (
@@ -227,7 +228,7 @@ function PostCard({
       queryClient.invalidateQueries({ queryKey: ["post-reaction-counts"] });
       queryClient.invalidateQueries({ queryKey: ["my-post-reactions"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   const commentMutation = useMutation({
@@ -237,7 +238,7 @@ function PostCard({
       queryClient.invalidateQueries({ queryKey: ["post-comments", post.id] });
       queryClient.invalidateQueries({ queryKey: ["post-comment-counts"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not comment."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not comment.")),
   });
 
   return (

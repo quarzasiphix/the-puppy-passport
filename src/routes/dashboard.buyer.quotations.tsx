@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   documentExpiryWarning,
   listMyQuotations,
@@ -52,7 +53,7 @@ function BuyerQuotationsPage() {
       queryClient.invalidateQueries({ queryKey: ["my-quotations", userId] });
       queryClient.invalidateQueries({ queryKey: ["my-transport-requests", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not respond."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not respond.")),
   });
 
   return (

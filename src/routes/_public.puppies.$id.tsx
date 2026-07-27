@@ -41,6 +41,7 @@ import { startApplicationConversation } from "@/lib/queries/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/lib/queries/applications";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/_public/puppies/$id")({
   loader: async ({ params }) => {
     const puppy = await getPuppyById(params.id).catch(() => null);
@@ -120,7 +121,7 @@ function PuppyDetail() {
         toast.error("Apply for this puppy first so the breeder knows who's asking.");
         return;
       }
-      toast.error(err instanceof Error ? err.message : "Could not start conversation.");
+      toast.error(getFriendlyErrorMessage(err, "Could not start conversation."));
     },
   });
 

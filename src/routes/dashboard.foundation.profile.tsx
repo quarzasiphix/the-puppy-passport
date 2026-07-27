@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getMyFoundationProfile } from "@/lib/queries/foundation";
 import { updateKennel } from "@/lib/queries/breeder";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/profile")({
   component: ProfilePage,
 });
@@ -72,7 +73,7 @@ function ProfilePage() {
       toast.success("Profile updated.");
       queryClient.invalidateQueries({ queryKey: ["my-foundation-profile", userId] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save.")),
   });
 
   const v = form.watch();

@@ -34,6 +34,7 @@ import {
 import { FUNDRAISING_ENABLED } from "@/lib/fundraising-flag";
 import { FundraisingDisabledNotice } from "@/components/fundraising-disabled-notice";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/fundraising/")({
   component: FundraisingPage,
 });
@@ -78,8 +79,7 @@ function FundraisingPage() {
       queryClient.invalidateQueries({ queryKey: ["eligible-quotations", org?.id] });
       toast.success("Draft campaign created.");
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not create campaign."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not create campaign.")),
   });
 
   if (!FUNDRAISING_ENABLED) {

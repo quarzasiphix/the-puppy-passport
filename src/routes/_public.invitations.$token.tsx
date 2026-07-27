@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   acceptOrgInvitation,
   declineOrgInvitation,
@@ -28,14 +29,14 @@ function InvitationPage() {
     mutationFn: () => acceptOrgInvitation(token),
     onSuccess: () => toast.success("You've joined the team."),
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not accept this invitation."),
+      toast.error(getFriendlyErrorMessage(err, "Could not accept this invitation.")),
   });
 
   const declineMutation = useMutation({
     mutationFn: () => declineOrgInvitation(token),
     onSuccess: () => toast.success("Invitation declined."),
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not decline this invitation."),
+      toast.error(getFriendlyErrorMessage(err, "Could not decline this invitation.")),
   });
 
   if (previewQuery.isLoading) {

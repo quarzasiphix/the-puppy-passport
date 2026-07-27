@@ -15,6 +15,7 @@ import {
 import { FUNDRAISING_ENABLED } from "@/lib/fundraising-flag";
 import { FundraisingDisabledNotice } from "@/components/fundraising-disabled-notice";
 
+import { getFriendlyErrorMessage } from "@/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/fundraising/$id")({
   component: CampaignDetailPage,
 });
@@ -50,7 +51,7 @@ function CampaignDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["org-fundraising-campaigns", org?.id] });
       toast.success("Submitted for admin review.");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not submit."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not submit.")),
   });
 
   if (!FUNDRAISING_ENABLED) {

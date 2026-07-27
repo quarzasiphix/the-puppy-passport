@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries/applications";
 import { startApplicationConversation } from "@/lib/queries/messaging";
 import { convertApplicationToReservation } from "@/lib/queries/reservations";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   CheckCircle2,
   XCircle,
@@ -74,7 +75,7 @@ function ApplicationsPage() {
       setOpenId(null);
       setReply("");
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
   });
 
   const messageMutation = useMutation({
@@ -85,8 +86,7 @@ function ApplicationsPage() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/breeder/messages", search: { conversation: conversationId } });
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not open conversation."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
   });
 
   const reserveMutation = useMutation({
@@ -100,7 +100,7 @@ function ApplicationsPage() {
       setOpenId(null);
     },
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not create the reservation."),
+      toast.error(getFriendlyErrorMessage(err, "Could not create the reservation.")),
   });
 
   return (

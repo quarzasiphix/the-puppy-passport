@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFoundation } from "@/lib/queries/foundation";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 import {
   convertWelfareCaseToTransportDraft,
   createWelfareCase,
@@ -123,7 +124,7 @@ function UrgentCasesPage() {
       setForm(emptyForm);
       queryClient.invalidateQueries({ queryKey: ["welfare-cases", orgQuery.data?.id] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not submit case."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not submit case.")),
   });
 
   const convertMutation = useMutation({
@@ -133,7 +134,7 @@ function UrgentCasesPage() {
       queryClient.invalidateQueries({ queryKey: ["welfare-cases", orgQuery.data?.id] });
     },
     onError: (err) =>
-      toast.error(err instanceof Error ? err.message : "Could not start a transport draft."),
+      toast.error(getFriendlyErrorMessage(err, "Could not start a transport draft.")),
   });
 
   return (
