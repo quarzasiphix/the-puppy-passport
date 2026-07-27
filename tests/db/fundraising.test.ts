@@ -89,6 +89,15 @@ test("fundraising: an org cannot self-declare target_reached or partially_funded
     assert.equal(created.error, null);
     campaignId = created.data!.id as string;
 
+    // Stage FA-3: an org can no longer self-activate straight from draft -- a real admin approval
+    // step is now required first, matching the real intended review flow this fixture previously
+    // skipped entirely.
+    const approvedByAdmin = await admin
+      .from("fundraising_campaigns")
+      .update({ status: "approved" })
+      .eq("id", campaignId);
+    assert.equal(approvedByAdmin.error, null);
+
     const activated = await foundation1
       .from("fundraising_campaigns")
       .update({ status: "active" })
@@ -129,6 +138,120 @@ test("fundraising: an org cannot self-declare target_reached or partially_funded
       .single();
     assert.equal(set.error, null);
     assert.equal(set.data?.status, "target_reached");
+  });
+
+  await t.test("cleanup", async () => {
+    await admin.from("fundraising_campaigns").delete().eq("id", campaignId!);
+    await fixture.cleanup();
+  });
+});
+
+// Stage FA-3 (fundraising publication control): "eligible org owners update their own non-terminal
+// campaigns" (Stage AA) already correctly excludes 'approved' from the set of statuses an org can
+// self-set -- but never actually required the campaign to have *passed through* 'approved' before
+// letting the org self-set 'active' (the status that makes it publicly visible). An org could go
+// straight from draft to a fully public, donation-soliciting campaign with zero admin review ever
+// happening -- confirmed genuinely reachable, not hypothetical, since this file's own earlier
+// fixture setup did exactly that until this stage fixed it. New trigger
+// (prevent_fundraising_self_publish, 20260101014000) closes it.
+test("fundraising: an org cannot self-publish a campaign without admin approval first", async (t) => {
+  const fixture = await buildEligibleFixture();
+  const foundation1 = await as("foundation1");
+  const admin = await as("admin");
+  let campaignId: string | undefined;
+
+  await t.test("setup: a draft campaign owned by the eligible org", async () => {
+    const created = await foundation1
+      .from("fundraising_campaigns")
+      .insert({
+        organisation_id: ids.orgFundacja,
+        animal_id: ids.animalReksio,
+        buyer_application_id: fixture.applicationId,
+        transport_request_id: ids.transportReksio,
+        quotation_id: fixture.quotationId,
+        title: "Self-publish lock test",
+        target_amount: 300,
+        currency: "EUR",
+      })
+      .select("id, status")
+      .single();
+    assert.equal(created.error, null);
+    assert.equal(created.data?.status, "draft");
+    campaignId = created.data!.id as string;
+  });
+
+  await t.test(
+    "the org cannot self-activate straight from draft, skipping admin review entirely",
+    async () => {
+      const attempt = await foundation1
+        .from("fundraising_campaigns")
+        .update({ status: "active" })
+        .eq("id", campaignId!)
+        .select();
+      assert.ok(attempt.error, "expected self-publication without approval to be rejected");
+
+      const stillDraft = await admin
+        .from("fundraising_campaigns")
+        .select("status")
+        .eq("id", campaignId!)
+        .single();
+      assert.equal(stillDraft.data?.status, "draft", "status must be unchanged by the rejection");
+    },
+  );
+
+  await t.test(
+    "moving to organisation_review first still does not unlock self-activation",
+    async () => {
+      const reviewStep = await foundation1
+        .from("fundraising_campaigns")
+        .update({ status: "organisation_review" })
+        .eq("id", campaignId!);
+      assert.equal(reviewStep.error, null);
+
+      const attempt = await foundation1
+        .from("fundraising_campaigns")
+        .update({ status: "active" })
+        .eq("id", campaignId!)
+        .select();
+      assert.ok(attempt.error, "expected self-publication to still be rejected without approval");
+    },
+  );
+
+  await t.test("once an admin approves it, the org can then activate it", async () => {
+    const approve = await admin
+      .from("fundraising_campaigns")
+      .update({ status: "approved" })
+      .eq("id", campaignId!)
+      .select("status")
+      .single();
+    assert.equal(approve.error, null);
+    assert.equal(approve.data?.status, "approved");
+
+    const activate = await foundation1
+      .from("fundraising_campaigns")
+      .update({ status: "active" })
+      .eq("id", campaignId!)
+      .select("status")
+      .single();
+    assert.equal(activate.error, null);
+    assert.equal(activate.data?.status, "active");
+  });
+
+  await t.test("admin can always activate directly, unaffected by this lock", async () => {
+    const revert = await admin
+      .from("fundraising_campaigns")
+      .update({ status: "approved" })
+      .eq("id", campaignId!);
+    assert.equal(revert.error, null);
+
+    const adminActivate = await admin
+      .from("fundraising_campaigns")
+      .update({ status: "active" })
+      .eq("id", campaignId!)
+      .select("status")
+      .single();
+    assert.equal(adminActivate.error, null);
+    assert.equal(adminActivate.data?.status, "active");
   });
 
   await t.test("cleanup", async () => {
