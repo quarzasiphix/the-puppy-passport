@@ -198,17 +198,33 @@ query performance budget audit, backend integration manifest, a final adversaria
 six-hour closeout report. Per its own explicit precedence, this queue starts only after every
 earlier-assigned stage (the rest of CJ, then IR-1–IR-18) completes.
 
+## YR queue (YR-1 through YR-25): stages completed
+
+A genuinely new queue, assigned after XR-1 through XR-24 and both transactional-workflow follow-ups
+were already complete. The assigning message's own "CURRENT EXPECTED STATE" claimed the repository
+was at Stage IR-10 with 782/782 tests — stale by the message's own admission ("this checkpoint may
+be stale. Trust the real repository."); the real repository was already at XR-24 plus two follow-up
+stages (948/948 tests, `c8bc235`). Correctly not acted on as a restart signal, matching this
+session's own established precedent for the same situation earlier (the "BA through BK" and "IR-10"
+stale-checkpoint messages before it) — only the genuinely new YR-1–25 content was treated as real
+new work.
+
+| Commit | Stage | Summary |
+|---|---|---|
+| `PENDING` | YR-1 | Notification producer inventory. New `docs/NOTIFICATION_PRODUCER_INVENTORY.md`. Inventoried all 5 real notification producers (this app has no email/push provider and no outbox/job system — confirmed repeatedly by earlier stages — so "notification" means exactly one thing: a synchronous `create_notification_if_enabled()` RPC call) — event source, template id, category, version, dedup key, mandatory/optional status, all in one table. **Found and fixed a real, reachable drift gap**: `category` was a second, independently-suppliable argument to `notifyUserFromTemplate()` alongside `templateId`, with nothing tying the two together — a future call site could type-check fine while sending an `adoption` template under a mismatched `category`, silently gating it on the wrong preference. Fixed at the type level: `category` now lives on the template definition itself (the single source of truth) and is no longer a caller argument at all — impossible to get wrong, not just tested against. `NotificationCategory` moved from `notifications.ts` to `notification-templates.ts` to avoid a circular import, re-exported from its old location. Investigated the `security` category (already correctly hard-coded as always-enabled in `get_notification_preference()`) and confirmed, not assumed, that it has zero real producers — checked the two most obvious candidates (legal-hold placement, account deletion) and found both are deliberately *not* good fits for a user notification, documented why rather than manufacturing one. New `tests/unit/` directory + `npm run test:unit` (pure-logic, no Supabase dependency, distinct from `tests/db`/`tests/e2e`) — 7/7 passing, the "drift coverage" this stage's own definition asked for. No migration this stage (pure TypeScript refactor of an already-tested pipeline). 948/948 `test:db` unaffected, verified on a fresh reset plus one more run without reset (one transient rate-limit-exhaustion flake from cumulative same-session runs, confirmed resolved by the fresh reset, not a regression), `tsc`/lint (21/13 baseline unchanged)/build/`db:preflight` clean, 137 migrations unchanged. |
+
 ## Next up
 
-**The XR-1 through XR-24 queue is complete.** No further stage is currently assigned — see
-`docs/XR_QUEUE_CLOSEOUT_REPORT.md` (Stage XR-24) for the full closeout: current verified state,
-what the queue did, and known open items carried forward. If resuming later without a new explicit
-assignment, re-run the Stage A baseline checks (`git
-status`, `db reset`, `test:db` ×2, `tsc`, `build`) first, per the "how to resume" section
+Stage YR-2 (notification preference enforcement matrix). Re-run the Stage A baseline checks (`git
+status`, `db reset`, `test:db` ×2, `tsc`, `build`) before starting, per the "how to resume" section
 below. **Note for whoever resumes**: candidate follow-up:
-`docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (Stage XR-7) lists 6 multi-write functions still
-needing full atomic-RPC conversion, not this session's
-own next stage but worth picking up whenever convenient.
+`docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (Stage XR-7) still lists `createTransportRequest`
+as the one remaining multi-write function not converted to a full atomic RPC, deliberately deferred
+(reasoning in `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_FOLLOWUP_1.md`) — not this session's own next
+stage but worth picking up whenever convenient. `docs/E2E_TESTING.md` also documents a real,
+unfixed SSR-hydration race on the sign-in/sign-up forms found 2026-07-27 (credentials briefly
+appear in the URL query string on a fast click before React hydrates) — frontend work, out of this
+session's backend-only mandate, flagged for whoever owns that surface next.
 `src/lib/supabase/types.ts` is now real generated output (Stage IR-5), not a hand-written stub —
 re-run `npm run db:types` after any future migration that adds/changes a table, column, or RPC
 signature the app uses, the same as any other generated artifact. **Also note**: `eslint.config.js`

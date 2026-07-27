@@ -154,7 +154,6 @@ export async function notifyAffectedUserOfDecision(caseId: string, affectedProfi
   await notifyUserFromTemplate({
     profileId: affectedProfileId,
     templateId: "moderation_decision",
-    category: "moderation",
     dedupKey: `moderation_case:${caseId}:decision`,
     payload: { caseId },
   });
@@ -266,7 +265,6 @@ export async function notifyAppellantOfAppealDecision(
   await notifyUserFromTemplate({
     profileId: appellantProfileId,
     templateId: "moderation_appeal_decision",
-    category: "moderation",
     dedupKey: `moderation_appeal:${appealId}:decision`,
     payload: { caseId, decision },
   });

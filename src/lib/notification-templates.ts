@@ -15,6 +15,15 @@
 // re-resolves later; `20260101012200_notification_template_versioning.sql`'s
 // `check (template_version is null or template_version >= 1)` is the one thing the database itself
 // enforces, so a caller can never persist a nonsensical version number.
+// Stage YR-1 (notification producer inventory): `category` used to be a second, independently
+// suppliable argument to notifyUserFromTemplate() alongside `templateId` -- nothing tied the two
+// together, so a future call site could type-check fine while passing a template designed for one
+// preference category (e.g. "adoption") under a mismatched one (e.g. "moderation"), silently
+// gating it on the wrong preference. `category` now lives on the template definition itself, the
+// single source of truth, and notifyUserFromTemplate() derives it -- a caller can no longer get
+// this wrong, closed at the type level rather than by convention or a runtime check.
+export type NotificationCategory = "applications" | "adoption" | "moderation" | "security";
+
 export type RehomingDecisionPayload = { animalId: string };
 export type ApplicationStatusChangePayload = { animalName: string; statusLabel: string };
 export type ModerationDecisionPayload = { caseId: string };
@@ -23,6 +32,7 @@ export type ModerationAppealDecisionPayload = { caseId: string; decision: "uphel
 export const notificationTemplates = {
   rehoming_approved: {
     version: 1,
+    category: "adoption" as NotificationCategory,
     render: (payload: RehomingDecisionPayload) => ({
       title: "Your rehoming listing was approved",
       body: "It's now visible to people looking to adopt on Havenpaw.",
@@ -31,6 +41,7 @@ export const notificationTemplates = {
   },
   rehoming_rejected: {
     version: 1,
+    category: "adoption" as NotificationCategory,
     render: (payload: { notes: string }) => ({
       title: "Your rehoming submission wasn't approved",
       body: payload.notes,
@@ -39,6 +50,7 @@ export const notificationTemplates = {
   },
   application_status_change: {
     version: 1,
+    category: "applications" as NotificationCategory,
     render: (payload: ApplicationStatusChangePayload) => ({
       title: `Update on your application for ${payload.animalName}`,
       body: payload.statusLabel,
@@ -47,6 +59,7 @@ export const notificationTemplates = {
   },
   moderation_decision: {
     version: 1,
+    category: "moderation" as NotificationCategory,
     render: (payload: ModerationDecisionPayload) => ({
       title: "A moderation decision affects you",
       body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
@@ -55,6 +68,7 @@ export const notificationTemplates = {
   },
   moderation_appeal_decision: {
     version: 1,
+    category: "moderation" as NotificationCategory,
     render: (payload: ModerationAppealDecisionPayload) => ({
       title:
         payload.decision === "overturned"

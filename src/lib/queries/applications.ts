@@ -211,7 +211,6 @@ export async function respondToApplication(params: {
   await notifyUserFromTemplate({
     profileId: params.buyerId,
     templateId: "application_status_change",
-    category: "applications",
     // Keyed on the specific status reached, not just the application -- a retry of *this*
     // transition dedupes, but a genuinely later, different status change still notifies.
     dedupKey: `application:${params.id}:${params.status}`,

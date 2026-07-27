@@ -84,7 +84,6 @@ export async function approveRehomingReview(id: string, animalId: string, ownerP
   await notifyUserFromTemplate({
     profileId: ownerProfileId,
     templateId: "rehoming_approved",
-    category: "adoption",
     dedupKey: `rehoming_review:${id}:approved`,
     payload: { animalId },
   });
@@ -101,7 +100,6 @@ export async function rejectRehomingReview(id: string, notes: string, ownerProfi
   await notifyUserFromTemplate({
     profileId: ownerProfileId,
     templateId: "rehoming_rejected",
-    category: "adoption",
     dedupKey: `rehoming_review:${id}:rejected`,
     payload: { notes },
   });

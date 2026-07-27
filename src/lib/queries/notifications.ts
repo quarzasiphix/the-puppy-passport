@@ -1,9 +1,12 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
   notificationTemplates,
+  type NotificationCategory,
   type NotificationTemplateId,
   type NotificationTemplatePayloads,
 } from "@/lib/notification-templates";
+
+export type { NotificationCategory } from "@/lib/notification-templates";
 
 export type NotificationRow = {
   id: string;
@@ -42,8 +45,6 @@ export async function markAllNotificationsRead(userId: string) {
     .eq("is_read", false);
   if (error) throw error;
 }
-
-export type NotificationCategory = "applications" | "adoption" | "moderation" | "security";
 
 // Routes through create_notification_if_enabled() (Stage H,
 // supabase/migrations/20260101008000_notification_preferences.sql) so every call site's
@@ -86,11 +87,12 @@ export async function notifyUser(payload: {
 // Stage CJS: the templated path every real call site should use. Renders title/body/linkUrl
 // deterministically from `notificationTemplates` (a pure function of `payload`, no ambient state)
 // instead of constructing the strings inline at each call site, and stamps the exact template
-// version that produced them.
+// version that produced them. Stage YR-1: `category` is deliberately not a caller-suppliable
+// argument here — it's read from the template definition itself, so a call site can never send a
+// template under a mismatched preference category.
 export async function notifyUserFromTemplate<T extends NotificationTemplateId>(args: {
   profileId: string;
   templateId: T;
-  category: NotificationCategory;
   dedupKey?: string | null;
   payload: NotificationTemplatePayloads[T];
 }) {
@@ -104,7 +106,7 @@ export async function notifyUserFromTemplate<T extends NotificationTemplateId>(a
   await notifyUser({
     profileId: args.profileId,
     type: args.templateId,
-    category: args.category,
+    category: template.category,
     title: rendered.title,
     body: rendered.body,
     linkUrl: rendered.linkUrl ?? null,
