@@ -40,7 +40,34 @@ Tests do **not** start, reset, or seed the database themselves — that would wi
 other developers/tests rely on. Run `npm run db:reset` yourself first if you need a known-clean
 seed state.
 
-## Known sandbox gap (not a code defect)
+## Update 2026-07-27: the Chromium launch gap is resolved; a different, real failure was found
+
+The `libglib-2.0.so.0`/broken-`apt`-mirror launch gap described below (as of 2026-07-22) no longer
+reproduces in this sandbox — `npx playwright test tests/e2e/auth.spec.ts` now launches headless
+Chromium and drives real browser interactions against a real `npm run dev` server and the real
+local Supabase auth stack.
+
+All 3 specs in `auth.spec.ts` now fail, but not on a launch/environment problem — on what looks
+like a genuine SSR-hydration race in `src/routes/_public.signin.tsx`/`_public.signup.tsx`: the
+failing sign-in spec's URL after clicking "Sign in" was
+`http://127.0.0.1:8080/signin?email=buyer%40havenpaw.test&password=password123` — a plain HTML
+form GET submission with credentials in the query string, not the expected client-side
+`form.handleSubmit(onSubmit)` (react-hook-form) call. That only happens if the browser's native
+form submission fires because React hasn't finished attaching its `onSubmit` handler yet when
+Playwright's `.click()` lands — a real hydration-timing race, worse under this sandbox's
+constrained CPU than it would likely be on a normal dev machine, but not something to dismiss as
+sandbox-only without checking on a normal machine too.
+
+**Not fixed here**: this whole multi-hour session operated under an explicit "backend-only, Bot 2
+is the sole backend writer" mandate — investigating and documenting this is in scope, but changing
+frontend hydration/submit-handling behavior is not, without separate explicit authorization. Flag
+this to whoever owns frontend work next; a first thing to check is whether TanStack Start's
+`extractedFn`/hydration is genuinely slower than the button's clickable state, and whether the
+sign-in/sign-up forms should disable the submit button (or otherwise block native fallback
+submission) until hydration completes — matching the existing `disabled={form.formState.isSubmitting}`
+pattern already on this exact button, just gated on hydration-readiness instead.
+
+## Known sandbox gap (not a code defect) — historical, as of 2026-07-22, superseded above
 
 In this project's development sandbox, Playwright's headless Chromium fails to launch
 (`error while loading shared libraries: libglib-2.0.so.0`), and `npx playwright install-deps`
