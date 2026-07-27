@@ -6,7 +6,7 @@
 // client-supplied actorId field; now always auth.uid()).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { as, ids } from "./helpers.ts";
+import { as, ids, createTestTransportRequest } from "./helpers.ts";
 
 test("change_ops_request_status: atomic status/history/audit write, server-stamped actor", async (t) => {
   const ops = await as("ops");
@@ -113,5 +113,94 @@ test("change_ops_request_status: atomic status/history/audit write, server-stamp
       p_internal_note: null,
     });
     assert.ok(attempt.error, "expected an error for a request id that doesn't exist");
+  });
+});
+
+// Stage YR-10 (transport operational timeline integrity): change_ops_request_status() deliberately
+// places no restriction on which status ops can move a request to (Stage BF/CC's own established
+// design -- ops needs full override flexibility). But the "reopening a terminal request needs an
+// explicit reason" accountability half of that design was never actually built by any stage,
+// despite an earlier migration's comment promising it. This closes it: moving a request *out of* a
+// terminal status (completed/rejected/cancelled_by_customer/cancelled_by_operations) now requires
+// a real internal_note; every other transition, including forward jumps and skips between any two
+// non-terminal statuses, remains completely unconstrained.
+test("change_ops_request_status: reopening a terminal request requires a real reason", async (t) => {
+  const admin = await as("admin");
+  const ops = await as("ops");
+  let requestId: string | undefined;
+
+  await t.test("setup: a disposable request, moved straight to completed", async () => {
+    requestId = await createTestTransportRequest(admin, {
+      requesterProfileId: ids.customer,
+      tag: "YR10-TERMINAL",
+      status: "submitted",
+    });
+    const complete = await ops.rpc("change_ops_request_status", {
+      p_request_id: requestId,
+      p_new_status: "completed",
+      p_internal_note: "YR-10 setup: mark completed",
+    });
+    assert.equal(complete.error, null);
+  });
+
+  await t.test("reopening it with no internal note at all is rejected", async () => {
+    const attempt = await ops.rpc("change_ops_request_status", {
+      p_request_id: requestId!,
+      p_new_status: "in_transport",
+      p_internal_note: null,
+    });
+    assert.ok(
+      attempt.error,
+      "expected reopening a completed request with no reason to be rejected",
+    );
+
+    const unchanged = await admin
+      .from("transport_requests")
+      .select("status")
+      .eq("id", requestId!)
+      .single();
+    assert.equal(unchanged.data?.status, "completed", "status must be unchanged by the rejection");
+  });
+
+  await t.test("reopening it with a blank/whitespace-only note is also rejected", async () => {
+    const attempt = await ops.rpc("change_ops_request_status", {
+      p_request_id: requestId!,
+      p_new_status: "in_transport",
+      p_internal_note: "   ",
+    });
+    assert.ok(attempt.error, "expected a whitespace-only reason to be treated as no reason at all");
+  });
+
+  await t.test("reopening it with a real reason succeeds", async () => {
+    const reopen = await ops.rpc("change_ops_request_status", {
+      p_request_id: requestId!,
+      p_new_status: "in_transport",
+      p_internal_note: "Marked completed by mistake, animal is still mid-transit.",
+    });
+    assert.equal(reopen.error, null);
+
+    const changed = await admin
+      .from("transport_requests")
+      .select("status")
+      .eq("id", requestId!)
+      .single();
+    assert.equal(changed.data?.status, "in_transport");
+  });
+
+  await t.test(
+    "a non-terminal-to-non-terminal transition still needs no reason at all",
+    async () => {
+      const call = await ops.rpc("change_ops_request_status", {
+        p_request_id: requestId!,
+        p_new_status: "rest_or_care_stop",
+        p_internal_note: null,
+      });
+      assert.equal(call.error, null, "ordinary in-flight transitions must remain unconstrained");
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    await admin.from("transport_status_history").delete().eq("transport_request_id", requestId!);
+    await admin.from("transport_requests").delete().eq("id", requestId!);
   });
 });
