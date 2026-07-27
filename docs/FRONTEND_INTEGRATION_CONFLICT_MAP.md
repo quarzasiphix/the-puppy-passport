@@ -23,6 +23,38 @@ else — including several files both branches touched (`package.json`, `src/lib
 cleanly at the text level. One of the three real conflicts hides a genuine regression risk if
 resolved carelessly (see `dashboard.buyer.quotations.tsx` below) — not just a textual clash.
 
+## Update (Stage YR-23, re-run of the same read-only trial merge): 3 more conflicts, all self-inflicted by this session's own YR-16 stage
+
+Re-ran the identical `git merge-tree --write-tree HEAD ux-marketplace-frontend-pass` check (still
+fully read-only — a temporary local ref was created purely to name the frontend branch's commit for
+the diff, deleted again immediately after, the frozen branch/worktree itself never entered or
+modified) to see whether anything changed since IR-14. It has: **3 new conflicts**, all in files
+Stage YR-16 touched while wiring `getFriendlyErrorMessage()` into customer-facing routes —
+`src/routes/dashboard.buyer.profile.tsx`, `src/routes/_public.create-breeder.tsx`,
+`src/routes/_public.breeders.$slug.tsx`. Total now **6 real conflicts**, not 3.
+
+**Reassuring, not concerning**: in both `dashboard.buyer.profile.tsx` and
+`_public.create-breeder.tsx`, the frozen frontend branch independently implemented *the same fix*
+this session's own YR-16 stage built — never surfacing a raw Postgres/RLS error to the customer —
+just with its own hardcoded generic message instead of the shared `getFriendlyErrorMessage()`
+helper. Convergent evolution, not a disagreement: whoever integrates should keep `main`'s version
+(the shared, reusable helper) and drop the frontend branch's local hardcoded duplicate, a
+straightforward resolution once flagged. `_public.breeders.$slug.tsx`'s conflict is a much larger,
+unrelated structural change on the frontend side (new i18n/post-listing/animal-image feature work)
+that merely happens to touch the same import lines as YR-16's own small edit — same
+straightforward resolution (take the frontend's real feature work, re-apply YR-16's one-line error-
+handling change on top).
+
+The original 3 (`marketplace.ts`, `buyer-activity.ts`, `dashboard.buyer.quotations.tsx`) still
+conflict, same as IR-14 found. One caveat: `main`'s own side of `dashboard.buyer.quotations.tsx`
+has itself changed since IR-14 (this session's later transactional-workflow-boundaries follow-up
+converted `respondToQuotation()` to the atomic `respond_to_quotation()` RPC, removing a
+`transportRequestId` argument from the mutation) — the detailed description in section 3 below was
+written against the IR-14-era version of this file and may not describe the exact current diff;
+whoever integrates should re-diff this specific file fresh rather than trust that section's exact
+line-level description verbatim, even though the conflict's existence and general shape (both
+sides independently touched the same accept/reject mutation) is still accurate.
+
 ## The 3 real conflicts
 
 ### 1. `src/lib/queries/marketplace.ts` — same N+1 bug, fixed independently on both sides
