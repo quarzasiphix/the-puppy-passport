@@ -45,15 +45,8 @@ function BuyerQuotationsPage() {
   });
 
   const respondMutation = useMutation({
-    mutationFn: ({
-      id,
-      transportRequestId,
-      response,
-    }: {
-      id: string;
-      transportRequestId: string;
-      response: "accepted" | "rejected";
-    }) => respondToQuotation(id, transportRequestId, response, userId!),
+    mutationFn: ({ id, response }: { id: string; response: "accepted" | "rejected" }) =>
+      respondToQuotation(id, response),
     onSuccess: (_data, vars) => {
       toast.success(vars.response === "accepted" ? "Quotation accepted." : "Quotation declined.");
       queryClient.invalidateQueries({ queryKey: ["my-quotations", userId] });
@@ -142,11 +135,7 @@ function BuyerQuotationsPage() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() =>
-                                respondMutation.mutate({
-                                  id: q.id,
-                                  transportRequestId: q.transport_request_id,
-                                  response: "accepted",
-                                })
+                                respondMutation.mutate({ id: q.id, response: "accepted" })
                               }
                             >
                               Accept
@@ -159,13 +148,7 @@ function BuyerQuotationsPage() {
                       size="sm"
                       variant="outline"
                       disabled={respondMutation.isPending}
-                      onClick={() =>
-                        respondMutation.mutate({
-                          id: q.id,
-                          transportRequestId: q.transport_request_id,
-                          response: "rejected",
-                        })
-                      }
+                      onClick={() => respondMutation.mutate({ id: q.id, response: "rejected" })}
                     >
                       {isExpired ? "Dismiss" : "Decline"}
                     </Button>

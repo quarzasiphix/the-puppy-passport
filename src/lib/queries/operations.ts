@@ -208,20 +208,10 @@ export async function createQuotation(input: {
   if (error) throw error;
 }
 
-export async function sendQuotation(id: string, transportRequestId: string, actorId: string) {
+export async function sendQuotation(id: string) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("quotations").update({ status: "sent" }).eq("id", id);
+  const { error } = await supabase.rpc("send_quotation", { p_quotation_id: id });
   if (error) throw error;
-  await supabase
-    .from("transport_requests")
-    .update({ status: "quotation_sent" })
-    .eq("id", transportRequestId);
-  await supabase.from("transport_status_history").insert({
-    transport_request_id: transportRequestId,
-    status: "quotation_sent",
-    changed_by: actorId,
-    customer_note: "A quotation is ready for you to review.",
-  });
 }
 
 // docs/adr/TRANSPORT_DATA_MODEL.md Phase 7: ops must clearly see every party (legal owner, sender,

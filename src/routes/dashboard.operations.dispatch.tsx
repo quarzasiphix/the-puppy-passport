@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 import {
   assignDriverToJob,
   listDriverWorkloads,
@@ -30,7 +29,6 @@ function workloadColor(count: number) {
 }
 
 function DispatchPage() {
-  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [selectedDriver, setSelectedDriver] = useState<Record<string, string>>({});
 
@@ -42,7 +40,7 @@ function DispatchPage() {
 
   const assignMutation = useMutation({
     mutationFn: (input: { transportRequestId: string; driverId: string }) =>
-      assignDriverToJob({ ...input, actorId: userId! }),
+      assignDriverToJob(input),
     onSuccess: () => {
       toast.success("Driver assigned.");
       queryClient.invalidateQueries({ queryKey: ["driver-workloads"] });

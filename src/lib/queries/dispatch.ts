@@ -67,21 +67,11 @@ export async function listUnassignedReadyJobs(): Promise<UnassignedJob[]> {
   return (data ?? []) as UnassignedJob[];
 }
 
-export async function assignDriverToJob(input: {
-  transportRequestId: string;
-  driverId: string;
-  actorId: string;
-}) {
+export async function assignDriverToJob(input: { transportRequestId: string; driverId: string }) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase
-    .from("transport_requests")
-    .update({ assigned_driver_id: input.driverId, status: "driver_assigned" })
-    .eq("id", input.transportRequestId);
-  if (error) throw error;
-
-  await supabase.from("transport_status_history").insert({
-    transport_request_id: input.transportRequestId,
-    status: "driver_assigned",
-    changed_by: input.actorId,
+  const { error } = await supabase.rpc("assign_driver_to_job", {
+    p_transport_request_id: input.transportRequestId,
+    p_driver_id: input.driverId,
   });
+  if (error) throw error;
 }

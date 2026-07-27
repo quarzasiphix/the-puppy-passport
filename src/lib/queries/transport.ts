@@ -562,28 +562,13 @@ export async function listMyQuotations(userId: string) {
   return (data ?? []) as unknown as MyQuotationRow[];
 }
 
-export async function respondToQuotation(
-  id: string,
-  transportRequestId: string,
-  response: "accepted" | "rejected",
-  userId: string,
-) {
+export async function respondToQuotation(id: string, response: "accepted" | "rejected") {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("quotations").update({ status: response }).eq("id", id);
+  const { error } = await supabase.rpc("respond_to_quotation", {
+    p_quotation_id: id,
+    p_response: response,
+  });
   if (error) throw error;
-
-  if (response === "accepted") {
-    await supabase
-      .from("transport_requests")
-      .update({ status: "accepted_by_customer" })
-      .eq("id", transportRequestId);
-    await supabase.from("transport_status_history").insert({
-      transport_request_id: transportRequestId,
-      status: "accepted_by_customer",
-      changed_by: userId,
-      customer_note: "Quotation accepted.",
-    });
-  }
 }
 
 // A completed transport can be reviewed once — matches transport_reviews' unique constraint on

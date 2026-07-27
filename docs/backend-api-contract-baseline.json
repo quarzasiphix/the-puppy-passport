@@ -298,6 +298,10 @@
       "returns": "uuid",
       "grantees": "authenticated"
     },
+    "assign_driver_to_job(p_transport_request_id uuid, p_driver_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
     "assign_request_to_route(p_route_id uuid, p_transport_request_id uuid, p_compatibility_notes text)": {
       "returns": "uuid",
       "grantees": "authenticated"
@@ -394,6 +398,10 @@
       "returns": "void",
       "grantees": "authenticated"
     },
+    "respond_to_quotation(p_quotation_id uuid, p_response quotation_status)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
     "review_moderation_appeal(p_appeal_id uuid, p_decision moderation_appeal_status, p_outcome_notes text, p_internal_notes text)": {
       "returns": "void",
       "grantees": "authenticated"
@@ -407,6 +415,10 @@
       "grantees": "authenticated"
     },
     "revoke_org_invitation(p_invitation_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
+    "send_quotation(p_quotation_id uuid)": {
       "returns": "void",
       "grantees": "authenticated"
     },

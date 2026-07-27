@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 import {
   createQuotation,
   listOpsQuotations,
@@ -55,7 +54,6 @@ const statusStyles: Record<string, string> = {
 };
 
 function QuotationsPage() {
-  const { userId } = useAuth();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -100,8 +98,7 @@ function QuotationsPage() {
   });
 
   const sendMutation = useMutation({
-    mutationFn: ({ id, transportRequestId }: { id: string; transportRequestId: string }) =>
-      sendQuotation(id, transportRequestId, userId!),
+    mutationFn: ({ id }: { id: string }) => sendQuotation(id),
     onSuccess: () => {
       toast.success("Sent to the customer.");
       queryClient.invalidateQueries({ queryKey: ["ops-quotations"] });
@@ -284,9 +281,7 @@ function QuotationsPage() {
                 {q.status === "draft" && (
                   <Button
                     size="sm"
-                    onClick={() =>
-                      sendMutation.mutate({ id: q.id, transportRequestId: q.transport_request_id })
-                    }
+                    onClick={() => sendMutation.mutate({ id: q.id })}
                     disabled={sendMutation.isPending}
                   >
                     <Send className="mr-1 size-3.5" /> Send

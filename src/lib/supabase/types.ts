@@ -4947,6 +4947,10 @@ export type Database = {
         Args: { p_admin_notes?: string; p_verification_id: string }
         Returns: string
       }
+      assign_driver_to_job: {
+        Args: { p_driver_id: string; p_transport_request_id: string }
+        Returns: undefined
+      }
       assign_request_to_route: {
         Args: {
           p_compatibility_notes?: string
@@ -5159,6 +5163,13 @@ export type Database = {
         Args: { p_max_age?: string; p_operation: string }
         Returns: undefined
       }
+      respond_to_quotation: {
+        Args: {
+          p_quotation_id: string
+          p_response: Database["public"]["Enums"]["quotation_status"]
+        }
+        Returns: undefined
+      }
       review_moderation_appeal: {
         Args: {
           p_appeal_id: string
@@ -5188,6 +5199,7 @@ export type Database = {
         Args: { p_invitation_id: string }
         Returns: undefined
       }
+      send_quotation: { Args: { p_quotation_id: string }; Returns: undefined }
       set_org_member_status: {
         Args: {
           p_member_id: string

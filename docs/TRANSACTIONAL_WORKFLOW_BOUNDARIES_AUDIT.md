@@ -58,6 +58,15 @@ commercially critical), `sendQuotation` (its ops-side pair), `assignDriverToJob`
 already-fixed siblings), `createTransportRequest`, `approveRehomingReview`,
 `escalateReportToCase`.
 
+**Update — first follow-up pass complete**: the first 3 of the 6 (`respondToQuotation`,
+`sendQuotation`, `assignDriverToJob`) were converted into atomic RPCs (`respond_to_quotation()`,
+`send_quotation()`, `assign_driver_to_job()`,
+`20260101013400_quotation_dispatch_atomic_rpcs.sql`) — see
+`docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_FOLLOWUP_1.md` for full detail, including a real
+previously-invisible bug the conversion's own tests surfaced and fixed (a customer accepting their
+own quotation was silently rejected by a Stage CC trigger with no exemption for that transition).
+`createTransportRequest`, `approveRehomingReview`, `escalateReportToCase` remain open.
+
 ## Also found and fixed: two silently-swallowed errors, while reading `respondToQuotation`
 
 `respondToQuotation()`'s second and third writes (`transport_requests.update(...)` and
