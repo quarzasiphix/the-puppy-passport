@@ -105,7 +105,7 @@ pattern" note already recommended, and what remains the single highest-leverage 
 recommendation from the original report.
 
 No new Critical or High finding was independently discovered this pass in the 69-commit delta beyond
-re-confirming the 4 already-known ones are still open. One New-Medium observation is recorded (§32):
+re-confirming the 4 already-known ones are still open. One New-Medium observation is recorded (§33):
 `account_deletion_requests`' *self-service* `for all` policy (`profile_id = auth.uid()`, pre-existing,
 not new this window, but not previously called out with this framing) means the raw-write bypass
 described in §5.2 is reachable by **any authenticated user acting on their own request row**, not
@@ -117,7 +117,7 @@ cause.
 | # | Finding | Prev. severity | Status | Fixing commit | Regression test quality |
 |---|---|---|---|---|---|
 | §5.1 | Fundraising campaigns self-publish to `active` | High | **Still open** | none | n/a — no test added |
-| §5.2 | `legal_holds`/`account_deletion_requests` raw-write bypass | High | **Still open** (audit-trail added to the RPC path only; raw-write bypass itself untouched; see §32 for a wider reachable-actor correction) | `d2d5d62`/`20260101013300` (audit trail only, not the bypass) | New test proves the RPC's own audit trail; no test covers the raw-write bypass |
+| §5.2 | `legal_holds`/`account_deletion_requests` raw-write bypass | High | **Still open** (audit-trail added to the RPC path only; raw-write bypass itself untouched; see §33 for a wider reachable-actor correction) | `d2d5d62`/`20260101013300` (audit trail only, not the bypass) | New test proves the RPC's own audit trail; no test covers the raw-write bypass |
 | §5.3 | `create_notification_if_enabled()` arbitrary recipient/content | High | **Still open** | none (only a sibling helper, `get_notification_preference()`, had its grant tightened — does not touch this function) | n/a |
 | §5.4 | `moderation_cases` self-resolution conflict of interest | High | **Still open** | none | n/a |
 | §6.1 | Quotation terminal-state gap | Medium | **Partially fixed** | `cfd33ca`/`20260101013400` (RPC path only) | New `tests/db/quotation-dispatch-atomic-rpcs.test.ts` covers the RPC well but not the raw-table bypass |
@@ -1336,3 +1336,331 @@ docker exec supabase_db_the-puppy-passport psql -U postgres -d postgres -c \
   checked out).
 - Audit clone: `/p/the-puppy-passport-bot1-audit-20260725-175844`, branch
   `audit/bot1-backend-20260725-175844`.
+
+### 31. Fixed findings
+
+#### §6.2 — `animal_ownership_history` admin-mutability — FIXED
+
+- **Fixing commit**: `281f0e4` ("Lock animal_ownership_history to admin-read-only; keep reports'
+  deliberate DELETE"), migration `supabase/migrations/20260101012900_history_evidence_immutability.sql`.
+- **Evidence**: the migration drops `"admins manage all ownership history" for all` and replaces it
+  with a single `"admins view all ownership history" for select` policy. Live-confirmed via
+  `pg_policies` against the shared instance (now migrated to this session's own `HEAD`): the table
+  carries exactly two policies, both `SELECT` (`admins view all ownership history` and `owners view
+  their animal's ownership history`) — **zero** `INSERT`/`UPDATE`/`DELETE` policy of any kind exists.
+  Since RLS defaults to deny with no matching policy, and no service-role/other-context writer exists
+  in `src/` (independently re-confirmed by grep, same conclusion the original report and Bot 2's own
+  migration comment both reached), the table is now genuinely immutable via the Data API — not just
+  via a narrower admin-only gate as the original report's suggested fix proposed, but the stronger
+  "no writer at all" form.
+- **Belt-and-suspenders gap, not worth reopening**: the raw `INSERT`/`UPDATE`/`DELETE`
+  table-level grant to `authenticated` was never explicitly revoked (`information_schema.
+  role_table_grants` still lists it) — but this is inert: RLS blocks 100% of write attempts
+  regardless, the identical "unused broader grant, not a live gap" shape Bot 2's own
+  `docs/GRANT_DATA_API_AUDIT.md` (§29) already documents choosing not to fix elsewhere
+  (`audit_logs`) for the same reason. Not re-flagged as a residual finding.
+- **Regression test**: `tests/db/animal-ownership-history-immutability.test.ts` (new, 61 lines, 5
+  tests) — proves no role can insert a row via the Data API at all (the strongest possible form of
+  the test, since nothing can exist to later update/delete), and that admin `SELECT` still works.
+  Genuinely exercises the real lower-trust actor (an authenticated admin attempting a raw write, not
+  just reading the policy text).
+- **Regression risk**: none found. The table has no real writer in the app today (documented,
+  pre-existing), so this closes a purely theoretical-but-real Data API gap with no functional impact.
+
+#### §6.5 (changed_by half only) — `transport_status_history.changed_by` forgery — FIXED
+
+- **Fixing commit**: `3e4ae1f` ("Close a transport_status_history actor-forgery straggler across 3
+  functions"), migration `supabase/migrations/20260101013000_transport_status_history_actor_lock.sql`.
+- **Evidence**: adds `stamp_changed_by_actor()`, an unconditional `BEFORE INSERT` trigger that sets
+  `new.changed_by := auth.uid()` on every insert, with no bypass condition for a non-privileged actor
+  (only `null` `auth.uid()` — the seed-script/service-role path — is exempted, and even then it just
+  produces a `null` `changed_by`, not an attacker-controlled one). Live-confirmed:
+  `stamp_transport_status_history_changed_by` is present in `pg_trigger` on the live, shared
+  instance. Critically, this fix closes the bypass **at the trigger layer**, which fires regardless
+  of whether the insert came through RLS-gated raw Data API access or a `SECURITY DEFINER` RPC — so,
+  unlike most of this report's "RPC correct, RLS still bypassable" findings, this one is not
+  reopenable via a raw insert; the trigger unconditionally overwrites whatever `changed_by` value the
+  client supplied.
+- **Regression test**: `tests/db/actor-attribution-stragglers.test.ts` (extended, +49 lines) — proves
+  a customer's attempt to credit a different profile as `changed_by` on a direct table insert is
+  silently overridden to their own real id. Exercises the real lower-trust actor (a requester, not an
+  admin) via the real, raw table-insert path, not only the RPC.
+- **Remaining gap, tracked separately (not superseded)**: this fix closes only the actor-forgery half
+  of §6.5. The other half — **unconstrained `status` values on direct inserts** (a requester or
+  driver can still insert `status: 'delivered'` or any other value regardless of the request's real
+  current status, poisoning the customer-facing timeline) — was not touched by this migration and
+  remains open. See §33.
+
+### 32. Partially fixed findings
+
+#### §6.1 — Quotation terminal-state gap — PARTIALLY FIXED
+
+- **Fixing commit**: `cfd33ca` ("Convert respondToQuotation/sendQuotation/assignDriverToJob to
+  atomic RPCs"), migration `supabase/migrations/20260101013400_quotation_dispatch_atomic_rpcs.sql`.
+- **What's genuinely fixed**: a new `respond_to_quotation(p_quotation_id, p_response)` RPC now
+  correctly gates on `v_quotation.status not in ('sent', 'viewed')` before allowing a transition
+  (raising `'this quotation is no longer open for a response'` otherwise), is idempotent on an exact
+  retry, and rechecks expiry server-side. `src/lib/queries/transport.ts`'s `respondToQuotation()` was
+  confirmed rewired to call this RPC (`supabase.rpc("respond_to_quotation", ...)`, line 567) instead
+  of the old raw `.from('quotations').update(...)` — the real app UI path can no longer reopen an
+  already-decided quotation.
+- **What's still open**: the underlying RLS policy the original finding is about — `"requesters
+  accept or reject their own quotation"` on `public.quotations` — was **not modified or revoked**.
+  Live-confirmed via `pg_policies` against the shared instance: the policy's `USING`/`WITH CHECK`
+  text is byte-for-byte identical to what the original report quoted (`using (exists (... tr.
+  requester_profile_id = auth.uid())) with check (status in ('accepted','rejected') and (status <>
+  'accepted' or expiry_date is null or expiry_date >= current_date))`) — no `OLD.status` check, still
+  live. No migration in the 69-commit delta touches `20260101012400_quotation_expiry_enforcement.sql`
+  or adds a `revoke update on quotations from authenticated`. The exact raw-API reproduction from the
+  original report still succeeds unchanged:
+  ```js
+  await supabase.from('quotations').update({ status: 'accepted' }).eq('id', quotationId);
+  await supabase.from('quotations').update({ status: 'rejected' }).eq('id', quotationId); // still succeeds directly, bypassing respond_to_quotation()
+  ```
+- **Regression-test quality**: the new `tests/db/quotation-dispatch-atomic-rpcs.test.ts` (357 lines)
+  is thorough for the RPC path (idempotency, expiry, wrong-requester rejection) but — consistent with
+  the gap above — does not attempt a raw-table update to prove the RLS-layer bypass is closed,
+  because it isn't.
+- **Smallest remaining action**: narrow the `quotations` UPDATE policy's `USING` clause to `status in
+  ('sent', 'viewed')`, exactly as the original report's §6.1 "Smallest fix" already specified — this
+  is a pure RLS change, independent of the new RPC, and would not affect `respond_to_quotation()`
+  (which is `SECURITY DEFINER` and unaffected by the caller's own RLS grants).
+
+#### §6.5 (status half) — see §31 above for the fixed `changed_by` half; the `status`-forgery half
+  remains open, detailed in §33.
+
+#### §5.2 — legal-hold/deletion-request raw-write bypass — audit trail added, core bypass untouched
+  (classified as **still open** in §30/§33, not "partially fixed," because the specific exploit the
+  finding is about — a raw insert/update bypassing `require_recent_auth()` and forging the actor
+  column — is completely unaffected by the audit-trail addition; see §33 for full detail).
+
+### 33. Still-open findings
+
+#### §5.1 — Fundraising campaign self-publish to `active` — STILL OPEN
+
+- **Evidence**: `grep -rln "fundraising_campaigns" supabase/migrations/*.sql` shows the newest
+  migration touching this table is `20260101010100_currency_code_validation.sql` (pre-dates the
+  Phase 2 snapshot; confirmed unrelated to status transitions — contains no reference to `status` or
+  `active`). No migration in the 69-commit delta touches `fundraising_campaigns` at all. Live-
+  confirmed via `pg_policies` against the shared instance: the `"eligible org owners update their own
+  non-terminal campaigns"` policy's `WITH CHECK` still includes `'active'` in the org-settable status
+  list, byte-for-byte identical to the original report's quoted text. The exact original reproduction
+  still succeeds: `supabase.from('fundraising_campaigns').update({ status: 'active' }).eq('id',
+  myDraftCampaignId)` as the owning org's owner.
+- **Smallest remaining action**: unchanged from the original report — move `'active'` to the
+  admin-only side of the policy, matching the exact template already used in the same file for
+  `target_reached`/`partially_funded`.
+- **Integration-blocker status**: still yes (see original §3) — this must be fixed before
+  `FUNDRAISING_ENABLED` is ever turned on for real users, since the gate is UI-only.
+
+#### §5.2 — `legal_holds`/`account_deletion_requests` raw-write bypass — STILL OPEN (audit trail added to the RPC path; the actual bypass this finding is about is untouched, and this pass found the reachable-actor set is wider than originally described)
+
+- **What changed this window**: `d2d5d62` ("Audit legal-hold placement and release in the shared
+  audit trail"), migration `20260101013300_legal_hold_audit_trail.sql`, adds an `audit_logs` insert
+  inside `place_legal_hold()`/`release_legal_hold()` — a real, independent improvement (closes a gap
+  adjacent to §6.8's audit-trail theme) but orthogonal to §5.2's actual finding.
+- **What's unchanged**: `grep -n "revoke" supabase/migrations/*.sql | grep -i "legal_holds\|
+  account_deletion_requests"` returns only the two `revoke all ... from public` / `grant execute ...
+  to authenticated` pairs on `place_legal_hold()`/`release_legal_hold()` themselves (unchanged,
+  pre-existing) — **no migration ever revokes the raw table `insert`/`update` grant** on either
+  table. `pg_trigger` on both tables (live-confirmed) still shows **zero** triggers — no actor-lock,
+  no `require_recent_auth()` call, nothing. The exact original reproduction still succeeds unchanged:
+  ```js
+  await supabase.from('legal_holds').insert({ subject_profile_id: targetUserId, reason: 'pretext', placed_by: someOtherAdminUuid });
+  await supabase.from('account_deletion_requests').update({ status: 'processed', processed_by: someOtherAdminUuid }).eq('id', requestId);
+  ```
+- **New this pass — the reachable-actor set is wider than the original report described**: reading
+  the full live `pg_policies` output for `account_deletion_requests` (not just the admin policy the
+  original report quoted) shows a *second*, pre-existing policy the original report's §5.2 text never
+  mentioned: `"users manage their own deletion request" for all using (profile_id = auth.uid()) with
+  check (profile_id = auth.uid())`. This policy places **no restriction on `status`, `processed_by`,
+  or `processed_at`** — only on which row (`profile_id = auth.uid()`). Combined with the unrestricted
+  table grant, this means **any ordinary authenticated user** (not only an admin, as the original
+  report's "Reachable actor" line stated) can raw-write their *own* deletion request straight to
+  `processed` with an arbitrary `processed_by`, without ever calling `execute_account_deletion()`:
+  ```js
+  // As an ordinary user, no admin role needed:
+  await supabase.from('account_deletion_requests')
+    .update({ status: 'processed', processed_at: new Date().toISOString(), processed_by: myOwnUserId })
+    .eq('profile_id', myOwnUserId);
+  // Succeeds. The request now falsely reads "processed" -- no anonymisation ever ran, no
+  // legal-hold check ran, no transport/reservation/application/org-ownership safety check ran.
+  ```
+  This is a correction/widening of the original finding's reachable-actor framing, not a new
+  finding — same root cause, same table, same fix — but materially changes severity triage: this is
+  reachable by *every* user on their own account, not gated behind an admin role at all, and produces
+  a **false audit record on the user's own account-deletion history** (their request appears
+  fulfilled when it was not). This should be Bot 2's top-priority item.
+- **Regression-test quality**: `tests/db/account-deletion-execution.test.ts` was extended (+134
+  lines) and `tests/db/legal-holds.test.ts` (+57 lines) this window, but — same gap the original
+  report identified — both still only exercise the RPC path in both directions; neither attempts a
+  raw insert/update against either table, so neither would catch this bypass (confirmed by reading
+  both files' current diffs; no `raw`/`.from("legal_holds").insert` / `.from("account_deletion_
+  requests").update` call outside the RPC wrapper appears in either).
+- **Smallest remaining action**: unchanged from the original report — revoke `insert`/`update` on
+  both tables from `authenticated` (the RPCs are `SECURITY DEFINER` and don't need the grant); this
+  single change also closes the newly-widened self-service angle above, since it removes the raw
+  write path entirely regardless of which RLS policy would otherwise allow it.
+
+#### §5.3 — `create_notification_if_enabled()` arbitrary recipient/content — STILL OPEN
+
+- **Evidence**: the only new migration touching notification internals this window is
+  `20260101012800_notification_preference_execute_lock.sql`, which revokes `authenticated`'s
+  `execute` grant on a *different*, internal helper function — `get_notification_preference(uuid,
+  text)` — not `create_notification_if_enabled()` itself. `grep -rln
+  "create_notification_if_enabled" supabase/migrations/*.sql` confirms no migration after
+  `20260101012200_notification_template_versioning.sql` (the version the original report cited)
+  redefines the function body. The function's own `execute` grant to `authenticated` and its internal
+  authorization logic (a preference check on the *recipient*, never a relationship/permission check
+  on the *caller*) are unchanged. The original reproduction still succeeds unchanged:
+  ```js
+  await supabase.rpc('create_notification_if_enabled', {
+    p_profile_id: victimProfileId, p_category: 'moderation', p_notification_type: 'account_alert',
+    p_title: 'URGENT: verify your account', p_body: 'Click here', p_link_url: 'https://attacker.example',
+  });
+  ```
+- **A closely-related, genuinely good fix landed nearby, worth noting so it isn't mistaken for
+  covering this gap**: the `get_notification_preference()` grant tightening (Stage XR-2) closes a
+  *different*, narrower information-disclosure issue (an authenticated user probing whether an
+  arbitrary other profile has muted a category) — real, correctly scoped, but does not touch the
+  "can send arbitrary content to anyone" authorization gap that is §5.3's actual subject.
+- **Smallest remaining action**: unchanged from the original report — add a caller-authorization
+  check inside `create_notification_if_enabled()` itself, or revoke `execute` from `authenticated`
+  and grant only to the specific trusted server-side call paths.
+
+#### §5.4 — `moderation_cases` self-resolution conflict of interest — STILL OPEN
+
+- **Evidence**: `grep -rln "moderation_cases" supabase/migrations/*.sql` shows the base table's only
+  own-definition file is still `20260101001800_moderation.sql`; the delta's one new file referencing
+  `moderation_cases` (`20260101013500_rehoming_report_atomic_rpcs.sql`) only adds
+  `escalate_report_to_case()` (creates a *new* case from a report, idempotently) — it never touches
+  case *resolution* or adds any `affected_profile_id`/`assigned_moderator_id` self-check. Live-
+  confirmed via `pg_policies`: the base policy is still exactly `"moderators and admins manage all
+  moderation cases" for all using (is_moderator()) with check (is_moderator())`, no conflict-of-
+  interest clause. `src/lib/queries/moderation.ts`'s `updateModerationCase()` (lines 119–137, current
+  file re-read) is unchanged — still a raw `.from("moderation_cases").update(payload)` with no
+  self-resolution guard client-side either. The original reproduction still succeeds unchanged: a
+  moderator who is also the case's `affected_profile_id` can `update({ status: 'dismissed', ... })`
+  their own case.
+- **Smallest remaining action**: unchanged from the original report — add `and (affected_profile_id
+  is distinct from auth.uid())` to the policy's `with check`, mirroring
+  `review_moderation_appeal()`'s existing self-review guard one layer up.
+
+#### §6.3 — `user_verifications` raw-write bypass — STILL OPEN
+
+- **Evidence**: `grep -rln "user_verifications" supabase/migrations/*.sql` shows no file in the
+  012500–013500 delta range touches this table. Live-confirmed via `pg_policies`: `"admins manage all
+  verifications" for all using (is_admin()) with check (is_admin())` is unchanged; no trigger exists
+  on the table beyond `set_user_verifications_updated_at` (a plain `updated_at` stamper, live-
+  confirmed via `pg_trigger` — not an actor/business-logic lock). `approve_user_verification()`'s
+  organisation-creation/role-granting side effects remain skippable via a raw
+  `.from('user_verifications').update({ status: 'approved' })`.
+- **Smallest remaining action**: unchanged — revoke `update` on `user_verifications` from
+  `authenticated`.
+
+#### §6.4 — `route_assignments.assigned_by` forgery — STILL OPEN
+
+- **Evidence**: `grep -rln "route_assignments" supabase/migrations/*.sql` shows no delta-range file.
+  Live-confirmed via `pg_policies`: `"ops staff manage route assignments" for all using
+  (is_ops_staff()) with check (is_ops_staff())` unchanged, no column-level restriction. A raw
+  `.from('route_assignments').insert({ ..., assigned_by: someOtherStaffId })` by any ops-staff
+  account still bypasses `assign_request_to_route()`'s correct stamping.
+- **Smallest remaining action**: unchanged — revoke `insert`/`update` on `route_assignments` from
+  `authenticated`.
+
+#### §6.5 (status half) — `transport_status_history` unconstrained `status` on direct insert — STILL OPEN (see §31 for the fixed `changed_by` half)
+
+- **Evidence**: `stamp_changed_by_actor()` (§31) only overwrites `changed_by`; it performs no
+  validation of `status` against the referenced request's real current status or any legal-transition
+  graph. The two direct-insert policies (`"requesters log status on their own request"`/`"assigned
+  drivers log status on their own requests"`) still only check row ownership/assignment in their
+  `WITH CHECK`, unchanged since the original audit. The original reproduction (minus the now-fixed
+  `changed_by` forgery) still succeeds:
+  ```js
+  // changed_by is now silently overridden to auth.uid() (fixed), but status is still unconstrained:
+  await supabase.from('transport_status_history').insert({
+    transport_request_id: R, status: 'delivered', customer_note: 'fake',
+  }); // for a request still in 'submitted' -- still succeeds, still poisons the customer timeline
+  ```
+- **Smallest remaining action**: unchanged from the original report's second half — add a legal-
+  status-transition check to both `WITH CHECK` clauses (or route all writes through a `SECURITY
+  DEFINER` RPC and drop the direct insert grants).
+
+#### §6.6 — `buyer_applications.organization_id` cross-org binding — STILL OPEN
+
+- **Evidence**: none of the delta's new migrations touch `buyer_applications`'s `organization_id`
+  binding (the delta files referencing this table —
+  `20260101013200_conversion_rpc_idempotent_retry.sql`, `20260101012700_support_case_reopen_field_
+  lock.sql` — only reference the table in passing/unrelated contexts; neither adds an `animals.
+  organization_id` cross-check to the buyer's own INSERT/UPDATE policy). `submitApplication()`
+  (`src/lib/queries/applications.ts`, re-read) still inserts `organization_id` verbatim from client
+  input.
+- **Smallest remaining action**: unchanged — add `exists (select 1 from animals a where a.id =
+  animal_id and a.organization_id = buyer_applications.organization_id)` to the `WITH CHECK`.
+
+#### §6.7 — `transport-evidence` cancellation-revocation gap — STILL OPEN
+
+- **Evidence**: `grep -rln "transport-evidence\|pickup_delivery_evidence"
+  supabase/migrations/*.sql` returns only the original `20260101010000_pickup_delivery_evidence.sql`
+  — no delta migration touches this bucket's policies or `is_assigned_driver_for_request()`'s status
+  filter. `cancelMyTransportRequest()` still only updates `status`, never `assigned_driver_id`.
+- **Smallest remaining action**: unchanged — add the same `tr.status not in (...)` clause the sibling
+  `transport-documents` bucket already has.
+
+#### §6.8 — Verification approval/rejection audit trail — STILL OPEN
+
+- **Evidence**: `approve_user_verification()` (unchanged file, `20260101009700`) still never inserts
+  into `audit_logs`. There is still no `reject_user_verification()` RPC — rejection still goes through
+  the raw client update in `src/components/verification-review-list.tsx` (re-read, lines 69–77
+  unchanged), with `reviewed_by`/`reviewed_at` still permanently `null` for rejections.
+- **Note**: Bot 2's own `place_legal_hold()`/`release_legal_hold()` audit-trail addition this window
+  (§32/§33's §5.2 entry) is the exact same *pattern* this finding recommends applying here — Bot 2
+  demonstrably has the template already in hand from its own recent work, just hasn't pointed it at
+  this table yet.
+- **Smallest remaining action**: unchanged — add an `audit_logs` insert inside
+  `approve_user_verification()`; add a `reject_user_verification()` RPC.
+
+#### §6.9 — `uploaded_by` forgery on `transport_documents`/`welfare_case_documents` — STILL OPEN
+
+- **Evidence**: `grep -rln "uploaded_by" supabase/migrations/*.sql` returns only the two original
+  table-definition files, no delta-range file. Note: `welfare_case_documents` did get real RLS
+  attention this window (`20260101012500_welfare_case_document_lock.sql`, §47) — its `for all` was
+  split into an editable-window-scoped SELECT/INSERT/UPDATE/DELETE set — but that migration's own
+  scope is explicitly the *edit-window* problem (org can't touch documents after ops decided), not
+  actor attribution; it does not add an `uploaded_by`-locking trigger, and the new INSERT policy's
+  `WITH CHECK` still never references `uploaded_by`. `submitDocument()` still takes `uploadedBy` as a
+  plain client-supplied parameter for `transport_documents`.
+- **Smallest remaining action**: unchanged — stamp `uploaded_by := auth.uid()` server-side via a
+  `before insert` trigger on both tables, the same shape as the new `stamp_changed_by_actor()` (§31)
+  Bot 2 already built this window for exactly this bug class elsewhere — this is now the *third* time
+  this session has needed this fix shape (`created_by`, `changed_by`, and now `uploaded_by`); Bot 2
+  should recognize the pattern and close all remaining instances in one migration.
+
+#### §7.5 — `getFriendlyErrorMessage()` wiring — STILL OPEN
+
+- **Evidence**: `grep -rln getFriendlyErrorMessage src/` returns exactly the same 2 files as the
+  original audit (`src/lib/errors.ts`, the sanitizer itself, and its one real consumer
+  `src/routes/_public.transport.request.tsx`). The three call sites named as the fix's own motivation
+  (`_public.create-breeder.tsx:119`, `dashboard.buyer.profile.tsx:132`,
+  `_public.reset-password.tsx:62`) are unchanged, still raw `toast.error(error.message)`.
+- **Smallest remaining action**: unchanged — wire the sanitizer into the three remaining call sites.
+
+#### §7.6 — `rpc-grant-hygiene.test.ts` weak assertion — STILL OPEN
+
+- **Evidence**: current file (re-read in full) still uses `assert.ok(attempt.error, ...)` at every
+  assertion site (lines 19/24/32/39 unchanged), never `attempt.error.code === '42501'` nor the
+  suite's own `isForbidden()` helper. Notably, Bot 2's own newer tests this window (e.g. `tests/db/
+  has-role-execute-lock.test.ts`, new, 81 lines, added for the `has_role()`/`get_notification_
+  preference()` grant fixes) **do** use precise, code-level assertions for the exact same
+  "prove the grant itself denies, not just the function body" property this finding is about —
+  meaning Bot 2 has since independently arrived at the correct pattern for *new* grant-hygiene tests,
+  just hasn't gone back to fix the original file that was flagged.
+- **Smallest remaining action**: unchanged — assert the specific `42501` code or use `isForbidden()`.
+
+### 34. Superseded findings
+
+None. All 13 named finding-groups map cleanly onto either the original code paths (still open/
+partially fixed) or a specific, identifiable fixing commit (fixed) — no finding was invalidated by
+an unrelated redesign, table removal, or architecture change that would make its original framing
+obsolete. §5.2's "reachable actor" line is *corrected/widened* (§33), not superseded — the same
+tables, same root cause, same fix.
