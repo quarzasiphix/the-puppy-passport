@@ -200,3 +200,61 @@ test("escalate_report_to_case: non-moderator rejected, escalates atomically, ide
     await admin.from("reports").delete().eq("id", reportId!);
   });
 });
+
+// Stage YR-15 (raw API bypass audit): escalate_report_to_case()'s own duplicate-prevention check
+// only protects callers going through the RPC -- "moderators and admins manage all moderation
+// cases" is a real, correct `for all` RLS policy (moderators are fully trusted staff), so a raw
+// direct insert bypassing the RPC entirely could previously still create a second case for the
+// same report. Closed with a real unique constraint (the strongest enforcement, works regardless
+// of which path is used to write) -- this proves the raw-API path specifically, not just the RPC.
+test("moderation_cases.report_id: a raw direct insert cannot create a duplicate case for an already-escalated report", async (t) => {
+  const admin = await as("admin");
+  let reportId: string | undefined;
+  let firstCaseId: string | undefined;
+
+  await t.test("setup: a report already escalated via the real RPC", async () => {
+    const report = await admin
+      .from("reports")
+      .insert({
+        reporter_profile_id: ids.buyer,
+        target_type: "organisation",
+        target_id: ids.orgWolnaDolina,
+        reason: "other",
+        description: "YR-15 raw-bypass test report.",
+      })
+      .select("id")
+      .single();
+    assert.equal(report.error, null);
+    reportId = report.data!.id as string;
+
+    const escalate = await admin.rpc("escalate_report_to_case", { p_report_id: reportId });
+    assert.equal(escalate.error, null);
+    firstCaseId = escalate.data as string;
+  });
+
+  await t.test(
+    "a raw direct insert for the same report_id is rejected by the database itself",
+    async () => {
+      const attempt = await admin
+        .from("moderation_cases")
+        .insert({
+          report_id: reportId!,
+          case_type: "report_escalation",
+          target_type: "organisation",
+          target_id: ids.orgWolnaDolina,
+          status: "open",
+        })
+        .select();
+      assert.ok(attempt.error, "expected the unique constraint to reject a duplicate raw insert");
+
+      const cases = await admin.from("moderation_cases").select("id").eq("report_id", reportId!);
+      assert.equal(cases.data?.length, 1, "still exactly one case, the original from the RPC");
+      assert.equal(cases.data?.[0]?.id, firstCaseId);
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    await admin.from("moderation_cases").delete().eq("report_id", reportId!);
+    await admin.from("reports").delete().eq("id", reportId!);
+  });
+});
