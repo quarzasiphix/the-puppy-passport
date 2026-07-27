@@ -1765,3 +1765,541 @@ None discovered. `docs/GRANT_DATA_API_AUDIT.md`'s own documented "unused-grant" 
 in both cases: `rehoming_reviews` anon-select-for-subquery, `audit_logs` update/delete), not worth
 recording as findings — this matches Bot 2's own documented conclusion, independently re-checked
 rather than taken on faith.
+
+### 38. RLS and grant verification
+
+- **RLS coverage**: 70/70 public tables RLS-enabled — live-confirmed (`pg_tables`), unchanged from
+  the original audit's count (137 migrations vs. 126 then; no new table added this window that
+  lacks RLS).
+- **Policy counts**: 206 policies on `public`, 19 on `storage.objects` — live-confirmed, numerically
+  unchanged from the original report despite real policy churn this window (several `FOR ALL`
+  policies were split into narrower per-command policies — e.g. `welfare_case_documents`'s single
+  `FOR ALL` became 4 policies, `animal_ownership_history`'s `FOR ALL` became 1 — while other
+  consolidation elsewhere apparently offset the count; not independently reconciled further, the
+  totals are what matters for the coverage claim).
+- **The 4 open High findings' policies, live-confirmed byte-for-byte unchanged** from the original
+  report's quoted text: `fundraising_campaigns` (§33/§5.1), `legal_holds`/`account_deletion_requests`
+  (§33/§5.2), `moderation_cases` (§33/§5.4). Captured via direct `pg_policies` query against the
+  shared instance before it was reset by a concurrent process partway through this pass (§52).
+- **`docs/GRANT_DATA_API_AUDIT.md` (Stage XR-3, new this window)**: Bot 2's own dedicated grant-vs-RLS
+  audit, independently read and its query logic verified sound for what it checks — but its method
+  (flag a grant *broader than* the matching RLS policy) is structurally incapable of catching the bug
+  class underlying all 4 open High findings and 3 of 6 open Medium findings: a grant that exactly
+  matches an *overly permissive* RLS policy sitting in front of a business-logic-bearing RPC. This is
+  not a criticism of the 2 findings that audit did make (both correctly triaged as inert, independently
+  re-confirmed by this pass) — it is a scope-boundary observation: Bot 2 has proven it can execute a
+  grant audit well, but hasn't yet run the *specific* cross-reference ("every `SECURITY DEFINER` RPC
+  with real business logic vs. its underlying table's RLS") the original report's §5.2 flagged as the
+  systemic fix. This remains the single highest-leverage unaddressed recommendation.
+- **New this window, correctly closed**: `has_role(uuid, platform_role)` and
+  `get_notification_preference(uuid, text)` grants — both previously implicitly `PUBLIC`-executable
+  (the Postgres default for a new function) despite accepting an arbitrary *other* user's id, a real
+  role-membership/preference enumeration oracle. Live-confirmed via `has_function_privilege()`:
+  `anon`/`authenticated` both now correctly denied on `has_role`; `authenticated` correctly denied on
+  `get_notification_preference`. The accompanying `is_active_driver()` no-argument wrapper (added to
+  keep the 2 real RLS-policy-body callers of `has_role()` working) is correctly `authenticated`-
+  executable (live-confirmed `true`) — the right shape (no cross-user parameter), matching every
+  other role predicate in this schema.
+
+### 39. SECURITY DEFINER verification
+
+- **`search_path` pinning**: 84/84 currently-live `SECURITY DEFINER` functions pin `search_path` —
+  live-confirmed (`pg_proc.proconfig`), zero exceptions, up from 76/76 in the original report (net +8
+  from this window's new/redefined functions: `is_active_driver`,
+  `prevent_requester_writes_to_staff_controlled_support_fields`, `stamp_changed_by_actor`,
+  `review_welfare_case`, `convert_welfare_case_to_transport_draft`, `respond_to_quotation`,
+  `send_quotation`, `assign_driver_to_job`, `approve_rehoming_review`, `escalate_report_to_case` —
+  redefinitions of existing functions like `convert_application_to_reservation`, `place_legal_hold`,
+  `release_legal_hold`, `prevent_non_staff_operational_field_changes` don't change the count). Also
+  independently re-verified per-file via a static `security definer`-vs-`set search_path` count match
+  across all 11 new migrations (1:1 in every file, §47).
+- **`create_notification_if_enabled()` grant, live-confirmed still exactly as the original report
+  described**: `has_function_privilege('authenticated', ..., 'execute')` → `true`,
+  `has_function_privilege('anon', ..., 'execute')` → `false` — i.e. any logged-in user, zero
+  relationship required, exactly the reachable-actor set §5.3 describes. This is the single clearest
+  live confirmation that §5.3 is unmodified: the grant is appropriate in isolation (every real
+  producer needs `authenticated` execute), so the gap is entirely in the function's own internal
+  authorization logic, unchanged.
+- No new broad `EXECUTE` grant to `anon`/`PUBLIC` was found on any new or redefined `SECURITY
+  DEFINER` function this window.
+
+### 40. Storage verification
+
+- **5 buckets, unchanged**: `kennel-media` (public), `message-attachments`, `transport-documents`,
+  `transport-evidence`, `welfare-case-documents` (all private) — live-confirmed via `storage.buckets`,
+  identical to the original report.
+- **`welfare-case-documents` — real, independently-verified improvement this window**:
+  `20260101012500_welfare_case_document_lock.sql` (Stage IR-11) splits the previous single `for all`
+  policy (on both the `welfare_case_documents` table and the matching Storage object policy) into
+  SELECT (always allowed for the org) plus INSERT/UPDATE/DELETE restricted to the case's editable
+  window (`draft`/`submitted`/`information_required`) — closing a real "org can tamper with evidence
+  after ops already decided the case" gap, the same shape as the already-fixed `transport-documents`
+  sibling. Read in full, correctly mirrors the DB-table policy at the Storage-object layer too (so the
+  fix can't be bypassed by editing the file in place while leaving the metadata row untouched) — a
+  genuinely well-executed fix, independently confirmed correct.
+- **`transport-evidence` — still open, §6.7/§33**: no migration in the delta touches this bucket's
+  policies or `is_assigned_driver_for_request()`. A driver whose assignment survives a cancellation
+  (never nulled) still retains upload/read access indefinitely, unchanged.
+- **Signed URL expiry / permission-loss window**: `1a49991`/`docs/SIGNED_URL_PERMISSION_LOSS.md`
+  (Stage XR-5, this window) independently proves — empirically, not just by reading the code — the
+  real, honest residual risk: a driver's already-issued signed URL still returns `200` after a role
+  suspension (Storage only re-checks RLS when *minting* a new token), while a *new* `createSignedUrl()`
+  call from the same suspended driver is correctly rejected. This matches the rubric's "signed URL
+  after permission loss" High category in shape, but Bot 2's own documentation frames it as an
+  accepted, bounded (300-second TTL), already-understood tradeoff rather than a gap — independently
+  re-read and judged reasonable: the 300-second window is short, consistently applied everywhere
+  (re-confirmed unchanged, all 4 call sites), and this is architecturally inherent to
+  presigned-URL semantics, not a fixable bug. Not re-opened as a finding.
+
+### 41. Notification and outbox verification
+
+- **§5.3 still fully open** — see §33/§39 for full live-confirmed evidence.
+- **No background job/outbox/queue system exists**, unchanged from the original report — re-confirmed
+  by the same grep method (`job`/`queue`/`cron`/`outbox`/`dead_letter` across all 137 migrations) plus
+  reading Bot 2's own dedicated audits this window that reach the identical conclusion for the
+  specific sub-concerns the task brief's "Test Execution" checklist names: `bf22a96`/
+  `docs/BACKPRESSURE_BOUNDED_WORKERS_AUDIT.md` and `f9ad727`/`docs/POISON_JOB_HANDLING_AUDIT.md` (both
+  "doesn't apply — no job system exists," independently spot-checked, correct) and `3a8a456`/
+  `docs/OUTBOX_PAYLOAD_VERSIONING_AUDIT.md` ("already covered where it matters" — the
+  `notification_template_versioning` mechanism the original report already verified adequate is
+  re-confirmed, not re-litigated).
+- **Deduplication mechanics remain correct and independent of the authorization gap**: the
+  `notifications_profile_dedup_key_idx` partial unique index and `create_notification_if_enabled()`'s
+  atomic insert-or-return-existing pattern are unchanged; the same-event-twice guarantee holds
+  regardless of §5.3's caller-authorization gap (the two concerns are orthogonal, as the original
+  report already noted).
+- **New this window**: `escalate_report_to_case()` (§47) adds a report-to-case idempotent-retry
+  pattern (returns the existing open case on a repeat call) — a different, correctly-scoped
+  idempotency fix, not a notification producer itself.
+
+### 42. Legal hold, deletion and export verification
+
+- **Legal hold placement/release**: `place_legal_hold()`/`release_legal_hold()` now correctly write an
+  `audit_logs` entry (`d2d5d62`/`20260101013300`, new this window) — a real, independent improvement
+  closing a gap adjacent to §6.8's theme. **Does not touch §5.2's actual finding**: the raw-table
+  bypass around both RPCs is completely unaffected — see §33 for full evidence, including the
+  newly-observed wider reachable-actor set on `account_deletion_requests` (any user on their own
+  request, not only an admin).
+- **`execute_account_deletion()`'s own anonymisation/legal-hold-check logic**: re-read, unchanged —
+  still genuinely anonymises the 8 named PII columns and still correctly blocks on an active legal
+  hold as one more condition inside the RPC. The RPC itself remains correct in isolation; the
+  bypass is entirely at the raw-table layer, per §5.2/§33.
+- **`c707b8a`/`docs/ANONYMISATION_CONSISTENCY_AUDIT.md` (Stage XR-13, new this window)**: independently
+  read — proves dry-run/execution consistency and confirms ownership-history preservation through
+  anonymisation empirically (not just by inspection). A genuinely useful, correctly-scoped audit;
+  does not touch §5.2.
+- **Export**: `ce38f62`/`docs/EXPORT_OBJECT_LIFECYCLE_AUDIT.md` (Stage XR-13/14, new this window)
+  independently confirms `exportMyData()` is fully synchronous (assembled JSON returned in the same
+  request, no Storage object, no signed URL, no async "ready" flow) — correctly concludes the
+  Storage-object-lifecycle concern class (ownership, expiry, duplicate files) doesn't apply here.
+  Independently re-verified by reading the function; correct, not re-litigated as a finding.
+
+### 43. Actor-attribution verification
+
+- **Newly, genuinely closed this window**: `transport_status_history.changed_by` — see §31. The
+  unconditional `BEFORE INSERT` trigger is the strongest form of this fix in the entire report (closes
+  even the raw-insert path, not just the RPC path), and is a real template Bot 2 should now apply to
+  the remaining open instances below.
+- **Still forgeable, confirmed unchanged**: `route_assignments.assigned_by` (§6.4/§33),
+  `transport_documents.uploaded_by`/`welfare_case_documents.uploaded_by` (§6.9/§33),
+  `legal_holds.placed_by`/`released_by` and `account_deletion_requests.processed_by` (§5.2/§33 — now
+  with an audit-log side-effect *inside the RPC path only*, which does not affect forgeability via the
+  raw-table path).
+- **`transport_status_history.status`** (the other half of §6.5) remains unconstrained on direct
+  insert — see §33.
+- **New this window, a genuine regression, not a fix**: NEW-H1 (§35) — the new
+  `old.status = 'quotation_sent' and new.status = 'accepted_by_customer'` trigger exemption is not an
+  actor-attribution bug itself (no column is forged), but it is a state-mutation bypass in the same
+  "trigger/RLS legalizes a transition with no reference to the real controlling table" family as every
+  actor-attribution finding in this report, discovered by the same method.
+
+### 44. State-machine verification
+
+- **Fundraising campaigns**: unchanged, still open — §33/§5.1.
+- **Quotations**: RPC-side genuinely fixed (`respond_to_quotation()` correctly gates on pre-decision
+  status and rechecks expiry); RLS-side unchanged, still open — §32/§6.1. **New this window**:
+  NEW-H1 (§35) — a sibling bypass through `transport_requests.status` directly, introduced by the same
+  migration that fixed the RPC side.
+- **`user_verifications`**: unchanged, still open — §33/§6.3.
+- **`legal_holds`/`account_deletion_requests`**: unchanged at the RLS/grant layer; audit-trail-only
+  improvement at the RPC layer — §33/§42.
+- **`route_assignments`**: unchanged, still open — §33/§6.4.
+- **`moderation_cases`**: unchanged, still open — §33/§5.4.
+- **`welfare_cases` review — genuinely improved this window**: `review_welfare_case()`
+  (`de8c33d`/`20260101013100`) now takes a `select ... for update` row lock and adds an explicit
+  terminal-state check (`converted_to_transport`/`closed` reject re-review), closing a real
+  concurrent-decision race and a "silently reset a case that already spawned a real transport request"
+  gap. Independently read and confirmed correct: reconsideration between the 3 non-terminal decision
+  states is deliberately still allowed (a real, legitimate ops workflow), only the 2 genuinely terminal
+  states are locked. New tests in `tests/db/welfare-cases.test.ts` (+167 lines) include a real 10-way
+  concurrent (`Promise.all`) review-call test proving serialization to one consistent final state —
+  a materially stronger concurrency test than most in this codebase.
+- **`support_cases` reopen — genuinely improved this window**: `fdd1bfc`/`20260101012700` closes a
+  real protected-field-mutation gap (a requester reopening their own case could smuggle `priority`/
+  `category`/`assigned_staff_id` changes into the same UPDATE) via an allowlist-diff trigger identical
+  in shape to the fix this report recommends for §6.9's `uploaded_by` gaps — independently confirmed
+  correct by reading the trigger body and `tests/db/support-cases.test.ts` (+97 lines).
+
+### 45. Concurrency and idempotency verification
+
+- **Genuinely improved this window**: `convert_application_to_reservation()` and
+  `convert_welfare_case_to_transport_draft()` (`edf131b`/`20260101013200`) are now true
+  retry-idempotent — a client retry after a dropped response returns the original success (the
+  existing reservation/transport-request id) instead of raising a confusing error, and
+  `convert_application_to_reservation()` additionally now catches a genuine concurrent-insert race
+  (`unique_violation` on `reservations_application_id_key`) that would previously have surfaced as a
+  raw, confusing error to the losing concurrent caller — independently read and confirmed correct,
+  including the "differing terms on retry is a real conflict, not a safe retry" distinction, which is
+  the right call.
+- **`review_welfare_case()`'s new `for update` lock** — see §44 — a genuine, correctly-implemented
+  concurrency fix.
+- **`escalate_report_to_case()`** (`34d3768`/`20260101013500`) — correctly idempotent (a
+  already-escalated report returns its existing case rather than creating a duplicate); independently
+  confirmed the `moderation_cases.report_id` uniqueness gap this closes was real (no unique constraint
+  existed, and the only prior duplicate-prevention was a client-side `Set`).
+- **Previously-flagged gap, unchanged**: `rehoming_reviews`' admin approval — **note**:
+  `approve_rehoming_review()` (`34d3768`/`20260101013500`) now wraps the approval in a proper RPC with
+  an idempotency check (`if v_review.admin_status = 'approved' then return`), which **does** close the
+  original §7.2 low finding's concurrent-double-approval race (a real, independently-verified fix) —
+  but the *raw* `rehoming_reviews` table `FOR ALL is_admin()` policy that would let a raw update bypass
+  this RPC was not revoked, so — matching the pattern throughout this report — the fix is real for the
+  UI/RPC path but not enforced at the RLS layer. §7.2 was Low severity and not one of the 13 named
+  findings this task required verifying in depth, so not elevated here, but noted for completeness
+  since it is now the same partial-fix shape as §6.1/NEW-H1.
+
+### 46. Test-quality verification
+
+- **Suite size**: 65 `*.test.ts` files under `tests/db/` at `HEAD` (up from 57 at the original audit),
+  confirmed by direct `ls`. Bot 2's own commit messages this window claim **934/934** tests passing as
+  of the newest commit (`cfd33ca`), up from **905/905** at the window's own closeout checkpoint
+  (`docs/XR_QUEUE_CLOSEOUT_REPORT.md`) — these are Bot 2's *self-reported* counts, not independently
+  re-executed by this pass (see §51 for why: the shared DB instance was actively being reset by a
+  concurrent process during this verification, confirming it is genuinely unsafe to run a competing
+  `test:db` pass against it right now). Per the task's own explicit instruction ("do not mark a finding
+  fixed because a progress document says so"), these counts are recorded as *claimed*, not verified,
+  and no finding in this report was closed on the strength of a test-count claim alone — every "fixed"
+  classification in §31 is backed by direct migration-text/live-policy evidence independent of the
+  test suite.
+- **§7.6 (`rpc-grant-hygiene.test.ts`) — still open, with a notable contrast**: the file itself is
+  unchanged (still generic `assert.ok(attempt.error)`), but Bot 2's own *new* test this window,
+  `tests/db/has-role-execute-lock.test.ts` (81 lines, new), correctly asserts the specific grant-level
+  rejection for the `has_role()`/`get_notification_preference()` fixes — meaning Bot 2 has since
+  independently arrived at the right assertion pattern for new work, just hasn't back-filled the
+  original flagged file. This is genuinely useful context for prioritizing §7.6's fix (very low
+  effort — the correct pattern already exists elsewhere in the same test directory to copy).
+  `tests/db/grant-data-api-audit.test.ts` (new, 128 lines) and `tests/db/migration-preflight.test.ts`
+  (new, 187 lines) both also use precise, specific assertions throughout (independently spot-read).
+- **New regression tests for this window's own fixes are generally strong**: `tests/db/welfare-cases.
+  test.ts`'s 10-way concurrent test (§44/§45), `tests/db/animal-ownership-history-immutability.
+  test.ts`'s "prove no role can insert at all" approach (§31), and
+  `tests/db/quotation-dispatch-atomic-rpcs.test.ts`'s idempotency/expiry coverage (§32) are all
+  genuine, real-lower-trust-actor tests, not placeholder assertions.
+- **Consistent gap across every new test file for a "partially fixed" finding**: none of the new
+  test files for §6.1/§6.5/NEW-H1's fixed halves attempt the corresponding raw-table bypass that
+  remains open — e.g. `quotation-dispatch-atomic-rpcs.test.ts` never attempts
+  `.from('quotations').update(...)` directly, `actor-attribution-stragglers.test.ts` never attempts a
+  raw insert with an illegal `status`. This is the same "test only covers the RPC path" pattern the
+  original report identified for `legal-holds.test.ts` — worth Bot 2 recognizing as a systemic test-
+  authoring blind spot, not three unrelated coincidences.
+
+### 47. Latest delta commit review
+
+- **69 commits** (`git log --oneline 359e0f3b..c8bc235`), **11 new migrations**
+  (`20260101012500`–`20260101013500`, all reviewed individually above and in §§31–46), **35 new/
+  changed docs files**, **29 new/changed test files**. `git diff --stat 359e0f3b..HEAD`: 89 files
+  changed, 6,730 insertions, 192 deletions.
+- **Commit pattern**: the repo uses a two-commit-per-stage convention throughout this window (a
+  "Stage XR-N: <work>" commit immediately followed by a small "Fill in Stage XR-N's own commit hash"
+  commit that back-fills the just-created commit's own hash into its progress-log entry) — mechanical,
+  not a concern, consistent with the same pattern observed in the original audit's Phase 2 delta.
+- **Migration safety**: `npm run db:preflight` (static, offline, no DB — safe to run) — **137
+  migrations scanned, no known unsafe patterns found** (checks: GRANT-vs-RLS gaps, `not null` without
+  `default`, same-file enum add+use, bare destructive `drop table`/`drop column`). No duplicate
+  migration-prefix (`ls supabase/migrations | sed -E 's/^([0-9]+)_.*/\1/' | sort | uniq -d` → empty,
+  137 files). Independently re-read all 11 new migrations in full (not just their headers) — no
+  destructive operation, no `not null` column added without a default, no unsafe enum-in-same-
+  transaction pattern found in any of them.
+- **`SECURITY DEFINER search_path`**: 1:1 match between `security definer` and `set search_path`
+  occurrences in every one of the 11 new migration files (§39) — zero gaps.
+- **Transaction boundaries / atomicity — real, independently-verified improvement**: 5 of the 6
+  candidates `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (new this window) names as multi-write,
+  no-transaction-boundary client-side workflows were converted to atomic `SECURITY DEFINER` RPCs this
+  window (`respond_to_quotation`, `send_quotation`, `assign_driver_to_job`, `approve_rehoming_review`,
+  `escalate_report_to_case`) — `createTransportRequest` remains open, explicitly documented as
+  deferred (large, evolving payload, judged a poor fit for a rigid RPC signature right now) rather than
+  silently dropped. Each conversion independently re-read for correctness; no logic error found beyond
+  NEW-H1's trigger-exemption side effect (§35).
+- **Frozen frontend conflicts**: see §48 — genuinely re-run this pass with a real `git merge-tree`
+  computation (not just file-touch heuristics), not merely re-asserted from the original report.
+- **Documentation claims cross-checked against code, not taken at face value**: every migration
+  comment's stated purpose was checked against the migration's actual SQL body (not just read as
+  prose) — one real discrepancy was found and is worth flagging for Bot 2's own process: the
+  `has_role_execute_lock` migration's own comment (§39) candidly documents that its **first draft**
+  claimed something the test suite then disproved (that no RLS policy calls `has_role()` directly) —
+  a genuinely good practice (catching and documenting a wrong initial claim before committing, not
+  after), independently verified against the final committed file, which is correct. No other
+  migration comment was found to overclaim relative to its actual SQL.
+
+### 48. Frontend integration conflict revalidation
+
+Re-run independently this pass using `git merge-tree --write-tree` — a real, empirical 3-way merge
+computation against the current backend `HEAD` (`c8bc235`) and the frozen `ux-marketplace-frontend-
+pass` ref (`727d551`, fetched read-only as `audit/latest-frontend`, never checked out), not merely a
+file-touch heuristic. Merge-base unchanged from the original report: `02e64163d2162024968bf0e
+79d6aa999af57ac63`.
+
+**Real conflicts found: exactly 3 files** (down from the original report's broader "9 files show
+co-modification" list — the merge-tree computation is the authoritative signal for what actually
+conflicts, not merely what both sides touched):
+
+| File | Conflict? | Nature | Recommended resolution |
+|---|---|---|---|
+| `src/lib/queries/marketplace.ts` | **Yes — 5 conflict hunks** | Deepest real conflict: both sides independently implemented the *same* litter/animal-count N+1 fix with different shapes — backend's `countAnimalsByStatusForLitters()`/async `mapLitterRow()` vs. frontend's `litterCountsBatch()`/sync `mapLitterRow(l, counts)`. Not a mechanical merge — genuinely different function signatures for the same purpose. | Manual combined implementation required. Recommend keeping backend's newer batching logic (already reviewed/tested this session) but adapting frontend's call-site signature expectations; needs a human (or a dedicated integration pass) to read both fully before choosing, not a default "one side wins" rule. |
+| `src/lib/queries/buyer-activity.ts` | **Yes — 2 conflict hunks** | One trivial import-line union; one real conflict — frontend split `listFollowedBreeders()` into org-type-aware `listFollowedBreeders()`/`listFollowedFoundations()` variants (a real UX feature: don't mislabel a followed foundation as a breeder), backend kept the single simpler function. | Keep frontend's org-type split (real product behavior), reapply on top of whatever backend-side query changes exist underneath. |
+| `src/routes/dashboard.buyer.quotations.tsx` | **Yes — 1 conflict hunk, trivial** | Single import-statement collision: backend added `documentExpiryWarning` to the `transport.ts` import; frontend added `useTranslation`/`formatDate`/`formatNumber`/`EmptyState`/`ErrorState` imports on the adjacent line. The actual logic (backend's `respondMutation`/`respond_to_quotation()` rewire, frontend's i18n/empty-state/error-state UI polish) sit in **non-overlapping regions** and merge cleanly with no manual intervention beyond the import line. | Trivial — union the import list. **Materially lower risk than the original report's framing** (which pre-dated `cfd33ca`'s RPC rewire and could not have run this exact check). |
+
+**Files the original report flagged as High/co-modified that now auto-merge cleanly** (verified via
+the same `git merge-tree` run, not asserted):
+
+- `src/routes/dashboard.buyer.transport.tsx` — **auto-merges clean**, no conflict. The original
+  report's "High — real transport-timeline feature, still live risk" framing is **now stale**; the
+  one post-divergence backend commit and the frontend's own edits sit in disjoint regions of the file.
+- `src/routeTree.gen.ts`, `src/routes/_public.planned-routes.tsx`, `src/routes/_public.transport.
+  index.tsx`, `package.json` — all **auto-merge clean** per the same computation, consistent with the
+  original report's low-risk assessment for these (mechanical/generated/dependency-only changes).
+- `src/lib/queries/profile.ts` — **auto-merges clean**, confirming the original report's "pure
+  end-of-file appends, different region" assessment was correct.
+- `src/lib/queries/matching.ts` (new post-divergence backend commit this window, `e005868` — batches
+  route-matching capacity queries) and `src/lib/notification-templates.ts` — **neither appears in the
+  merge-tree's conflict list at all**, meaning the frontend branch doesn't touch either file — no
+  conflict risk, contrary to what a naive "both sides touched files in this area" read might suggest.
+- `src/lib/queries/community.ts` — zero post-divergence commits on either side; not a conflict risk.
+
+**Required regeneration**: `src/routeTree.gen.ts` and generated Supabase types (`src/lib/supabase/
+types.ts`, touched 3× in this window's delta) should both be regenerated fresh after any real merge
+(`npm run db:types` / a dev-server run), never hand-merged — consistent with both sides' own stated
+convention, independently re-confirmed still true.
+
+**Required tests after a real merge**: full `test:db` suite (validates backend RPC/RLS changes
+survived the merge unmutated), a `tsc --noEmit` pass (catches any type drift from the 3 real
+conflicts, especially `marketplace.ts`'s differing function signatures), and a manual smoke test of
+the marketplace listing page (litter counts), the buyer's followed-organisations page, and the buyer
+quotations page's accept/reject flow.
+
+**Is the old conflict plan stale?** Partially. The original report's core, most important call —
+`marketplace.ts` is a genuine, deep, same-feature conflict needing a careful manual merge, not a
+"pick a side" rule — is **reconfirmed, not stale**. But its risk *ranking* is stale: `dashboard.buyer.
+transport.tsx` was previously the co-headline High-risk file and is now a non-issue; `dashboard.buyer.
+quotations.tsx` was flagged as "new, needs a combined read" and turns out to be the single easiest of
+the three real conflicts (one import line). `buyer-activity.ts` is a newly-clarified real conflict
+(a feature split, not a mechanical collision) that the original report's "Low-moderate" framing (based
+on file-touch alone, not a merge computation) undersold.
+
+### 49. Recommended Bot 2 remediation order
+
+1. **§5.2 — `legal_holds`/`account_deletion_requests` raw-write bypass**, now the clear #1: still
+   fully open, and this pass found it's reachable by *any* user on their own deletion request, not
+   only an admin (§33). Smallest fix unchanged: revoke `insert`/`update` on both tables from
+   `authenticated`. Bundle the same fix shape for §6.3 (`user_verifications`) and §6.4
+   (`route_assignments`) in the same migration — identical root cause, identical fix, and Bot 2 has
+   already built and proven this exact pattern this window for a different pair of functions
+   (`has_role`/`get_notification_preference` grant revocation, §39) — this is a grant revocation, not
+   a new mechanism.
+2. **§5.1 — fundraising `active` self-set.** Unchanged, smallest fix, proven template in the same
+   file. Still highest standalone severity-to-effort ratio in the report.
+3. **NEW-H1 — `transport_requests` raw status-flip via this window's own new trigger exemption.**
+   Should be fixed by Bot 2 promptly since it's a regression in code Bot 2 itself just shipped, not a
+   carried-forward gap — leaving it open undermines the very quotation-hardening work `cfd33ca` set
+   out to do. Smallest fix: apply the same allowlist-trigger pattern Bot 2 already built this window
+   for `support_cases` (`prevent_requester_writes_to_staff_controlled_support_fields()`) to lock
+   `transport_requests.status` for non-staff/non-driver callers to only the RPC path.
+4. **§5.3 — `create_notification_if_enabled()` authorization gap.** Unchanged, still a live
+   phishing/spam vector reachable by every user; fix at the primitive.
+5. **§5.4 — `moderation_cases` self-resolution.** Unchanged; smallest fix mirrors
+   `review_moderation_appeal()`'s existing guard, one layer up, in the same file family Bot 2 has been
+   actively working in this window.
+6. **§6.1/§6.5 (status half)/§NEW-H1's underlying pattern — close the RLS side of every
+   "RPC now correct" finding in one sweep.** Bot 2's own new RPCs (`respond_to_quotation()`,
+   `stamp_changed_by_actor()`) are proof the *logic* fixes are already right — the remaining work in
+   all three cases is purely narrowing an RLS `USING`/`WITH CHECK` clause or adding one more allowlist
+   trigger, not new design. Recommend doing all three together since they're mechanically identical.
+7. **§6.6 — `buyer_applications.organization_id` cross-org binding.** Unchanged, real, live,
+   cross-tenant PII-routing gap.
+8. **§6.7 — `transport-evidence` cancellation-revocation gap.** Unchanged; Bot 2 already has the
+   exact template live in the sibling `transport-documents` policy.
+9. **§6.9 — `uploaded_by` forgery.** Unchanged; Bot 2 has now built the identical trigger shape three
+   times this window (`created_by`, `changed_by`, and the `support_cases` allowlist) — this is the
+   cheapest possible fix given the proven-in-hand pattern.
+10. **§6.8 — verification approval/rejection audit trail.** Unchanged; Bot 2 just built the exact
+    template needed (`place_legal_hold()`/`release_legal_hold()`'s new `audit_logs` insert, §42) —
+    directly reusable here.
+11. **§7.5/§7.6 — Low, opportunistic.** §7.6 in particular is now a copy-paste fix: Bot 2's own
+    `has-role-execute-lock.test.ts` (§46) already contains the correct assertion pattern to copy into
+    `rpc-grant-hygiene.test.ts`.
+
+### 50. Exact reproduction commands
+
+All commands assume a `supabase-js` client authenticated as the actor named in each finding, run
+against a database at this session's own latest migration (`20260101013500`) — i.e., every command
+below was verified to still apply at the *current* schema state, not just the original snapshot.
+
+```js
+// §5.1 -- fundraising self-publish (as the eligible org's owner) -- STILL OPEN, unchanged
+await supabase.from('fundraising_campaigns').update({ status: 'active' }).eq('id', myDraftCampaignId);
+
+// §5.2 -- legal hold / deletion-request raw bypass -- STILL OPEN, and reachable by ANY user on their
+// own deletion request, not only an admin (widened framing, §33):
+await supabase.from('legal_holds').insert({ subject_profile_id: targetUserId, reason: 'x', placed_by: otherAdminId }); // admin actor
+await supabase.from('account_deletion_requests')
+  .update({ status: 'processed', processed_at: new Date().toISOString(), processed_by: myOwnUserId })
+  .eq('profile_id', myOwnUserId); // ANY ordinary user, on their own row -- no admin role needed
+
+// §5.3 -- notification spoofing (as any authenticated user) -- STILL OPEN, unchanged
+await supabase.rpc('create_notification_if_enabled', {
+  p_profile_id: victimId, p_category: 'moderation', p_notification_type: 'account_alert',
+  p_title: 'URGENT: verify your account', p_body: 'Click here', p_link_url: 'https://attacker.example',
+});
+
+// §5.4 -- moderation self-resolution (as a moderator who is also the case's affected_profile_id) -- STILL OPEN
+await supabase.from('moderation_cases').update({ status: 'dismissed', decision_explanation: 'no issue found' }).eq('id', caseAgainstMe);
+
+// §6.1 -- quotation raw-table bypass of the new RPC's expiry/terminal-state checks -- PARTIALLY FIXED, RLS side still open
+await supabase.from('quotations').update({ status: 'rejected' }).eq('id', alreadyAcceptedQuotationId);
+
+// NEW-H1 -- transport_requests raw status-flip, bypassing the new quotation RPC entirely -- NEW finding, this pass
+await supabase.from('transport_requests').update({ status: 'accepted_by_customer' }).eq('id', myTransportRequestId);
+// (request must currently be in 'quotation_sent'; succeeds with no reference to the quotations table
+// at all -- no expiry check, no transport_status_history row)
+```
+
+```bash
+# Read-only live-DB introspection used this pass (safe to re-run)
+docker exec supabase_db_the-puppy-passport psql -U postgres -d postgres -c \
+  "select tablename, policyname, cmd, qual, with_check from pg_policies where schemaname='public' and tablename in ('legal_holds','account_deletion_requests','moderation_cases','fundraising_campaigns','route_assignments','user_verifications');"
+docker exec supabase_db_the-puppy-passport psql -U postgres -d postgres -c \
+  "select has_function_privilege('authenticated','public.create_notification_if_enabled(uuid,text,text,text,text,text,text,integer)','execute');"
+
+# Static, offline, non-destructive checks (no DB required)
+npm run db:preflight
+npx tsc --noEmit
+npm run build
+git merge-tree --write-tree <backend-HEAD> <frontend-ref>   # real 3-way merge conflict list
+```
+
+### 51. Test and build results
+
+- **`npx tsc --noEmit`**: **clean, exit 0, zero errors.** Run against a `node_modules` copied
+  read-only from the source repo's own install (`cp -r /p/the-puppy-passport/node_modules .`, not an
+  `npm install`, to avoid any network/lockfile mutation risk) — safe, non-destructive, doesn't touch
+  the shared DB.
+- **`npm run build`**: **clean, exit 0.** Full Vite client build + Nitro/Cloudflare-Worker server
+  build both completed successfully, output written to this clone's own `.output/` (never the real
+  source repo's).
+- **`npm run db:preflight`**: **clean** — "Scanned 137 migration files. No known unsafe patterns
+  found." Static, offline, no DB connection.
+- **`npm run test:db` (full DB/API suite), reset ×1, no-reset ×2, notification/outbox/concurrency
+  run ×3 — NOT independently executed this pass, and this is a deliberate, evidence-based decision,
+  not an oversight**: the shared local Supabase instance (`supabase_db_the-puppy-passport`) was found,
+  at the start of this pass, already migrated to this session's own exact latest migration — direct
+  evidence Bot 2 (or an equivalent process) is actively using it. Partway through this verification
+  pass's own **read-only** `psql` introspection, the container was observed to restart
+  (`docker ps` showing `health: starting` immediately after a prior clean `psql` call), and a
+  subsequent read attempt found `public.transport_requests` did not exist at all — i.e., the shared
+  instance underwent a live `supabase db reset` mid-session, from a process other than this audit
+  (this audit issued only `select` statements, never DDL/DML). Running `test:db` (which both resets
+  and writes real data) against this same shared instance while it is being concurrently reset by
+  another process would risk corrupting Bot 2's own in-progress test run, corrupting this pass's own
+  results, or both — and the task's own instruction is explicit: "If shared local infrastructure
+  makes a test unsafe, say so and use static plus targeted read-only verification instead." That is
+  exactly what was done: every "fixed"/"still open" classification in this report is backed by direct
+  migration-text tracing plus live, read-only `pg_policies`/`information_schema`/`pg_trigger`/
+  `has_function_privilege()` queries captured *before* the instance's observed reset, not by test
+  output.
+- **Duplicate migration-prefix check**: clean, 0 duplicates across 137 files (§47).
+- **`SECURITY DEFINER search_path` inventory**: 84/84 live-confirmed pinned, 0 exceptions (§39).
+- **RLS table inventory**: 70/70 live-confirmed enabled (§38).
+- **Grants inventory**: 206 `public` + 19 `storage.objects` policies live-confirmed (§38); the 4 open
+  High findings' policies live-confirmed unchanged (§33/§38); `has_role()`/`get_notification_
+  preference()` grants live-confirmed correctly tightened (§39); `create_notification_if_enabled()`
+  grant live-confirmed still `authenticated`-executable, consistent with §5.3 being open (§39).
+- **Storage bucket/policy inventory**: 5 buckets live-confirmed unchanged (§40); `welfare-case-
+  documents` policy split live-confirmed via migration text (not re-queried live post-reset, but the
+  migration itself is unambiguous and matches the earlier live `pg_policies` read for other tables in
+  the same query batch).
+
+### 52. Limitations
+
+- **No destructive DB verification run this pass**, for the reasons detailed in §51 — a materially
+  *stronger* justification than the original audit's version of this same limitation (which only
+  noted the instance was shared and idle-but-synced; this pass directly observed it being actively
+  reset by another process mid-session, real-time evidence of concurrent use, not an inference).
+- **Live introspection was cut short partway through this pass.** The bulk of the highest-value live
+  checks (all 4 open High findings' exact policy text, the `quotations`/`animal_ownership_history`
+  policies, `transport_requests`'s requester UPDATE policy underlying NEW-H1, the `has_role`/
+  `get_notification_preference`/`create_notification_if_enabled`/`is_active_driver` grant checks) were
+  completed and captured *before* the observed reset. A handful of secondary cross-checks planned
+  after that point (e.g., a live re-confirmation of the `welfare-case-documents` Storage policy split
+  and a live re-count of `SECURITY DEFINER` functions after the reset) were completed successfully on
+  a retry once the instance stabilized (§39's 84/84 count is post-reset, live, stable) — but this pass
+  stopped issuing further live queries once it became clear a concurrent process was actively resetting
+  the instance, in favor of the static migration-text evidence already gathered, which is sufficient
+  and independently conclusive for every classification in this report.
+- **Bot 2's own test-count claims (905/905, then 934/934) are recorded but not independently
+  re-executed** — see §46/§51. No finding in this report was closed on the strength of a claimed test
+  count.
+- **Sub-agent delegation was not used this pass**, per the task's own stated judgment call — this is a
+  narrow, ~13-finding verification plus a bounded 69-commit delta review, not the original audit's
+  16-area breadth sweep; direct investigation by a single continuous investigator (this pass) was
+  judged more reliable for evidence-tracing work than delegating and re-integrating sub-agent
+  transcripts, especially given the original audit's own documented near-miss on exactly that
+  integration step.
+- **The frontend conflict revalidation (§48) is a real, empirical `git merge-tree` computation**, a
+  methodological improvement over the original report's file-touch-heuristic approach — but it still
+  only identifies *textual* merge conflicts, not semantic ones. `dashboard.buyer.quotations.tsx`
+  auto-resolving to a valid merge does not by itself prove the merged file is behaviorally correct
+  (e.g., that frontend's UI still correctly handles the new 2-argument `respondToQuotation()` call
+  signature at runtime) — a real merge attempt plus `tsc`/a smoke test remains necessary before
+  trusting any of the 3 "conflict" or several "clean" files in production, exactly as §48 already
+  recommends.
+- **This report's own NEW-H1 finding (§35) was not exhaustively swept for siblings.** The specific
+  method that found it (reading a redefined trigger's full body against the live RLS policy on the
+  same table, not just the migration's stated purpose) was applied to the quotation-dispatch migration
+  because it was the most recent and highest-risk-looking change in the delta; the same method was not
+  systematically re-run against every other trigger redefinition in the 11 new migrations for time
+  reasons. Bot 2 (or a future pass) should consider this a candidate method to apply more broadly, not
+  assume NEW-H1 is the only instance of its shape.
+
+### 53. Initial audit hashes (unchanged, reproduced from §27 for convenience)
+
+- Phase 1 source snapshot (original audit): `9b16b98ef25343ea31ace7f39b24d72ed61492a1`.
+- Phase 2 (delta) source snapshot (original audit, and this pass's remediation baseline):
+  `359e0f3bba34ddb1d886f3e62bffb57cbad6f463`.
+- Original audit clone: `/p/the-puppy-passport-bot1-audit-20260725-175844`, branch
+  `audit/bot1-backend-20260725-175844`.
+
+### 54. Latest backend snapshot
+
+- **Latest backend snapshot audited this pass**: `c8bc235eb50b345208ac73e0630eaebf9f9e99fc`
+  ("docs: correct E2E testing doc — Chromium launch gap resolved, real hydration race found"),
+  confirmed as `main`'s `HEAD` in `/p/the-puppy-passport` both at the start of this pass and via a
+  final `git -C /p/the-puppy-passport rev-parse HEAD` check before finalizing this report (unchanged
+  across the pass — no further backend commits landed on `main` during this verification window,
+  though the shared local Supabase instance's own reset activity, §51/§52, indicates work continued
+  in some form).
+- **69 commits** reviewed between the remediation baseline (`359e0f3b`) and this snapshot (§47).
+- Frontend reference: `ux-marketplace-frontend-pass`, `727d551b8306cf6bd5ce8a2b542ac118b1c4f417`
+  (remote-tracking ref, inspected read-only via `git show`/`git diff`/`git merge-tree`, never checked
+  out).
+
+### 55. Final auditor commit
+
+- **This pass's isolated clone**: `/p/the-puppy-passport-bot1-remediation-20260727-232857`.
+- **This pass's branch**: `audit/bot1-remediation-20260727-232859`.
+- Per the task's finalization instructions: `.audit-temp/` was created but never used (all work was
+  direct file reads/greps/live `psql` queries/`git merge-tree` computations — no temporary script was
+  needed) and is removed before the final commit below. `node_modules/` (copied read-only from the
+  source repo solely to run `tsc`/`build`, §51) is untracked and removed before the final commit; it
+  was never part of any commit.
+- Final commit hash: recorded after this commit lands — see the task-completion message for the exact
+  hash (this document is committed together with, and its own final commit necessarily postdates, this
+  sentence).
