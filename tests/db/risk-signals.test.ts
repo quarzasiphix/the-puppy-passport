@@ -212,6 +212,17 @@ test("risk_signals: repeatedly crossing a real rate-limit threshold produces a s
     assert.equal(reviewed.data?.reviewed, true);
     assert.equal(reviewed.data?.is_false_positive, true);
     assert.equal(reviewed.data?.reviewed_by, ids.ops);
+
+    // Stage YR-7 (admin command catalogue): mark_risk_signal_reviewed() previously left no
+    // audit_logs trail, unlike its sibling ops-privileged RPCs.
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", signalRow.data!.id as string)
+      .eq("action", "risk_signal.reviewed")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.ops);
   });
 
   await t.test("a non-staff user cannot call mark_risk_signal_reviewed", async () => {

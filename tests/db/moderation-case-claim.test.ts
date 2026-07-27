@@ -34,6 +34,17 @@ test("claim_moderation_case: atomic claim, server-stamped actor, clear conflict 
     assert.equal(claimed.error, null);
     assert.equal(claimed.data?.assigned_moderator_id, ids.admin);
     assert.equal(claimed.data?.status, "investigating");
+
+    // Stage YR-7 (admin command catalogue): claim_moderation_case() previously left no
+    // audit_logs trail, unlike its direct sibling claim_support_case().
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", caseId!)
+      .eq("action", "moderation_case.claimed")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.admin);
   });
 
   await t.test("claiming it again (idempotent, same claimant) succeeds", async () => {

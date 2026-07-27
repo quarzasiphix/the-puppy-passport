@@ -259,9 +259,20 @@ test("send_quotation: ops-only, atomic, idempotent on retry", async (t) => {
       .single();
     assert.equal(history.error, null);
     assert.equal(history.data?.changed_by, ids.ops);
+
+    // Stage YR-7 (admin command catalogue): every ops-privileged RPC should leave a real
+    // audit_logs entry, matching its sibling ops RPCs -- send_quotation() previously didn't.
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", quotationId!)
+      .eq("action", "quotation.sent")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.ops);
   });
 
-  await t.test("a retry is idempotent, no duplicate history", async () => {
+  await t.test("a retry is idempotent, no duplicate history or audit entry", async () => {
     const retry = await ops.rpc("send_quotation", { p_quotation_id: quotationId! });
     assert.equal(retry.error, null);
 
@@ -271,6 +282,17 @@ test("send_quotation: ops-only, atomic, idempotent on retry", async (t) => {
       .eq("transport_request_id", requestId!)
       .eq("status", "quotation_sent");
     assert.equal(historyRows.data?.length, 1);
+
+    const auditRows = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("target_id", quotationId!)
+      .eq("action", "quotation.sent");
+    assert.equal(
+      auditRows.data?.length,
+      1,
+      "the idempotent retry must not duplicate the audit entry",
+    );
   });
 
   await t.test("cleanup", async () => {
@@ -333,22 +355,47 @@ test("assign_driver_to_job: ops-only, atomic, idempotent on retry, rejects a bog
       .single();
     assert.equal(history.error, null);
     assert.equal(history.data?.changed_by, ids.ops);
+
+    // Stage YR-7 (admin command catalogue): assign_driver_to_job() previously left no audit_logs
+    // trail at all, unlike its sibling ops-privileged RPCs.
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", requestId!)
+      .eq("action", "transport_request.driver_assigned")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.ops);
   });
 
-  await t.test("a retry with the same driver is idempotent, no duplicate history", async () => {
-    const retry = await ops.rpc("assign_driver_to_job", {
-      p_transport_request_id: requestId!,
-      p_driver_id: ids.driverRecord,
-    });
-    assert.equal(retry.error, null);
+  await t.test(
+    "a retry with the same driver is idempotent, no duplicate history or audit entry",
+    async () => {
+      const retry = await ops.rpc("assign_driver_to_job", {
+        p_transport_request_id: requestId!,
+        p_driver_id: ids.driverRecord,
+      });
+      assert.equal(retry.error, null);
 
-    const historyRows = await admin
-      .from("transport_status_history")
-      .select("id")
-      .eq("transport_request_id", requestId!)
-      .eq("status", "driver_assigned");
-    assert.equal(historyRows.data?.length, 1);
-  });
+      const auditRows = await admin
+        .from("audit_logs")
+        .select("id")
+        .eq("target_id", requestId!)
+        .eq("action", "transport_request.driver_assigned");
+      assert.equal(
+        auditRows.data?.length,
+        1,
+        "the idempotent retry must not duplicate the audit entry",
+      );
+
+      const historyRows = await admin
+        .from("transport_status_history")
+        .select("id")
+        .eq("transport_request_id", requestId!)
+        .eq("status", "driver_assigned");
+      assert.equal(historyRows.data?.length, 1);
+    },
+  );
 
   await t.test("cleanup", async () => {
     await admin.from("transport_status_history").delete().eq("transport_request_id", requestId!);

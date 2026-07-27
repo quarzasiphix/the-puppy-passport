@@ -114,6 +114,20 @@ test("scenario: buyer applies, breeder approves, breeder reserves -- the full pu
   });
 
   await t.test(
+    "a real audit_logs entry records the conversion (Stage YR-7: previously missing)",
+    async () => {
+      const audit = await admin
+        .from("audit_logs")
+        .select("actor_profile_id, action")
+        .eq("target_id", applicationId!)
+        .eq("action", "buyer_application.converted_to_reservation")
+        .single();
+      assert.equal(audit.error, null);
+      assert.equal(audit.data?.actor_profile_id, ids.breeder1);
+    },
+  );
+
+  await t.test(
     "converting the same application again with DIFFERENT terms is rejected as a real conflict (Stage XR-9)",
     async () => {
       const attempt = await breeder1.rpc("convert_application_to_reservation", {

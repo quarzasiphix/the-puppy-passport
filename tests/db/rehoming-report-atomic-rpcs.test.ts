@@ -72,11 +72,33 @@ test("approve_rehoming_review: non-admin rejected, admin approves atomically, id
       .eq("id", animalId!)
       .single();
     assert.equal(animal.data?.availability_status, "available");
+
+    // Stage YR-7 (admin command catalogue): approve_rehoming_review() previously left no
+    // audit_logs trail at all, unlike its sibling admin-privileged RPCs.
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", reviewId!)
+      .eq("action", "rehoming_review.approved")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.admin);
   });
 
-  await t.test("a retry is idempotent, no error", async () => {
+  await t.test("a retry is idempotent, no error, no duplicate audit entry", async () => {
     const retry = await admin.rpc("approve_rehoming_review", { p_review_id: reviewId! });
     assert.equal(retry.error, null, "an already-approved retry must succeed quietly");
+
+    const auditRows = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("target_id", reviewId!)
+      .eq("action", "rehoming_review.approved");
+    assert.equal(
+      auditRows.data?.length,
+      1,
+      "the idempotent retry must not duplicate the audit entry",
+    );
   });
 
   await t.test("cleanup", async () => {
@@ -139,6 +161,17 @@ test("escalate_report_to_case: non-moderator rejected, escalates atomically, ide
       assert.equal(moderationCase.data?.report_id, reportId);
       assert.equal(moderationCase.data?.case_type, "report_escalation");
       assert.equal(moderationCase.data?.status, "open");
+
+      // Stage YR-7 (admin command catalogue): escalate_report_to_case() previously left no
+      // audit_logs trail at all, unlike its sibling moderator-privileged RPCs.
+      const audit = await admin
+        .from("audit_logs")
+        .select("actor_profile_id, action")
+        .eq("target_id", reportId!)
+        .eq("action", "report.escalated")
+        .single();
+      assert.equal(audit.error, null);
+      assert.equal(audit.data?.actor_profile_id, ids.admin);
     },
   );
 
@@ -149,6 +182,17 @@ test("escalate_report_to_case: non-moderator rejected, escalates atomically, ide
 
     const cases = await admin.from("moderation_cases").select("id").eq("report_id", reportId!);
     assert.equal(cases.data?.length, 1, "no duplicate case must ever be created");
+
+    const auditRows = await admin
+      .from("audit_logs")
+      .select("id")
+      .eq("target_id", reportId!)
+      .eq("action", "report.escalated");
+    assert.equal(
+      auditRows.data?.length,
+      1,
+      "the idempotent retry must not duplicate the audit entry",
+    );
   });
 
   await t.test("cleanup", async () => {

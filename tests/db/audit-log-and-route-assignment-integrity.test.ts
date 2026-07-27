@@ -98,6 +98,17 @@ test("assign_request_to_route: atomic write, server-stamped actor, ops-only", as
         routeId,
         "transport_requests.assigned_route_id must reflect the same assignment, atomically",
       );
+
+      // Stage YR-7 (admin command catalogue): assign_request_to_route() previously left no
+      // audit_logs trail, unlike its sibling ops-privileged RPCs.
+      const audit = await admin
+        .from("audit_logs")
+        .select("actor_profile_id, action")
+        .eq("target_id", requestId!)
+        .eq("action", "transport_request.route_assigned")
+        .single();
+      assert.equal(audit.error, null);
+      assert.equal(audit.data?.actor_profile_id, ids.ops);
     },
   );
 

@@ -13,7 +13,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { as } from "./helpers.ts";
+import { as, ids } from "./helpers.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const ANON_KEY =
@@ -60,6 +60,17 @@ test("approve_user_verification: idempotent against a second sequential call", a
     assert.equal(call.error, null);
     assert.ok(call.data, "expected a real organisation id back");
     orgId = call.data as string;
+
+    // Stage YR-7 (admin command catalogue): approve_user_verification() previously left no
+    // audit_logs trail, unlike this schema's other significant trust-decision RPCs.
+    const audit = await admin
+      .from("audit_logs")
+      .select("actor_profile_id, action")
+      .eq("target_id", verificationId!)
+      .eq("action", "user_verification.approved")
+      .single();
+    assert.equal(audit.error, null);
+    assert.equal(audit.data?.actor_profile_id, ids.admin);
   });
 
   await t.test(
