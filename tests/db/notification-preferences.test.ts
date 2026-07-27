@@ -151,6 +151,78 @@ test("'security' is always sent regardless of any stored preference", async (t) 
   });
 });
 
+// Stage YR-2 (notification preference enforcement matrix): preference is only ever checked once,
+// at creation time (get_notification_preference() inside create_notification_if_enabled()) -- the
+// SELECT policy on `notifications` ("users manage their own notifications",
+// 20260101002100_platform.sql) is pure ownership (profile_id = auth.uid()), with no join back to
+// notification_preferences at read time. This proves that property holds in practice, not just by
+// reading the policy: a later preference change must never retroactively hide, delete, or alter an
+// already-created notification -- there is no delivery/outbox pipeline in this app that would ever
+// revisit a past row, so once a notification exists, disabling its category afterward must be a
+// complete no-op against it.
+test("disabling a category after a notification already exists does not retroactively affect it", async (t) => {
+  const buyer = await as("buyer");
+  let notificationId: string | undefined;
+
+  await t.test("setup: create a real notification while 'adoption' is enabled", async () => {
+    const { data, error } = await buyer.rpc("create_notification_if_enabled", {
+      p_profile_id: ids.buyer,
+      p_category: "adoption",
+      p_notification_type: "test_notification",
+      p_title: "Pre-existing notification",
+    });
+    assert.equal(error, null);
+    assert.ok(data);
+    notificationId = data as string;
+  });
+
+  await t.test("now disable 'adoption'", async () => {
+    const { error } = await buyer
+      .from("notification_preferences")
+      .upsert(
+        { profile_id: ids.buyer, category: "adoption", in_app_enabled: false },
+        { onConflict: "profile_id,category" },
+      );
+    assert.equal(error, null);
+  });
+
+  await t.test("the already-created notification is completely untouched", async () => {
+    const row = await buyer
+      .from("notifications")
+      .select("id, title, is_read")
+      .eq("id", notificationId!)
+      .single();
+    assert.equal(
+      row.error,
+      null,
+      "the row must still exist -- disabling a preference never deletes history",
+    );
+    assert.equal(row.data?.title, "Pre-existing notification");
+    assert.equal(row.data?.is_read, false, "unmodified, not silently marked read or altered");
+  });
+
+  await t.test("it's still markable read, exactly like any other notification", async () => {
+    const update = await buyer
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("id", notificationId!)
+      .select("is_read")
+      .single();
+    assert.equal(update.error, null);
+    assert.equal(update.data?.is_read, true);
+  });
+
+  await t.test("cleanup", async () => {
+    await buyer.from("notifications").delete().eq("id", notificationId!);
+    await buyer
+      .from("notification_preferences")
+      .upsert(
+        { profile_id: ids.buyer, category: "adoption", in_app_enabled: true },
+        { onConflict: "profile_id,category" },
+      );
+  });
+});
+
 test("cross-user isolation: a user cannot read or change another user's preferences", async (t) => {
   const buyer = await as("buyer");
   const customer = await as("customer");
