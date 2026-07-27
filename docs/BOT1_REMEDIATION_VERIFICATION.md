@@ -2300,6 +2300,10 @@ git merge-tree --write-tree <backend-HEAD> <frontend-ref>   # real 3-way merge c
   needed) and is removed before the final commit below. `node_modules/` (copied read-only from the
   source repo solely to run `tsc`/`build`, §51) is untracked and removed before the final commit; it
   was never part of any commit.
-- Final commit hash: recorded after this commit lands — see the task-completion message for the exact
-  hash (this document is committed together with, and its own final commit necessarily postdates, this
-  sentence).
+- **WIP commits** (incremental, per the "commit progress incrementally" operational lesson from the
+  prior six-hour run): `a13a53e` (snapshot/exec-summary/status-table), `35acd46` (all 13 findings
+  verified), `9b199fd` (new-findings section, including NEW-H1), `580e6f8` (all 28 sections drafted).
+- **Final commit**: this edit plus the finalization cleanup (`.audit-temp/`/`node_modules` removal,
+  already reflected in a clean `git status --short`) is committed immediately below as
+  "Verify backend remediation and latest security delta" — its hash is reported in this pass's
+  task-completion summary.
