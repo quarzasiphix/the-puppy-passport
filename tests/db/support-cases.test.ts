@@ -391,3 +391,104 @@ test("support_cases: reopening cannot smuggle in a staff-only field change", asy
     assert.equal(deleted.error, null);
   });
 });
+
+// Stage YR-6 (support-to-operations boundary audit): related_entity_type/related_entity_id
+// (this file's own header comment, and the original migration's comment) are documented as
+// "informational relation only, never trusted for authorisation" -- confirmed by grep that no
+// policy, RPC, or query helper anywhere in the schema joins off these columns. This proves it
+// directly rather than by absence of code alone: pointing a case at a resource the case's own
+// requester cannot normally see must never grant them (or leak through the case) any new access
+// to that resource.
+test("support_cases: related_entity_id is informational context only, never a capability", async (t) => {
+  const customer = await as("customer");
+  const admin = await as("admin");
+  let caseId: string | undefined;
+
+  await t.test(
+    "a customer's case can reference a transport request they don't own, with no effect",
+    async () => {
+      // ids.transportBerlin belongs to a different persona (customer's own is transportWarsawAmsterdam/
+      // transportBerlin actually IS customer's own per helpers.ts -- use buyer's instead, a genuinely
+      // foreign resource relative to this test's own actor).
+      const created = await customer
+        .from("support_cases")
+        .insert({
+          subject: "Question about a route I don't own",
+          category: "transport",
+          requester_profile_id: ids.customer,
+          related_entity_type: "transport_request",
+          related_entity_id: ids.transportKrakow, // belongs to `buyer`, not `customer`
+        })
+        .select("id, related_entity_id")
+        .single();
+      assert.equal(created.error, null);
+      assert.equal(created.data?.related_entity_id, ids.transportKrakow);
+      caseId = created.data!.id as string;
+    },
+  );
+
+  await t.test(
+    "the customer still cannot read the foreign transport request directly -- the relation grants nothing",
+    async () => {
+      const attempt = await customer
+        .from("transport_requests")
+        .select("id")
+        .eq("id", ids.transportKrakow);
+      assert.ok(
+        isBlocked(attempt.data, attempt.error),
+        "related_entity_id must never act as a capability, only as staff-facing context",
+      );
+    },
+  );
+
+  await t.test("cleanup", async () => {
+    await admin.from("support_cases").delete().eq("id", caseId!);
+  });
+});
+
+// This app has no separate "support" role distinct from "operations" -- is_ops_staff() (checked
+// against has_role(auth.uid(), 'operations') or is_admin()) is the one gate for both, a deliberate
+// choice documented in the original migration's own comment ("no dedicated 'support' platform_role
+// exists... ops staff are the closest real, already-trusted staff concept"). This means the
+// "support-to-operations boundary" this stage's own definition asks about doesn't exist as a
+// separate privilege boundary in this app's real role model today -- there is only one combined
+// staff tier, so there's no lower-trust "support-only" actor that could accidentally reach into
+// moderation/ownership/financial/transport mutations beyond what they're already legitimately
+// allowed to do as ops staff. Documented, not fabricated: this test proves the two "is_*_staff()"
+// gates this app actually has (ops vs moderator) are genuinely distinct from each other, the one
+// real staff/staff boundary that does exist.
+test("ops-staff and moderator gates are genuinely distinct roles, not a combined super-role", async (t) => {
+  const ops = await as("ops");
+
+  await t.test("ops staff (no moderator role) cannot claim a moderation case", async () => {
+    // Use a real, currently-open path: reporting something fresh and attempting to claim the
+    // resulting case as ops (not moderator).
+    const admin = await as("admin");
+    const report = await admin
+      .from("reports")
+      .insert({
+        reporter_profile_id: ids.customer,
+        target_type: "organisation",
+        target_id: ids.orgWolnaDolina,
+        reason: "other",
+        description: "YR-6 ops-vs-moderator boundary test.",
+      })
+      .select("id")
+      .single();
+    assert.equal(report.error, null);
+    const caseResult = await admin.rpc("escalate_report_to_case", {
+      p_report_id: report.data!.id as string,
+    });
+    assert.equal(caseResult.error, null);
+    const caseId = caseResult.data as string;
+
+    const attempt = await ops.rpc("claim_moderation_case", { p_case_id: caseId });
+    assert.ok(attempt.error, "expected ops staff without a moderator role to be rejected");
+
+    await admin.from("moderation_cases").delete().eq("id", caseId);
+    await admin
+      .from("reports")
+      .delete()
+      .eq("id", report.data!.id as string);
+  });
+});
