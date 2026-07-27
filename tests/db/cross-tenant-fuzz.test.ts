@@ -53,6 +53,16 @@ const cases: FuzzCase[] = [
     owner: "customer",
     unrelated: ["buyer", "breeder1", "foundation1"],
   },
+  // Stage YR-14 (cross-tenant fuzz matrix): organisation_members has no single dedicated cross-
+  // tenant test elsewhere -- an org's membership roster is itself sensitive (reveals who works
+  // where), so it belongs in this sweep alongside the resource tables above.
+  {
+    table: "organisation_members",
+    column: "org_id",
+    rowId: ids.orgCichyLas,
+    owner: "breeder1",
+    unrelated: ["buyer", "breeder2", "foundation1"],
+  },
 ];
 
 test("cross-tenant fuzz sweep: unrelated personas get zero rows across every case", async (t) => {
