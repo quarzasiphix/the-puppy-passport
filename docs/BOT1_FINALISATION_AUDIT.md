@@ -655,6 +655,28 @@ git merge-tree --write-tree <backend-HEAD> <frontend-ref>  # real 3-way merge co
   plus 4 new docs, `package.json`, `src/lib/notification-templates.ts`,
   `src/lib/queries/{applications,moderation,notifications,rehoming}.ts`, 2 new test files).
 
+### 48a. Second delta-loop check (post-report-draft)
+
+Per the task's own instruction to repeat the delta check once more if time remains: a second
+`git -C /p/the-puppy-passport rev-parse HEAD` performed while finalising this report found `main`
+had moved to `2971c3b914640b9c2bf4800c7c0e7880bbee304b` (4 more commits: Stage YR-5 "event replay
+safety" and Stage YR-6 "support-to-operations boundary audit", each with its usual "fill in commit
+hash" companion commit) — real, continuing Bot 2 activity during this pass. `git -C
+/p/the-puppy-passport diff --stat 26f1b2e..2971c3b -- supabase/migrations` is still **empty** — 0
+new migrations in this second delta either, only 2 new audit docs and 2 new/changed test files
+(`tests/db/event-replay-safety.test.ts`, `tests/db/support-cases.test.ts`). No finding in this
+report is affected. This pass's own audited snapshot remains `26f1b2ef6b1a43315d11512e22983500
+dcd8e788` (the last snapshot with a stable window for this pass's own live verification and report
+drafting); `2971c3b` is recorded here as the latest-observed real-repo state for the next pass to
+start from, not independently audited by this pass beyond the diffstat above. The real repo's
+working tree also gained one more untracked file since this pass began
+(`supabase/migrations/20260101013600_admin_command_audit_coverage.sql`, uncommitted — not read,
+per the task mandate) — worth flagging only because it coincidentally shares this pass's own
+candidate-fix migration's timestamp prefix; since the candidate fix lives only in this pass's
+isolated clone and was never pushed, there is no real collision, but Bot 2 should be aware when it
+eventually commits its own `20260101013600` file that this pass's candidate branch used the same
+prefix for an unrelated change.
+
 ## 49. Limitations
 
 - **Not all 130 stages received deep, independent evidence-gathering this pass.** Stages given real,
