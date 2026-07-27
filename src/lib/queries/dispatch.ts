@@ -16,13 +16,27 @@ export type DriverWorkload = {
   id: string;
   name: string;
   availability_status: string | null;
+  internal_verification_status: string | null;
+  document_expiry_date: string | null;
   activeJobCount: number;
 };
 
+// Stage YR-9 (driver and vehicle eligibility consistency): assign_driver_to_job() only ever
+// checked that a drivers row with this id exists, deliberately -- ops staff, not the system, make
+// the final assignment call (CLAUDE.md: "AI may only produce recommendations... final transport
+// approval stays human"). But that human judgment needs the relevant facts in front of it, and
+// this query previously never selected internal_verification_status/document_expiry_date at all
+// -- ops had literally no way to see a driver was unverified or document-expired while assigning
+// them, not because they made an informed call, but because the data was never surfaced. Fixed by
+// exposing both columns; dashboard.operations.dispatch.tsx now shows a warning badge derived from
+// them, matching the same documentExpiryWarning() pattern already used for quotations/vehicles.
 export async function listDriverWorkloads(): Promise<DriverWorkload[]> {
   const supabase = getSupabaseBrowserClient();
   const [driversResult, jobsResult] = await Promise.all([
-    supabase.from("drivers").select("id, name, availability_status").order("name"),
+    supabase
+      .from("drivers")
+      .select("id, name, availability_status, internal_verification_status, document_expiry_date")
+      .order("name"),
     supabase
       .from("transport_requests")
       .select("assigned_driver_id")
@@ -38,9 +52,7 @@ export async function listDriverWorkloads(): Promise<DriverWorkload[]> {
     counts.set(j.assigned_driver_id, (counts.get(j.assigned_driver_id) ?? 0) + 1);
   }
 
-  return (
-    (driversResult.data ?? []) as { id: string; name: string; availability_status: string | null }[]
-  )
+  return ((driversResult.data ?? []) as Omit<DriverWorkload, "activeJobCount">[])
     .map((d) => ({ ...d, activeJobCount: counts.get(d.id) ?? 0 }))
     .sort((a, b) => a.activeJobCount - b.activeJobCount);
 }

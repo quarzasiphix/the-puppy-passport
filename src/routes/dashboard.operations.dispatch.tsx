@@ -16,7 +16,17 @@ import {
   assignDriverToJob,
   listDriverWorkloads,
   listUnassignedReadyJobs,
+  type DriverWorkload,
 } from "@/lib/queries/dispatch";
+import { documentExpiryWarning } from "@/lib/queries/transport";
+
+function driverEligibilityWarning(d: DriverWorkload): string | null {
+  if (d.internal_verification_status !== "verified") return "Not yet verified";
+  const expiry = documentExpiryWarning(d.document_expiry_date);
+  if (expiry === "expired") return "Documents expired";
+  if (expiry === "upcoming") return "Documents expiring soon";
+  return null;
+}
 
 export const Route = createFileRoute("/dashboard/operations/dispatch")({
   component: DispatchPage,
@@ -82,6 +92,11 @@ function DispatchPage() {
                     {d.availability_status.replace(/_/g, " ")}
                   </p>
                 )}
+                {driverEligibilityWarning(d) && (
+                  <p className="mt-1 text-xs font-medium text-destructive">
+                    ⚠ {driverEligibilityWarning(d)}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -133,6 +148,7 @@ function DispatchPage() {
                       {(workloadQuery.data ?? []).map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           {d.name} ({d.activeJobCount} active)
+                          {driverEligibilityWarning(d) ? ` — ⚠ ${driverEligibilityWarning(d)}` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
