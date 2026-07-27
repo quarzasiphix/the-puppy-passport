@@ -78,18 +78,8 @@ export async function listRehomingReviews() {
 
 export async function approveRehomingReview(id: string, animalId: string, ownerProfileId: string) {
   const supabase = getSupabaseBrowserClient();
-  const { error: reviewError } = await supabase
-    .from("rehoming_reviews")
-    .update({ admin_status: "approved", reviewed_at: new Date().toISOString() })
-    .eq("id", id);
-  if (reviewError) throw reviewError;
-  // Approval alone makes it publicly visible via RLS; also mark it available so it shows the
-  // right status instead of sitting in "draft" forever.
-  const { error: animalError } = await supabase
-    .from("animals")
-    .update({ availability_status: "available" })
-    .eq("id", animalId);
-  if (animalError) throw animalError;
+  const { error } = await supabase.rpc("approve_rehoming_review", { p_review_id: id });
+  if (error) throw error;
 
   await notifyUserFromTemplate({
     profileId: ownerProfileId,

@@ -65,7 +65,15 @@ already-fixed siblings), `createTransportRequest`, `approveRehomingReview`,
 `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_FOLLOWUP_1.md` for full detail, including a real
 previously-invisible bug the conversion's own tests surfaced and fixed (a customer accepting their
 own quotation was silently rejected by a Stage CC trigger with no exemption for that transition).
-`createTransportRequest`, `approveRehomingReview`, `escalateReportToCase` remain open.
+
+**Update — second follow-up pass complete**: `approveRehomingReview` and `escalateReportToCase`
+were also converted (`approve_rehoming_review()`, `escalate_report_to_case()`,
+`20260101013500_rehoming_report_atomic_rpcs.sql`) — see
+`docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_FOLLOWUP_2.md`. `escalate_report_to_case()` also closes a
+real duplicate-case risk that had no DB-level protection at all (only a client-side check). Only
+`createTransportRequest` remains open, deliberately deferred — see follow-up 1's own reasoning
+(its actor-forgery half is already closed; its payload is a large, evolving multi-field form, not
+a good RPC-signature fit right now).
 
 ## Also found and fixed: two silently-swallowed errors, while reading `respondToQuotation`
 

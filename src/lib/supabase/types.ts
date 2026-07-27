@@ -4943,6 +4943,10 @@ export type Database = {
         Args: { p_animal_id: string }
         Returns: boolean
       }
+      approve_rehoming_review: {
+        Args: { p_review_id: string }
+        Returns: undefined
+      }
       approve_user_verification: {
         Args: { p_admin_notes?: string; p_verification_id: string }
         Returns: string
@@ -5018,6 +5022,10 @@ export type Database = {
       enforce_rate_limit: {
         Args: { p_action_key: string; p_max_count: number; p_window: string }
         Returns: undefined
+      }
+      escalate_report_to_case: {
+        Args: { p_report_id: string }
+        Returns: string
       }
       execute_account_deletion: {
         Args: { p_request_id: string }

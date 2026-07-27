@@ -294,6 +294,10 @@
       "returns": "void",
       "grantees": "authenticated"
     },
+    "approve_rehoming_review(p_review_id uuid)": {
+      "returns": "void",
+      "grantees": "authenticated"
+    },
     "approve_user_verification(p_verification_id uuid, p_admin_notes text)": {
       "returns": "uuid",
       "grantees": "authenticated"
@@ -344,6 +348,10 @@
     },
     "enforce_rate_limit(p_action_key text, p_max_count integer, p_window interval)": {
       "returns": "void",
+      "grantees": "authenticated"
+    },
+    "escalate_report_to_case(p_report_id uuid)": {
+      "returns": "uuid",
       "grantees": "authenticated"
     },
     "execute_account_deletion(p_request_id uuid)": {

@@ -101,13 +101,7 @@ function ReportsPage() {
                   <div className="mt-4 flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() =>
-                        escalate.mutate({
-                          id: r.id,
-                          target_type: r.target_type,
-                          target_id: r.target_id,
-                        })
-                      }
+                      onClick={() => escalate.mutate({ id: r.id })}
                       disabled={escalate.isPending}
                     >
                       <Gavel className="mr-1 size-4" /> Open moderation case

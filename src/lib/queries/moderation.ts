@@ -82,26 +82,10 @@ export async function dismissReport(reportId: string) {
   if (error) throw error;
 }
 
-export async function escalateReportToCase(report: {
-  id: string;
-  target_type: ReportTargetType;
-  target_id: string;
-}) {
+export async function escalateReportToCase(report: { id: string }) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("moderation_cases").insert({
-    report_id: report.id,
-    case_type: "report_escalation",
-    target_type: report.target_type,
-    target_id: report.target_id,
-    status: "open",
-  });
+  const { error } = await supabase.rpc("escalate_report_to_case", { p_report_id: report.id });
   if (error) throw error;
-
-  const { error: statusError } = await supabase
-    .from("reports")
-    .update({ status: "escalated" })
-    .eq("id", report.id);
-  if (statusError) throw statusError;
 }
 
 export type ModerationCaseRow = {
