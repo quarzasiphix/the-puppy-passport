@@ -1664,3 +1664,104 @@ partially fixed) or a specific, identifiable fixing commit (fixed) — no findin
 an unrelated redesign, table removal, or architecture change that would make its original framing
 obsolete. §5.2's "reachable actor" line is *corrected/widened* (§33), not superseded — the same
 tables, same root cause, same fix.
+
+### 35. New high findings
+
+#### NEW-H1 — `20260101013400`'s own new trigger exemption lets a requester raw-flip `transport_requests.status` to `accepted_by_customer`, bypassing `respond_to_quotation()`'s expiry check and audit trail entirely — a regression introduced by this window's own remediation work
+
+- **Severity**: High (protected-field/state mutation bypassing a controlled RPC, reachable by an
+  ordinary requester on their own row with no elevated role needed — matches the rubric's
+  "protected-field mutation" High category).
+- **Exact location**: `supabase/migrations/20260101013400_quotation_dispatch_atomic_rpcs.sql`'s
+  `create or replace function public.prevent_non_staff_operational_field_changes()` (redefining the
+  original from `20260101011100_driver_status_state_machine.sql`), specifically the new clause added
+  to the generic (non-ops, non-assigned-driver) branch:
+  ```sql
+  if new.status is distinct from old.status
+    and not (old.status = 'draft' and new.status = 'submitted')
+    and new.status is distinct from 'cancelled_by_customer'
+    and not (old.status = 'quotation_sent' and new.status = 'accepted_by_customer')  -- new this window
+  then
+    raise exception ...
+  end if;
+  ```
+  This exemption was added, per the migration's own comment, because the *new* `respond_to_quotation()`
+  RPC's own `update public.transport_requests set status = 'accepted_by_customer' ...` call was being
+  rejected by the *old* version of this same trigger (which had no such exemption) — the fix correctly
+  unblocks the RPC, but the trigger fires on the underlying table regardless of whether the caller is
+  the RPC or a raw client, and has no way to distinguish the two.
+- **Reachable actor**: any authenticated requester on their own `transport_requests` row (no ops/admin
+  role needed).
+- **Root cause — the underlying RLS policy has no status restriction at all**: live-confirmed via
+  `pg_policies` (captured before the shared instance was reset by a concurrent process partway
+  through this verification pass, see §52): `"requesters update their own transport requests" for
+  update using (requester_profile_id = auth.uid()) with check (requester_profile_id = auth.uid())` —
+  no `status`/column restriction whatsoever at the RLS layer; the *entire* protection against illegal
+  status transitions for a non-staff, non-driver caller is this one trigger. The new exemption is
+  therefore a full, direct, raw-API-reachable transition, identical in shape to every other "trigger/
+  RLS legalizes a transition with no reference to a sibling controlling table" gap in this report.
+- **Reproduction path**:
+  ```js
+  // As the real requester, with their own transport_requests row currently in 'quotation_sent'
+  // (a real, ops-driven state -- ops has sent a quotation, but the requester never accepted it,
+  // or the quotation has since expired):
+  await supabase.from('transport_requests')
+    .update({ status: 'accepted_by_customer' })
+    .eq('id', myTransportRequestId);
+  // Succeeds. Bypasses:
+  //  - respond_to_quotation()'s own expiry check (v_quotation.expiry_date < current_date) entirely
+  //    -- the quotations table is never touched or read by this path at all;
+  //  - respond_to_quotation()'s own idempotency/status-in-('sent','viewed') guard on the quotation
+  //    itself (quotations.status is left at 'sent'/'viewed', now inconsistent with the request
+  //    showing 'accepted_by_customer');
+  //  - the transport_status_history insert respond_to_quotation() performs -- no audit/timeline
+  //    row is created, so the customer-facing timeline silently has no record of "why" the request
+  //    moved to accepted.
+  ```
+- **Expected invariant**: the same one `respond_to_quotation()` itself embeds — an acceptance should
+  only be possible against a non-expired, currently-open (`sent`/`viewed`) quotation, and should always
+  produce a matching `transport_status_history` row. This raw path satisfies neither.
+- **Observed behavior**: as above — a customer can self-advance their own transport request past the
+  quotation-acceptance gate without ever accepting (or even having) a valid, unexpired quotation, and
+  with no trace in the timeline. Downstream, `assign_driver_to_job()` and other ops-side flows treat
+  `accepted_by_customer` as a trusted signal that a real acceptance occurred; this path forges that
+  signal.
+- **Smallest fix**: narrow the RLS `USING`/`WITH CHECK` on `"requesters update their own transport
+  requests"` to exclude `status` from what a raw client update may change (matching the allowlist-
+  trigger pattern Bot 2 already built this window for `support_cases`,
+  `prevent_requester_writes_to_staff_controlled_support_fields()`,
+  `20260101012700_support_case_reopen_field_lock.sql`), or — smaller — remove the new trigger
+  exemption and instead have `respond_to_quotation()` perform its `transport_requests` update via a
+  path the trigger doesn't need to specially allow for non-privileged callers at all (e.g., have the
+  RPC's own `SECURITY DEFINER` context set a session-local flag the trigger checks, or simply accept
+  that this specific transition should only ever happen through the RPC and lock the column instead of
+  legalizing the transition for every caller).
+- **Regression test**: an ordinary requester with a `transport_requests` row in `quotation_sent`
+  attempts a raw `.update({ status: 'accepted_by_customer' })` directly (not via
+  `respond_to_quotation()`) and is rejected; `respond_to_quotation()` itself continues to work.
+- **Integration-blocker status**: no — pre-existing-shaped gap, not a new frontend integration
+  dependency, but worth fixing before this window's own quotation-hardening work is considered
+  complete, since it silently reopens the exact class of bug (`OLD.status`/business-rule bypass on a
+  commercially meaningful transition) this window's own `20260101013400` migration set out to close.
+- **Note on discovery**: found by reading the *full* diff of `prevent_non_staff_operational_field_
+  changes()` in `20260101013400` (not just its stated purpose) against the live `pg_policies` output
+  for `transport_requests` — the same "read the trigger body, not just its migration comment" method
+  this report has applied to every other finding. This is a genuine regression introduced by this
+  remediation window's own fix, not a carried-forward gap from the original audit.
+
+No other new Critical or High finding was independently discovered in the 69-commit delta.
+
+### 36. New medium findings
+
+None discovered beyond the wider-reachable-actor correction to §5.2 already recorded in §33 (not
+counted as a separate new finding — same table, same root cause, same fix). The 69-commit delta's own
+new work (§47) was reviewed commit-by-commit for new medium-severity issues; none were found beyond
+NEW-H1 above.
+
+### 37. New low findings
+
+None discovered. `docs/GRANT_DATA_API_AUDIT.md`'s own documented "unused-grant" false positives
+(§29/§38) were independently re-verified as genuinely inert (RLS fully blocks the extra grant surface
+in both cases: `rehoming_reviews` anon-select-for-subquery, `audit_logs` update/delete), not worth
+recording as findings — this matches Bot 2's own documented conclusion, independently re-checked
+rather than taken on faith.
