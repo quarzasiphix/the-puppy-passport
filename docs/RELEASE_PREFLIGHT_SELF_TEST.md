@@ -42,9 +42,11 @@ runs" discipline this session has applied to every other new checker tool) — f
 ## Verification: proved each failure mode fires for real, not just that a clean state passes
 
 - **git dirty state**: ran with real uncommitted files present — correctly failed, listing them.
-- **secret detection**: injected a real fake secret (`sk_live_FAKETEST...`) into a throwaway
-  tracked file, confirmed the script reported the exact file and line, then removed it and
-  confirmed a clean pass again.
+- **secret detection**: injected a real fake secret (Stripe-live-key-shaped, deliberately not
+  spelled out literally in this permanent doc — writing the exact pattern here would make this
+  file itself trip the scanner forever, discovered by dogfooding the tool at Stage YR-24) into a
+  throwaway tracked file, confirmed the script reported the exact file and line, then removed it
+  and confirmed a clean pass again.
 - **lint baseline**: ran against the real current repo state — correctly passed at exactly
   21/13 (the documented baseline), proving the comparison logic works against real data, not just
   a hypothetical.
