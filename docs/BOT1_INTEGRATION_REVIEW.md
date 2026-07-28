@@ -1,13 +1,31 @@
 # Bot 1 — Integration Review (Finalisation Pass)
 
+**Resumption-round correction, read first**: the table below was computed against backend `main` at
+`26f1b2e`, this pass's first-round snapshot. Backend `main` has since advanced to `8201f17` (5 new
+migrations, ~26 commits, including Stage YR-16's error-message-wiring pass touching 32 route files —
+see `docs/BOT1_FINALISATION_AUDIT.md` §51–§57). **Bot 2's own Stage YR-23** (`docs/
+FRONTEND_INTEGRATION_CONFLICT_MAP.md`, per its progress-log entry, read but not independently
+re-run by this pass this round — flagged as a claim, not independently verified) re-ran the
+identical `git merge-tree` check after YR-16 landed and found **6 real conflicts, not 3** — 3 new
+ones self-inflicted by YR-16 itself (`dashboard.buyer.profile.tsx`, `_public.create-breeder.tsx`,
+`_public.breeders.$slug.tsx`), 2 of which are reportedly convergent evolution (the frontend branch
+independently built the same "never show a raw Postgres error" fix, just with a hardcoded message
+instead of the shared helper — a trivial resolution once flagged). The table below (this pass's own
+first-round computation, against `26f1b2e`) is therefore **stale by 3 rows** — a buyer or Bot 2
+should treat Bot 2's own YR-23 output as the current answer, not this table, until this pass or a
+future one independently re-runs `git merge-tree` against `8201f17` to confirm it directly.
+
+---
+
 One row per file the frozen `ux-marketplace-frontend-pass` branch would conflict (or not) with the
-current backend `main` (`26f1b2e`), computed via a real `git merge-tree --write-tree` 3-way merge
+backend `main` **as of this pass's first-round snapshot (`26f1b2e`)** — see the correction above for
+the current, more accurate count. Computed via a real `git merge-tree --write-tree` 3-way merge
 (not a file-touch heuristic). The frontend ref is unchanged since the last remediation pass
 (`727d551b8306cf6bd5ce8a2b542ac118b1c4f417`, re-confirmed via `git fetch origin
 ux-marketplace-frontend-pass` this pass — identical hash), and zero backend commits in the
 `c8bc235..26f1b2e` delta touch any file in this table, so the prior pass's `git merge-tree`
 computation (`docs/BOT1_REMEDIATION_VERIFICATION.md` §48) remains the authoritative, current
-answer — re-verified this pass by re-fetching the frontend ref and confirming its hash is
+answer for the `26f1b2e` snapshot — re-verified this pass by re-fetching the frontend ref and confirming its hash is
 byte-identical, not merely re-asserted. Merge-base: `02e64163d2162024968bf0e79d6aa999af57ac63`.
 
 | File | Conflict? | Nature | Recommended resolution |
