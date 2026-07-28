@@ -1,44 +1,62 @@
 # Bot 1 — Remediation Matrix (Finalisation Pass)
 
 One row per known finding, consolidated across all three Bot 1 passes (original audit, remediation
-verification, this finalisation pass). Status as of this pass's audited snapshot
-`26f1b2ef6b1a43315d11512e22983500dcd8e788`. "Verified" = independently re-confirmed this pass, live
-where the shared instance allowed it, static (migration-text tracing) otherwise. See
-`docs/BOT1_FINALISATION_AUDIT.md` for full evidence per finding; this table is the index.
+verification, this finalisation pass) plus this pass's own resumption round. Status as of the
+**second** live-DB re-check this pass, against real-repo `HEAD` `8201f17dd4c8abc36cc816d63c52f3620ae7e44f`
+(142 migrations — 5 more landed on `main` mid-pass: `20260101013600`–`20260101014000`, Stages
+YR-7 through FA-3). "Verified" now distinguishes three evidence tiers, weakest to strongest: static
+(migration-text tracing only), live-static (a live `pg_policies`/grant/trigger-body query against
+the running shared instance), and **live-empirical** (an actual authenticated lower-trust-actor API
+call was made against the live schema and its real result recorded, then reverted). See
+`docs/BOT1_FINALISATION_AUDIT.md` §14/§51–§54 for the full empirical-testing methodology and every
+raw result. This resumption round found and empirically confirmed **two real fixes** that the first
+round of this same pass had marked "still open" from a stale snapshot — see §5.1/§7.5 below; this is
+exactly the "check whether everything actually works" correction the resumption round was asked to
+make.
 
 | ID | Finding | Severity | Priority | Status | Fixing commit | Verified this pass | Candidate fix |
 |---|---|---|---|---|---|---|---|
-| §5.1 | Fundraising campaigns self-publish to `active` | High | P0 | **Still open** | none | Yes — live `pg_policies`, unchanged | No |
-| §5.2 | `legal_holds`/`account_deletion_requests` raw-write bypass (widened: any user, own row) | High | P0 | **Still open** | none (audit-trail-only `d2d5d62` doesn't touch it) | Yes — live `pg_policies` + `role_table_grants`, unchanged | **Yes** — `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @ `7ba7b32` |
-| §5.3 | `create_notification_if_enabled()` arbitrary recipient/content | High | P1 | **Still open** | none | Yes — live `has_function_privilege`, still true | No |
-| §5.4 | `moderation_cases` self-resolution conflict of interest | High | P1 | **Still open** | none | Yes — live `pg_policies`/`pg_trigger`, unchanged | No |
-| NEW-H1 | `transport_requests` raw status-flip via `20260101013400`'s trigger exemption | High | P1 | **Still open** (found in remediation pass, this pass confirms unchanged) | none | Yes — live trigger body re-read, exemption clause present unchanged | No |
-| §6.1 | Quotation terminal-state gap | Medium | P2 | **Partially fixed** (RPC path closed `cfd33ca`; raw RLS still open) | `cfd33ca`/`20260101013400` | Yes — live `pg_policies`, unchanged | No |
-| §6.2 | `animal_ownership_history` admin-mutable | Medium | — | **Fixed** | `281f0e4`/`20260101012900` | Yes — live `pg_policies`, admin-SELECT/INSERT-only confirmed | n/a |
-| §6.3 | `user_verifications` raw-write bypass | Medium | P0 (bundle with §5.2) | **Still open** | none | Yes — live `pg_policies`, unchanged | No |
-| §6.4 | `route_assignments.assigned_by` forgery | Medium | P0 (bundle with §5.2) | **Still open** | none | Yes — live `pg_policies`, unchanged | No |
-| §6.5 | `transport_status_history` forged `changed_by`/unconstrained `status` | Medium | P2 (status half) | **Partially fixed** (`changed_by` closed `3e4ae1f`; `status` still open) | `3e4ae1f`/`20260101013000` | Yes — trigger + policy re-read, status half unchanged | No |
-| §6.6 | `buyer_applications.organization_id` cross-org PII binding | Medium | P1 | **Still open** | none | Not re-queried live this pass (no delta migration touches it — static confirmation via `grep` only) | No |
-| §6.7 | `transport-evidence` cancellation-revocation gap | Medium | P2 | **Still open** | none | Not re-queried live this pass (no delta migration touches it — static confirmation only) | No |
-| §6.8 | Verification approval/rejection audit trail | Medium | P2 | **Still open** | none | Not re-queried live this pass (static confirmation only) | No |
-| §6.9 | `uploaded_by` forgery on `transport_documents`/`welfare_case_documents` | Medium | P2 | **Still open** | none | Not re-queried live this pass (static confirmation only) | No |
-| §7.1 | `convert_application_to_reservation()` raw constraint-name leak | Low | P3 | Open (not re-verified this pass) | none | No | No |
-| §7.2 | `rehoming_reviews` admin approval missing `OLD.admin_status` guard | Low | P3 | Open (not re-verified this pass) | none | No | No |
-| §7.3 | `markDeletionRequestProcessed()` `declined` path trusts client `processedBy` | Low | P3 | Open — **this pass's own candidate fix does not close this**: the admin decline path still passes a client-supplied `processedBy` through to the raw update; the migration only blocks the `processed` transition, not actor-forgery on `declined`. Left open deliberately (fixing it means changing `src/lib/queries/privacy.ts`'s call signature, judged outside "smallest, no-frontend-impact" scope for this pass's candidate fix). | none | Partially re-examined (found while building the candidate fix, see §5.2 area of main report) | No |
+| §5.1 | Fundraising campaigns self-publish to `active` | High | — | **FIXED** (found this resumption round — was misreported "still open" earlier in this same pass, based on the `26f1b2e` snapshot; real-repo `main` had moved to `8201f17` mid-pass) | `52637b1`/`20260101014000` (Stage FA-3) | **Live-empirical**: built full real fixtures (accepted quotation, adoption buyer-application, all FK-linked) and attempted the exact original exploit as the real seeded org owner (`foundation1`) via `supabase-js`/GoTrue — rejected with `P0001 "A fundraising campaign can only go live after Havenpaw staff have approved it."`, thrown by a new `BEFORE UPDATE` trigger (`fundraising_campaigns_prevent_self_publish`) neither this nor either prior Bot 1 pass had ever checked for (all three only inspected the RLS `WITH CHECK`, never `pg_trigger` on this specific table) | No — already fixed, no candidate needed |
+| §5.2 | `legal_holds`/`account_deletion_requests` raw-write bypass (widened: any user, own row) | High | P0 | **Still open** — confirmed unchanged even at `HEAD` `8201f17` | none | **Live-empirical**: as real `admin`, raw-inserted a `legal_holds` row forging `placed_by` — succeeded; as real `customer`, self-service-inserted then self-updated own `account_deletion_requests` row straight to `processed` forging `processed_by` — succeeded. Both probe rows deleted immediately after via superuser cleanup, verified deleted | **Yes** — `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @ `7ba7b32` |
+| §5.3 | `create_notification_if_enabled()` arbitrary recipient/content | High | P1 | **Still open** | none | **Live-empirical**: as real `customer`, called the raw RPC targeting `ops` (zero relationship) with an attacker-controlled title/body/link — succeeded, real row created (id `6eed9b2e-...`), deleted after via superuser cleanup | No |
+| §5.4 | `moderation_cases` self-resolution conflict of interest | High | P1 | **Still open** | none | **Live-empirical**: temporarily activated a real `moderator` role grant on the `customer` persona, created a real case with `affected_profile_id = customer`, then as `customer` (now also a moderator) raw-updated the case to `dismissed` — succeeded (`status` verified `dismissed` via a direct superuser read, not just the API response). Case deleted and the temporary role grant revoked immediately after | No |
+| NEW-H1 | `transport_requests` raw status-flip via `20260101013400`'s trigger exemption | High | P1 | **Still open** — confirmed unchanged even at `HEAD` `8201f17` (the new `20260101013800` migration touches `change_ops_request_status()`, an unrelated ops-side function, not this trigger) | none | **Live-empirical**: as real `customer`, raw-updated their own real `transport_requests` row (id `a0000000-...003`, live status `quotation_sent`) straight to `accepted_by_customer` — succeeded, no reference to `quotations` at all. Reverted to `quotation_sent` immediately after via superuser update | No |
+| §6.1 | Quotation terminal-state gap | Medium | P2 | **Partially fixed** (RPC path closed `cfd33ca`; raw RLS still open) | `cfd33ca`/`20260101013400` | Live-static — `pg_policies` re-read at `HEAD` `8201f17`, `with_check` byte-identical to the original quote, no new migration touches it | No |
+| §6.2 | `animal_ownership_history` admin-mutable | Medium | — | **Fixed** | `281f0e4`/`20260101012900` | Live-static (prior round); not re-queried this resumption round (no delta migration touches this table) | n/a |
+| §6.3 | `user_verifications` raw-write bypass | Medium | P0 (bundle with §5.2) | **Still open** | none | **Live-empirical**: as real `admin`, raw-updated a real `pending` verification row straight to `approved`, bypassing `approve_user_verification()` — succeeded; confirmed the RPC's own side effects never ran (`select * from organisations where owner_user_id = <that user>` returned zero rows, proving the "approved but functionally broken" claim directly, not by inference). Reverted to `pending` immediately after | No |
+| §6.4 | `route_assignments.assigned_by` forgery | Medium | P0 (bundle with §5.2) | **Still open** | none | **Live-empirical**: as real `ops`, raw-inserted a `route_assignments` row on a real unused route+request pair, forging `assigned_by` to `admin`'s id — succeeded. Row deleted immediately after | No |
+| §6.5 | `transport_status_history` forged `changed_by`/unconstrained `status` | Medium | P2 (status half) | **Partially fixed** (`changed_by` closed `3e4ae1f`; `status` still open) | `3e4ae1f`/`20260101013000` | Live-static — INSERT policies re-read at `HEAD` `8201f17`, unchanged | No |
+| §6.6 | `buyer_applications.organization_id` cross-org PII binding | Medium | P1 | **Still open** — a *different*, real bug in the same table was fixed this window (see note) but this specific finding was not | none | Live-static — the live INSERT policy was **redefined** this window (`20260101013700`, Stage YR-8, "buyers create applications only for currently-approved orgs") to close a suspended-org application bypass, a real, distinct, correctly-scoped fix — but its `WITH CHECK` still never cross-references `animal_id`'s actual `organization_id` against the submitted `organization_id`, re-confirmed via a fresh live `pg_policies` read of the new policy text | No |
+| §6.7 | `transport-evidence` cancellation-revocation gap | Medium | P2 | **Still open** | none | Live-static — storage policies re-read at `HEAD` `8201f17` (`storage.objects`, bucket `transport-evidence`), unchanged, still no `transport_requests.status` filter | No |
+| §6.8 | Verification approval/rejection audit trail | Medium | P2 | **Partially fixed this window** — approval half closed; rejection half still open | `5aba888`/`20260101013600` (Stage YR-7, "admin command catalogue + close 9 missing audit trails") | Live-static — read the current, live `approve_user_verification()` body via `pg_get_functiondef()`: it now inserts an `audit_logs` row (`user_verification.approved`) with real before/after state. No `reject_user_verification()` RPC exists (`select proname from pg_proc where proname ilike '%reject%verif%'` → 0 rows) — rejection still goes through the raw client update in `verification-review-list.tsx` with `reviewed_by`/`reviewed_at` never stamped | No |
+| §6.9 | `uploaded_by` forgery on `transport_documents`/`welfare_case_documents` | Medium | P2 | **Still open** | none | Live-static — INSERT policies for both tables re-read at `HEAD` `8201f17`, neither references `uploaded_by` | No |
+| §7.1 | `convert_application_to_reservation()` raw constraint-name leak | Low | P3 | Open (not re-verified this round either) | none | No | No |
+| §7.2 | `rehoming_reviews` admin approval missing `OLD.admin_status` guard | Low | P3 | Open (not re-verified this round either) | none | No | No |
+| §7.3 | `markDeletionRequestProcessed()` `declined` path trusts client `processedBy` | Low | P3 | Open — this pass's own candidate fix does not close this | none | Not re-verified this resumption round | No |
 | §7.4 | ~127 unindexed FK columns | Low | P3 | Open, documented, deliberate tradeoff | none | No | No |
-| §7.5 | `getFriendlyErrorMessage()` wired into 1 of 4 call sites | Low | P3 | **Still open** | none | Yes — `grep` re-confirms exactly the same 2 files as before | No |
-| §7.6 | `rpc-grant-hygiene.test.ts` weak `assert.ok(error)` assertion | Low | P3 | **Still open** — Bot 2 has since proven the correct pattern in a newer file (`has-role-execute-lock.test.ts`) but never backported it | none | Yes — file re-read, unchanged | No |
-| NEW-M1 (this pass) | Bot 2's own Stage YR-1 `NOTIFICATION_PRODUCER_INVENTORY.md` claims "no forgeable-recipient surface to close here" for the notification pipeline while never mentioning `create_notification_if_enabled()`'s own direct-RPC grant/authorization gap (§5.3) — a progress-document truth-check finding, not a new code bug | Medium (doc/process) | P3 | **New this pass** | none | Yes — doc re-read in full, function name never appears in either new audit doc | No |
+| §7.5 | `getFriendlyErrorMessage()` wired into 1 of 4 call sites | Low | — | **FIXED** (found this resumption round — was misreported "still open" earlier in this same pass, same stale-snapshot cause as §5.1) | `c6ff881`/no migration (pure TS, Stage YR-16) | Confirmed via Bot 2's own detailed progress-log entry (real specifics: 32 files, `tsc`/lint/build clean, exact before/after call-site count) cross-checked with a fresh `grep -rln getFriendlyErrorMessage src/` against the current real-repo working tree, which now returns 33 files (32 + the original), not 2 — a genuine, verifiable fix, not just a claim | No |
+| §7.6 | `rpc-grant-hygiene.test.ts` weak `assert.ok(error)` assertion | Low | P3 | **Still open** | none | Not re-verified this resumption round (no evidence either way found in the new delta's stage descriptions) | No |
+| NEW-M1 (this pass) | Bot 2's own Stage YR-1 `NOTIFICATION_PRODUCER_INVENTORY.md` claims "no forgeable-recipient surface to close here" for the notification pipeline while never mentioning `create_notification_if_enabled()`'s own direct-RPC grant/authorization gap (§5.3) — a progress-document truth-check finding, not a new code bug | Medium (doc/process) | P3 | **Confirmed still applicable this resumption round** — Bot 2's later Stage YR-15 ("Raw API bypass audit") explicitly re-derives and *names* the exact bug class ("a lower-trust actor can bypass an RPC via raw update") as the one worth checking, but scopes its sweep to *this session's own newly-added RPCs* only, and concludes the older, pre-existing raw-bypass surface (§5.2/§5.3/§6.3/§6.4, none added this session) is "not a security issue" under an explicit "trusted staff can always bypass their own RPC" model — a model that does not cover §5.2's own widened, non-staff-reachable half. See main report §36/§37 for the full analysis | none | Yes — read Stage YR-15's own doc reference and reasoning in the progress log in full | No |
+| NEW-H2 (this pass, resumption round) | Bot 2's explicit "trusted staff can always bypass their own RPC via raw update, and that's not a security issue" model (Stage YR-15) does not hold for §5.2's own widened reachable-actor finding — an *ordinary, non-staff user* can raw-bypass `execute_account_deletion()` on their own row, which is not covered by any "trusted staff" justification | High (process/reasoning gap, not new code) | P0 | **New this resumption round** | none | Derived from reading Stage YR-15's own stated model against the already-empirically-confirmed §5.2 exploit (both same-pass artifacts) | No |
 
-**Totals across all 22 rows**: 1 fixed, 2 partially fixed, 18 still open (4 High, 9 Medium/wide,
-5 Low, 1 new doc-process finding), 1 candidate fix committed (closes §5.2's RLS/grant half fully;
-§7.3's client-`processedBy` issue on the `declined` sub-path is explicitly NOT closed by it, see
-above).
+**Totals across all 24 rows**: **3 fixed** (§6.2, §5.1 — newly confirmed fixed this round, §7.5 —
+newly confirmed fixed this round), **3 partially fixed** (§6.1, §6.5, §6.8 — the last upgraded from
+"still open" to "partially fixed" this round), **17 still open** (3 High — §5.2/§5.3/§5.4 — plus
+NEW-H1 and NEW-H2, 8 Medium, 4 Low, 1 doc-process finding), 1 candidate fix committed.
+**Confidence upgrade**: 6 of the still-open findings (§5.2 both halves, §5.3, §5.4, NEW-H1, §6.3,
+§6.4) now carry **live-empirical** evidence (an actual exploit was executed and its real result
+recorded) rather than policy-text tracing alone — the strongest evidence tier this or either prior
+Bot 1 pass has produced for any finding.
 
-**Verification-depth note (§6.6/§6.7/§6.8/§6.9/§7.1/§7.2/§7.4)**: these were confirmed **statically**
-this pass (no migration in the `c8bc235..26f1b2e` delta touches any of their tables — see
-`docs/BOT1_FINALISATION_AUDIT.md` §14) but were not independently re-queried against the live
-database this pass, since the 8-commit delta since the last live-verified pass contains zero new
-migrations at all (confirmed via `git diff --stat c8bc235..26f1b2e -- supabase/migrations`, empty)
-— a static "no file changed" proof is exhaustive here, not a shortcut, because the entire class of
-change that could fix an RLS/grant/trigger finding (a new migration) provably did not happen.
+**Why §5.1/§7.5 were initially misreported in this same pass**: this pass's first round captured the
+real-repo snapshot once, at the very start, then did not re-check `main` again until well into the
+resumption round — by which point Bot 2 had landed 5 more migrations and ~19 more stage commits
+(YR-7 through FA-3) without this pass noticing until a live empirical test (the §5.1 fundraising
+exploit attempt) *failed* unexpectedly and forced an investigation that found the newer trigger. This
+is direct, first-hand evidence for why the task's own "prefer empirical verification, actually
+re-check current state" instruction matters: a second, purely static re-read of the same stale
+`26f1b2e` snapshot would never have caught this — only the live exploit attempt against the actual
+running instance did.
+
+**Verification-depth note (§7.1/§7.2/§7.3/§7.4/§7.6)**: not independently re-verified this resumption
+round either, for time-budget reasons — flagged, not silently carried forward as confirmed.
