@@ -171,10 +171,14 @@ Not independently re-derived this pass. Overlaps with Domain D (public marketpla
 carried forward unchanged (no backend delta touches it this round).
 
 ## VA-42 SEO readiness
-Partially checkable via code reading without a browser: not independently re-driven this pass
-(would need to inspect actual rendered `<head>` output per public route, e.g.
-`src/routes/_public.*.tsx` loader/meta functions). Not reached this pass — flagged as the concrete
-next VA stage to prioritize on resume (see final handoff).
+**Completed this pass — real finding SEO-1 (Low).** 30 of `src/routes/_public.*.tsx` define a real
+TanStack Router `head()` producing dynamic (loader-data-driven, not hardcoded) `<title>`/
+`<meta name="description">` — confirmed by reading `_public.puppies.$id.tsx` and
+`_public.breeders.$slug.tsx` in full; `__root.tsx` sets a sane default. **Absent**: canonical
+`<link>` tags (zero anywhere in `src/`), robots meta tags (zero `noindex` anywhere),
+`robots.txt`/`sitemap.xml` (neither file exists anywhere in the repo). Low severity, not
+launch-blocking; real duplicate-content/crawl-budget risk once the marketplace has live,
+filterable/paginated traffic. Full detail: `docs/BOT1_MARKETING_AND_SALES_TRUTH_REVIEW.md`.
 
 ## VA-43 Performance claim truth
 No production performance claims found anywhere in the repository to flag as unsupported —

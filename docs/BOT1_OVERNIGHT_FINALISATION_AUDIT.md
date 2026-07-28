@@ -193,7 +193,10 @@ self-audit methodology scope). Full detail: prior lineage reports, especially
 ## 14. Low findings
 
 Carried forward unchanged: §7.1, §7.2, §7.3, §7.4, §7.6 (documentation drift / minor polish items).
-Not independently re-verified this pass.
+Not independently re-verified this pass. **New this pass: SEO-1** — canonical URLs, `robots.txt`,
+`sitemap.xml`, and structured data are entirely absent across all public routes (dynamic title/
+description metadata itself is real and adequate). See §61–63 below and
+`docs/BOT1_MARKETING_AND_SALES_TRUTH_REVIEW.md` for full detail.
 
 ## 15. Fixed prior findings (re-confirmed not regressed, live evidence where checked)
 
@@ -281,8 +284,13 @@ sweep (0/72 deps match any payment provider signature) rather than assumed.
 
 ## 61–63. Marketing / SEO / advertising review
 
-See §8 above — genuinely N/A for paid/CRM surfaces (0/72 deps match any analytics/CRM/email
-provider); the one real, checkable SEO-facing surface (Domain D) carried forward unchanged.
+Genuinely N/A for paid/CRM surfaces (0/72 deps match any analytics/CRM/email provider). **New this
+pass — SEO-1 (Low)**: 30 public routes have real, dynamic (loader-data-driven, not hardcoded) `head()`
+title/description metadata via TanStack Router — a genuine positive. But zero canonical `<link>`
+tags, zero robots meta tags, and no `robots.txt`/`sitemap.xml` exist anywhere in the repo (confirmed
+by direct grep/find, not assumed). Low severity, not launch-blocking, real crawl-budget/
+duplicate-content risk once the marketplace has live traffic. Full detail:
+`docs/BOT1_MARKETING_AND_SALES_TRUTH_REVIEW.md`.
 
 ## 64–67. Sales / CRM / onboarding / support review
 
