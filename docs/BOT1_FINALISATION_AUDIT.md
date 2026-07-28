@@ -1121,3 +1121,13 @@ to any live database, neither merged, neither pushed.
   Bot 1 pass has yet independently executed the full suite despite three consecutive passes citing
   the same infra-safety reasoning — a sustained idle window (this round found at least 3
   separate idle windows of a minute or more) may make a single full run genuinely safe to attempt.
+
+### 63a. Checkpoint delta check
+
+Real-repo `HEAD` re-checked once more at this checkpoint: `ac612690c1741d7879d747f7e13b40fd0cb2cc04`
+(2 more commits since `6dbba45`: `7926f8a`/`ac61269`, "Self-directed: audit-log fundraising campaign
+approval," 1 new migration `20260101014300_fundraising_approval_audit_trail.sql`, read in full — adds
+an `audit_logs` insert to the fundraising-campaign admin-approval RPC, unrelated to any open finding
+in this report). 145 migrations total now. Real backend and frozen frontend worktrees both
+reconfirmed untouched (`git status --short` clean on both; frontend ref still `727d551`, unchanged).
+Candidate-fix branch unchanged at 2 commits (`7ba7b32`, `3f4db66`), neither merged nor pushed.
