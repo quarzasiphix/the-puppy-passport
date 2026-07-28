@@ -953,6 +953,25 @@ should change about how it scopes future self-audits.
    not touched by the 5-migration delta.
 7. **§7.6** — the last remaining open Low finding from the original 6; unchanged.
 
+### 56a. Attempted further empirical testing; stopped on renewed concurrent-reset evidence
+
+After §52's 8-finding batch, this round attempted 2 more targeted empirical probes (§6.1 quotation
+raw accept/reject flip; §6.9 `uploaded_by` forgery) with the DB confirmed idle immediately
+beforehand. Mid-setup (checking existing quotation fixtures, cleaning up 2 leftover fixture rows
+from the §5.1 test that this round had forgotten to delete alongside the campaign row itself — a
+real process slip, recorded honestly, not hidden), a follow-up query found `public.quotations`,
+`public.buyer_applications`, and `public.fundraising_campaigns` **no longer existed at all**
+(`information_schema.tables` returned 0 rows for `public`), and `docker ps` showed the DB container
+at ~10 seconds of uptime — direct, unambiguous evidence of another concurrent `db reset` by Bot 2 or
+an equivalent process, mid-round. This **also resolved** the leftover-fixture cleanup concern
+automatically (a full reset wipes everything, including the 2 forgotten rows) — confirmed via a
+final `git -C /p/the-puppy-passport status --short` showing only a routine uncommitted test-file
+edit (not read, per the task mandate), and `HEAD` unchanged at `8201f17`. This round stopped issuing
+further live queries or writes at this point, in favor of finalizing this report on the strong
+evidence already gathered (§52's 8-finding empirical batch), rather than racing a live reset a third
+time. §6.1 and §6.9 remain confirmed only via live-static policy-text reading (§54), not
+live-empirical exploit, for this reason — an honest, explicit gap, not a silent omission.
+
 ### 57. Empirical-testing session hygiene confirmation
 
 - Every probe row/mutation created by this round's live testing was deleted or reverted, and every
@@ -969,3 +988,35 @@ should change about how it scopes future self-audits.
 - This pass's own candidate-fix migration (`7ba7b32`, on the isolated `candidate-fixes/` branch) was
   never applied to the shared instance during this round — the live schema tested against throughout
   §52 is Bot 2's real, unmodified `main` state at `8201f17`.
+
+### 58. Next resume point (updated, supersedes §49's "resume from B1-008" note)
+
+B1-008's core intent (fresh adversarial anonymous/tenant-isolation testing against still-open
+findings, preferring live empirical actor tests over static claims) has now been substantially
+carried out this resumption round — 8 findings were actually exploited or attempted live, not just
+traced through policy text. Remaining, not yet worked at this depth:
+
+- **B1-008–B1-015 continued**: empirical testing was concentrated on this report's own already-named
+  findings (§5.x/§6.x); a genuinely fresh, undirected adversarial sweep (anonymous role, arbitrary
+  table/RPC fuzzing beyond the named findings) was not attempted — Bot 2's own YR-14 "cross-tenant
+  fuzz matrix" and YR-13 "public privacy regression suite" claim to cover much of this ground
+  already (per their progress-log entries, not independently re-verified by this pass) and would be
+  the efficient starting point for a future pass rather than re-deriving from scratch.
+- **§6.1/§6.9 empirical confirmation** (§56a) — live-static only this round; the DB reset before
+  these 2 probes could run. Cheap to pick up first in a future session: fixtures are simple (an
+  existing `accepted` quotation for §6.1, any transport request for §6.9), no complex multi-table
+  setup like §5.1 required.
+- **B1-026–B1-090, B1-096/B1-097/B1-099/B1-100, B1-101–B1-118**: still not independently worked, per
+  §49's original list — unchanged by this resumption round, which spent its budget on empirical
+  depth for already-known findings rather than breadth into new stage clusters, per the coordinator's
+  explicit priority ("unresolved High findings and anything release/security-relevant first").
+- **A third live-instance check**, if a future pass resumes and finds the shared DB idle again,
+  should prioritize: (1) re-running §6.1/§6.9 empirically, (2) a fresh, undirected fuzz pass as a
+  genuinely different lower-trust actor against tables this report has not yet named a finding for,
+  since every empirical probe attempted so far was directed at an already-suspected gap, not a blind
+  search — B1-119/B1-120's "final adversarial matrix" stages are the closest match in the original
+  130-stage spec for that kind of undirected sweep and have not been attempted this pass.
+- **`git -C /p/the-puppy-passport rev-parse HEAD` should be the very first action** of any future
+  resumption, before any other analysis — this round's own §5.1/§7.5 correction happened only because
+  an empirical test's *unexpected* result forced that check; a routine habit of re-checking `HEAD`
+  first would catch the same class of staleness without needing a lucky failed exploit to trigger it.
