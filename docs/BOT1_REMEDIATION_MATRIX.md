@@ -39,14 +39,80 @@ make.
 | NEW-M1 (this pass) | Bot 2's own Stage YR-1 `NOTIFICATION_PRODUCER_INVENTORY.md` claims "no forgeable-recipient surface to close here" for the notification pipeline while never mentioning `create_notification_if_enabled()`'s own direct-RPC grant/authorization gap (§5.3) — a progress-document truth-check finding, not a new code bug | Medium (doc/process) | P3 | **Confirmed still applicable this resumption round** — Bot 2's later Stage YR-15 ("Raw API bypass audit") explicitly re-derives and *names* the exact bug class ("a lower-trust actor can bypass an RPC via raw update") as the one worth checking, but scopes its sweep to *this session's own newly-added RPCs* only, and concludes the older, pre-existing raw-bypass surface (§5.2/§5.3/§6.3/§6.4, none added this session) is "not a security issue" under an explicit "trusted staff can always bypass their own RPC" model — a model that does not cover §5.2's own widened, non-staff-reachable half. See main report §36/§37 for the full analysis | none | Yes — read Stage YR-15's own doc reference and reasoning in the progress log in full | No |
 | NEW-H2 (this pass, resumption round) | Bot 2's explicit "trusted staff can always bypass their own RPC via raw update, and that's not a security issue" model (Stage YR-15, `docs/RAW_API_BYPASS_AUDIT.md`) does not cover §5.2's own widened reachable-actor finding — an *ordinary, non-staff `customer` persona*, live-empirically confirmed this pass, can raw-bypass `execute_account_deletion()`'s entire safety model on their own row, which YR-15's own "lower-trust actor reaching a protected field/RPC-only transition via raw call" bug-class definition explicitly says *would* be a real bypass worth fixing — but YR-15's own sweep scope was limited to "this stage's own new migrations" (quotation dispatch, rehoming/report, admin command audit coverage, suspended-org application lock, terminal-reopen-reason) and structurally never revisits older, pre-existing tables like `account_deletion_requests`/`legal_holds`/`user_verifications`/`route_assignments`, so this exact bug class — one YR-15 says it has hunted "dozens of times already" — was never pointed at the tables where it still lives | High (process/reasoning gap, not new code) | P0 | **New this resumption round** | none | Read `docs/RAW_API_BYPASS_AUDIT.md` in full; cross-referenced its stated scope and bug-class definition against the already-empirically-confirmed §5.2 exploit (both same-pass artifacts) | No |
 
-**Totals across all 24 rows**: **3 fixed** (§6.2, §5.1, §7.5), **3 partially fixed** (§6.1, §6.5,
-§6.8), **17 still open** (3 High — §5.2/§5.3/§5.4 — plus NEW-H1 and NEW-H2, 8 Medium, 4 Low, 1
-doc-process finding), 1 candidate fix committed.
+**Totals across all 25 rows**: **3 fixed** (§6.2, §5.1, §7.5), **3 partially fixed** (§6.1, §6.5,
+§6.8), **18 still open** (4 High — §5.2/§5.3/§5.4/NEW-H3 — plus NEW-H1 (regression) and NEW-H2
+(process), 8 Medium, 4 Low, 1 doc-process finding), 1 candidate fix committed. NEW-H3
+(`achievements.verification_status` owner self-verification) is a genuinely new finding, found by
+this pass's own undirected fuzz sweep, not a carried-forward item from either prior Bot 1 pass.
 **Confidence upgrade**: **8 of the still-open/partial findings now carry live-empirical evidence**
 (§5.2 both halves, §5.3, §5.4, NEW-H1, §6.1, §6.3, §6.4, §6.9 — an actual exploit was executed
 against the live schema and its real result recorded) rather than policy-text tracing alone — the
 strongest evidence tier any of the three Bot 1 passes has produced for any finding. This is now a
 majority of the still-open High/Medium findings (8 of 11), not just a spot-check.
+
+### New finding — undirected fuzz sweep (B1-119/B1-120)
+
+An undirected fuzz batch (not tied to any previously-named finding) was run against `HEAD`
+`6dbba45` covering: privilege escalation via raw `user_roles` self-insert (admin/moderator/
+active-breeder-bypass — all 3 attempts **correctly rejected**, `42501`), anonymous read access to
+`legal_holds`/`audit_logs`/`account_deletion_requests`/`user_verifications`/`profiles.email,phone`
+(all 5 **correctly rejected at the grant level**, not merely RLS — `anon` has no `SELECT` grant at
+all on these tables), cross-tenant reads of exact transport addresses and support cases (correctly
+empty-filtered, no error), and `organisation_members` self-promotion to owner of an unaffiliated
+org, including by an owner of a *different* real org (both **correctly rejected**, `42501`). All of
+this is genuinely solid, evidence-backed "adequate" — the platform's core privilege/tenant boundary
+held against every angle tried.
+
+**One new, real, previously-undiscovered High finding did surface**:
+
+| ID | Finding | Severity | Priority | Status | Fixing commit | Verified this pass | Candidate fix |
+|---|---|---|---|---|---|---|---|
+| NEW-H3 | `achievements.verification_status` owner self-verification | High | P1 | **New this pass, still open** | none | **Live-empirical**: as real `breeder1` (real kennel owner), raw-inserted an achievement row pre-set to `verification_status='approved'` — succeeded, immediately publicly visible (the public SELECT policy requires only `verification_status='approved'` + the org being public/approved, no admin-review gate at all). Probe row deleted immediately after, verified | No |
+
+- **Exact location**: `supabase/migrations/20260101004200_achievements.sql`, policy `"owners manage
+  their kennel's achievements"` (`for all using/with check owns_org(kennel_id)`) — no restriction on
+  `verification_status` anywhere in the policy, and `select tgname from pg_trigger where tgrelid =
+  'public.achievements'::regclass` shows only `set_achievements_updated_at` (a plain timestamp
+  stamper), confirmed live — no trigger locks this column the way `20260101014000` now locks
+  `fundraising_campaigns.status`.
+- **Reachable actor**: any org owner (breeder/foundation/shelter) with at least one `parent_dogs` row
+  on file — a normal, unprivileged state for any active kennel.
+- **Reproduction**: `supabase.from('achievements').insert({ parent_dog_id, kennel_id, title: 'Best
+  in Show', verification_status: 'approved' })` as the kennel's own owner — succeeds.
+- **Not reachable through the real app UI**: `src/components/achievement-form-dialog.tsx` never sets
+  `verification_status` (confirmed via `grep`, zero matches) — the real form always leaves it at its
+  column default (`'pending'`). But `createAchievement()` (`src/lib/queries/breeder.ts`) takes the
+  full `Database["public"]["Tables"]["achievements"]["Insert"]` type and passes it straight to a raw
+  `.insert(payload)` with no server-side stripping — a raw Data API call (curl/Postman/browser
+  devtools) bypasses the UI's own restraint entirely, the identical shape as this report's own §5.2
+  finding.
+- **Expected invariant**: the same one `fundraising_campaigns_prevent_self_publish()` now enforces
+  one table over — a claim that becomes publicly visible as a verified trust signal (here: a
+  breeder's award/certification, shown to prospective buyers) must pass through admin review first,
+  never be self-declared.
+- **Observed behavior**: a kennel can publish a fabricated "verified" achievement/certification
+  (e.g., a fake "Best in Show" or health-certification claim) that displays identically to a real,
+  admin-reviewed one on the public marketplace — a direct trust/fraud vector for buyers evaluating a
+  breeder, matching the rubric's explicit High category "owner self-verification."
+  `src/lib/queries/marketplace.ts` (line 687) confirms achievements are surfaced on public breeder
+  profile pages without re-checking anything beyond `verification_status`.
+- **Smallest fix**: mirror `20260101014000_fundraising_self_publish_lock.sql` exactly — a `before
+  insert or update` trigger rejecting any non-admin attempt to set `verification_status = 'approved'`
+  (and, for symmetry, `'rejected'`, since an owner shouldn't be able to self-reject their own
+  competitor's... n/a here, self-reject their own record either, though lower risk) unless
+  `is_admin()`.
+- **Regression test**: as a real kennel owner, insert/update an achievement to `verification_status
+  = 'approved'` directly (not via any admin RPC, since none exists yet either) and assert rejection;
+  an admin performing the same update succeeds.
+- **Integration-blocker status**: no — pre-existing, not tied to a frontend integration step.
+- **Release-blocker status**: yes, if achievement badges are ever surfaced as a trust signal to real
+  buyers before this is fixed.
+- **Overlap risk with Bot 2**: moderate — this is exactly the self-approval pattern the codebase has
+  now fixed twice elsewhere (`organisations.verification_status`, `fundraising_campaigns.status`)
+  without a documented sweep for a third instance; a future Bot 2 self-audit checking "every table
+  with a `verification_status`/`admin_status`-shaped column against its owner-facing RLS" would very
+  likely find this the same way this fuzz sweep did.
+- **Confidence**: confirmed, live-empirical, cleanup verified.
 
 **Second resumption round, `HEAD` `6dbba45`**: 2 more real-repo commits landed since the `8201f17`
 checkpoint (`58c1589`/`82e9f73`, Stages FA-4 and a test-hygiene fix), adding 2 more migrations
