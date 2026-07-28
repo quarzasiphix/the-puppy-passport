@@ -374,6 +374,10 @@
       "returns": "uuid",
       "grantees": "authenticated"
     },
+    "is_profile_under_legal_hold(p_profile_id uuid)": {
+      "returns": "boolean",
+      "grantees": "authenticated"
+    },
     "last_auth_at()": {
       "returns": "timestamp with time zone",
       "grantees": "authenticated"
