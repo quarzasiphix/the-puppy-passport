@@ -260,6 +260,91 @@ test("fundraising: an org cannot self-publish a campaign without admin approval 
   });
 });
 
+// Self-directed follow-up to Stage FA-3, which flagged and deliberately deferred this exact gap:
+// admin approval of a fundraising campaign wrote no audit_logs entry at all, unlike every other
+// comparably consequential admin action in this schema. 20260101014300_fundraising_approval_audit_trail.sql
+// closes it with a trigger, since approval happens via a raw admin RLS update, not an RPC.
+test("fundraising: admin approval of a campaign is recorded in the audit trail", async (t) => {
+  const fixture = await buildEligibleFixture();
+  const foundation1 = await as("foundation1");
+  const admin = await as("admin");
+  let campaignId: string | undefined;
+
+  try {
+    await t.test("setup: a draft campaign owned by the eligible org", async () => {
+      const created = await foundation1
+        .from("fundraising_campaigns")
+        .insert({
+          organisation_id: ids.orgFundacja,
+          animal_id: ids.animalReksio,
+          buyer_application_id: fixture.applicationId,
+          transport_request_id: ids.transportReksio,
+          quotation_id: fixture.quotationId,
+          title: "Approval audit trail test",
+          target_amount: 300,
+          currency: "EUR",
+        })
+        .select("id, status")
+        .single();
+      assert.equal(created.error, null);
+      campaignId = created.data!.id as string;
+    });
+
+    await t.test("an admin approves it and a real audit_logs entry is written", async () => {
+      const approve = await admin
+        .from("fundraising_campaigns")
+        .update({ status: "approved" })
+        .eq("id", campaignId!)
+        .select("status")
+        .single();
+      assert.equal(approve.error, null);
+      assert.equal(approve.data?.status, "approved");
+
+      const audit = await admin
+        .from("audit_logs")
+        .select("actor_profile_id, target_type, target_id, before, after")
+        .eq("action", "fundraising_campaign.approved")
+        .eq("target_id", campaignId!)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      assert.equal(audit.error, null);
+      assert.equal(audit.data?.actor_profile_id, ids.admin, "the real caller must be the actor");
+      assert.equal(audit.data?.target_type, "fundraising_campaigns");
+      assert.equal((audit.data?.before as { status: string })?.status, "draft");
+      assert.equal((audit.data?.after as { status: string })?.status, "approved");
+    });
+
+    await t.test(
+      "an unrelated later status change does not write a second approval entry",
+      async () => {
+        const activate = await foundation1
+          .from("fundraising_campaigns")
+          .update({ status: "active" })
+          .eq("id", campaignId!);
+        assert.equal(activate.error, null);
+
+        const audits = await admin
+          .from("audit_logs")
+          .select("id")
+          .eq("action", "fundraising_campaign.approved")
+          .eq("target_id", campaignId!);
+        assert.equal(audits.error, null);
+        assert.equal(
+          audits.data?.length,
+          1,
+          "only the one real approval transition should be logged",
+        );
+      },
+    );
+  } finally {
+    await t.test("cleanup", async () => {
+      if (campaignId) await admin.from("fundraising_campaigns").delete().eq("id", campaignId);
+      await fixture.cleanup();
+    });
+  }
+});
+
 test("fundraising: only an approved foundation/shelter/rescue org can create a campaign", async () => {
   const fixture = await buildEligibleFixture();
   try {
