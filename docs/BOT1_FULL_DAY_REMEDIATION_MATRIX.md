@@ -26,6 +26,13 @@ for all "this pass" columns: `8201f17dd4c8abc36cc816d63c52f3620ae7e44f`.
 | NEW-M1 | Medium | Bot 2's own Stage YR-1 notification-producer audit repeats §5.3's blind spot | Open (not re-verified this pass) | Carried forward | `docs/NOTIFICATION_PRODUCER_INVENTORY.md` |
 | NEW-H2 | High | Bot 2's own Stage YR-15 raw-API-bypass audit repeats the same blind-spot pattern, scoped to new code only | Open (not re-verified this pass — existence of cited doc spot-checked only) | Carried forward | `docs/RAW_API_BYPASS_AUDIT.md` (existence confirmed, full content not re-read this pass) |
 
+## Findings from this pass's own delta review (not from the original three-pass lineage)
+
+| ID | Severity | Title | Status | This pass's method | Evidence (file/line) |
+|---|---|---|---|---|---|
+| FA-4-legal-hold-propagation | N/A (fixed same-session, not a Bot-1-originated finding) | `legal_holds` was never wired into ordinary self-service `comments`/`buyer_applications` hard-delete | **Fixed, live-empirically confirmed by this pass** | Real authenticated-actor test: placed a real hold on `buyer@havenpaw.test`, confirmed a real existing `buyer_applications` row's self-delete was rejected with the exact migration error text, released the hold | `20260101014200_legal_hold_self_delete_lock.sql`; live test recorded in `BOT1_FULL_DAY_FINALISATION_AUDIT.md` §10a |
+| J01-fundraising-doc-drift | Low (documentation accuracy, not security) | `PRODUCT_VISION.md`/`IMPLEMENTATION_PLAN.md` summary sections claim fundraising has "no schema/RLS/UI yet"; contradicted by 7 real migrations, real RLS, real UI routes, a feature flag, and this session's own FA-1–FA-4 bug-fix work on the same module | Open (documentation, not code) | `docs/BOT1_FULL_DAY_DUE_DILIGENCE_REVIEW.md` J01 row |
+
 ## Candidate fixes
 
 | Branch | Commit | Finding | Applied to main? | Notes |

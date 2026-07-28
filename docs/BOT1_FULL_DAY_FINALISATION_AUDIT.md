@@ -368,15 +368,99 @@ target), and was not modified, merged, or re-derived by this pass.
   `git -C /p/the-puppy-passport rev-parse HEAD` first, before anything else, per the finalisation
   pass's own §58 lesson.
 
+## 10a. Continuation round — delta loop, live empirical test, and due-diligence first pass
+
+Resumed in the same clone/branch. Per the continuous-delta-loop rule, re-checked
+`git -C /p/the-puppy-passport rev-parse HEAD` first, before any other work.
+
+**Delta found**: real repo `HEAD` moved from `8201f17` to `6dbba457f1077393cf0b7882716a6c71dc94bf2f`
+(4 commits: "Fix test-cleanup pollution and a real broken draft-delete cascade",
+"Stage FA-4: close a real legal-hold enforcement gap"). Two new migrations, both read in full:
+
+- **`20260101014100_draft_delete_cascade_lock_fix.sql`**: fixes a real, unrelated-to-any-open-
+  finding bug where `prevent_animal_and_party_changes_after_draft()` unconditionally rejected the
+  cascade-triggered child-row deletes that follow a legitimate parent `transport_requests` DELETE
+  (the parent row is already gone by the time the trigger's own status lookup runs, so it always
+  saw `NULL` and always raised). Confirmed via full read: the fix correctly narrows the exception to
+  only `TG_OP = 'DELETE' and v_status is null`, which (per the migration's own reasoning, verified
+  against the schema's real foreign-key structure) can only be reached via a cascade from an
+  already-authorized parent deletion, not a forgeable direct path. **Not a security finding either
+  way** — a test-hygiene/correctness bug, now fixed.
+- **`20260101014200_legal_hold_self_delete_lock.sql`** ("Stage FA-4"): closes a **real, previously
+  undiscovered legal-hold propagation gap** distinct from §5.2 — `legal_holds` was only ever wired
+  into `execute_account_deletion()` (full account deletion), never into the two ordinary self-
+  service hard-delete paths (`"authors delete their own comments"`, `"buyers delete their own
+  applications"`), so a profile under an active hold could destroy comments/applications one at a
+  time with no restriction. Adds `is_profile_under_legal_hold()` plus two `before delete` triggers
+  on `comments` and `buyer_applications`. **This does not touch or narrow §5.2** (the raw-write
+  bypass on `legal_holds`/`account_deletion_requests` themselves, confirmed still open in §4.3
+  above) — it is a different table/gap in the same general area (legal-hold *propagation
+  completeness*, task area G17, not G-tier §5.2's grant/policy gap on the hold mechanism itself).
+
+**Live empirical test performed** (genuinely new ground — this exact fix had not been tested by any
+prior Bot 1 pass): checked the shared local Supabase instance's state first (`docker ps`: healthy,
+`pg_stat_activity`: no non-idle backends beyond the check query itself) before running a live,
+authenticated-actor test via `@supabase/supabase-js` against real seeded personas
+(`admin@havenpaw.test`, `buyer@havenpaw.test`, real demo credentials from `docs/LOCAL_SETUP.md`):
+
+1. Signed in as `admin`, called `place_legal_hold()` on the real `buyer@havenpaw.test` profile
+   (`10000000-0000-0000-0000-000000000002`) — succeeded, real hold row created.
+2. Signed in as `buyer`, attempted `DELETE` on a real, pre-existing, non-probe
+   `buyer_applications` row they own (`70000000-0000-0000-0000-000000000001`, `status = approved`)
+   — **REJECTED**: `P0001 "This application cannot be deleted while an active legal hold requires
+   this account's data to be preserved."` — the exact error text from the migration, proving the
+   fix works as claimed against a real row, not just a specially-constructed one.
+3. As `admin`, called `release_legal_hold()` on the hold — succeeded (non-error response).
+4. Attempted to independently re-verify the release and the untouched application row via a direct
+   superuser `psql` read — **this specific verification step was interrupted**: a concurrent
+   `db reset` by Bot 2 (or an equivalent process) occurred between step 3 and step 4 (`docker ps`
+   showed the container at 9 seconds of uptime, `information_schema.tables` returned zero `public`
+   relations moments later) — the same phenomenon the finalisation pass's own §56a documented
+   independently. **This does not weaken the finding**: no probe row was ever created (the delete
+   was rejected, not performed) and the release call itself returned successfully before the reset,
+   so there is nothing to have left in a bad state, and the reset would have wiped it regardless.
+   Recorded honestly as an interrupted final-verification step, not hidden.
+5. No further live queries were attempted after the reset was detected, matching the same
+   discipline the finalisation pass applied in its own §56a.
+6. All temporary probe scripts were deleted after use (`.audit-temp/` on this clone, and a
+   scratchpad copy outside any git worktree used only because Node's ESM resolver would not walk up
+   to the real repo's `node_modules` from this clone's own directory tree — the real repo itself was
+   never written to; only read via its `node_modules` for module resolution and its already-running
+   local Supabase instance for the live HTTP/Postgres calls, identical in kind to what a real
+   browser client does).
+
+**Conclusion**: `20260101014200_legal_hold_self_delete_lock.sql`'s core claim is **live-empirically
+confirmed**, independently, this pass — a genuinely new result, not a re-confirmation of an
+already-triple-confirmed finding. §5.2 itself (the raw-write bypass on the hold mechanism) remains
+open and is unaffected by this fix; see §4.3.
+
+**Due-diligence first pass**: see `docs/BOT1_FULL_DAY_DUE_DILIGENCE_REVIEW.md` for the full write-up
+— covers J01 (product-scope framing, plus a real documentation-accuracy finding: `PRODUCT_VISION.md`
+and `IMPLEMENTATION_PLAN.md`'s own summary sections both understate how built the fundraising module
+actually is, contradicted by that same file's own detail section and by this session's own Stage
+FA-1–FA-4 work), J02 (capability/tech-debt matrix, itself confirmed partially stale), J03
+(architecture, shallow), J06/J20 (no payment/SMS/email provider anywhere in the codebase — confirmed
+via dependency and env-file scan), J07 (legal boundaries, partial), J08/J09 (dependency/IP surface,
+shallow — no `license` field in `package.json`, no unusual dependency pattern observed, a real CI
+job that provisions Supabase and runs the DB test suite twice on every push), J13 (new-team
+takeover, partial — CI *is* a real, automated takeover rehearsal). J14–J16/J18/J19/J21/J22: **no
+KPI/analytics/sales/roadmap-credibility/valuation/acquirer-persona documents exist anywhere in this
+repository at all** — confirmed via exhaustive filename and content grep, a real structural gap for
+a due-diligence data room, not an invented one. J04/J05/J10–J12/J17/J23 not attempted this round.
+
 ## 11. Next resume point
 
-**Resume from FD-C01** (role/actor/RLS matrix work), or equivalently the un-reviewed Medium findings
-(§6.1 RLS half, §6.5, §6.6, §6.7, §6.8 rejection half, §6.9) if prioritizing finding-verification
-breadth over fresh matrix construction, or **FD-J02** if prioritizing due-diligence breadth (this
-pass's own §7 covers J01/J06/J08/J09/J20 partially; J02–J05/J07/J10–J24 are the largest genuinely
-uncovered block across the entire four-pass lineage). Latest committed source HEAD reviewed:
-`8201f17dd4c8abc36cc816d63c52f3620ae7e44f` (re-confirmed unchanged at both the start and the end of
-this pass).
+**Resume from FD-J04** (security due diligence beyond the findings-based sections already covered,
+continuing through J05/J10–J12/J17/J23 — the largest genuinely uncovered block across all four
+passes now that J01/J02/J03/J06/J07/J08/J09/J13/J14–J16/J18/J19/J20/J21/J22 have at least a partial
+or "confirmed absent" first pass), or **FD-C01** (role/actor/RLS matrix work) if prioritizing
+security breadth instead — this pass's own judgment is due diligence has the higher marginal value
+given three passes already triple-confirm the same High-finding set. The un-reviewed Medium findings
+(§6.1 RLS half, §6.5, §6.6, §6.7, §6.8 rejection half, §6.9) remain a cheap, well-scoped pickup
+either way. Latest committed source `HEAD` reviewed: `6dbba457f1077393cf0b7882716a6c71dc94bf2f`
+(moved 4 commits from this pass's own initial `8201f17` snapshot; delta reviewed in full in §10a;
+re-confirm again at the start of any future resumption, per the finalisation pass's own lesson about
+not carrying forward a stale snapshot silently).
 
 ## 12. Confirmation
 
