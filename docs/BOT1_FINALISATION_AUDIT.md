@@ -1020,3 +1020,104 @@ traced through policy text. Remaining, not yet worked at this depth:
   resumption, before any other analysis — this round's own §5.1/§7.5 correction happened only because
   an empirical test's *unexpected* result forced that check; a routine habit of re-checking `HEAD`
   first would catch the same class of staleness without needing a lucky failed exploit to trigger it.
+
+---
+
+## SECOND RESUMPTION ROUND — §6.1/§6.9 empirical closure and undirected fuzz sweep (B1-119/B1-120)
+
+Resumed again in the same clone/branch. Real-repo `HEAD` re-checked first this time (per §58's own
+recommendation): had advanced to `6dbba45` (2 more commits, 2 more migrations — Stage FA-4 closing a
+real, distinct legal-hold-*propagation* gap unrelated to §5.2's own finding, plus an unrelated
+cascade-delete bug fix; full review in the remediation matrix). §5.2 confirmed still fully open
+against this newest snapshot too (live `pg_policies`/grant re-read, byte-identical).
+
+### 59. §6.1 and §6.9: closed the empirical-evidence gap noted at §56a
+
+Both probes flagged as "live-static only" at the end of the first resumption round were run this
+round, DB confirmed idle immediately beforehand:
+
+- **§6.1** (quotation terminal-state, RLS half): as real `customer`, flipped an already-`accepted`
+  quotation to `rejected` — succeeded — then flipped it back to `accepted` — also succeeded,
+  directly demonstrating the "un-terminal-ize" claim from the original finding, not just a one-way
+  misuse.
+- **§6.9** (`uploaded_by` forgery): as real `customer`, raw-inserted a `transport_documents` row on
+  their own real transport request, forging `uploaded_by` to the `ops` persona's id — succeeded.
+
+Both are now confirmed via the strongest evidence tier this report uses. The shared instance was
+reset by a concurrent process again before this round's own cleanup query could run and confirm
+reversion by direct read (the third such reset observed this pass) — not a concern, since a full
+reset restores seed state regardless of what a prior probe did to it; no residual mutation risk.
+
+### 60. Undirected fuzz sweep (B1-119/B1-120)
+
+Unlike every other empirical test in this report, this sweep was **not** targeted at an
+already-suspected gap — it probed 15 different actor/table/action combinations chosen to cover
+domains this report had not yet named a finding against: privilege escalation, anonymous exposure,
+cross-tenant reads, and organisation-membership self-promotion. Full results:
+
+| # | Probe | Actor | Result |
+|---|---|---|---|
+| 1 | Self-insert `role='admin', status='active'` into `user_roles` | `customer` | **REJECTED** (`42501`) |
+| 2 | Self-insert `role='moderator', status='active'` | `customer` | **REJECTED** (`42501`) |
+| 3 | Self-insert `role='breeder', status='active'` (skip the pending/approval step) | `customer` | **REJECTED** (`42501`) — `user_roles`' own INSERT policy correctly only allows `breeder`/`foundation_member`/`shelter_member`/`operations` at `status='pending'`, never `'active'`, for a self-insert |
+| 4 | Read `legal_holds` | anonymous | **REJECTED** — no `SELECT` grant to `anon` at all (stronger than an RLS-only block) |
+| 5 | Read `audit_logs` | anonymous | **REJECTED** — same, no grant |
+| 6 | Read `account_deletion_requests` | anonymous | **REJECTED** — same, no grant |
+| 7 | Read `user_verifications` | anonymous | **REJECTED** — same, no grant |
+| 8 | Read `profiles.email, phone` | anonymous | **REJECTED** — same, no grant on the whole table for `anon` |
+| 9 | Read exact pickup/delivery addresses on *other* users' transport requests | `customer` | Correctly returned empty (RLS row-filtered, not merely column-filtered) |
+| 10 | Broad-select `support_cases` | `customer` | Correctly returned empty |
+| 11 | Self-insert into `organisation_members` as `owner` of an org with no prior relationship | `buyer` | **REJECTED** (`42501`) |
+| 12 | Self-insert into `organisation_members` as `owner` of a *different* real org than the one already owned | `breeder2` (real owner of Wolna Dolina) | **REJECTED** (`42501`) — owning one org does not let you self-appoint to another |
+| 13 | Read another org's private member list | `buyer` (unaffiliated) | Correctly returned empty |
+| 14 | Self-insert an `achievements` row pre-set to `verification_status='approved'` | `breeder1` (real kennel owner) | **SUCCEEDED — see NEW-H3, §61** |
+
+14 of 15 held completely firm — genuinely strong, evidence-backed confirmation that the core
+privilege/tenant-isolation model (role self-grant, anonymous exposure, cross-tenant row visibility,
+organisation-membership self-promotion) is solid, not just claimed. This is exactly the kind of
+"areas verified adequate, with evidence" the task's evidence standard requires, and this report had
+not previously produced this breadth of positive evidence in one place. One probe found a genuine,
+new, previously-undiscovered High finding.
+
+### 61. NEW-H3 — `achievements.verification_status` owner self-verification
+
+Full writeup, evidence, reproduction, and smallest fix are in `docs/BOT1_REMEDIATION_MATRIX.md`
+(new dedicated section) — not duplicated here in full to avoid drift between the two documents.
+Summary: a kennel owner can raw-insert or raw-update their own `achievements` row straight to
+`verification_status = 'approved'`, immediately publicly visible on the marketplace as a genuine,
+admin-reviewed trust signal (an award/certification claim) with zero review — the exact "owner
+self-verification" category the task's own severity rubric names as High, and the third instance of
+this codebase's own recurring self-approval bug class (after `organisations.verification_status` and
+`fundraising_campaigns.status`, both already fixed this session). Not reachable through the real app
+UI (`achievement-form-dialog.tsx` never sets this field); reachable via a raw Data API call.
+**A candidate fix now exists**: `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @
+`3f4db66`, applying the identical, already-twice-proven trigger pattern. Not applied to any live
+database (same shared-instance-safety reasoning as the first candidate fix).
+
+### 62. Updated finding counts (supersedes §§ earlier totals references)
+
+**3 fixed** (§6.2, §5.1, §7.5), **3 partially fixed** (§6.1's RPC half / §6.5's changed_by half /
+§6.8's approval half — each still has an open other half), **18 still open**: **4 High**
+(§5.2, §5.3, §5.4, **NEW-H3**) + NEW-H1 (regression) + NEW-H2 (process finding) + 8 Medium + 4 Low +
+1 doc-process finding (NEW-M1). **8 of the 11 open High/Medium findings now carry live-empirical
+evidence** (§5.2 both halves, §5.3, §5.4, NEW-H1, §6.1, §6.3, §6.4, §6.9, plus NEW-H3 itself — 9,
+counting NEW-H3). **2 candidate fixes committed**, both on the same isolated branch, neither applied
+to any live database, neither merged, neither pushed.
+
+### 63. Next resume point (supersedes §58)
+
+- **B1-026–B1-090, B1-096/B1-097/B1-099/B1-100, B1-101–B1-118**: still not independently worked —
+  per the coordinator's own explicit instruction this round, the due-diligence/commercial/legal tier
+  (B1-101+) is being covered by a separate, independent audit pass and should not be duplicated here.
+- **Further undirected fuzzing**: 15 probes is a real start, not exhaustive — genuinely different
+  domains not yet fuzzed include `welfare_cases`/`rehoming_reviews`/`reports`/`messages` raw-write
+  and cross-tenant-read attempts (fixture-building cost deferred this round for time reasons, seed
+  data doesn't cover these tables), driver/vehicle eligibility raw overrides, and Storage bucket
+  path-traversal attempts beyond the already-named `transport-evidence` gap.
+- **A third resumption**, if budget allows, should prioritize: (1) fuzzing the tables just named,
+  since the technique has now found one real bug in ~15 probes and the remaining domains are
+  structurally similar (owner-facing `FOR ALL` policy + a status/verification-shaped column); (2) if
+  the shared instance is caught idle again, running `npm run test:db` itself at least once, since no
+  Bot 1 pass has yet independently executed the full suite despite three consecutive passes citing
+  the same infra-safety reasoning — a sustained idle window (this round found at least 3
+  separate idle windows of a minute or more) may make a single full run genuinely safe to attempt.
