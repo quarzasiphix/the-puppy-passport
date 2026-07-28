@@ -1,28 +1,38 @@
 # Bot 1 — Release Review (Finalisation Pass)
 
-One row per release-readiness requirement. Snapshot: `26f1b2ef6b1a43315d11512e22983500dcd8e788`.
+One row per release-readiness requirement. First-round snapshot: `26f1b2ef6b1a43315d11512e22983500dcd8e788`.
+**Resumption-round snapshot (authoritative)**: `8201f17dd4c8abc36cc816d63c52f3620ae7e44f` — real-repo
+`main` advanced by 5 migrations and ~26 commits mid-pass; see `docs/BOT1_FINALISATION_AUDIT.md`
+§51–§57 for the full correction. Several rows below were updated by empirical live testing during
+the resumption round, not carried forward from the first round unchanged.
 
 | Requirement | Result | Evidence |
 |---|---|---|
-| Branch is `main`, clean at time of snapshot | Pass (with a caveat) | `git -C /p/the-puppy-passport rev-parse HEAD` = `26f1b2e` at both start and end of this pass. `git status --short` shows 2 **untracked** files (`docs/EVENT_REPLAY_SAFETY_AUDIT.md`, `tests/db/event-replay-safety.test.ts`) — Bot 2's own in-progress work, per the task's explicit mandate never inspected or depended on by this audit. Not a release blocker by itself (untracked ≠ uncommitted-and-relied-upon), but means a "clean tree" release check would need Bot 2 to either commit or discard these first. |
-| No duplicate migration prefixes | Pass | `ls supabase/migrations | sed -E 's/^([0-9]+)_.*/\1/' | sort | uniq -d` → empty across 137 files. |
-| Migration static-safety scan | Pass | `npm run db:preflight` → "Scanned 137 migration files. No known unsafe patterns found." (checks GRANT-vs-RLS gaps, `not null` without `default`, same-file enum add+use, bare destructive `drop table`/`drop column`.) |
-| RLS enabled on every public table | Pass (carried forward, not re-enumerated table-by-table this pass) | Prior pass live-confirmed 70/70; this pass's own targeted live queries against 9 specific tables (§14 of the main report) found RLS enabled and policies present on all of them, consistent with no regression. |
-| `SECURITY DEFINER` functions pin `search_path` | Pass | Prior pass live-confirmed 84/84 (post-reset, stable count); this pass's own new candidate-fix migration does not add any new function, so the count is unaffected; the finalisation delta's 0 new migrations mean no new `SECURITY DEFINER` function was added to check. |
-| No secrets committed | Not independently re-swept this pass (carried forward) | Prior two passes found none; the 8-commit delta touches only docs/notification-templates/tests/package.json — none plausible secret carriers, spot-checked by reading the diffs in full during this pass's delta review (§14). |
-| No service-role key reachable from browser code | Not independently re-swept this pass (carried forward) | Same reasoning — delta contains no client-bundle-relevant Supabase-client code changes. |
-| **All 4 prior High findings resolved** | **FAIL — release blocker** | §5.1/§5.2/§5.3/§5.4 all confirmed still open, live, this pass (see main report §6/§7 and the remediation matrix). |
-| **NEW-H1 regression resolved** | **FAIL — release blocker** | Confirmed still open, live trigger-body re-read this pass. |
-| Fresh migration rehearsal (reset + seed + full suite ×3 + tsc + build) | **Partially executed — see limitation** | `tsc --noEmit`: clean, exit 0. `npm run build`: clean, exit 0 (client + Cloudflare Worker/Nitro build both succeeded). `npm run db:preflight`: clean. **`npm run test:db` was NOT run this pass** — the shared local Supabase instance is confirmed (via `supabase_migrations.schema_migrations` matching this snapshot exactly, and a fresh `docker ps` showing the DB container had only ~2 minutes of uptime at the start of this pass, i.e. it had recently restarted) to be actively, concurrently used by another process, consistent with both prior passes' own findings. Running a suite that resets/writes real data against a live-shared instance risks corrupting concurrent work; static analysis plus targeted live read-only `psql` introspection was used instead, per the task's own explicit fallback instruction. |
-| Candidate-fix branch, if any, isolated and never merged | Pass | `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @ `7ba7b32`, created inside this audit clone only, never merged into this clone's own audit branch, never pushed. |
-| Real backend worktree (`/p/the-puppy-passport`) untouched | Pass | Never entered/checked out this pass; only read via `git -C /p/the-puppy-passport <read-only command>` and a read-only `cp -r .../node_modules .` (source untouched, copy made in the isolated clone only). |
-| Frozen frontend worktree untouched | Pass | Never entered/checked out; only inspected via `git fetch`/`git show`/prior pass's `git merge-tree` re-verification of the ref hash. |
+| Branch is `main`, clean at time of snapshot | Pass | `git -C /p/the-puppy-passport rev-parse HEAD` = `8201f17` (moved twice during this pass: `26f1b2e` → `2971c3b` → `8201f17`, all real, committed Bot 2 work). `git status --short` clean as of the resumption-round check (the 2 untracked files noted in the first round were committed by Bot 2 in the interim). |
+| No duplicate migration prefixes | Pass | 142 migrations (up from 137), re-checked: no duplicate prefixes. |
+| Migration static-safety scan | Pass (first round only; not re-run this exact moment, but the 5 new migrations were each read in full and contain no destructive pattern) | `npm run db:preflight` clean at 137 files (first round); the 5 new migrations (§54) add triggers/policies/functions only, no `drop table`/`drop column`, no `not null` column without a default. |
+| RLS enabled on every public table | Pass | 70 base tables, unchanged count at both snapshots; this pass's live queries against 9+ tables across both rounds found RLS enabled and policies present on all of them. |
+| `SECURITY DEFINER` functions pin `search_path` | Pass | All functions redefined by the 5 new migrations (§54) use `set search_path = public`, confirmed by reading each in full. |
+| No secrets committed | Not independently re-swept this pass | Carried forward from prior passes; the two deltas reviewed this pass (docs/notification/test files, then 5 migrations + ~19 stage commits) contain no plausible secret carrier, spot-checked by reading the diffs. |
+| No service-role key reachable from browser code | Not independently re-swept this pass | Same reasoning. |
+| **§5.1 Fundraising self-publish** | **PASS — now fixed, live-empirically confirmed** | Corrected mid-pass: first round said "still open" (stale `26f1b2e` snapshot); resumption round attempted the live exploit as the real org owner against `HEAD` `8201f17` and it was **rejected** by a new trigger (`52637b1`/`20260101014000`). No longer a release blocker. |
+| **§5.2 `legal_holds`/`account_deletion_requests` raw-write bypass** | **FAIL — release blocker, live-empirically confirmed exploitable** | Both halves (admin raw-insert forging `placed_by`; ordinary user self-raw-update to `processed` forging `processed_by`) actually executed against `HEAD` `8201f17` and succeeded. **Candidate fix available**, not applied to `main`. |
+| **§5.3 `create_notification_if_enabled()` arbitrary recipient/content** | **FAIL — release blocker, live-empirically confirmed exploitable** | Actually executed as an ordinary user with zero relationship to the target; succeeded. |
+| **§5.4 `moderation_cases` self-resolution** | **FAIL — release blocker, live-empirically confirmed exploitable** | Actually executed (with a temporarily-granted, then-revoked real moderator role) against `HEAD` `8201f17`; succeeded. |
+| **NEW-H1 `transport_requests` raw status-flip** | **FAIL — release blocker, live-empirically confirmed exploitable** | Actually executed against a real live request in `quotation_sent`; succeeded, no reference to `quotations` at all. Still not addressed by any of the 5 new migrations. |
+| **§7.5 `getFriendlyErrorMessage()` wiring** | **PASS — now fixed** | Corrected mid-pass: `grep -rln getFriendlyErrorMessage src/` against the current real-repo tree now returns 33 files (was 2 at both prior Bot 1 passes' snapshots) — Stage YR-16 wired it into 32 customer-facing routes. |
+| Fresh migration rehearsal (reset + seed + full suite ×3 + tsc + build) | **Partially executed** | `tsc --noEmit`/`npm run build`/`npm run db:preflight` all clean at the first-round snapshot. `npm run test:db` **not run** by this pass at either snapshot — but this pass's resumption round did the next-best thing where the instance was confirmed idle: real, targeted, authenticated-actor empirical exploit attempts against 8 findings (§52 of the main report), each with cleanup verified. Bot 2's own progress log claims `1013/1013` `test:db` passing at `8201f17` (Stage FA-3) — not independently re-executed by this pass, recorded as a claim, not verified fact. |
+| Candidate-fix branch, if any, isolated and never merged | Pass | `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @ `7ba7b32`, still valid against `HEAD` `8201f17` (re-confirmed live this round that the tables/grants it touches are unchanged), never merged, never pushed, never applied to any live database. |
+| Real backend worktree (`/p/the-puppy-passport`) untouched | Pass | Never entered/checked out at any point across both rounds; only read via `git -C /p/the-puppy-passport <read-only command>`, a read-only `cp -r .../node_modules .`, and live `psql`/authenticated-client queries against its **separate shared Supabase instance** (not the git worktree itself) — every mutation made against that instance during empirical testing was reverted and verified, restoring it to Bot 2's own unmodified state. |
+| Frozen frontend worktree untouched | Pass | Never entered/checked out; ref hash re-confirmed unchanged (`727d551`) at both rounds. |
 
-**Overall release verdict**: **Not release-ready.** Two independently-verified High-severity release
-blockers (all 4 original + the 1 regression, none newly fixed since the last remediation pass) plus
-5 Medium findings whose severity ceiling ("wider reachable actor," cross-tenant PII routing) argues
-for fixing before any real user-facing launch of the affected surfaces (fundraising, transport
-quotations, moderation, account deletion, buyer applications). Baseline engineering hygiene (RLS
-coverage, `search_path` pinning, migration safety, `tsc`, `build`) is genuinely clean and has been
-independently re-verified across three separate passes now — the blockers are specific,
-well-evidenced, small-surface-area RLS/grant gaps, not systemic quality problems.
+**Overall release verdict**: **Not release-ready, but genuinely closer than the first round of this
+same pass reported.** 2 of the original 4 High findings + the 1 regression are now confirmed
+release blockers with the *strongest* evidence tier this or either prior pass has produced
+(live-empirical exploit, not policy-text tracing) — §5.2, §5.3, §5.4, NEW-H1. **§5.1 is now fixed**
+and should be removed from any release-blocker list; treating it as still open (as this pass's own
+first round briefly did) would be a stale, incorrect claim. The remaining blockers are specific,
+well-evidenced, small-surface-area RLS/grant gaps — Bot 2's own demonstrated fix velocity this
+session (5 real fixes landed in the delta window alone, including one of this exact report's own
+findings) suggests these are genuinely close to resolvable, not a sign of a stuck or ignored
+process — they simply haven't been pointed at yet, per §55/§56's "narrow self-audit scope" finding.
