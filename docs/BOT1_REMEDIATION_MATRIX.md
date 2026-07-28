@@ -41,9 +41,11 @@ make.
 
 **Totals across all 25 rows**: **3 fixed** (§6.2, §5.1, §7.5), **3 partially fixed** (§6.1, §6.5,
 §6.8), **18 still open** (4 High — §5.2/§5.3/§5.4/NEW-H3 — plus NEW-H1 (regression) and NEW-H2
-(process), 8 Medium, 4 Low, 1 doc-process finding), 1 candidate fix committed. NEW-H3
-(`achievements.verification_status` owner self-verification) is a genuinely new finding, found by
-this pass's own undirected fuzz sweep, not a carried-forward item from either prior Bot 1 pass.
+(process), 8 Medium, 4 Low, 1 doc-process finding), **2 candidate fixes committed** (both on
+`candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727`: `7ba7b32` for §5.2, `3f4db66` for
+NEW-H3). NEW-H3 (`achievements.verification_status` owner self-verification) is a genuinely new
+finding, found by this pass's own undirected fuzz sweep, not a carried-forward item from either
+prior Bot 1 pass.
 **Confidence upgrade**: **8 of the still-open/partial findings now carry live-empirical evidence**
 (§5.2 both halves, §5.3, §5.4, NEW-H1, §6.1, §6.3, §6.4, §6.9 — an actual exploit was executed
 against the live schema and its real result recorded) rather than policy-text tracing alone — the
@@ -67,7 +69,7 @@ held against every angle tried.
 
 | ID | Finding | Severity | Priority | Status | Fixing commit | Verified this pass | Candidate fix |
 |---|---|---|---|---|---|---|---|
-| NEW-H3 | `achievements.verification_status` owner self-verification | High | P1 | **New this pass, still open** | none | **Live-empirical**: as real `breeder1` (real kennel owner), raw-inserted an achievement row pre-set to `verification_status='approved'` — succeeded, immediately publicly visible (the public SELECT policy requires only `verification_status='approved'` + the org being public/approved, no admin-review gate at all). Probe row deleted immediately after, verified | No |
+| NEW-H3 | `achievements.verification_status` owner self-verification | High | P1 | **New this pass, still open on `main`** | none | **Live-empirical**: as real `breeder1` (real kennel owner), raw-inserted an achievement row pre-set to `verification_status='approved'` — succeeded, immediately publicly visible (the public SELECT policy requires only `verification_status='approved'` + the org being public/approved, no admin-review gate at all). Probe row deleted immediately after, verified | **Yes** — `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` @ `3f4db66` (same branch as the §5.2 fix; migration prefix `20260201000100` deliberately out-of-band from Bot 2's active `20260101*` sequence) |
 
 - **Exact location**: `supabase/migrations/20260101004200_achievements.sql`, policy `"owners manage
   their kennel's achievements"` (`for all using/with check owns_org(kennel_id)`) — no restriction on
