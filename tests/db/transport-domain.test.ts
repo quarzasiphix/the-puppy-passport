@@ -71,8 +71,68 @@ test("create_transport_draft: happy path with multiple animals and parties", asy
   });
 
   await t.test("cleanup", async () => {
-    await customer.from("transport_requests").delete().eq("id", requestId!);
+    const deleted = await customer.from("transport_requests").delete().eq("id", requestId!);
+    assert.equal(deleted.error, null, "cleanup must not silently swallow a real deletion failure");
   });
+});
+
+// Regression for a real bug found while fixing an unrelated test-suite hygiene issue (an unchecked
+// cleanup delete in adoption-questionnaire.test.ts): "requesters delete their own draft requests"
+// (20260101002400_animals_transport_fields.sql) was completely broken for any draft with animals
+// or parties attached (the normal case, since create_transport_draft() always inserts both) —
+// prevent_animal_and_party_changes_after_draft()'s status lookup always found the parent row
+// already gone once its own ON DELETE CASCADE reached the child tables, and treated that as "not a
+// draft," rejecting the cascade every time. Fixed in 20260101014100_draft_delete_cascade_lock_fix.sql.
+test("a requester can delete their own draft request even with animals and parties attached", async () => {
+  const customer = await as("customer");
+  const created = await customer.rpc("create_transport_draft", {
+    p_request: { pickup_city: "Warsaw" },
+    p_animals: [{ name: "Deletable Dog" }],
+    p_parties: [
+      { party_role: "delivery_contact", external_name: "Jan Kowalski", external_phone: "+48 1" },
+    ],
+  });
+  assert.equal(created.error, null);
+  const requestId = created.data as string;
+
+  const deleted = await customer.from("transport_requests").delete().eq("id", requestId).select();
+  assert.equal(deleted.error, null, "the documented 'delete own draft' policy must actually work");
+  assert.equal(deleted.data?.length, 1);
+
+  const gone = await customer.from("transport_requests").select("id").eq("id", requestId);
+  assert.equal(gone.data?.length, 0);
+});
+
+test("a requester still cannot delete their own request once it has left draft", async () => {
+  const customer = await as("customer");
+  let requestId: string | undefined;
+
+  try {
+    const created = await customer.rpc("create_transport_draft", {
+      p_request: { pickup_city: "Warsaw" },
+      p_animals: [{ name: "Submitted Dog" }],
+      p_parties: [],
+    });
+    assert.equal(created.error, null);
+    requestId = created.data as string;
+
+    const submitted = await customer
+      .from("transport_requests")
+      .update({ status: "submitted" })
+      .eq("id", requestId)
+      .select("status")
+      .single();
+    assert.equal(submitted.error, null);
+    assert.equal(submitted.data?.status, "submitted");
+
+    const attempt = await customer.from("transport_requests").delete().eq("id", requestId).select();
+    assert.equal(attempt.data?.length, 0, "a submitted request must not be directly deletable");
+  } finally {
+    if (requestId) {
+      const ops = await as("ops");
+      await ops.from("transport_requests").delete().eq("id", requestId);
+    }
+  }
 });
 
 test("create_transport_draft: a customer cannot pass a 'requester' party explicitly", async () => {
