@@ -26,6 +26,12 @@ for all "this pass" columns: `8201f17dd4c8abc36cc816d63c52f3620ae7e44f`.
 | NEW-M1 | Medium | Bot 2's own Stage YR-1 notification-producer audit repeats §5.3's blind spot | Open (not re-verified this pass) | Carried forward | `docs/NOTIFICATION_PRODUCER_INVENTORY.md` |
 | NEW-H2 | High | Bot 2's own Stage YR-15 raw-API-bypass audit repeats the same blind-spot pattern, scoped to new code only | Open (not re-verified this pass — existence of cited doc spot-checked only) | Carried forward | `docs/RAW_API_BYPASS_AUDIT.md` (existence confirmed, full content not re-read this pass) |
 
+## NEW-H3 (folded in from the finalisation pass, independently re-verified against LATEST_MAIN)
+
+| ID | Severity | Title | Status | This pass's method | Evidence (file/line) |
+|---|---|---|---|---|---|
+| NEW-H3 / H-5 | High | `achievements.verification_status` owner self-verification | **Still open** (independently re-verified this pass against `LATEST_MAIN` `ac61269`) | Direct policy/trigger read; confirmed no migration touches `achievements` after its own creation | `supabase/migrations/20260101004200_achievements.sql` — `"owners manage their kennel's achievements" for all owns_org(kennel_id)`, no status restriction; only trigger is `set_achievements_updated_at` |
+
 ## Findings from this pass's own delta review (not from the original three-pass lineage)
 
 | ID | Severity | Title | Status | This pass's method | Evidence (file/line) |
@@ -37,6 +43,8 @@ for all "this pass" columns: `8201f17dd4c8abc36cc816d63c52f3620ae7e44f`.
 
 | Branch | Commit | Finding | Applied to main? | Notes |
 |---|---|---|---|---|
-| `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` (in the finalisation clone, not this clone) | `7ba7b32` | §5.2 | No, never merged/pushed | Target confirmed unchanged and still valid by this pass's independent §5.2 re-verification |
+| `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` (in the finalisation clone, not this clone) | `7ba7b32` | §5.2 / H-1 | No, never merged/pushed | Content still valid against `LATEST_MAIN`; **real migration-prefix collision found** (`20260101013600` now also used by a real Bot 2 migration) — needs renumbering before use. See `BOT1_CANDIDATE_FIX_LEDGER.md`. |
+| `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` (same branch, finalisation clone) | `3f4db66` | NEW-H3 / H-5 | No, never merged/pushed | Content still valid against `LATEST_MAIN`; no prefix collision; safe to apply as-is pending Bot 2's own testing. See `BOT1_CANDIDATE_FIX_LEDGER.md`. |
 
-No new candidate fix was created by this pass.
+No new candidate fix was created by this pass. Full staleness review in
+`docs/BOT1_CANDIDATE_FIX_LEDGER.md`.

@@ -448,19 +448,89 @@ KPI/analytics/sales/roadmap-credibility/valuation/acquirer-persona documents exi
 repository at all** — confirmed via exhaustive filename and content grep, a real structural gap for
 a due-diligence data room, not an invented one. J04/J05/J10–J12/J17/J23 not attempted this round.
 
+## 10b. Final consolidation round — verify against LATEST_MAIN, fold in finalisation pass's closing findings
+
+Per explicit coordinator instruction: stop expanding audit breadth, finish and consolidate. First
+action: re-checked `git -C /p/the-puppy-passport rev-parse HEAD` → `ac612690c1741d7879d747f7e13b40fd0cb2cc04`
+(`LATEST_MAIN`), 2 commits ahead of this clone's own prior checkpoint snapshot (`6dbba45`). Delta:
+`20260101014300_fundraising_approval_audit_trail.sql` — an `after update` trigger adding an
+`audit_logs` insert when an admin approves a fundraising campaign. Read in full: touches only
+`fundraising_campaigns`, adds audit logging alongside (not instead of) the existing
+`fundraising_campaigns_prevent_self_publish` trigger, no interaction with any open High finding.
+
+**The finalisation clone (`/p/the-puppy-passport-bot1-finalisation-20260727-235034`) is confirmed
+clean and held at `4fc8223`** — read as stable evidence per instruction. It closed 2 gaps this
+report's own §10a had left open (§6.1/§6.9 live-empirical confirmation, previously interrupted by a
+concurrent reset) and found one genuinely new High finding via a 15-probe undirected fuzz sweep:
+
+**NEW-H3/H-5 — `achievements.verification_status` owner self-verification.** A kennel owner can
+raw-insert/update their own `achievements` row straight to `verification_status = 'approved'`,
+immediately publicly visible as an admin-reviewed trust signal with zero review — the third instance
+of this exact self-approval bug class in this codebase (after `organisations.verification_status`
+and `fundraising_campaigns.status`, both already fixed). **Independently re-verified by this pass
+against `LATEST_MAIN`**, not merely copied: `supabase/migrations/20260101004200_achievements.sql`
+(confirmed, via `grep -rl "public.achievements" supabase/migrations/*.sql`, to be the *only*
+migration touching this table — nothing later narrows it) shows `"owners manage their kennel's
+achievements" for all owns_org(kennel_id)`, no `verification_status` restriction in `USING` or
+`WITH CHECK`, and the only trigger on the table is `set_achievements_updated_at` (a plain timestamp
+stamper — confirmed via the migration's own `create trigger` statements, exactly one, not a
+self-approval guard). The public-read policy requires only `verification_status = 'approved'` plus
+the owning organisation being public/approved — no reviewer-stamped column gates it. **Status:
+STILL OPEN, independently confirmed against `LATEST_MAIN` by this pass's own static method**,
+corroborating the finalisation pass's live-empirical result via a second, different method (same
+relationship as this report's §4 treats every other High finding).
+
+**All 5 open/fixed High findings now independently re-verified by this pass against the true
+`LATEST_MAIN`** (not a stale intermediate snapshot): §5.1 fixed, §5.2/§5.3/§5.4/NEW-H1/NEW-H3 open —
+see §4 above (updated numbering: H-1=§5.2, H-2=§5.3, H-3=§5.4, H-4=NEW-H1, H-5=NEW-H3, matching the
+coordinator's own H-1..H-5 numbering). **No regression found in any previously-fixed finding**:
+`fundraising_campaigns_prevent_self_publish` trigger still present and unweakened by the new audit
+trigger layered alongside it; `animal_ownership_history`'s admin-view/insert-only shape untouched
+since its one fixing migration; `getFriendlyErrorMessage` wiring still at 34 files (unchanged
+count); the new legal-hold self-delete triggers (§10a) untouched by anything since.
+
+**Candidate fix staleness review** (both candidates live only on the finalisation clone's own
+branch, never this clone's): `7ba7b32` (§5.2/H-1) has a **real, confirmed migration-prefix
+collision** — its filename uses `20260101013600`, but Bot 2's own real `main` now has a *different*
+real migration at that exact prefix (`20260101013600_admin_command_audit_coverage.sql`, landed after
+the candidate branch's base snapshot). The candidate's SQL content is still logically correct
+against `LATEST_MAIN` (independently re-verified), but it cannot be applied under its current
+filename without a `supabase db reset` duplicate-prefix collision — Bot 2 must rename it or
+reimplement the same two changes under a fresh prefix. `3f4db66` (NEW-H3/H-5) has **no collision**
+(deliberately used `20260201000100`, confirmed still ahead of `LATEST_MAIN`'s highest real prefix,
+`20260101014300`) and its target table is confirmed completely untouched since — safe to apply as a
+file, pending Bot 2's own testing. Full detail in `docs/BOT1_CANDIDATE_FIX_LEDGER.md`.
+
+**Testing this round**: `pg_stat_activity` showed 2 non-idle backends at this round's own check
+(including the check's own query — i.e. at least one other genuine concurrent process), combined
+with the coordinator's explicit instruction to stop expanding scope. This round relied on **static
+verification** for H-1 through H-5 and for the no-regression checks above — stated explicitly here,
+not defaulted to silently. No `tsc`/`build`/`lint`/`test:db` was independently re-run this round;
+`.github/workflows/ci.yml`'s own `database-tests` job (confirmed present, runs `npm run test:db`
+twice on every push) is the best available automated-equivalent evidence, itself not re-triggered by
+this pass.
+
+**Updated finding counts (this pass's own independent tally, LATEST_MAIN)**: 0 Critical. **6 High
+ever named across the full lineage** — §5.1, §5.2, §5.3, §5.4 (original four), NEW-H1 (regression),
+NEW-H3 (fuzz-sweep finding). **1 fixed** (§5.1). **5 still open** (§5.2, §5.3, §5.4, NEW-H1, NEW-H3
+— these are exactly the coordinator's own H-1 through H-5). Medium: 2 independently re-confirmed
+open this pass (§6.3, §6.4); remainder carried forward per §5 above, not independently re-checked
+this round. Low: 1 fixed (§7.5), remainder carried forward. See
+`docs/BOT1_FINAL_CONSOLIDATED_HANDOFF.md` for the single authoritative count table.
+
 ## 11. Next resume point
 
-**Resume from FD-J04** (security due diligence beyond the findings-based sections already covered,
-continuing through J05/J10–J12/J17/J23 — the largest genuinely uncovered block across all four
-passes now that J01/J02/J03/J06/J07/J08/J09/J13/J14–J16/J18/J19/J20/J21/J22 have at least a partial
-or "confirmed absent" first pass), or **FD-C01** (role/actor/RLS matrix work) if prioritizing
-security breadth instead — this pass's own judgment is due diligence has the higher marginal value
-given three passes already triple-confirm the same High-finding set. The un-reviewed Medium findings
-(§6.1 RLS half, §6.5, §6.6, §6.7, §6.8 rejection half, §6.9) remain a cheap, well-scoped pickup
-either way. Latest committed source `HEAD` reviewed: `6dbba457f1077393cf0b7882716a6c71dc94bf2f`
-(moved 4 commits from this pass's own initial `8201f17` snapshot; delta reviewed in full in §10a;
-re-confirm again at the start of any future resumption, per the finalisation pass's own lesson about
-not carrying forward a stale snapshot silently).
+**This audit lineage is now considered substantially complete per the coordinator's own final
+instruction** — this was explicitly the last planned resumption. If a future session does resume
+this lineage, the highest-value remaining gaps are: the un-reviewed Medium findings (§6.1 RLS half
+[note: RPC half already closed], §6.5 status half, §6.6, §6.7, §6.8 rejection half, §6.9 — the last
+of which now has live-empirical confirmation per the finalisation pass's §59, not independently
+re-verified by this pass), the due-diligence stages J04/J05/J10–J12/J17/J23 (still genuinely
+uncovered), and the fuzz-sweep continuation the finalisation pass's own §63 named (`welfare_cases`/
+`rehoming_reviews`/`reports`/`messages` raw-write/cross-tenant fuzzing, driver/vehicle eligibility
+raw overrides, Storage path-traversal beyond §6.7). Latest committed source `HEAD` reviewed this
+pass: `ac612690c1741d7879d747f7e13b40fd0cb2cc04` (`LATEST_MAIN`, re-confirmed at the start of this
+final consolidation round per the coordinator's own first-action instruction).
 
 ## 12. Confirmation
 
