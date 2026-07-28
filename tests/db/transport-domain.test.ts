@@ -135,6 +135,161 @@ test("a requester still cannot delete their own request once it has left draft",
   }
 });
 
+// docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md left createTransportRequest (the standalone
+// public transport-request form's client function, src/lib/queries/transport.ts) as the one
+// deliberately-deferred multi-write function: a plain insert into transport_requests followed by a
+// separate insert into transport_status_history, with no transaction. Investigating the real fix
+// found a second, more severe, previously-undocumented bug: the form always auto-saves a draft
+// first (a real row with a real id), then on submission the old client code re-inserted with that
+// SAME id -- which always failed with a duplicate-key error against the still-existing draft row,
+// confirmed empirically against the live database before writing this fix. Both are closed by
+// 20260101014400_submit_transport_request_atomic_rpc.sql.
+test("submit_transport_request: fresh submission (no draft) creates a request and its history atomically", async () => {
+  const customer = await as("customer");
+  const submit = await customer.rpc("submit_transport_request", {
+    p_request: { pickup_city: "Warsaw", animal_name: "Fresh Submit Dog" },
+  });
+  assert.equal(submit.error, null);
+  const row = submit.data?.[0];
+  assert.ok(row?.id);
+  assert.equal(row?.status, "submitted");
+  assert.ok(row?.request_number);
+
+  const history = await customer
+    .from("transport_status_history")
+    .select("status, changed_by, customer_note")
+    .eq("transport_request_id", row!.id);
+  assert.equal(history.error, null);
+  assert.equal(history.data?.length, 1, "exactly one initial history row must exist");
+  assert.equal(history.data?.[0]?.status, "submitted");
+  assert.equal(history.data?.[0]?.changed_by, ids.customer, "the real caller must be the actor");
+
+  const ops = await as("ops");
+  await ops.from("transport_requests").delete().eq("id", row!.id);
+});
+
+test("submit_transport_request: submitting a saved draft updates it in place, never a duplicate-key failure", async () => {
+  const customer = await as("customer");
+  let draftId: string | undefined;
+
+  try {
+    // Mirrors the real form's own auto-save-then-submit sequence: a draft row already exists with
+    // a real id before submission is attempted.
+    const draft = await customer
+      .from("transport_requests")
+      .insert({
+        requester_profile_id: ids.customer,
+        request_purpose: "other",
+        status: "draft",
+        pickup_city: "Krakow",
+      })
+      .select("id")
+      .single();
+    assert.equal(draft.error, null);
+    draftId = draft.data!.id as string;
+
+    const submit = await customer.rpc("submit_transport_request", {
+      p_request: { pickup_city: "Krakow", animal_name: "Resumed Draft Dog" },
+      p_draft_id: draftId,
+    });
+    assert.equal(
+      submit.error,
+      null,
+      "submitting a saved draft must never fail with a duplicate key",
+    );
+    const row = submit.data?.[0];
+    assert.equal(row?.id, draftId, "the same row is updated in place, not duplicated");
+    assert.equal(row?.status, "submitted");
+
+    const rows = await (await as("ops")).from("transport_requests").select("id").eq("id", draftId);
+    assert.equal(rows.data?.length, 1, "exactly one row must exist for this request, never two");
+
+    const history = await customer
+      .from("transport_status_history")
+      .select("status")
+      .eq("transport_request_id", draftId);
+    assert.equal(history.data?.length, 1);
+  } finally {
+    if (draftId) {
+      const ops = await as("ops");
+      await ops.from("transport_requests").delete().eq("id", draftId);
+    }
+  }
+});
+
+test("submit_transport_request: cannot submit another user's draft", async () => {
+  const customer = await as("customer");
+  const buyer = await as("buyer");
+  let draftId: string | undefined;
+
+  try {
+    const draft = await customer
+      .from("transport_requests")
+      .insert({ requester_profile_id: ids.customer, request_purpose: "other", status: "draft" })
+      .select("id")
+      .single();
+    assert.equal(draft.error, null);
+    draftId = draft.data!.id as string;
+
+    const attempt = await buyer.rpc("submit_transport_request", {
+      p_request: {},
+      p_draft_id: draftId,
+    });
+    assert.ok(attempt.error, "expected submitting someone else's draft to be rejected");
+  } finally {
+    if (draftId) {
+      const ops = await as("ops");
+      await ops.from("transport_requests").delete().eq("id", draftId);
+    }
+  }
+});
+
+test("submit_transport_request: cannot re-submit an already-submitted request", async () => {
+  const customer = await as("customer");
+  let requestId: string | undefined;
+
+  try {
+    const submit = await customer.rpc("submit_transport_request", { p_request: {} });
+    assert.equal(submit.error, null);
+    requestId = submit.data?.[0]?.id;
+
+    const again = await customer.rpc("submit_transport_request", {
+      p_request: {},
+      p_draft_id: requestId!,
+    });
+    assert.ok(again.error, "expected re-submitting a non-draft request to be rejected");
+  } finally {
+    if (requestId) {
+      const ops = await as("ops");
+      await ops.from("transport_requests").delete().eq("id", requestId);
+    }
+  }
+});
+
+test("submit_transport_request: a forged requester_profile_id in the payload is ignored", async () => {
+  const customer = await as("customer");
+  const submit = await customer.rpc("submit_transport_request", {
+    p_request: { requester_profile_id: ids.admin },
+  });
+  assert.equal(submit.error, null);
+  const row = submit.data?.[0];
+
+  const stored = await (
+    await as("ops")
+  )
+    .from("transport_requests")
+    .select("requester_profile_id")
+    .eq("id", row!.id)
+    .single();
+  assert.equal(
+    stored.data?.requester_profile_id,
+    ids.customer,
+    "the real caller must always be the requester, regardless of payload content",
+  );
+
+  await (await as("ops")).from("transport_requests").delete().eq("id", row!.id);
+});
+
 test("create_transport_draft: a customer cannot pass a 'requester' party explicitly", async () => {
   const customer = await as("customer");
   const { data, error } = await customer.rpc("create_transport_draft", {

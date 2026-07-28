@@ -566,12 +566,8 @@ function TransportRequestPage() {
           senderOrgId,
         ),
       );
-      if (draftId) {
-        // createTransportRequest always inserts; a submitted draft becomes a new row and the
-        // draft row is removed rather than left behind as an orphaned duplicate.
-        const supabase = getSupabaseBrowserClient();
-        await supabase.from("transport_requests").delete().eq("id", draftId).eq("status", "draft");
-      }
+      // submit_transport_request() updates the existing draft row in place (draft -> submitted)
+      // when a draft id is passed, so there is no separate row left behind to clean up here.
       setResult({ requestNumber: created.request_number ?? "", status: created.status });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {

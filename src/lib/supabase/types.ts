@@ -5124,6 +5124,10 @@ export type Database = {
       }
       is_ops_staff: { Args: never; Returns: boolean }
       is_org_member: { Args: { p_org_id: string }; Returns: boolean }
+      is_profile_under_legal_hold: {
+        Args: { p_profile_id: string }
+        Returns: boolean
+      }
       last_auth_at: { Args: never; Returns: string }
       leave_organisation: { Args: { p_org_id: string }; Returns: undefined }
       mark_risk_signal_reviewed: {
@@ -5230,6 +5234,14 @@ export type Database = {
           p_supporting_document_url?: string
         }
         Returns: string
+      }
+      submit_transport_request: {
+        Args: { p_draft_id?: string; p_request: Json }
+        Returns: {
+          id: string
+          request_number: string
+          status: Database["public"]["Enums"]["transport_status"]
+        }[]
       }
     }
     Enums: {

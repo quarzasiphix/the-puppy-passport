@@ -29,24 +29,22 @@ export function classifyComplianceResult(input: {
   return "eligible_for_quotation";
 }
 
+// Atomic: the request write and its initial status-history entry happen in one transaction via
+// submit_transport_request(), so a mid-way failure can never leave a live request with no history
+// row. Passing a draft's own id updates that row in place (draft -> submitted) instead of
+// attempting a second insert with the same id, which previously always failed with a duplicate-key
+// error — see 20260101014400_submit_transport_request_atomic_rpc.sql for the full history.
 export async function createTransportRequest(payload: TransportRequestInsert) {
   const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from("transport_requests")
-    .insert(payload)
-    .select("id, request_number, status")
-    .single();
-  if (error) throw error;
-
-  const { error: historyError } = await supabase.from("transport_status_history").insert({
-    transport_request_id: data.id,
-    status: data.status,
-    changed_by: payload.requester_profile_id,
-    customer_note: "Request submitted.",
+  const { id, ...request } = payload;
+  const { data, error } = await supabase.rpc("submit_transport_request", {
+    p_request: request,
+    ...(id ? { p_draft_id: id } : {}),
   });
-  if (historyError) throw historyError;
-
-  return data;
+  if (error) throw error;
+  const row = data?.[0];
+  if (!row) throw new Error("submit_transport_request returned no row");
+  return row;
 }
 
 // Drafts are just transport_requests rows with status='draft' — "save progress automatically,

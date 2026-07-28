@@ -449,6 +449,10 @@
     "submit_moderation_appeal(p_case_id uuid, p_statement text, p_supporting_document_url text)": {
       "returns": "uuid",
       "grantees": "authenticated"
+    },
+    "submit_transport_request(p_request jsonb, p_draft_id uuid)": {
+      "returns": "TABLE(id uuid, request_number text, status transport_status)",
+      "grantees": "authenticated"
     }
   }
 }
