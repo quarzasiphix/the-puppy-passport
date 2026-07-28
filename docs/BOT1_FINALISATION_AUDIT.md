@@ -17,6 +17,21 @@ clearly-checkpointed coverage beats rushed shallow coverage of everything"). §4
 exactly which stage clusters received real evidence-backed treatment this pass and which did not,
 so nothing is implied to be checked that wasn't.
 
+**READ THIS FIRST — resumption round correction (§51 onward)**: §§1–50 below are this pass's
+*first* round, written against a real-repo snapshot (`26f1b2e`) that went stale mid-pass without
+this pass noticing — `main` moved forward by 5 more migrations and ~19 more stage commits (Stages
+YR-7 through FA-3) before §§1–50 were committed. A resumption round, explicitly instructed to
+prefer live empirical testing over carrying forward static claims, caught this the moment a live
+exploit attempt against §5.1 (fundraising self-publish) *failed* unexpectedly — the failure forced
+an investigation that found Bot 2 had genuinely fixed it hours after this pass's original snapshot
+was taken. **§§1–50's classification of §5.1 as "still open" and §7.5 as "still open" are both
+superseded and wrong as of `HEAD` `8201f17`** — both are now fixed; see §51–§56 for the full
+correction, the empirical evidence for every other finding (most of the High findings now carry an
+actual executed-and-reverted exploit, not just policy-text tracing), and the two new findings
+(NEW-H2, a reasoning-model gap in Bot 2's own newest self-audit) this round found. Treat §51 onward
+as the authoritative current state; §§1–50 remain as the historical first-round record, same as
+prior Bot 1 reports' own layering convention.
+
 ---
 
 ## 1. Snapshot and environment
@@ -730,3 +745,227 @@ report (and its two predecessors) point to exactly, starting with §5.2 — for 
 candidate fix now exists on `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727` — and then
 updating the self-audit process itself so the next "producer inventory"-style document asks "is this
 also directly callable?" as a standing question, not an afterthought.
+
+---
+
+## RESUMPTION ROUND (authoritative current state — supersedes §§1–50 where noted)
+
+Resumed in the same isolated clone/branch, explicitly instructed to prefer empirical verification
+over static claims wherever the shared instance's actual state allowed it, and to continue through
+further stage clusters (B1-008 onward) rather than stopping at §§1–50's checkpoint.
+
+### 51. Live-instance state check (empirical, not assumed)
+
+Unlike every prior Bot 1 pass (including §§1–50 above), this round did not default to "the shared
+instance is probably unsafe" — it re-checked the instance's actual state at the start, and multiple
+times during the round, before deciding whether to run live queries or live writes:
+
+- **Initial check**: `docker ps` showed `supabase_db_the-puppy-passport` with only ~5 seconds of
+  uptime and `health: starting`, and `supabase_migrations.schema_migrations` did not exist yet —
+  direct, real-time evidence the instance was **mid-reset** at that exact moment (Bot 2 or an
+  equivalent process actively resetting it). No query beyond the liveness check itself was run
+  during this window.
+- **~30–60 seconds later**: container reported `healthy`, `public` schema had all 77 (later 70 base
+  tables + views) objects present, `pg_stat_activity` showed **zero non-idle backends**, and seed
+  data (`profiles` row count, known fixture ids) was present and consistent with a completed,
+  successful reset — the instance was now genuinely idle, not merely quiet.
+- **This idle window was used for real, empirical, authenticated-actor testing** (§52) — the
+  specific action the task explicitly asked this round to take "where safe," rather than defaulting
+  to the same read-only caution as every prior pass by rote.
+- **Re-checked for concurrent activity before and after every batch of writes** (`pg_stat_activity`
+  non-idle count, `docker ps` uptime) — zero non-idle backends found at every check point during this
+  round's live-write window.
+- **Mid-round, a routine live check (an exploit attempt against §5.1) failed unexpectedly** — not
+  because the instance became unsafe, but because the *schema itself* had changed: `main` had moved
+  forward to `8201f17` (5 new migrations, ~19 new stage commits) without this round's initial check
+  having re-polled `git -C /p/the-puppy-passport rev-parse HEAD` first. This is recorded honestly as
+  a real process gap this round had, corrected the moment the unexpected result surfaced it (see
+  §54) — not glossed over.
+
+### 52. Live-empirical exploit testing: methodology and full raw results
+
+For every High finding still believed open, and several Medium findings, this round authenticated as
+the real, exact lower-trust seeded persona named in the finding (via `@supabase/supabase-js` +
+GoTrue `signInWithPassword`, the identical client library and auth path the real app and a real
+attacker would use — never a service-role key, never a superuser session for the exploit attempt
+itself) and issued the *exact* reproduction call from the finding, recording the raw PostgREST
+response. Every mutation that succeeded (proving a real gap) was reverted immediately afterward via
+a separate, superuser `psql` statement, and the reversion was itself verified by re-reading the row —
+not assumed. No mutation was left in place. Full results:
+
+| Finding | Actor | Action | Result | Cleanup verified |
+|---|---|---|---|---|
+| §5.1 fundraising self-publish | `foundation1` (real org owner) | `update fundraising_campaigns set status='active'` on a freshly-built, fully valid draft campaign (real linked animal/buyer-application/accepted-quotation fixtures, built via superuser insert to satisfy `fundraising_campaign_links_are_valid()`) | **REJECTED** — `P0001 "A fundraising campaign can only go live after Havenpaw staff have approved it."` — proves this is now genuinely fixed, not just claimed | Probe campaign deleted |
+| NEW-H1 transport status-flip | `customer` (real requester) | `update transport_requests set status='accepted_by_customer'` on their own real request (`a0000000-...003`, live status `quotation_sent`) | **SUCCEEDED** — status flipped with zero reference to `quotations` | Reverted to `quotation_sent`, verified |
+| §5.2a legal-hold raw insert | `admin` (real) | raw insert into `legal_holds`, forging `placed_by` to a different staff id | **SUCCEEDED** | Probe row deleted, verified 0 rows remain with that id |
+| §5.2b deletion-request self-bypass | `customer` (real, non-staff) | self-insert own `pending` request (legitimate), then self-update straight to `processed` forging `processed_by` to themselves | Insert **succeeded** (legitimate); raw update to `processed` **SUCCEEDED** (the bypass) | Probe row deleted entirely, verified |
+| §5.3 notification forgery | `customer` (real, zero relationship to target) | `rpc('create_notification_if_enabled', ...)` targeting `ops` with an attacker-controlled title/body/phishing link | **SUCCEEDED** — real row created in `ops`'s notification feed | Probe row deleted, verified |
+| §5.4 moderation self-resolution | `customer`, temporarily granted (then revoked) a real `active` `moderator` role | raw-update a real case (`affected_profile_id` = themselves) to `dismissed` with a decision | **SUCCEEDED** (first attempt returned an empty result because the role grant defaulted to `status='pending'`, not `'active'` — a real methodology correction made mid-probe, documented not hidden; retried after activating the role and succeeded) | Probe case deleted, temporary role grant revoked, both verified |
+| §6.3 verification raw-approve | `admin` (real) | raw-update a real `pending` verification straight to `approved`, bypassing `approve_user_verification()` | **SUCCEEDED** — and directly confirmed the "approved but broken" claim: `select * from organisations where owner_user_id = <that user>` returned **zero rows** after the raw approval | Reverted to `pending`, verified |
+| §6.4 route-assignment forgery | `ops` (real) | raw-insert a `route_assignments` row on a real, previously-unused route+request pair, forging `assigned_by` to `admin` | **SUCCEEDED** | Probe row deleted, verified |
+
+**Every single probe attempted against a claimed-open finding succeeded exactly as predicted, except
+§5.1, which is why §5.1 was investigated further and found fixed.** This is strong positive evidence
+that the remaining open findings (§5.2, §5.3, §5.4, NEW-H1, §6.3, §6.4) are not just theoretically
+reachable from policy text but are **actually, presently exploitable** on the live schema at `HEAD`
+`8201f17` — the strongest evidence tier any of the three Bot 1 passes has produced for any of them.
+
+**Fixture-construction note for §5.1**: building a valid campaign required a real `accepted`
+quotation and a real `adoption`-type buyer application, both linked to a real animal owned by the
+target org (`Fundacja Ratunek dla Psów`) and a real transport request — none of these existed in
+seed data, so this round constructed them via direct superuser insert (not via RLS-bypassing the
+finding itself, just building otherwise-ordinary prerequisite rows a real org's genuine workflow
+would have produced over time) before attempting the campaign creation and self-publish as the real,
+RLS-governed `foundation1` persona.
+
+### 53. §5.1 and §7.5: confirmed genuinely fixed — full correction of §§7.1/§9/§10
+
+**§5.1 — Fundraising campaigns self-publish to `active` — now FIXED.**
+Fixing commit: `52637b1` / migration `20260101014000_fundraising_self_publish_lock.sql` (Stage FA-3).
+Effective mechanism: a new `before update` trigger, `fundraising_campaigns_prevent_self_publish()`,
+rejects any non-admin `status` transition to `'active'` unless `OLD.status = 'approved'` — the exact
+gate the original finding said was missing, implemented as a trigger (not an RLS `WITH CHECK`
+rewrite) because, as the migration's own comment correctly notes, a bare `WITH CHECK` cannot see
+`OLD.status`. **Why three Bot 1 passes (including this one's own first round) all missed that this
+was even checkable**: all three inspected only the RLS policy's `WITH CHECK` clause for this table
+and never ran `select tgname from pg_trigger where tgrelid = 'public.fundraising_campaigns'::regclass`
+— the same "read the trigger body, not just the RLS policy" gap the remediation pass's own NEW-H1
+finding already flagged as a method to apply more broadly (its §52 limitations note said exactly
+this: "the same method was not systematically re-run against every other trigger... Bot 2 (or a
+future pass) should consider this a candidate method to apply more broadly"). This round did exactly
+that, on this table, driven by an empirical test failing rather than a deliberate broader sweep — the
+lesson generalizes further still: Bot 1's own future passes should live-query `pg_trigger` for
+*every* table with an open RLS-shaped finding before concluding a raw path is unguarded, not only
+after a surprise. Test file: `tests/db/fundraising.test.ts` (per the progress log, extended this
+stage; not independently re-read line-by-line this round, but the live trigger body itself is
+unambiguous and was read in full). Remaining risk: none identified against this specific gap.
+Repeated-run verification: not re-run by this pass (would require `test:db`); the live empirical
+exploit-and-reject this round performed is a different, real form of repeated verification.
+
+**§7.5 — `getFriendlyErrorMessage()` wiring — now FIXED.**
+Fixing commit: `c6ff881` (Stage YR-16, "Error-contract consistency", pure TypeScript, no migration).
+Per Bot 2's own progress-log entry (specific, checkable claims, not vague): wired into 32
+genuinely customer-facing route files (ops/admin dashboards correctly exempted), found the true
+baseline was 1 of **88** call sites (worse than either prior Bot 1 pass's "1 of 4" estimate — the
+prior passes' own sweep undercounted the affected surface), 30 converted mechanically matching the
+existing idiom, 2 by hand, 3 auth-flow files deliberately left alone (GoTrue errors, never routed
+through Postgres, already safe). **Independently re-checked this round** (not merely trusting the
+log entry): `grep -rln getFriendlyErrorMessage src/` against the current real-repo working tree
+returns **33 files**, not the 2 both prior Bot 1 passes found — consistent with the claimed 32-file
+expansion. This is a genuinely verified fix, not just a claim taken at face value.
+
+**Both corrections propagate to**: §7 (High findings — §5.1 should be removed from the open list),
+§9 (Low findings — §7.5 should be removed), §10 (Fixed prior findings — both should be added), §12
+(Still-open — both should be removed), the executive summary (§2)'s finding-count claims, and every
+downstream document (`BOT1_REMEDIATION_MATRIX.md`, already updated; `BOT1_RELEASE_REVIEW.md`,
+`BOT1_DUE_DILIGENCE_REVIEW.md`, updated in this same commit batch — see their own current versions,
+not restated here to avoid duplication).
+
+### 54. Second real-repo snapshot capture and 5-migration delta review
+
+`git -C /p/the-puppy-passport rev-parse HEAD` mid-resumption-round: `8201f17dd4c8abc36cc816d63c52
+f3620ae7e44f` — 26 commits ahead of this pass's §48 checkpoint (`2971c3b`), working tree clean (the
+2 previously-untracked files from §48a are now committed). `git diff --stat 2971c3b..8201f17 --
+supabase/migrations`: **5 new migrations** (`20260101013600`–`20260101014000`, Stages YR-7 through
+FA-3) — the first non-empty migration delta either round of this pass has seen. Each read in full:
+
+- **`20260101013600_admin_command_audit_coverage.sql`** (Stage YR-7): adds `audit_logs` inserts to 9
+  staff-privileged RPCs that previously had none, including `approve_user_verification()` — closes
+  the approval half of §6.8 (still no `reject_user_verification()` RPC, so the rejection half stays
+  open — see the remediation matrix). Does not touch any RLS policy or grant on any table this report
+  has an open finding against.
+- **`20260101013700_suspended_org_application_lock.sql`** (Stage YR-8): splits `buyer_applications`'
+  single `for all` buyer policy into SELECT/UPDATE/DELETE/INSERT, adding a real, correctly-scoped
+  check that a new application's `organization_id` belongs to a currently-`approved` organisation —
+  a genuine, different fix (closes a suspended-org application bypass) that does **not** close §6.6
+  (no cross-check that `organization_id` actually matches the referenced `animal_id`'s real owning
+  org — confirmed via a fresh live read of the new policy's exact `with_check` text, §52's table
+  above did not re-test this one empirically for time reasons, static/live-policy-text confirmation
+  only).
+- **`20260101013800_transport_terminal_reopen_reason.sql`** (Stage YR-10): adds a mandatory
+  `internal_note` requirement when *ops* reopens a *terminal* transport request via
+  `change_ops_request_status()`. Unrelated to NEW-H1 (a different function, a different actor tier,
+  a different transition) — confirmed via full read, NEW-H1's own trigger is untouched by this file.
+- **`20260101013900_moderation_case_report_unique.sql`** (Stage YR-15): adds a real unique constraint
+  preventing duplicate `moderation_cases` per report (closes a raw-API duplicate-case bypass — a
+  real, different bug from §5.4). Does not touch case *resolution* or add any self-dealing guard —
+  §5.4 confirmed still open both statically and empirically this round (§52).
+- **`20260101014000_fundraising_self_publish_lock.sql`** (Stage FA-3): the §5.1 fix, §53 above.
+
+**No migration in this 5-file delta touches**: `legal_holds`, `account_deletion_requests`,
+`create_notification_if_enabled()`, `route_assignments`'s RLS/grants, `user_verifications`'s
+RLS/grants, `quotations`' RLS, `transport_status_history`'s INSERT policies,
+`transport-evidence`/`transport_documents`/`welfare_case_documents` — consistent with every open
+finding on those tables/functions remaining open, which §52's live-empirical results independently
+confirm for the 6 that were actually tested.
+
+**A second delta-loop check was performed at the end of this round**: `git -C /p/the-puppy-passport
+rev-parse HEAD` → still `8201f17` (no further real-repo commits landed in the remaining time of this
+round). `git -C /p/the-puppy-passport status --short` → clean.
+
+### 55. New findings this round
+
+**NEW-H2** — see the remediation matrix for the full writeup with exact citations. Summary: Bot 2's
+own Stage YR-15 (`docs/RAW_API_BYPASS_AUDIT.md`) explicitly defines and repeatedly hunts for the
+precise bug class this report's own §5.2/§6.3/§6.4 findings are — "a lower-trust actor reaching a
+protected field or an RPC-only transition via a raw call" — and explicitly distinguishes it from the
+"trusted staff bypassing their own RPC" pattern it correctly judges as by-design and not a real
+issue. But YR-15's own sweep scope is "this stage's own new migrations" only, so it never revisits
+the older, pre-existing tables where this exact class of bug — one it says it has closed "dozens of
+times already" elsewhere — still lives, including §5.2's own non-staff-reachable half (an ordinary
+`customer`, not an ops/admin/moderator, live-empirically confirmed this round to bypass
+`execute_account_deletion()`'s entire safety model on their own row). This is Bot 2's second
+consecutive newest-work self-audit (after NEW-M1's Stage YR-1 finding) that has the *correct*
+methodology in hand and applies it narrowly to new code only, never as a full-schema sweep against
+its own already-standing older findings.
+
+**Confirms NEW-M1 was not a one-off**: NEW-M1 (§36) found Stage YR-1's notification-producer
+inventory reasoning only from "our own call sites," missing the raw-RPC surface. NEW-H2 finds Stage
+YR-15's raw-API-bypass audit reasoning only from "this stage's own new migrations," missing the
+older-table surface. Two structurally similar blind spots, independently found in two different
+newest-work audit documents, are stronger evidence of a systemic pattern in Bot 2's own review
+process than either alone — see §43 (updated recommendation below) for what this suggests Bot 2
+should change about how it scopes future self-audits.
+
+### 56. Updated recommended Bot 2 fix order (supersedes §43)
+
+1. **§5.2 — apply or adapt this pass's candidate fix** (`7ba7b32`) — now carrying live-empirical
+   proof for both halves, and the more significant one (any ordinary user, not just an admin, can
+   falsify their own account-deletion audit record) is exactly the bug class Bot 2's own YR-15 audit
+   says it takes seriously when found — it just hasn't looked at this table yet. Bundle §6.3/§6.4 in
+   the same migration (identical shape, also now live-empirically confirmed).
+2. **§5.3 — `create_notification_if_enabled()` authorization gap.** Unchanged priority; live-
+   empirically confirmed this round.
+3. **§5.4 — `moderation_cases` self-resolution.** Unchanged priority; live-empirically confirmed this
+   round, including the real mechanic (any user can be granted moderator and self-resolve a case
+   against themselves).
+4. **NEW-H1 — `transport_requests` raw status-flip.** Unchanged priority; live-empirically confirmed
+   this round, still not touched by the 5 new migrations.
+5. **New recommendation this round — widen Bot 2's own next self-audit's scope, not just its
+   method**: both NEW-M1 and NEW-H2 show Bot 2 already has the right methodology (check whether a
+   lower-trust actor can bypass an RPC's authorization/business logic via a raw call) but has applied
+   it only to newly-written code twice in a row. A single stage that runs the exact same YR-15-style
+   check against *every* `SECURITY DEFINER` RPC in the schema, old and new, cross-referenced against
+   its underlying table's RLS — not scoped to "this session's own work" — would very likely find and
+   close §5.2/§5.3/§5.4/§6.3/§6.4/NEW-H1 in one pass, since Bot 2's own tooling and judgment for this
+   exact bug class is already proven correct twice.
+6. **§6.1/§6.5 status half/§6.6/§6.7/§6.8 rejection half/§6.9** — unchanged from §43, still open,
+   not touched by the 5-migration delta.
+7. **§7.6** — the last remaining open Low finding from the original 6; unchanged.
+
+### 57. Empirical-testing session hygiene confirmation
+
+- Every probe row/mutation created by this round's live testing was deleted or reverted, and every
+  reversion was verified by a direct superuser read of the affected row — not assumed from the
+  cleanup statement's own success message.
+- Final row-count sanity check after all cleanup: `legal_holds` (10), `account_deletion_requests`
+  (8), `route_assignments` (2, matching the pre-probe count exactly) — no residual probe data.
+- No `db reset`, no `test:db`, no migration applied by this round to the shared instance. All schema
+  changes observed (`20260101013600`–`20260101014000`) were Bot 2's own, pre-existing before this
+  round's first live query.
+- Temporary probe scripts (`.audit-temp/live-probe.mjs`, `.audit-temp/probe2.mjs`,
+  `.audit-temp/probe3.mjs`) were deleted immediately after each was run; `.audit-temp/` is empty and
+  removed before the final commit, per the task's temporary-file rule.
+- This pass's own candidate-fix migration (`7ba7b32`, on the isolated `candidate-fixes/` branch) was
+  never applied to the shared instance during this round — the live schema tested against throughout
+  §52 is Bot 2's real, unmodified `main` state at `8201f17`.
