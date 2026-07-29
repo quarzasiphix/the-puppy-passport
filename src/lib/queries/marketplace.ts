@@ -147,6 +147,15 @@ function animalSelectFor(filters?: PuppySearchFilters): string {
 // factored into a shared generic helper: supabase-js's query builder type narrows on each chained
 // call in a way a generic wrapper can't cleanly express, and the two real call sites are short
 // enough that duplicating these five lines is clearer than fighting the type checker for it.
+// Bot 1 finding Q-1: pagination was fully built (page/pageSize below) but every real call site
+// left both undefined, so the query ran with no .range() at all -- a genuinely unbounded fetch of
+// every published puppy in the marketplace, safe today only because the seeded/demo dataset is
+// small. DEFAULT_PAGE_SIZE closes that regardless of whether a future caller remembers to pass
+// one -- generous enough to be invisible against the current dataset (none of the 3 real call
+// sites, all unpaginated marketplace browse pages, currently return anywhere near this many rows),
+// but a real, finite cap rather than "however many rows exist."
+const DEFAULT_PAGE_SIZE = 200;
+
 export async function listPublishedPuppies(filters?: PuppySearchFilters) {
   const supabase = getSupabaseBrowserClient();
   let query = supabase
@@ -167,10 +176,10 @@ export async function listPublishedPuppies(filters?: PuppySearchFilters) {
   // depending on how each separate query happens to resolve the tie. `id` is unique and stable,
   // closing the gap with no visible behaviour change for the common case (distinct timestamps).
   query = query.order("created_at", { ascending: false }).order("id", { ascending: true });
-  if (filters?.page !== undefined && filters?.pageSize !== undefined) {
-    const from = filters.page * filters.pageSize;
-    query = query.range(from, from + filters.pageSize - 1);
-  }
+  const page = filters?.page ?? 0;
+  const pageSize = filters?.pageSize ?? DEFAULT_PAGE_SIZE;
+  const from = page * pageSize;
+  query = query.range(from, from + pageSize - 1);
   const { data, error } = await query;
   if (error) throw error;
   const rows = (data ?? []) as unknown as AnimalRow[];
