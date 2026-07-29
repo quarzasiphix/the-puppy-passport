@@ -5,18 +5,29 @@ speculative product plan.
 
 ## In scope for a real beta
 
-Every real, tested, RLS-hardened workflow already in the codebase: public marketplace discovery,
-breeder/foundation onboarding and verification, private rehoming, buyer applications,
-reservations, quotations, messaging, support, moderation, ownership handover/history, transport
-requests (both flows), driver/vehicle/route operations, document review, legal holds, and
-signup-time consent recording.
+Every real, tested, RLS-hardened workflow already in the codebase **with a real frontend**: public
+marketplace discovery, breeder/foundation onboarding and verification, private rehoming, buyer
+applications, reservations, quotations, messaging, moderation, ownership handover/history,
+transport requests (both flows), driver/vehicle/route operations, document review, legal holds,
+and signup-time consent recording.
 
 None of these need new backend work to be "beta-ready" in the sense of being real rather than
 mocked — they already are. What each needs before a **real external pilot** (not local testing) is
 covered by the readiness gates already tracked separately: production Supabase infrastructure
 (`docs/PRODUCTION_SETUP.md`, not yet stood up), legal review of the `/terms`/`/privacy` draft text
-(consent _mechanism_ is real, the _content_ isn't final), and the operational runbooks/support
-staffing this session is producing alongside this document.
+(consent _mechanism_ is real, the _content_ isn't final), and the operational runbooks this session
+is producing alongside this document.
+
+## Correction: support cases are backend-only, not in scope for this beta's UI
+
+An earlier version of this document listed "support" alongside the fully-real workflows above.
+That was wrong — corrected after direct inspection found `support_cases`/`support_case_messages`
+are real, tested at the database layer (`tests/db/support-cases.test.ts` and others), but have
+**zero frontend surface anywhere in `src/`**. A pilot participant cannot open a support case
+through the app today. Until frontend work builds that UI, real support during any pilot needs an
+out-of-band channel (direct email/contact) — see `docs/SUPPORT_RUNBOOK.md` for how to run that
+manually against the same real backend semantics (claim, internal notes, resolution) in the
+meantime.
 
 ## Explicitly out of scope for this beta
 
