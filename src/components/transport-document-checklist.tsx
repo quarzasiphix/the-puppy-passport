@@ -28,6 +28,8 @@ import {
   reviewDocument,
   submitDocument,
 } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 import type { TransportDocumentCategory } from "@/lib/supabase/enums";
 
 // The transport-documents Storage bucket is private — there is no public URL to link to, only a
@@ -78,6 +80,7 @@ export function TransportDocumentChecklist({
   userId: string;
   canReview?: boolean;
 }) {
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
@@ -204,7 +207,7 @@ export function TransportDocumentChecklist({
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {doc.file_url && <ViewDocumentButton objectPath={doc.file_url} />}
                       {doc.expiry_date && (
-                        <span>Expires {new Date(doc.expiry_date).toLocaleDateString("en-GB")}</span>
+                        <span>Expires {formatDate(doc.expiry_date, locale)}</span>
                       )}
                       {warning && (
                         <span className="inline-flex items-center gap-1 text-warning">

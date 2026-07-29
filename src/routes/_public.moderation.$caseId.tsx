@@ -12,6 +12,8 @@ import {
   getMyAppealForCase,
   submitModerationAppeal,
 } from "@/lib/queries/moderation";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/moderation/$caseId")({
   component: MyModerationCasePage,
@@ -34,6 +36,7 @@ const appealStatusLabels: Record<string, string> = {
 function MyModerationCasePage() {
   const { caseId } = useParams({ from: "/_public/moderation/$caseId" });
   const { isSignedIn } = useAuth();
+  const { locale } = useTranslation();
   const queryClient = useQueryClient();
   const [statement, setStatement] = useState("");
 
@@ -91,7 +94,7 @@ function MyModerationCasePage() {
     <div className="mx-auto max-w-lg p-8">
       <h1 className="font-display text-2xl font-medium">Moderation decision</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Opened {new Date(c.created_at).toLocaleDateString("en-GB")}
+        Opened {formatDate(c.created_at, locale)}
       </p>
 
       <div className="mt-4 flex items-center gap-2">

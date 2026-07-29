@@ -10,6 +10,8 @@ import {
   listMyScheduledTransportRequests,
   statusEventLabel,
 } from "@/lib/queries/transport";
+import { useTranslation } from "@/lib/i18n";
+import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/dashboard/buyer/scheduled")({
   component: ScheduledTransportsPage,
@@ -68,6 +70,7 @@ function ScheduledCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const { locale } = useTranslation();
   const timelineQuery = useQuery({
     queryKey: ["transport-timeline", t.id],
     enabled: expanded,
@@ -90,9 +93,9 @@ function ScheduledCard({
       </div>
       {(t.earliest_date || t.latest_date) && (
         <p className="mt-2 text-xs text-muted-foreground">
-          {t.earliest_date && new Date(t.earliest_date).toLocaleDateString("en-GB")}
+          {t.earliest_date && formatDate(t.earliest_date, locale)}
           {t.earliest_date && t.latest_date && " – "}
-          {t.latest_date && new Date(t.latest_date).toLocaleDateString("en-GB")}
+          {t.latest_date && formatDate(t.latest_date, locale)}
         </p>
       )}
       <button
