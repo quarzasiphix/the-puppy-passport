@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Construction, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import {
   getAccountDeletionBlockers,
   listDeletionRequests,
@@ -22,13 +21,12 @@ const statusStyles: Record<string, string> = {
 };
 
 function UsersPage() {
-  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["admin-deletion-requests"], queryFn: listDeletionRequests });
 
   const mutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "processed" | "declined" }) =>
-      markDeletionRequestProcessed(id, status, userId!),
+      markDeletionRequestProcessed(id, status),
     onSuccess: () => {
       toast.success("Updated.");
       queryClient.invalidateQueries({ queryKey: ["admin-deletion-requests"] });

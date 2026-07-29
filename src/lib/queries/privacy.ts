@@ -146,12 +146,10 @@ export async function listDeletionRequests() {
 // "processed" now actually executes the deletion (anonymises the profile via
 // execute_account_deletion(), which also stamps the request row itself) — it used to only flip
 // this row's own status flag while leaving the account fully intact. "declined" stays a plain
-// status update; nothing to execute for a declined request.
-export async function markDeletionRequestProcessed(
-  id: string,
-  status: "processed" | "declined",
-  processedBy: string,
-) {
+// status update; nothing to execute for a declined request. Stage HF-1: processed_by/processed_at
+// are now always server-stamped from the real caller (stamp_deletion_request_processed_by()) —
+// this function no longer accepts or sends a client-supplied actor.
+export async function markDeletionRequestProcessed(id: string, status: "processed" | "declined") {
   const supabase = getSupabaseBrowserClient();
   if (status === "processed") {
     const { error } = await supabase.rpc("execute_account_deletion", { p_request_id: id });
@@ -160,7 +158,7 @@ export async function markDeletionRequestProcessed(
   }
   const { error } = await supabase
     .from("account_deletion_requests")
-    .update({ status, processed_at: new Date().toISOString(), processed_by: processedBy })
+    .update({ status })
     .eq("id", id);
   if (error) throw error;
 }

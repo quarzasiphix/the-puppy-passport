@@ -280,3 +280,98 @@ test("anonymisation consistency: the dry-run predicts the real outcome, and hist
     if (postId) await admin.from("posts").delete().eq("id", postId);
   });
 });
+
+// Independently verified from a Bot 1 audit finding (H-1/§5.2, reproduced live against this repo's
+// own database before fixing, not trusted from the report alone): "users manage their own deletion
+// request" is row-level RLS, not column-level, so a user could raw-UPDATE status/processed_at/
+// processed_by on their own pending request -- faking it as "processed" or "declined" (with no real
+// anonymisation ever running) and forging processed_by to name any real admin as the decider. Fixed
+// in 20260101014700_account_deletion_request_field_lock.sql: a trigger blocks non-admin changes to
+// those three fields outright, and processed_by/processed_at are now always server-stamped from the
+// real caller, closing the same forgeable-actor shape already fixed elsewhere for
+// transport_status_history.changed_by/quotations.created_by.
+test("account_deletion_requests: status/processed_by cannot be raw-forged by the requester", async (t) => {
+  const admin = await as("admin");
+  let disposableId: string | undefined;
+  let requestId: string | undefined;
+  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+
+  try {
+    await t.test("setup: a fresh throwaway account requests its own deletion", async () => {
+      const email = uniqueTestEmail("deletion-forge");
+      const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
+      assert.equal(signUp.error, null);
+      disposableId = signUp.data.user?.id;
+      assert.ok(disposableId);
+
+      const request = await disposableClient
+        .from("account_deletion_requests")
+        .insert({ profile_id: disposableId, reason: "HF-1 regression test" })
+        .select("id")
+        .single();
+      assert.equal(request.error, null);
+      requestId = request.data!.id as string;
+    });
+
+    await t.test(
+      "the requester cannot raw-forge status/processed_at/processed_by on their own row",
+      async () => {
+        const attempt = await disposableClient
+          .from("account_deletion_requests")
+          .update({
+            status: "processed",
+            processed_at: new Date().toISOString(),
+            processed_by: ids.admin,
+          })
+          .eq("id", requestId!)
+          .select();
+        assert.ok(attempt.error, "expected the raw-forge attempt to be rejected");
+
+        const row = await admin
+          .from("account_deletion_requests")
+          .select("status, processed_by")
+          .eq("id", requestId!)
+          .single();
+        assert.equal(row.data?.status, "pending", "status must be unchanged by the rejection");
+        assert.equal(row.data?.processed_by, null);
+
+        const profile = await admin
+          .from("profiles")
+          .select("is_deleted")
+          .eq("id", disposableId!)
+          .single();
+        assert.equal(
+          profile.data?.is_deleted,
+          false,
+          "the forged row must not have triggered any real deletion",
+        );
+      },
+    );
+
+    await t.test(
+      "an admin declining it is server-stamped as the real actor, never forgeable",
+      async () => {
+        const attempt = await admin
+          .from("account_deletion_requests")
+          .update({ status: "declined", processed_by: ids.customer })
+          .eq("id", requestId!)
+          .select("status, processed_by, processed_at")
+          .single();
+        assert.equal(attempt.error, null);
+        assert.equal(attempt.data?.status, "declined");
+        assert.equal(
+          attempt.data?.processed_by,
+          ids.admin,
+          "the real caller must be server-stamped, never the forged value",
+        );
+        assert.ok(attempt.data?.processed_at);
+      },
+    );
+  } finally {
+    await t.test("cleanup", async () => {
+      if (requestId) await admin.from("account_deletion_requests").delete().eq("id", requestId);
+    });
+  }
+});
