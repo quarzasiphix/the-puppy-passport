@@ -275,6 +275,8 @@ hardening stage already assigned" — both already true at this point).
 
 | — | (real-beta Phase F) | Environment/backup/recovery requirements — **checked before writing, found already comprehensively covered**, no new docs created to avoid duplication. `docs/PRODUCTION_SETUP.md` already covers environments, migration/rollback risk, seed-data safety, Storage buckets, RLS, Auth, functions, backups, and env-var summary (its own §1–10). `docs/BACKUP_AND_DISASTER_RECOVERY.md` already covers exactly what Phase F asked for: real local recovery (verified commands, not hypothetical), what real production backups require (PITR vs. daily snapshots, RPO/RTO, Storage-bucket coverage — explicitly flagged as unverified/plan-dependent, not assumed), and fix-forward migration incident response. Neither document hardcodes a stale count that would need updating. No code change. |
 
+| `4f05520` | (real-beta Phase L) | Demo environment — verified `supabase/seed.sql` already provides a substantial real demo dataset (orgs, animals, litters, applications, reservations, quotations, full transport chain, drivers, vehicles); real, bounded gap found (zero moderation/messaging/achievement demo rows), deliberately not closed by editing the shared test-fixture seed file (collision risk with the 1062-test baseline), flagged as a well-scoped separate future script instead. No code change. |
+
 ## Next up
 
 **The numbered FA-5 through FA-100 / OF-1 through OF-50 / DAY-A01 through DAY-I19 queues can no
