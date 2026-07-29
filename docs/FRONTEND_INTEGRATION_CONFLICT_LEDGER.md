@@ -135,3 +135,29 @@ One entry per real conflict hit during the 52-commit cherry-pick, in the order e
   "Declined" / "Expired" / "Replaced by a new quotation", never a raw enum string; total price
   renders locale-formatted in both `en` and `pl`; accept/decline still functionally submit
   (Phase 21).
+
+## 6. `src/routes/_public.planned-routes.tsx` — commit `5163613`
+
+- **Frontend commit**: `5163613` "Fix raw route-status enum shown on public planned-routes page"
+- **File**: `src/routes/_public.planned-routes.tsx`
+- **Conflict type**: content — not a real logic fork, both sides added independent, unrelated
+  top-of-file declarations (HEAD: `getFriendlyErrorMessage` import from this session's own
+  error-sanitisation work; incoming: `routeStatusLabels` plain-language map for the same
+  raw-enum-exposure class of bug as ledger entry 5, this time on an unauthenticated public page).
+  Also surfaced a real, separate type error: `routeStatusLabels[r.status]` doesn't compile against
+  the integration branch's current (more complete) generated Supabase types, where the
+  `public_routes` view's `status` column types as `string | null` — the frontend branch's own
+  stale types (Bot 1's pre-identified conflict #2) had it as non-nullable `string`.
+- **Backend behavior preserved**: kept `getFriendlyErrorMessage` import in full; both additions are
+  used elsewhere in the file with no actual overlap.
+- **Frontend behavior preserved**: kept `routeStatusLabels` in full — a real CLAUDE.md
+  rule-of-translation fix, worse here than the quotations page since this route has zero auth
+  gate: any visitor would otherwise see the raw `'planning'`/`'confirmed'` enum values.
+- **Manual decision**: concatenated both declarations (no actual overlap, purely adjacent). Fixed
+  the type error by guarding the null case: `routeStatusLabels[r.status ?? ""] ?? r.status` instead
+  of the frontend's un-guarded `routeStatusLabels[r.status]` — a minimal, targeted fix rather than
+  a wholesale type regeneration, since Phase 7 (regenerate Supabase types from the final integrated
+  schema) will re-verify this class of issue everywhere at once.
+- **Test required**: none new — verified with `npx tsc --noEmit` (clean after the null-guard fix).
+- **Browser scenario required**: `/planned-routes` as an anonymous visitor shows "Being planned" /
+  "Confirmed" badges, never raw `planning`/`confirmed` text (Phase 23, public/SEO routes).
