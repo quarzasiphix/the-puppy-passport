@@ -276,8 +276,14 @@ test("cross-user isolation: a user cannot read or change another user's preferen
   });
 });
 
+// Stage HF-2: create_notification_if_enabled() now requires a real relationship between caller and
+// recipient (self, moderator/admin, or an org owner notifying a real applicant to their own org) --
+// breeder1 genuinely owns orgCichyLas, which ids.buyer has a real, seeded application to
+// (id 70000000-0000-0000-0000-000000000001), matching the real respondToApplication() call site
+// this test exercises. foundation1 (used here previously) has no real application relationship to
+// ids.buyer at all, which this fix now correctly rejects.
 test("real call sites now respect preferences: application status change", async (t) => {
-  const foundation1 = await as("foundation1");
+  const breeder1 = await as("breeder1");
   const buyer = await as("buyer");
 
   await t.test("buyer disables 'applications'", async () => {
@@ -297,7 +303,7 @@ test("real call sites now respect preferences: application status change", async
       .eq("profile_id", ids.buyer)
       .eq("notification_type", "application_status_change");
 
-    const { error } = await foundation1.rpc("create_notification_if_enabled", {
+    const { error } = await breeder1.rpc("create_notification_if_enabled", {
       p_profile_id: ids.buyer,
       p_category: "applications",
       p_notification_type: "application_status_change",
@@ -324,4 +330,111 @@ test("real call sites now respect preferences: application status change", async
       );
     assert.equal(error, null);
   });
+});
+
+// Independently verified from a Bot 1 audit finding (H-2/§5.3, reproduced live against this repo's
+// own database before fixing, not trusted from the report alone): create_notification_if_enabled()
+// never checked whether the caller had any real relationship to the target profile at all, only
+// whether the target's own preference allowed the category -- a zero-privilege, EXECUTE-to-
+// authenticated arbitrary-recipient/arbitrary-content phishing primitive. Fixed in
+// 20260101014600_notification_producer_authorization_lock.sql by requiring the same relationship
+// notifications' own two legitimate raw-INSERT RLS policies already require: self, is_moderator()
+// (covers admin), or an org owner notifying a real applicant to their own organisation.
+test("create_notification_if_enabled: authorization boundary", async (t) => {
+  await t.test("an unrelated user cannot notify another user with arbitrary content", async () => {
+    // foundation1 owns orgFundacja, which ids.buyer has no application to at all (unlike
+    // orgCichyLas/orgWolnaDolina) -- genuinely unrelated, confirmed by direct query before writing
+    // this test.
+    const foundation1 = await as("foundation1");
+    const attempt = await foundation1.rpc("create_notification_if_enabled", {
+      p_profile_id: ids.buyer,
+      p_category: "system",
+      p_notification_type: "phish",
+      p_title: "Your account will be suspended",
+      p_body: "Click here to verify",
+      p_link_url: "https://evil.example.com",
+    });
+    assert.ok(attempt.error, "expected an unrelated caller to be rejected");
+  });
+
+  await t.test("a user can always notify themselves", async () => {
+    const buyer = await as("buyer");
+    const call = await buyer.rpc("create_notification_if_enabled", {
+      p_profile_id: ids.buyer,
+      p_category: "system",
+      p_notification_type: "self_test",
+      p_title: "Self notification",
+    });
+    assert.equal(call.error, null);
+    assert.ok(call.data);
+    await buyer
+      .from("notifications")
+      .delete()
+      .eq("id", call.data as string);
+  });
+
+  await t.test("a moderator can notify any user", async () => {
+    const moderatorId = ids.customer;
+    const admin = await as("admin");
+    let grantId: string | undefined;
+    try {
+      const grant = await admin
+        .from("user_roles")
+        .insert({ user_id: moderatorId, role: "moderator", status: "active" })
+        .select("id")
+        .single();
+      assert.equal(grant.error, null);
+      grantId = grant.data!.id as string;
+
+      const moderator = await as("customer");
+      const call = await moderator.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "system",
+        p_notification_type: "moderation_decision",
+        p_title: "A moderation decision affecting you",
+      });
+      assert.equal(call.error, null);
+      assert.ok(call.data);
+      await admin
+        .from("notifications")
+        .delete()
+        .eq("id", call.data as string);
+    } finally {
+      if (grantId) await admin.from("user_roles").delete().eq("id", grantId);
+    }
+  });
+
+  await t.test(
+    "an org owner can notify a real applicant to their own org, but not an unrelated one",
+    async () => {
+      const breeder1 = await as("breeder1");
+      // Real, seeded application: ids.buyer -> orgCichyLas (owned by breeder1).
+      const legit = await breeder1.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "applications",
+        p_notification_type: "application_status_change",
+        p_title: "Update on your application",
+      });
+      assert.equal(legit.error, null);
+      assert.ok(legit.data);
+      await breeder1
+        .from("notifications")
+        .delete()
+        .eq("id", legit.data as string);
+
+      // foundation1 has no application relationship at all with ids.buyer (confirmed by direct
+      // query: unlike breeder2's orgWolnaDolina, which ids.buyer does have a real application to).
+      const foundation1 = await as("foundation1");
+      const attempt = await foundation1.rpc("create_notification_if_enabled", {
+        p_profile_id: ids.buyer,
+        p_category: "applications",
+        p_notification_type: "application_status_change",
+        p_title: "Update on your application",
+      });
+      assert.ok(
+        attempt.error,
+        "expected an org owner with no real applicant relationship to be rejected",
+      );
+    },
+  );
 });
