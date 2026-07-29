@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { signIn } from "@/lib/auth/actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -34,6 +35,7 @@ function SignIn() {
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const hydrated = useHydrated();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
@@ -78,7 +80,7 @@ function SignIn() {
         </p>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -117,7 +119,7 @@ function SignIn() {
               type="submit"
               className="w-full"
               size="lg"
-              disabled={form.formState.isSubmitting}
+              disabled={!hydrated || form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
             </Button>

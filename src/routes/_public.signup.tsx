@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { signUp } from "@/lib/auth/actions";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 const schema = z.object({
   intent: z.enum(["customer", "buyer", "breeder", "foundation", "operations"]),
@@ -85,6 +86,7 @@ function SignUp() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<0 | 1>(0);
+  const hydrated = useHydrated();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -140,6 +142,7 @@ function SignUp() {
 
         <Form {...form}>
           <form
+            method="post"
             onSubmit={(e) => {
               e.preventDefault();
               if (step === 0) goToStepTwo();
@@ -212,7 +215,7 @@ function SignUp() {
                   )}
                 />
 
-                <Button type="submit" className="w-full" size="lg">
+                <Button type="submit" className="w-full" size="lg" disabled={!hydrated}>
                   Continue <ArrowRight className="ml-1 size-4" />
                 </Button>
               </>
@@ -311,7 +314,11 @@ function SignUp() {
                   <Button type="button" variant="ghost" onClick={() => setStep(0)}>
                     <ArrowLeft className="mr-1 size-4" /> Back
                   </Button>
-                  <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={!hydrated || form.formState.isSubmitting}
+                  >
                     {form.formState.isSubmitting ? "Creating account…" : "Create account"}
                   </Button>
                 </div>

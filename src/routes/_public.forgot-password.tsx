@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 const schema = z.object({ email: z.string().email("Enter a valid email") });
 type FormValues = z.infer<typeof schema>;
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_public/forgot-password")({
 
 function ForgotPassword() {
   const [sent, setSent] = useState(false);
+  const hydrated = useHydrated();
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: "" } });
 
   async function onSubmit(values: FormValues) {
@@ -68,7 +70,7 @@ function ForgotPassword() {
               Enter your email and we'll send you a link to choose a new password.
             </p>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
+              <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
                 <FormField
                   control={form.control}
                   name="email"
@@ -86,7 +88,7 @@ function ForgotPassword() {
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={form.formState.isSubmitting}
+                  disabled={!hydrated || form.formState.isSubmitting}
                 >
                   {form.formState.isSubmitting ? "Sending…" : "Send reset link"}
                 </Button>
