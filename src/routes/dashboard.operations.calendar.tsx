@@ -128,7 +128,12 @@ function OperationsCalendar() {
       </header>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => step(-1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={viewMode === "week" ? "Previous week" : "Previous day"}
+          onClick={() => step(-1)}
+        >
           <ChevronLeft className="size-4" />
         </Button>
         <span className="text-sm font-medium">
@@ -136,7 +141,12 @@ function OperationsCalendar() {
             ? `${format(rangeStart, "d MMM")} – ${format(rangeEnd, "d MMM yyyy")}`
             : format(anchorDate, "EEEE d MMMM yyyy")}
         </span>
-        <Button variant="outline" size="icon" onClick={() => step(1)}>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={viewMode === "week" ? "Next week" : "Next day"}
+          onClick={() => step(1)}
+        >
           <ChevronRight className="size-4" />
         </Button>
 

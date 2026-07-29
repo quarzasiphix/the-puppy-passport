@@ -119,6 +119,8 @@ function OrganisationsPage() {
                       size="icon"
                       variant="ghost"
                       disabled={featuredMutation.isPending}
+                      aria-label={o.is_featured ? "Remove from featured" : "Mark as featured"}
+                      aria-pressed={o.is_featured}
                       onClick={() =>
                         featuredMutation.mutate({ id: o.id, featured: !o.is_featured })
                       }
