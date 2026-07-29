@@ -55,16 +55,16 @@ Open Supabase Studio at `http://127.0.0.1:54323` to browse the database directly
 
 ## Everyday commands
 
-| Command | What it does |
-|---|---|
-| `npm run db:start` | Start the local Supabase stack (Docker containers). |
-| `npm run db:stop` | Stop it. |
-| `npm run db:reset` | Drop and recreate the local database from migrations + seed — use this any time you change a migration or want a clean slate. |
-| `npm run db:status` | Show local URLs/keys again without restarting. |
-| `npm run db:types` | Regenerate `src/lib/supabase/types.ts` from the running local database (replaces the hand-written stub with the real generated types). |
-| `npm run dev` | Start the app (`vite dev`). |
-| `npm run build` | Production build. |
-| `npm run lint` | ESLint. |
+| Command             | What it does                                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run db:start`  | Start the local Supabase stack (Docker containers).                                                                                    |
+| `npm run db:stop`   | Stop it.                                                                                                                               |
+| `npm run db:reset`  | Drop and recreate the local database from migrations + seed — use this any time you change a migration or want a clean slate.          |
+| `npm run db:status` | Show local URLs/keys again without restarting.                                                                                         |
+| `npm run db:types`  | Regenerate `src/lib/supabase/types.ts` from the running local database (replaces the hand-written stub with the real generated types). |
+| `npm run dev`       | Start the app (`vite dev`).                                                                                                            |
+| `npm run build`     | Production build.                                                                                                                      |
+| `npm run lint`      | ESLint.                                                                                                                                |
 
 A fresh clone should always be reproducible with:
 
@@ -76,23 +76,51 @@ npm run db:reset          # only needed if db:start didn't already seed (it does
 npm run dev
 ```
 
+### Troubleshooting: `npm run db:reset` fails with `exit 139` / `LegacyGoChildExitError`
+
+Confirmed real, container-orchestration-level failure (not an app/migration defect — the same
+committed migration files replay cleanly by hand) that can occur, particularly against a
+freshly-created container set: the Supabase CLI's own "Initialising schema" step crashes,
+partway through — after dropping the previous `public` schema but before finishing the reset —
+leaving the database in a partial state and the `storage`/`auth` extension schemas (which those
+services bootstrap themselves, separate from this repo's own migrations) incomplete.
+
+**Simplest recovery, confirmed to work**: just retry `npm run db:reset` — it is a normal, safe CLI
+command with no destructive side effect beyond its own intended one, and the failure has been
+reported as intermittent (container-orchestration timing), not deterministic on every attempt.
+
+If it fails repeatedly and you need a manual fallback, the general shape (verified independently by
+an audit pass working from a disposable clone, not merely a suggestion) is: drop and recreate the
+`public` schema, then replay every file in `supabase/migrations/` in filename order via `psql`
+against the local database container, then `supabase/seed.sql`, then restart the
+`supabase_storage_the-puppy-passport`/`supabase_auth_the-puppy-passport` containers so those
+services re-bootstrap their own (non-`public`) extension schemas. **One real complication found
+while double-checking this locally**: a `drop schema public cascade` does _not_ remove policies
+that migrations created on tables living in the `storage` schema (`storage.objects`) — replaying a
+migration that re-creates one of those policies fails with `policy "..." for table "objects"
+already exists`, since the prior policy is still there. If you hit that, drop the storage-schema
+policies for the affected bucket first (`select policyname from pg_policies where schemaname =
+'storage'` to find them) before replaying, or restart the storage container _before_ the migration
+replay rather than after. Given the added complexity and unverified edge cases in the fully manual
+path, prefer just retrying `npm run db:reset` first — it succeeds far more often than not.
+
 ## Demo accounts
 
 Every account below uses the password **`password123`**. Passwords are obviously fake/local-only —
 never reuse them anywhere real.
 
-| Email | Persona | Role(s) |
-|---|---|---|
-| `customer@havenpaw.test` | Marta Zielińska — private transport customer | `customer` (active) |
-| `buyer@havenpaw.test` | Julia Kowalczyk — buyer looking for a puppy | `buyer` (active) |
-| `breeder1@havenpaw.test` | Anna Kowalska — owns Cichy Las Kennel (approved) | `breeder` (active) |
-| `breeder2@havenpaw.test` | Tomasz Nowak — owns Wolna Dolina (approved) | `breeder` (active) |
-| `breeder3-pending@havenpaw.test` | Katarzyna Wiśniewska — Srebrna Rzeka, awaiting verification | `breeder` (pending) |
-| `foundation1@havenpaw.test` | Aleksandra Nowicka — owns Fundacja Ratunek dla Psów (approved) | `foundation_member` (active) |
-| `foundation2-pending@havenpaw.test` | Bartłomiej Sikora — Schronisko Nadzieja, awaiting verification | `shelter_member` (pending) |
-| `ops@havenpaw.test` | Kasia Woźniak — transport operations | `operations` (active) |
-| `driver@havenpaw.test` | Marek Dąbrowski — driver | `driver` (active) |
-| `admin@havenpaw.test` | Havenpaw Admin | `admin` (active) |
+| Email                               | Persona                                                        | Role(s)                      |
+| ----------------------------------- | -------------------------------------------------------------- | ---------------------------- |
+| `customer@havenpaw.test`            | Marta Zielińska — private transport customer                   | `customer` (active)          |
+| `buyer@havenpaw.test`               | Julia Kowalczyk — buyer looking for a puppy                    | `buyer` (active)             |
+| `breeder1@havenpaw.test`            | Anna Kowalska — owns Cichy Las Kennel (approved)               | `breeder` (active)           |
+| `breeder2@havenpaw.test`            | Tomasz Nowak — owns Wolna Dolina (approved)                    | `breeder` (active)           |
+| `breeder3-pending@havenpaw.test`    | Katarzyna Wiśniewska — Srebrna Rzeka, awaiting verification    | `breeder` (pending)          |
+| `foundation1@havenpaw.test`         | Aleksandra Nowicka — owns Fundacja Ratunek dla Psów (approved) | `foundation_member` (active) |
+| `foundation2-pending@havenpaw.test` | Bartłomiej Sikora — Schronisko Nadzieja, awaiting verification | `shelter_member` (pending)   |
+| `ops@havenpaw.test`                 | Kasia Woźniak — transport operations                           | `operations` (active)        |
+| `driver@havenpaw.test`              | Marek Dąbrowski — driver                                       | `driver` (active)            |
+| `admin@havenpaw.test`               | Havenpaw Admin                                                 | `admin` (active)             |
 
 A pending breeder/foundation account can sign in and use Havenpaw as a transport customer, but
 cannot publish listings — their organisation doesn't exist yet (only a `user_verifications` row
@@ -124,4 +152,4 @@ trusting the schema:
    - `breeder3-pending@havenpaw.test` cannot see a live kennel profile (still pending);
    - `admin@havenpaw.test` can query `user_verifications`/`organisations` directly in Studio.
 4. `npm run lint` and `"node" node_modules/typescript/bin/tsc --noEmit` (or just `npx tsc
-   --noEmit`) should both be clean.
+--noEmit`) should both be clean.
