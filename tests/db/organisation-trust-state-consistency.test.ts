@@ -218,3 +218,94 @@ test("organisation trust-state role matrix: only admin can change verification_s
     );
   });
 });
+
+// Independently verified from a Bot 1 audit finding (H-5/NEW-H3, reproduced live against this
+// repo's own database before fixing, not trusted from the report alone): "owners manage their
+// kennel's achievements" (ALL, owns_org(kennel_id)) had no restriction on verification_status/
+// admin_notes/reviewed_at -- an organisation owner could raw-update their own achievement straight
+// to 'approved' (the exact status that makes it public), forging reviewed_at and admin_notes too.
+// Fixed in 20260101014900_achievement_self_verification_lock.sql with a trigger blocking non-admin
+// changes to those three fields specifically, leaving ordinary content fields freely editable.
+test("achievements: an organisation cannot self-verify its own achievement", async (t) => {
+  const breeder1 = await as("breeder1");
+  const admin = await as("admin");
+  let achievementId: string | undefined;
+
+  try {
+    await t.test("setup: breeder1 creates a real achievement on their own kennel", async () => {
+      const dog = await admin
+        .from("parent_dogs")
+        .select("id")
+        .eq("kennel_id", ids.orgCichyLas)
+        .limit(1)
+        .maybeSingle();
+      assert.equal(dog.error, null);
+      assert.ok(dog.data, "expected a real seeded parent_dog for orgCichyLas");
+
+      const created = await breeder1
+        .from("achievements")
+        .insert({
+          parent_dog_id: dog.data!.id as string,
+          kennel_id: ids.orgCichyLas,
+          title: "HF-5 regression test achievement",
+        })
+        .select("id, verification_status")
+        .single();
+      assert.equal(created.error, null);
+      assert.equal(created.data?.verification_status, "pending");
+      achievementId = created.data!.id as string;
+    });
+
+    await t.test(
+      "the owner cannot self-approve, forge reviewed_at, or write admin_notes",
+      async () => {
+        const attempt = await breeder1
+          .from("achievements")
+          .update({
+            verification_status: "approved",
+            reviewed_at: new Date().toISOString(),
+            admin_notes: "self-approved",
+          })
+          .eq("id", achievementId!)
+          .select();
+        assert.ok(attempt.error, "expected self-verification to be rejected");
+
+        const stillPending = await admin
+          .from("achievements")
+          .select("verification_status, admin_notes, reviewed_at")
+          .eq("id", achievementId!)
+          .single();
+        assert.equal(stillPending.data?.verification_status, "pending");
+        assert.equal(stillPending.data?.admin_notes, null);
+        assert.equal(stillPending.data?.reviewed_at, null);
+      },
+    );
+
+    await t.test("the owner can still freely edit ordinary content fields", async () => {
+      const edit = await breeder1
+        .from("achievements")
+        .update({ title: "Updated title", issuing_body: "Kennel Club" })
+        .eq("id", achievementId!)
+        .select("title, issuing_body")
+        .single();
+      assert.equal(edit.error, null);
+      assert.equal(edit.data?.title, "Updated title");
+      assert.equal(edit.data?.issuing_body, "Kennel Club");
+    });
+
+    await t.test("an admin can genuinely approve it", async () => {
+      const approve = await admin
+        .from("achievements")
+        .update({ verification_status: "approved", reviewed_at: new Date().toISOString() })
+        .eq("id", achievementId!)
+        .select("verification_status")
+        .single();
+      assert.equal(approve.error, null);
+      assert.equal(approve.data?.verification_status, "approved");
+    });
+  } finally {
+    await t.test("cleanup", async () => {
+      if (achievementId) await admin.from("achievements").delete().eq("id", achievementId);
+    });
+  }
+});
