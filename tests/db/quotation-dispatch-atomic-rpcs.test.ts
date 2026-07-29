@@ -213,6 +213,108 @@ test("respond_to_quotation: an already-expired quotation cannot be accepted", as
   });
 });
 
+// Independently verified from a Bot 1 audit finding (H-4/NEW-H1): prevent_non_staff_operational_
+// field_changes() unconditionally allowed a raw customer update to move transport_requests.status
+// straight to accepted_by_customer whenever old.status = 'quotation_sent', completely bypassing
+// respond_to_quotation()'s ownership/current-status/expiry checks. Reproduced live before fixing:
+// a raw update succeeded even with an expired quotation, while the real RPC correctly rejected the
+// same case. Fixed in 20260101014500_quotation_acceptance_raw_forge_lock.sql by requiring a real,
+// currently accepted, unexpired quotation to already exist for the request before the trigger
+// allows this specific transition.
+test("transport_requests.status: a raw update cannot forge accepted_by_customer", async (t) => {
+  const admin = await as("admin");
+  let requestId: string | undefined;
+  let quotationId: string | undefined;
+
+  try {
+    await t.test(
+      "setup: quotation_sent request with an expired, unaccepted quotation",
+      async () => {
+        requestId = await createTestTransportRequest(admin, {
+          requesterProfileId: ids.customer,
+          tag: "RPC-QUOTE-RAWFORGE",
+          status: "quotation_sent",
+        });
+        quotationId = await createTestQuotation(requestId, { expiryDate: "2020-01-01" });
+      },
+    );
+
+    await t.test(
+      "a raw update to accepted_by_customer is rejected with no accepted quotation",
+      async () => {
+        const customer = await as("customer");
+        const attempt = await customer
+          .from("transport_requests")
+          .update({ status: "accepted_by_customer" })
+          .eq("id", requestId!)
+          .select();
+        assert.ok(attempt.error, "expected the raw-forge attempt to be rejected");
+
+        const request = await admin
+          .from("transport_requests")
+          .select("status")
+          .eq("id", requestId!)
+          .single();
+        assert.equal(
+          request.data?.status,
+          "quotation_sent",
+          "status must be unchanged by the rejection",
+        );
+      },
+    );
+
+    await t.test(
+      "a raw update is still rejected even after attempting to separately mark the expired quotation accepted",
+      async () => {
+        // quotations' own RLS with_check already blocks a customer from accepting an expired
+        // quotation directly, so this must fail too -- proving the trigger's exists() check and
+        // the table's own RLS are consistent, not just the trigger alone.
+        const customer = await as("customer");
+        const rawQuotationAccept = await customer
+          .from("quotations")
+          .update({ status: "accepted" })
+          .eq("id", quotationId!)
+          .select();
+        assert.ok(
+          rawQuotationAccept.error,
+          "expected RLS to reject accepting an expired quotation",
+        );
+
+        const attempt = await customer
+          .from("transport_requests")
+          .update({ status: "accepted_by_customer" })
+          .eq("id", requestId!)
+          .select();
+        assert.ok(attempt.error, "expected the raw-forge attempt to still be rejected");
+      },
+    );
+
+    await t.test("the legitimate RPC path is unaffected by this lock", async () => {
+      const freshQuotationId = await createTestQuotation(requestId!, { expiryDate: "2099-01-01" });
+      const customer = await as("customer");
+      const legit = await customer.rpc("respond_to_quotation", {
+        p_quotation_id: freshQuotationId,
+        p_response: "accepted",
+      });
+      assert.equal(legit.error, null);
+
+      const request = await admin
+        .from("transport_requests")
+        .select("status")
+        .eq("id", requestId!)
+        .single();
+      assert.equal(request.data?.status, "accepted_by_customer");
+
+      await admin.from("quotations").delete().eq("id", freshQuotationId);
+    });
+  } finally {
+    await t.test("cleanup", async () => {
+      if (quotationId) await admin.from("quotations").delete().eq("id", quotationId);
+      if (requestId) await admin.from("transport_requests").delete().eq("id", requestId);
+    });
+  }
+});
+
 test("send_quotation: ops-only, atomic, idempotent on retry", async (t) => {
   const admin = await as("admin");
   const ops = await as("ops");
