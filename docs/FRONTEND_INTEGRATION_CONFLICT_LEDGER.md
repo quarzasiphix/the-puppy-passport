@@ -161,3 +161,29 @@ One entry per real conflict hit during the 52-commit cherry-pick, in the order e
 - **Test required**: none new — verified with `npx tsc --noEmit` (clean after the null-guard fix).
 - **Browser scenario required**: `/planned-routes` as an anonymous visitor shows "Being planned" /
   "Confirmed" badges, never raw `planning`/`confirmed` text (Phase 23, public/SEO routes).
+
+## 7. `src/routes/_public.create-breeder.tsx` and `src/routes/dashboard.buyer.profile.tsx` —
+   commit `990b63a`
+
+- **Frontend commit**: `990b63a` "Supplemental stage Z/EL: fix two raw-database-error exposures"
+- **Files**: `src/routes/_public.create-breeder.tsx`, `src/routes/dashboard.buyer.profile.tsx`
+- **Conflict type**: content (one hunk each, same shape in both files) — both sides independently
+  fixed the exact same bug (a raw Postgres/RLS error surfaced to the user on a failed
+  submit/update) with different mechanisms: HEAD already used this session's own
+  `getFriendlyErrorMessage()` sanitisation helper (Phase E-7 equivalent, established earlier in
+  this same session); the incoming frontend commit used a simpler hardcoded generic string with an
+  explanatory comment, not aware `getFriendlyErrorMessage` already existed on `main`.
+- **Backend behavior preserved**: `getFriendlyErrorMessage(error, "<fallback>")` kept as the
+  mechanism in both files — it already fully satisfies the "never surface raw Postgres/RLS error"
+  goal the incoming commit was solving for, and additionally gives more specific safe messages for
+  known error classes rather than always falling back to one generic string.
+- **Frontend behavior preserved**: none of the incoming mechanism itself was needed (HEAD's
+  approach is a strict superset), but kept the incoming's explanatory comment content (adapted) in
+  both files, since the "why" — never leak constraint/column/policy names — is worth documenting
+  at each call site.
+- **Manual decision**: take HEAD's `getFriendlyErrorMessage` call in both files; this was purely
+  independent-fix-for-the-same-bug, not a case of losing any real frontend behavior.
+- **Test required**: none new — verified with `npx tsc --noEmit` (clean).
+- **Browser scenario required**: submitting an invalid breeder application / profile update that
+  triggers a database error shows a plain, non-technical toast message, never raw SQL/constraint
+  text (Phase 17, error sanitisation).
