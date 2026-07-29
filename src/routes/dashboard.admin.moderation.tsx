@@ -188,12 +188,14 @@ function ModerationPage() {
                   )}
                   <Textarea
                     rows={2}
+                    aria-label="Decision notes (internal only)"
                     placeholder="Decision notes (internal only)…"
                     value={notesById[c.id] ?? ""}
                     onChange={(e) => setNotesById({ ...notesById, [c.id]: e.target.value })}
                   />
                   <Textarea
                     rows={2}
+                    aria-label="Explanation sent to the affected user"
                     placeholder="Explanation sent to the affected user (safe, never mentions the reporter)…"
                     value={summaryById[c.id] ?? ""}
                     onChange={(e) => setSummaryById({ ...summaryById, [c.id]: e.target.value })}

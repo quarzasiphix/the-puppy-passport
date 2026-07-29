@@ -165,6 +165,7 @@ function AchievementVerificationPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <Textarea
+                      aria-label="Rejection reason"
                       placeholder="Reason — e.g. evidence unclear, request clearer photo…"
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}

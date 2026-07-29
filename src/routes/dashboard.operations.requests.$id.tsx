@@ -328,20 +328,28 @@ function OpsRequestDetail() {
                     </DialogHeader>
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <label
+                          htmlFor="status-customer-note"
+                          className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                        >
                           Customer-facing note (optional)
                         </label>
                         <Textarea
+                          id="status-customer-note"
                           rows={2}
                           value={customerNote}
                           onChange={(e) => setCustomerNote(e.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <label
+                          htmlFor="status-internal-note"
+                          className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                        >
                           Internal note (never shown to the customer)
                         </label>
                         <Textarea
+                          id="status-internal-note"
                           rows={2}
                           value={internalNote}
                           onChange={(e) => setInternalNote(e.target.value)}

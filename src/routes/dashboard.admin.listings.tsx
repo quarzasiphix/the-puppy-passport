@@ -146,6 +146,7 @@ function ListingsPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <Textarea
+                        aria-label="Reason for rejection"
                         placeholder="Reason for rejection…"
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}

@@ -111,6 +111,7 @@ function OpsWelfareCasesPage() {
               <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
                 <Textarea
                   rows={2}
+                  aria-label="Internal review notes (never shown to the organisation)"
                   placeholder="Internal review notes (never shown to the organisation)"
                   value={notesByCase[c.id] ?? ""}
                   onChange={(e) => setNotesByCase({ ...notesByCase, [c.id]: e.target.value })}
