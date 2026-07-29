@@ -100,3 +100,38 @@ One entry per real conflict hit during the 52-commit cherry-pick, in the order e
 - **Browser scenario required**: an expired quotation shows "This quote expired on &lt;date&gt;"
   with no accept button and a "Dismiss" button, in both `en` and `pl` locales; a non-expired
   quotation still shows "Valid until &lt;date&gt;" and both Accept/Decline buttons (Phase 21).
+
+## 5. `src/routes/dashboard.buyer.quotations.tsx` — commit `dacd24a`
+
+- **Frontend commit**: `dacd24a` "Fix raw quotation-status enum shown to buyers + locale-aware
+  number formatting"
+- **File**: `src/routes/dashboard.buyer.quotations.tsx`
+- **Conflict type**: content (2 hunks) — third consecutive conflict on this same file, again both
+  sides touching the same quotation card. Also surfaced a genuine stale-signature issue: the
+  incoming tree's `AlertDialogAction`/decline `Button` `onClick` handlers called
+  `respondMutation.mutate({ id, transportRequestId: q.transport_request_id, response })`, a 3-field
+  shape inherited from the frontend branch's much earlier common-ancestor history (commits
+  `4dabe60`/`cfd33ca`, both already ancestors of backend `main` too). Backend `main` later
+  simplified `respondToQuotation()` to a 2-arg RPC form (`id`, `response` only — confirmed via
+  `src/lib/queries/transport.ts:563`, and matching this integration branch's already-resolved
+  `mutationFn` type from ledger entry 4); the frontend branch never received that simplification,
+  so its `transportRequestId` field no longer exists on the `mutationFn` parameter type and would
+  fail TypeScript's excess-property check verbatim.
+- **Backend behavior preserved**: kept the 2-arg `respondMutation.mutate({ id, response })` calls
+  (both accept and decline) exactly as already established in ledger entry 4 — dropped the stale
+  `transportRequestId` field entirely rather than trying to plumb it through.
+- **Frontend behavior preserved**: `statusLabels` plain-language badge map (never show a raw
+  `q.status` enum value like `"sent"`/`"replaced"` to a buyer — a real CLAUDE.md rule this commit's
+  own message calls out by name) and `formatNumber(q.total_price, locale)` for the price display,
+  replacing bare `.toLocaleString()` (same hydration-mismatch/locale-ignoring class of bug as the
+  date formatting in ledger entry 4), applied in both the card body and the accept-confirmation
+  dialog text.
+- **Manual decision**: combined both — HEAD's `isExpired` guard/dismiss-button flow and 2-arg
+  mutate calls (unchanged from entry 4), plus incoming's `statusLabels` badge translation and
+  `formatNumber` price formatting layered on top.
+- **Test required**: none new for this file — verified with `npx tsc --noEmit` (clean), which is
+  precisely what would have caught the dropped `transportRequestId` field if missed.
+- **Browser scenario required**: quotation badge reads "Awaiting your response" / "Accepted" /
+  "Declined" / "Expired" / "Replaced by a new quotation", never a raw enum string; total price
+  renders locale-formatted in both `en` and `pl`; accept/decline still functionally submit
+  (Phase 21).
