@@ -5,22 +5,20 @@ must be regression-checked going forward. Supersedes scattered per-report detail
 reference; full evidence trail remains in `docs/BOT1_OVERNIGHT_FINALISATION_AUDIT.md` §12 and the
 prior lineage reports cited throughout.
 
-**STATUS AS OF LATEST REVIEW: all 5 High findings FIXED AND EMPIRICALLY VERIFIED — TWICE, BY TWO
-INDEPENDENT METHODS.** Method 1 (prior round): non-destructive rollback-transaction attack
-reproduction directly against the shared local Supabase instance (real JWT-claims impersonation of
-real lower-trust seeded actors, `BEGIN ... ROLLBACK`, zero residual rows). Method 2 (this round,
-Domain 7): a genuine fresh-reset full-suite empirical run in an isolated throwaway clone —
-**1062/1062 tests passing, 3 consecutive full runs (fresh-reset-equivalent + 2 repeats), 0
-failures** — see the Domain 7 section below for the full account, including a real infrastructure
-incident (the `supabase db reset` CLI command crashes in this environment; recovered via a manual
-migration+seed replay, documented in full, not glossed over). Latest committed `main` HEAD reviewed:
-`92e8126cb6a4a2ca4bf5a96dad7226195d2d05ac` for the 5 High findings themselves (unchanged since);
-real backend `main` has since moved to `8aaecc292b03cbd42823f8f2bcec1cd8a06d6837` via a docs-only
-commit (Bot 2 resumed activity during this round — see Domain 7/Domain 6 notes), confirmed
-irrelevant to any of the 5 findings or this round's other work. See the Delta Verification Log at
-the bottom of this file for the full commit-by-commit trail (Delta 1: `ac612690`→`e8cf7073`,
-unrelated fix; Delta 2: `e8cf7073`→`92e8126c`, all 5 High fixes landed; Delta 3:
-`92e8126c`→`8aaecc2`, docs-only, reviewed below).
+**STATUS AS OF LATEST REVIEW: all 5 High findings FIXED AND CERTIFIED — three independent
+verification methods, culminating in a genuine final quiet-main fresh-reset certification.**
+Method 1: non-destructive rollback-transaction attack reproduction. Method 2: fresh-reset full-suite
+empirical run (1062/1062 x3). **Method 3 (this round): a second, final fresh-reset full-suite
+certification at the frozen HEAD `54b06d79bdaec4c44ea8947bf20e9585108bc2aa`** — see
+`docs/BOT1_FINAL_BACKEND_CERTIFICATION.md` for the full account, including a second `db:reset`
+infrastructure crash (same known failure mode, same documented recovery) and a diagnosed,
+confirmed-transient settling-period flake, resolved to 3 consecutive clean 1062/1062 runs. Bot 2
+itself then froze `main` at exactly this HEAD (`docs/CURRENT_RELEASE_STATUS.md`, commit `54846e0`),
+independently re-derived and confirmed matching in every claimed number. **Backend technical
+certification: GO.** See the Delta Verification Log at the bottom of this file for the full
+commit-by-commit trail (Delta 1: `ac612690`→`e8cf7073`; Delta 2: `e8cf7073`→`92e8126c`, all 5 High
+fixes landed; Delta 3: `92e8126c`→`8aaecc2`; Deltas 4-8 and final certification: see the section
+appended at the very end of this file).
 
 ---
 
@@ -516,3 +514,35 @@ real repo) by the time this was noticed.
 
 **Last-reviewed HEAD after Domain 7**: `8aaecc292b03cbd42823f8f2bcec1cd8a06d6837` (committed state
 only; real repo currently has uncommitted changes not reviewed).
+
+---
+
+### Delta 4-8 and final quiet-main certification (long-hours queue round)
+
+Across the subsequent rounds, real `main` advanced through `8aaecc292` → `91f466b` → `1070878` →
+`e5c7899` → `b785dc4` → `4f05520` → `54b06d79` — all documentation-only (SSR hydration fix write-up,
+runbooks, pilot onboarding/offboarding, consent-model review, demo-environment doc — the 3 actual
+**code** fixes in this span, SSR hydration/E-7/Q-1, are covered in
+`docs/BOT1_A_TO_Z_FINAL_CERTIFICATION.md` and `docs/BOT1_LONG_HOURS_DELTA_LEDGER.md` in full).
+None touched any migration file. All 5 High findings remained unaffected and unchanged throughout.
+
+**Final quiet-main empirical certification performed** at `54b06d79bdaec4c44ea8947bf20e9585108bc2aa`
+— see `docs/BOT1_FINAL_BACKEND_CERTIFICATION.md` for the full account, including a second
+`supabase db reset` infrastructure crash (same failure mode as before, recovered the same documented
+way) and a transient PostgREST/Auth settling-period flake (3 different test files failed once each
+across the first 3 runs with generic infra-shaped errors, root-caused via container logs, then 3
+consecutive clean 1062/1062 runs once settled). **All 5 High findings reconfirmed FIXED via this
+fresh, independent, full-suite empirical run** — the strongest evidence tier yet for all 5:
+static review → live-catalog introspection → rollback-transaction attack reproduction → now a
+genuine fresh-reset full-suite pass, 3 consecutive times, 0 failures.
+
+**Bot 2 itself then froze `main`** at this exact HEAD via `docs/CURRENT_RELEASE_STATUS.md` (commit
+`54846e0036c117eec5078cfa41ffb95dc6e803bf`), explicitly declaring no further commits pending Bot 1's
+certification — read in full, its every claimed number (1062/1062, tsc/lint/build/preflight/
+contract-check results, 151 migrations) independently re-derived from scratch rather than trusted,
+and found to match exactly.
+
+**Last-reviewed HEAD**: `54846e0036c117eec5078cfa41ffb95dc6e803bf` (current real `main` tip,
+docs-only atop the certified `54b06d79bdaec4c44ea8947bf20e9585108bc2aa`). Stable across 2+
+real-time-separated checks. Backend technical certification: **GO** (see
+`docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`).
