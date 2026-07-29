@@ -27,6 +27,8 @@
     "db:contract-check": "node scripts/contract-drift-check.mjs",
     "db:schema-drift": "node scripts/schema-drift-check.mjs",
     "release:preflight": "node scripts/release-preflight.mjs",
+    "quality:integration": "node scripts/release-preflight.mjs",
+    "quality:integration:full": "node scripts/release-preflight.mjs --with-db",
     "db:perf-report": "node scripts/query-performance-report.mjs",
     "config:check": "node scripts/config-check.mjs"
   },

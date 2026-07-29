@@ -1,29 +1,32 @@
 #!/usr/bin/env node
-// Stage YR-19 (release-preflight self-test). Every stage this whole session has manually run the
-// same verification contract by hand: git status, migration-preflight, tsc, eslint, build, a
-// duplicate-migration-prefix check, and a secret scan (plus, separately when a migration changed,
-// db:contract-check/db:schema-drift and a full test:db pass). This consolidates the fast, no-live-
-// database-required subset into one real, executable command with a real non-zero exit code on any
-// failure -- exactly the tool this stage's own definition asks for, not just a repeated manual
-// checklist. The slower, live-database-dependent checks (test:db, db:contract-check,
-// db:schema-drift) are deliberately NOT bundled in by default (they need `supabase start`/`db
-// reset` first and take 30-60s+ each) -- pass `--with-db` to include them once a local stack is
-// already running.
+// Stage YR-19 (release-preflight self-test), extended during post-integration hardening with the
+// route/generated-artifact guard (scripts/route-artifact-guard.mjs) added below. Every stage this
+// whole session has manually run the same verification contract by hand: git status,
+// migration-preflight, the route/artifact guard, tsc, eslint, build, a duplicate-migration-prefix
+// check, and a secret scan (plus, separately when a migration changed, db:contract-check/
+// db:schema-drift and a full test:db pass). This consolidates the fast, no-live-database-required
+// subset into one real, executable command with a real non-zero exit code on any failure --
+// exactly the tool this stage's own definition asks for, not just a repeated manual checklist. Also
+// runnable as `npm run quality:integration` (an alias — same script, same behavior). The slower,
+// live-database-dependent checks (test:db, db:contract-check, db:schema-drift) are deliberately NOT
+// bundled in by default (they need `supabase start`/`db reset` first and take 30-60s+ each) -- pass
+// `--with-db` to include them once a local stack is already running.
 //
 // Each check prints a clear PASS/FAIL line and its own output on failure; the script exits 1 if
 // any check fails, 0 only if every check genuinely passed. Never deploys anything itself.
 
 import { execSync } from "node:child_process";
 
-// The real, documented lint baseline (docs/AUTONOMOUS_BACKEND_PROGRESS.md, Stage IR-16): this repo
-// currently carries 21 pre-existing errors / 13 warnings of frontend-prototype debt that predate
-// this session and are out of scope to fix wholesale here. `npx eslint .` therefore *always* exits
-// non-zero today -- treating that as a hard failure would make this preflight cry wolf on every
-// single run, useless as a real gate. Compares the actual count against this baseline instead: a
-// real regression (more problems than the baseline) fails; the untouched pre-existing debt does
-// not. Update these two numbers (and mention it in a commit message) only after a deliberate,
-// reviewed cleanup actually reduces the baseline.
-const LINT_BASELINE = { errors: 21, warnings: 13 };
+// The real, documented lint baseline: post-integration hardening (commit 1674319) fixed all 21
+// pre-existing prettier/prettier errors (they were purely deterministic formatting, safe to
+// --fix) and the one fixable react-hooks/exhaustive-deps warning, dropping this from 21/13 to
+// 0/14 -- the +1 over the old 13-warning figure is two new legitimate exports the frontend
+// integration added to already-warning-carrying files (see docs/INTEGRATION_FINAL_REPORT.md),
+// net of the one exhaustive-deps warning fixed. `npx eslint .` should now exit 0 on a clean tree;
+// this compares against the real baseline so a genuine regression still fails loudly. Update these
+// two numbers (and mention it in a commit message) only after a deliberate, reviewed change
+// actually moves the baseline.
+const LINT_BASELINE = { errors: 0, warnings: 14 };
 
 const WITH_DB = process.argv.includes("--with-db");
 const results = [];
@@ -155,6 +158,7 @@ checkGitClean();
 checkDuplicateMigrationPrefixes();
 checkForSecrets();
 run("db:preflight (static migration text scan)", "npm run db:preflight");
+run("route/generated-artifact guard", "npm run route-guard");
 run("TypeScript (tsc --noEmit)", "npx tsc --noEmit");
 checkLintBaseline();
 run("build (vite build)", "npm run build");
