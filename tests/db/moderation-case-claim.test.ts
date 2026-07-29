@@ -164,3 +164,107 @@ test("claim_moderation_case: two genuinely concurrent claims resolve to exactly 
       .eq("role", "moderator");
   });
 });
+
+// Independently verified from a Bot 1 audit finding (H-3/§5.4, reproduced live against this repo's
+// own database before fixing, not trusted from the report alone): a moderator whose own account is
+// affected_profile_id on a case could both claim it (via this RPC) and fully decide it (via the raw
+// updateModerationCase() client path), a genuine conflict of interest with zero server-side check.
+// Fixed in 20260101014800_moderation_case_self_conflict_lock.sql with a single trigger covering
+// both paths (SECURITY DEFINER doesn't bypass triggers, only RLS), scoped to only the
+// decision-making columns so the affected user's own legitimate appeal_status update
+// (submit_moderation_appeal()) stays unaffected -- confirmed by re-running the full
+// moderation-appeals suite before committing, since a first, broader version of this trigger was
+// found to incorrectly block that legitimate path too.
+test("claim_moderation_case: a moderator cannot claim or decide a case about their own account", async (t) => {
+  const admin = await as("admin");
+  let caseId: string | undefined;
+  let granted = false;
+
+  try {
+    await t.test(
+      "setup: a case where the affected profile is also granted the moderator role",
+      async () => {
+        const created = await admin
+          .from("moderation_cases")
+          .insert({
+            case_type: "test",
+            target_type: "user",
+            target_id: ids.breederPending,
+            affected_profile_id: ids.breederPending,
+            status: "open",
+          })
+          .select("id")
+          .single();
+        assert.equal(created.error, null);
+        caseId = created.data!.id as string;
+
+        const grant = await admin
+          .from("user_roles")
+          .upsert(
+            { user_id: ids.breederPending, role: "moderator", status: "active" },
+            { onConflict: "user_id,role" },
+          );
+        assert.equal(grant.error, null);
+        granted = true;
+      },
+    );
+
+    await t.test("the affected moderator cannot claim their own case", async () => {
+      const conflictedModerator = await as("breederPending");
+      const attempt = await conflictedModerator.rpc("claim_moderation_case", {
+        p_case_id: caseId!,
+      });
+      assert.ok(attempt.error, "expected the self-conflict check to reject this claim");
+
+      const stillOpen = await admin
+        .from("moderation_cases")
+        .select("assigned_moderator_id, status")
+        .eq("id", caseId!)
+        .single();
+      assert.equal(stillOpen.data?.assigned_moderator_id, null);
+      assert.equal(stillOpen.data?.status, "open");
+    });
+
+    await t.test(
+      "the affected moderator cannot decide their own case via a raw update either",
+      async () => {
+        const conflictedModerator = await as("breederPending");
+        const attempt = await conflictedModerator
+          .from("moderation_cases")
+          .update({ status: "dismissed", decision: "no violation found" })
+          .eq("id", caseId!)
+          .select();
+        assert.ok(attempt.error, "expected the self-conflict check to reject this raw update");
+      },
+    );
+
+    await t.test("an independent moderator can claim and decide it normally", async () => {
+      const call = await admin.rpc("claim_moderation_case", { p_case_id: caseId! });
+      assert.equal(call.error, null);
+
+      const decide = await admin
+        .from("moderation_cases")
+        .update({
+          status: "resolved",
+          decision: "no violation found",
+          resolved_at: new Date().toISOString(),
+        })
+        .eq("id", caseId!)
+        .select("status")
+        .single();
+      assert.equal(decide.error, null);
+      assert.equal(decide.data?.status, "resolved");
+    });
+  } finally {
+    await t.test("cleanup", async () => {
+      if (caseId) await admin.from("moderation_cases").delete().eq("id", caseId);
+      if (granted) {
+        await admin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", ids.breederPending)
+          .eq("role", "moderator");
+      }
+    });
+  }
+});
