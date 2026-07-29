@@ -1,5 +1,9 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
+// No caller passes a limit today, so this cap is invisible against the current dataset — same
+// unbounded-fetch class of gap Q-1 closed for listPublishedPuppies (src/lib/queries/marketplace.ts).
+const DEFAULT_PAGE_SIZE = 200;
+
 export type GroupRow = {
   id: string;
   name: string;
@@ -13,7 +17,8 @@ export async function listGroups(): Promise<GroupRow[]> {
   const { data, error } = await supabase
     .from("groups")
     .select("id, name, slug, description, group_type")
-    .order("name");
+    .order("name")
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   return data ?? [];
 }
@@ -85,7 +90,8 @@ export async function listGroupPosts(groupId: string): Promise<GroupPostRow[]> {
     )
     .eq("group_id", groupId)
     .eq("visibility", "group")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   return (data ?? []) as unknown as GroupPostRow[];
 }

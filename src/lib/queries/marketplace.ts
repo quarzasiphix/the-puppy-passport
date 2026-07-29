@@ -304,7 +304,12 @@ export async function listPublishedLitters(status?: LitterStatus) {
   const supabase = getSupabaseBrowserClient();
   let query = supabase.from("litters").select(litterSelect).eq("is_published", true);
   if (status) query = query.eq("status", status);
-  const { data, error } = await query;
+  // Bounded the same way as listPublishedPuppies (Q-1): no caller passes a limit today, so this
+  // cap is invisible against the current dataset, but closes the same unbounded-fetch class of
+  // gap for a growing public listings page.
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   return mapLitterRows((data ?? []) as unknown as LitterRow[]);
 }
@@ -412,12 +417,15 @@ export type { OrgRow };
 
 export async function listApprovedKennels() {
   const supabase = getSupabaseBrowserClient();
+  // Bounded the same way as listPublishedPuppies (Q-1) — see that function's own comment.
   const { data, error } = await supabase
     .from("organisations")
     .select(orgSelect)
     .eq("org_type", "kennel")
     .eq("verification_status", "approved")
-    .eq("is_public", true);
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
 }
@@ -509,12 +517,15 @@ export function mapOrgToFoundation(o: OrgRow, availableForAdoption: number): Fou
 
 export async function listApprovedFoundations() {
   const supabase = getSupabaseBrowserClient();
+  // Bounded the same way as listPublishedPuppies (Q-1) — see that function's own comment.
   const { data, error } = await supabase
     .from("organisations")
     .select(orgSelect)
     .in("org_type", FOUNDATION_ORG_TYPES)
     .eq("verification_status", "approved")
-    .eq("is_public", true);
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   const orgs = (data ?? []) as unknown as OrgRow[];
   const counts = await orgAvailableAdoptionCounts(orgs.map((o) => o.id));
@@ -744,12 +755,14 @@ const adoptionSelect =
 
 export async function listPublishedAdoptions() {
   const supabase = getSupabaseBrowserClient();
+  // Bounded the same way as listPublishedPuppies (Q-1) — see that function's own comment.
   const { data, error } = await supabase
     .from("animals")
     .select(adoptionSelect)
     .in("listing_category", ["adoption", "private_rehoming"])
     .eq("is_published", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(DEFAULT_PAGE_SIZE);
   if (error) throw error;
   return ((data ?? []) as unknown as AdoptionAnimalRow[]).map(mapAnimalToAdoption);
 }
