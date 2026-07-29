@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { submitReport, type ReportReason, type ReportTargetType } from "@/lib/queries/moderation";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 
 const reasonLabels: Record<ReportTargetType, { value: ReportReason; label: string }[]> = {
   animal_listing: [
@@ -84,7 +85,7 @@ export function ReportDialog({
         description: description || null,
       }),
     onSuccess: () => setSubmitted(true),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not send report."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not send report.")),
   });
 
   if (!userId) return null;

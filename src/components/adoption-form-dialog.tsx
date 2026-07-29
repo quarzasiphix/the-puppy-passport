@@ -26,6 +26,7 @@ import {
   updateAdoptionAnimal,
   type FoundationAnimalRow,
 } from "@/lib/queries/foundation";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 
 type FormValues = {
   name: string;
@@ -114,7 +115,7 @@ export function AdoptionFormDialog({
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save.")),
   });
 
   return (

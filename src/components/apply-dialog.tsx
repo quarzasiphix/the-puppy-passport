@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { submitApplication } from "@/lib/queries/applications";
+import { getFriendlyErrorMessage } from "@/lib/errors";
 
 const purposeOptions = [
   "Family companion",
@@ -151,7 +152,11 @@ export function ApplyDialog({
         toast.error("You've already applied for this puppy.");
         return;
       }
-      toast.error(err instanceof Error ? err.message : "Could not send — please try again.");
+      if (err instanceof Error && err.message === "Sign in required") {
+        toast.error(err.message);
+        return;
+      }
+      toast.error(getFriendlyErrorMessage(err, "Could not send — please try again."));
     },
   });
 
