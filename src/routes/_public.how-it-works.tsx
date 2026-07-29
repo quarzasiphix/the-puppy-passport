@@ -8,19 +8,48 @@ export const Route = createFileRoute("/_public/how-it-works")({
 });
 
 const steps = [
-  ["Find a breeder or litter", "Search verified kennels and current or planned litters. Save what interests you."],
+  [
+    "Find a breeder or litter",
+    "Search verified kennels and current or planned litters. Save what interests you.",
+  ],
   ["Submit an application", "A structured form helps the breeder understand your home and plans."],
-  ["Get approved by the breeder", "The breeder reviews, asks questions or invites you to a video call."],
+  [
+    "Get approved by the breeder",
+    "The breeder reviews, asks questions or invites you to a video call.",
+  ],
   ["Reserve the puppy", "Pay a deposit and sign the sales agreement — everything is tracked here."],
-  ["Collect the puppy or arrange transport", "Meet in person, or book safe transport across Europe."],
+  [
+    "Collect the puppy or arrange transport",
+    "Meet in person, or book safe transport across Europe.",
+  ],
 ];
 
 const trust = [
-  { icon: ShieldCheck, label: "Verified breeders", desc: "Identity, kennel and association membership checked." },
-  { icon: FileCheck2, label: "Confirmed litters", desc: "Parents, birth date and pedigree confirmed before publishing." },
-  { icon: Stethoscope, label: "Health testing visible", desc: "HD, ED, eye tests and DNA panels shown on parent profiles." },
-  { icon: HeartHandshake, label: "Structured applications", desc: "A calm, transparent process for both sides." },
-  { icon: Truck, label: "Safe transport", desc: "Planned routes with rest stops and delivery updates." },
+  {
+    icon: ShieldCheck,
+    label: "Verified breeders",
+    desc: "Identity, kennel and association membership checked.",
+  },
+  {
+    icon: FileCheck2,
+    label: "Confirmed litters",
+    desc: "Parents, birth date and pedigree confirmed before publishing.",
+  },
+  {
+    icon: Stethoscope,
+    label: "Health testing visible",
+    desc: "HD, ED, eye tests and DNA panels shown on parent profiles.",
+  },
+  {
+    icon: HeartHandshake,
+    label: "Structured applications",
+    desc: "A calm, transparent process for both sides.",
+  },
+  {
+    icon: Truck,
+    label: "Safe transport",
+    desc: "Planned routes with rest stops and delivery updates.",
+  },
 ];
 
 function HowItWorks() {
@@ -29,11 +58,13 @@ function HowItWorks() {
       <section className="border-b border-border/60 bg-secondary/40 py-16">
         <div className="container-page max-w-3xl">
           <p className="text-xs font-medium uppercase tracking-wider text-accent">How it works</p>
-          <h1 className="mt-2 font-display text-5xl font-medium">A calm, transparent way to find a puppy</h1>
+          <h1 className="mt-2 font-display text-5xl font-medium">
+            A calm, transparent way to find a puppy
+          </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Havenpaw is a specialist marketplace for responsibly bred puppies — not a classified
-            ads site. Every kennel is verified, every litter is confirmed, and every application
-            flows through a structured process.
+            Havenpaw is a specialist marketplace for responsibly bred puppies — not a classified ads
+            site. Every kennel is verified, every litter is confirmed, and every application flows
+            through a structured process.
           </p>
         </div>
       </section>
@@ -74,13 +105,17 @@ function HowItWorks() {
         <div className="rounded-3xl border border-border/70 bg-card p-8 md:p-12">
           <h2 className="font-display text-3xl font-medium">Reviews only after handover</h2>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            To keep reviews honest, buyers can only leave a review after a confirmed reservation
-            and handover. Reviews cover communication, accuracy of information, puppy condition
-            at handover, documents and overall experience. Transport has its own separate review.
+            To keep reviews honest, buyers can only leave a review after a confirmed reservation and
+            handover. Reviews cover communication, accuracy of information, puppy condition at
+            handover, documents and overall experience. Transport has its own separate review.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
-            <Button asChild><Link to="/find-a-dog">Find your dog</Link></Button>
-            <Button asChild variant="outline"><Link to="/create-breeder">I'm a breeder</Link></Button>
+            <Button asChild>
+              <Link to="/find-a-dog">Find your dog</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/create-breeder">I'm a breeder</Link>
+            </Button>
           </div>
         </div>
       </section>

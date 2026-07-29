@@ -420,6 +420,9 @@ function TransportRequestPage() {
     if (sizeCategory) form.setValue("sizeCategory", sizeCategory as FormValues["sizeCategory"]);
     if (serviceType)
       form.setValue("requestedServiceType", serviceType as FormValues["requestedServiceType"]);
+    // Deliberately runs once on mount only (reads the URL's initial query params) — matches the
+    // same established pattern as adoption-form-dialog.tsx/puppy-form-dialog.tsx etc.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sensible defaults: prefill from context so the customer doesn't re-type what we already know.

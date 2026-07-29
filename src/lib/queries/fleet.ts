@@ -40,6 +40,7 @@ export function expiryWarnings(date: string | null, label: string): ExpiryWarnin
   if (!date) return [];
   const days = (new Date(date).getTime() - Date.now()) / 86_400_000;
   if (days < 0) return [{ label: `${label} expired`, severity: "expired" }];
-  if (days <= UPCOMING_WINDOW_DAYS) return [{ label: `${label} expires soon`, severity: "upcoming" }];
+  if (days <= UPCOMING_WINDOW_DAYS)
+    return [{ label: `${label} expires soon`, severity: "upcoming" }];
   return [];
 }

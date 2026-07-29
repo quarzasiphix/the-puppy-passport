@@ -31,11 +31,15 @@ function approximateDistanceBand(pickupCountry: string, destinationCountry: stri
 
 export async function calculateEstimate(inputs: PricingInputs): Promise<PricingBreakdown> {
   const supabase = getSupabaseBrowserClient();
-  const { data: rules, error } = await supabase.from("pricing_rules").select("*").eq("active", true);
+  const { data: rules, error } = await supabase
+    .from("pricing_rules")
+    .select("*")
+    .eq("active", true);
   if (error) throw error;
 
   const currency = rules?.[0]?.currency ?? "EUR";
-  const find = (type: string, appliesTo: string | null) => rules?.find((r) => r.rule_type === type && r.applies_to === appliesTo);
+  const find = (type: string, appliesTo: string | null) =>
+    rules?.find((r) => r.rule_type === type && r.applies_to === appliesTo);
 
   const baseFee = find("base_fee", null)?.amount ?? 100;
   const distanceBand = approximateDistanceBand(inputs.pickupCountry, inputs.destinationCountry);

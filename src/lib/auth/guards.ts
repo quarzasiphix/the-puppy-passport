@@ -5,7 +5,11 @@ import type { CurrentUser } from "@/lib/auth/session";
 // getCurrentUser() call in __root.tsx — never a value the frontend could fabricate. This is a UX
 // guard (avoid a flash of the wrong dashboard / a confusing redirect deep in a page); the real
 // enforcement is RLS on every table those pages query.
-export function requireRole(auth: CurrentUser | null, allowedRoles: string[], redirectTo = "/dashboard/buyer") {
+export function requireRole(
+  auth: CurrentUser | null,
+  allowedRoles: string[],
+  redirectTo = "/dashboard/buyer",
+) {
   if (!auth) {
     throw redirect({ to: "/signin" });
   }
