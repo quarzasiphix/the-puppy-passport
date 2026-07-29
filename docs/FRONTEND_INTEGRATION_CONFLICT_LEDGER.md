@@ -71,3 +71,32 @@ One entry per real conflict hit during the 52-commit cherry-pick, in the order e
   (clean) after resolution.
 - **Browser scenario required**: breeder listing/detail pages and litter listing/detail pages
   still show correct available/reserved counts (Phase 21).
+
+## 4. `src/routes/dashboard.buyer.quotations.tsx` — commit `0573acf`
+
+- **Frontend commit**: `0573acf` "PR review + presentation core: fix owner-preview leak, add
+  locale-aware dates"
+- **File**: `src/routes/dashboard.buyer.quotations.tsx`
+- **Conflict type**: content — both sides modified the same quotation-card rendering block, again
+  for different reasons.
+- **Backend behavior preserved**: HEAD's expired-quotation guard (backend main commit
+  `5cc520f` "Prevent accepting an already-expired quotation", landed on `main` just before this
+  integration effort started) — `documentExpiryWarning(q.expiry_date) === "expired"` computed once
+  per row as `isExpired`, used to hide the "Accept quotation" dialog entirely and relabel the
+  decline button "Dismiss" for an already-expired quote. This is a real business-rule guard (a
+  buyer must not be able to accept a quote past its expiry), not cosmetic — dropping it would
+  silently reintroduce the bug that commit fixed.
+- **Frontend behavior preserved**: the incoming commit's locale-aware date formatting —
+  `formatDate(q.expiry_date, locale)` from the new `src/lib/presentation/date.ts` (also added by
+  this same commit) — replacing HEAD's hardcoded `new Date(...).toLocaleDateString("en-GB")`,
+  which ignored a Polish-preference visitor's locale.
+- **Manual decision**: combined both — kept HEAD's `isExpired` logic and conditional
+  accept/dismiss UI wholesale, but replaced every hardcoded `en-GB` date call inside it with
+  `formatDate(q.expiry_date, locale)`. Added `useTranslation`/`locale` (incoming) alongside
+  `getFriendlyErrorMessage`/`documentExpiryWarning` (HEAD) in the merged import block. Neither
+  side's change was a strict superset of the other.
+- **Test required**: none new — client-side only; verified with `npx tsc --noEmit` (clean) after
+  resolution.
+- **Browser scenario required**: an expired quotation shows "This quote expired on &lt;date&gt;"
+  with no accept button and a "Dismiss" button, in both `en` and `pl` locales; a non-expired
+  quotation still shows "Valid until &lt;date&gt;" and both Accept/Decline buttons (Phase 21).
