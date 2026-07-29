@@ -47,6 +47,7 @@ import { Route as DashboardBreederIndexRouteImport } from './routes/dashboard.br
 import { Route as DashboardAdminIndexRouteImport } from './routes/dashboard.admin.index'
 import { Route as PublicTransportIndexRouteImport } from './routes/_public.transport.index'
 import { Route as PublicFundraisingIndexRouteImport } from './routes/_public.fundraising.index'
+import { Route as PublicFoundationsIndexRouteImport } from './routes/_public.foundations.index'
 import { Route as PublicCommunityIndexRouteImport } from './routes/_public.community.index'
 import { Route as PublicBreedersIndexRouteImport } from './routes/_public.breeders.index'
 import { Route as PublicAdoptionsIndexRouteImport } from './routes/_public.adoptions.index'
@@ -319,6 +320,11 @@ const PublicFundraisingIndexRoute = PublicFundraisingIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicFundraisingRoute,
+} as any)
+const PublicFoundationsIndexRoute = PublicFoundationsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicFoundationsRoute,
 } as any)
 const PublicCommunityIndexRoute = PublicCommunityIndexRouteImport.update({
   id: '/',
@@ -880,6 +886,7 @@ export interface FileRoutesByFullPath {
   '/adoptions/': typeof PublicAdoptionsIndexRoute
   '/breeders/': typeof PublicBreedersIndexRoute
   '/community/': typeof PublicCommunityIndexRoute
+  '/foundations/': typeof PublicFoundationsIndexRoute
   '/fundraising/': typeof PublicFundraisingIndexRoute
   '/transport/': typeof PublicTransportIndexRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -906,7 +913,6 @@ export interface FileRoutesByTo {
   '/find-a-dog': typeof PublicFindADogRoute
   '/find-your-dog': typeof PublicFindYourDogRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
-  '/foundations': typeof PublicFoundationsRouteWithChildren
   '/how-it-works': typeof PublicHowItWorksRoute
   '/planned-litters': typeof PublicPlannedLittersRoute
   '/planned-routes': typeof PublicPlannedRoutesRoute
@@ -985,6 +991,7 @@ export interface FileRoutesByTo {
   '/adoptions': typeof PublicAdoptionsIndexRoute
   '/breeders': typeof PublicBreedersIndexRoute
   '/community': typeof PublicCommunityIndexRoute
+  '/foundations': typeof PublicFoundationsIndexRoute
   '/fundraising': typeof PublicFundraisingIndexRoute
   '/transport': typeof PublicTransportIndexRoute
   '/dashboard/admin': typeof DashboardAdminIndexRoute
@@ -1107,6 +1114,7 @@ export interface FileRoutesById {
   '/_public/adoptions/': typeof PublicAdoptionsIndexRoute
   '/_public/breeders/': typeof PublicBreedersIndexRoute
   '/_public/community/': typeof PublicCommunityIndexRoute
+  '/_public/foundations/': typeof PublicFoundationsIndexRoute
   '/_public/fundraising/': typeof PublicFundraisingIndexRoute
   '/_public/transport/': typeof PublicTransportIndexRoute
   '/dashboard/admin/': typeof DashboardAdminIndexRoute
@@ -1229,6 +1237,7 @@ export interface FileRouteTypes {
     | '/adoptions/'
     | '/breeders/'
     | '/community/'
+    | '/foundations/'
     | '/fundraising/'
     | '/transport/'
     | '/dashboard/admin/'
@@ -1255,7 +1264,6 @@ export interface FileRouteTypes {
     | '/find-a-dog'
     | '/find-your-dog'
     | '/forgot-password'
-    | '/foundations'
     | '/how-it-works'
     | '/planned-litters'
     | '/planned-routes'
@@ -1334,6 +1342,7 @@ export interface FileRouteTypes {
     | '/adoptions'
     | '/breeders'
     | '/community'
+    | '/foundations'
     | '/fundraising'
     | '/transport'
     | '/dashboard/admin'
@@ -1455,6 +1464,7 @@ export interface FileRouteTypes {
     | '/_public/adoptions/'
     | '/_public/breeders/'
     | '/_public/community/'
+    | '/_public/foundations/'
     | '/_public/fundraising/'
     | '/_public/transport/'
     | '/dashboard/admin/'
@@ -1751,6 +1761,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/fundraising/'
       preLoaderRoute: typeof PublicFundraisingIndexRouteImport
       parentRoute: typeof PublicFundraisingRoute
+    }
+    '/_public/foundations/': {
+      id: '/_public/foundations/'
+      path: '/'
+      fullPath: '/foundations/'
+      preLoaderRoute: typeof PublicFoundationsIndexRouteImport
+      parentRoute: typeof PublicFoundationsRoute
     }
     '/_public/community/': {
       id: '/_public/community/'
@@ -2381,10 +2398,12 @@ const PublicCommunityRouteWithChildren = PublicCommunityRoute._addFileChildren(
 
 interface PublicFoundationsRouteChildren {
   PublicFoundationsSlugRoute: typeof PublicFoundationsSlugRoute
+  PublicFoundationsIndexRoute: typeof PublicFoundationsIndexRoute
 }
 
 const PublicFoundationsRouteChildren: PublicFoundationsRouteChildren = {
   PublicFoundationsSlugRoute: PublicFoundationsSlugRoute,
+  PublicFoundationsIndexRoute: PublicFoundationsIndexRoute,
 }
 
 const PublicFoundationsRouteWithChildren =
