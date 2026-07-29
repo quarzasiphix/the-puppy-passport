@@ -85,7 +85,12 @@ function BreederProfile() {
 
   return (
     <div>
-      <div className="relative h-64 bg-secondary md:h-80">
+      {/* pointer-events-none: this box is purely decorative (cover photo + fade), but being
+      position:relative it paints above the card below regardless of DOM order (CSS stacking
+      rule: positioned elements always paint above non-positioned in-flow siblings) — the card
+      overlaps this box via -mt-24, so without this the Follow/Report buttons are completely
+      unclickable despite being visibly rendered on top */}
+      <div className="pointer-events-none relative h-64 bg-secondary md:h-80">
         <AnimalImage src={b.cover} alt="" className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
       </div>

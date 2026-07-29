@@ -78,7 +78,10 @@ function FoundationProfile() {
 
   return (
     <div>
-      <div className="relative h-64 bg-secondary md:h-80">
+      {/* pointer-events-none: see the matching fix on the breeder detail page — this box is
+      purely decorative but, being position:relative, otherwise paints above the overlapping card
+      below regardless of DOM order and makes its buttons unclickable */}
+      <div className="pointer-events-none relative h-64 bg-secondary md:h-80">
         <AnimalImage src={f.cover} alt="" className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
       </div>
