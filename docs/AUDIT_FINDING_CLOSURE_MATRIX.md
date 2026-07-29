@@ -10,7 +10,7 @@ Latest source clone reconciled: `/p/the-puppy-passport-bot1-overnight-20260728-2
 
 | ID | Severity | Area | Status | Evidence | Fixing commit | Regression test |
 |---|---|---|---|---|---|---|
-| H-4 / NEW-H1 | High | `transport_requests.status` raw-forge to `accepted_by_customer` | **Fixed** | Reproduced live: a customer's raw update succeeded even with an expired quotation, bypassing `respond_to_quotation()`'s ownership/status/expiry checks entirely; `quotations.status` never advanced. | `(pending — this commit)` | `tests/db/quotation-dispatch-atomic-rpcs.test.ts`: "transport_requests.status: a raw update cannot forge accepted_by_customer" |
+| H-4 / NEW-H1 | High | `transport_requests.status` raw-forge to `accepted_by_customer` | **Fixed** | Reproduced live: a customer's raw update succeeded even with an expired quotation, bypassing `respond_to_quotation()`'s ownership/status/expiry checks entirely; `quotations.status` never advanced. | `66383af` | `tests/db/quotation-dispatch-atomic-rpcs.test.ts`: "transport_requests.status: a raw update cannot forge accepted_by_customer" |
 | H-2 / §5.3 | High | `create_notification_if_enabled()` arbitrary-recipient/content phishing primitive | Not yet reconciled | — | — | — |
 | H-1 / §5.2 | High | `account_deletion_requests` RLS `ALL` self-policy raw-write | Not yet reconciled | — | — | — |
 | H-3 / §5.4 / VA-25-gap | High | `moderation_cases` moderator self-resolution | Not yet reconciled | — | — | — |
