@@ -114,7 +114,8 @@ function BuyerQuotationsPage() {
                       </span>
                     </div>
                     <div className="mt-1 font-display text-2xl font-semibold">
-                      {q.total_price != null ? formatNumber(q.total_price, locale) : ""} {q.currency}
+                      {q.total_price != null ? formatNumber(q.total_price, locale) : ""}{" "}
+                      {q.currency}
                     </div>
                     {q.expiry_date && (
                       <p

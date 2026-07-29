@@ -31,7 +31,6 @@ const routeStatusLabels: Record<string, string> = {
   confirmed: "Confirmed",
 };
 
-
 export const Route = createFileRoute("/_public/planned-routes")({
   head: () => ({ meta: [{ title: "Planned routes — Havenpaw" }] }),
   loader: async () => {
