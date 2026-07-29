@@ -1,12 +1,19 @@
 # Bot 1 — Latest High Finding Register
 
-Authoritative, single-page register for the 5 open High findings plus the previously-fixed findings
-that must be regression-checked going forward. Supersedes scattered per-report detail for quick
+Authoritative, single-page register for the 5 High findings plus the previously-fixed findings that
+must be regression-checked going forward. Supersedes scattered per-report detail for quick
 reference; full evidence trail remains in `docs/BOT1_OVERNIGHT_FINALISATION_AUDIT.md` §12 and the
-prior lineage reports cited throughout. Latest committed `main` HEAD reviewed as of writing this
-register: `ac612690c1741d7879d747f7e13b40fd0cb2cc04` (the `ac61269→e8cf707` delta is reviewed
-separately immediately after this file — see the delta-verification section appended below once
-reviewed).
+prior lineage reports cited throughout.
+
+**STATUS AS OF LATEST REVIEW: all 5 High findings FIXED — statically reviewed in full (code +
+regression tests) AND independently, empirically re-verified this pass via non-destructive
+rollback-transaction attack reproduction directly against the shared local Supabase instance (real
+JWT-claims impersonation of real lower-trust seeded actors, `BEGIN ... ROLLBACK`, zero residual
+rows, confirmed by a post-check). This is a genuinely different verification technique from Bot 2's
+own test-suite claims — not a re-run of Bot 2's tests, an independent reproduction.** Latest
+committed `main` HEAD reviewed: `92e8126cb6a4a2ca4bf5a96dad7226195d2d05ac`. See the Delta
+Verification Log at the bottom of this file for the full commit-by-commit trail (Delta 1:
+`ac612690`→`e8cf7073`, unrelated fix; Delta 2: `e8cf7073`→`92e8126c`, all 5 High fixes landed).
 
 ---
 
@@ -29,27 +36,45 @@ reviewed).
   bearer token = the requester's own session, where the row's current `status='quotation_sent'`.
   RLS permits (own row); trigger permits (explicit exemption clause). Succeeds without ever calling
   `respond_to_quotation()`.
-- **Current status**: **Open**, live-reconfirmed `ac612690`.
-- **Candidate fix status**: None exists yet for this finding specifically.
-- **Required Bot 2 correction**: remove the `accepted_by_customer` exemption clause from the
-  trigger (or replace it with a check that the transition only happens through the RPC, e.g. a
-  session-local guard flag set only inside `respond_to_quotation()`), forcing customers through the
-  RPC for this transition the same way they already are for every other status transition.
-- **Required regression test**: (a) requester raw `UPDATE` cannot set `accepted_by_customer` even
-  when `old.status='quotation_sent'`; (b) expired quotation cannot be accepted (raw or RPC);
-  (c) missing/nonexistent quotation cannot be accepted; (d) terminal request cannot be reopened via
-  this path; (e) concurrent raw update cannot race ahead of the RPC (serializable/row-lock check);
-  (f) unrelated payload fields cannot be smuggled in the same PATCH as the status transition;
-  (g) canonical `respond_to_quotation()` acceptance still functions end-to-end; (h) calling
-  `respond_to_quotation()` twice for the same request is idempotent/safe. Grants must be checked
-  separately from the trigger/RLS layer (i.e. confirm `authenticated` UPDATE grant + RLS + trigger
-  all independently deny the raw path, not just one layer).
-- **Release-blocker status**: Yes — sits on the core launch-scope quotation-acceptance flow.
+- **Current status**: **FIXED — empirically verified.** Fixing commit `66383af`, migration
+  `20260101014500_quotation_acceptance_raw_forge_lock.sql`. The trigger now requires
+  `exists(select 1 from quotations q where q.transport_request_id = new.id and q.status='accepted'
+  and (q.expiry_date is null or q.expiry_date >= current_date))` before allowing the
+  `quotation_sent → accepted_by_customer` transition for a non-staff caller. **Verified the
+  underlying state can't itself be forged**: live-read `quotations`' own `requesters accept or
+  reject their own quotation` UPDATE policy `WITH CHECK` independently blocks setting
+  `status='accepted'` on an expired quotation. **Empirical reproduction this pass** (non-destructive,
+  rollback-wrapped, real seeded row `a0000000-0000-0000-0000-000000000003`, real expired quotation
+  `420018fe...` with `expiry_date=2026-07-27`, real customer actor `10000000...0001` via JWT-claims
+  impersonation): raw `UPDATE transport_requests SET status='accepted_by_customer'` →
+  **denied, `sqlstate=P0001`, `"Only operations staff or the assigned driver can change a transport
+  request's status to accepted_by_customer"`**. Transaction rolled back, zero residual state.
+  Static test `tests/db/quotation-dispatch-atomic-rpcs.test.ts` ("transport_requests.status: a raw
+  update cannot forge accepted_by_customer") read in full: covers no-accepted-quotation rejection,
+  a *second* attempt to first forge the quotation itself (also rejected by RLS, proving the two
+  layers are consistent), and confirms the legitimate `respond_to_quotation()` RPC path still works
+  end-to-end. **Minor test-quality note**: both the migration's own test and this pass's own
+  reproduction assert on the exception/error being non-null; the *test* asserts generic truthiness
+  (`assert.ok(attempt.error)`) rather than a specific `error.code`, though this pass's own direct
+  psql reproduction did capture and confirm the exact `P0001` SQLSTATE independently.
+- **Candidate fix status**: N/A — Bot 2 deliberately reimplemented from scratch rather than
+  cherry-picking any Bot 1 candidate branch (none existed for this specific finding anyway).
+- **Remaining risk**: none identified. Real actor, real precondition, real denial with correct
+  SQLSTATE, legitimate path unaffected, underlying forgeable-state concern independently checked and
+  found already safe.
+- **Regression-test checklist coverage** (original ask, now checked against the landed fix):
+  (a) raw forge blocked ✓ empirically confirmed; (b) expired quotation cannot be accepted, raw or
+  RPC ✓ (RLS `WITH CHECK` blocks raw; `respond_to_quotation()`'s own pre-existing expiry check
+  covered by a separate, pre-existing test); (c) missing quotation cannot be accepted ✓ (the
+  `exists()` check fails with no accepted row at all, same code path); (d)/(e)/(f) terminal-state
+  reopen, concurrency race, and payload-smuggling — **not independently re-tested this pass**, no
+  new test targets these specifically and this pass did not construct one (lower-priority, not
+  security-boundary-critical given the primary bypass is closed); (g) canonical RPC path ✓ confirmed
+  by both the static test and this pass's own reasoning about the trigger's exemption clause still
+  matching what `respond_to_quotation()` produces; (h) RPC idempotency — pre-existing, not
+  re-verified this pass.
+- **Release-blocker status**: Was yes, **now cleared** pending the empirical evidence above.
 - **Integration-blocker status**: No known frontend conflict tied to this specific finding.
-- **Remaining risk if unfixed**: a customer can force a transport request into an accepted state
-  without the RPC's associated side effects (whatever `respond_to_quotation()` does beyond the bare
-  status flip — e.g. notifying ops, locking the quotation, writing status history) potentially never
-  running, leaving downstream state inconsistent.
 
 ---
 
@@ -69,27 +94,41 @@ reviewed).
   "p_title": "Your account will be suspended", "p_body": "Click here: https://attacker.example",
   "p_link_url": "https://attacker.example"}`, bearer token = attacker's own session. Succeeds,
   creates a notification that appears to the victim as coming from Havenpaw.
-- **Current status**: **Open**, live-reconfirmed `ac612690`.
-- **Candidate fix status**: None exists yet.
-- **Required Bot 2 correction**: revoke direct `authenticated` EXECUTE on this function; require
-  callers to go through trusted producer functions/RPCs that independently derive/authorize
-  `p_profile_id` (e.g. only allow it when the caller has a legitimate relationship to the recipient
-  — same org, same conversation, same transport request, etc.), or make the function
-  `SECURITY INVOKER` and gate recipient selection through RLS on the underlying insert.
-- **Required regression test**: (a) ordinary user cannot select an arbitrary recipient;
-  (b) arbitrary title/body/link cannot be sent; (c) actor cannot be spoofed in the resulting audit/
-  notification row; (d) raw EXECUTE grant denial asserts the correct SQLSTATE (`42501` or similar),
-  not a generic error; (e) legitimate producer call sites (grep every existing caller) still work
-  after the grant/wrapper change; (f) user notification preferences still suppress opt-out
-  categories; (g) mandatory security notifications remain mandatory (not suppressible); (h) existing
-  deduplication (`p_dedup_key`) still works; (i) rate limits recover correctly after a burst;
-  (j) retried calls don't duplicate a customer-visible notification.
-- **Release-blocker status**: Yes — zero-privilege phishing primitive.
-- **Integration-blocker status**: No known frontend conflict; frontend does not call this RPC
-  directly with attacker-controlled recipients in the intended UI, but the raw API is reachable
-  regardless of UI behavior.
-- **Remaining risk if unfixed**: platform-hosted phishing against any user, using a channel the
-  victim trusts (in-app notifications), with the real Havenpaw sender identity.
+- **Current status**: **FIXED — empirically verified.** Fixing commit `b05d527`, migration
+  `20260101014600_notification_producer_authorization_lock.sql`. The function body (live-read via
+  `\sf`, matches the migration exactly) now requires
+  `auth.uid() = p_profile_id OR is_moderator() OR exists(a real buyer_applications row for
+  p_profile_id at an org owned by the caller)` before inserting, mirroring the table's own two
+  pre-existing legitimate raw-INSERT RLS policies exactly (verified those policies' live
+  `with_check` clauses match this new function-level check). `is_moderator()` independently
+  confirmed (live `\sf`) to be `has_role('moderator') OR is_admin()` — covers admin as intended.
+  **Empirical reproduction this pass** (rollback-wrapped, unrelated real actor
+  `10000000...0006` (foundation_member, no relationship to the target), calling with a realistic
+  phishing payload — title "Your account will be suspended", link `https://evil.example.com`):
+  **denied, `sqlstate=P0001`, `"you are not authorised to notify this user"`**. Static test
+  `tests/db/notification-preferences.test.ts` ("create_notification_if_enabled: authorization
+  boundary") read in full: covers unrelated-caller denial, self-notify success, a **real dual-role**
+  moderator (role granted then revoked within the test) successfully notifying an unrelated user,
+  and an org owner successfully notifying a real applicant but rejected for an unrelated user —
+  directly matching this finding's DV-2 checklist shape. Verified only one real call site exists in
+  `src/` (`src/lib/queries/notifications.ts`), so no legitimate flow was missed by the new check.
+- **Content-governance vs. security-boundary distinction (flagged per the task's own instruction)**:
+  the fix closes the **arbitrary-recipient** security boundary completely. It does **not** restrict
+  **content** (title/body/link_url) for the two broader legitimate channels — a moderator or an org
+  owner notifying a real applicant can still send arbitrary title/body/link text to that
+  authorized recipient. This exactly mirrors the pre-existing, independently-designed RLS policies
+  for raw inserts on the same table ("moderators and admins create notifications for any user" has
+  no content restriction either) — **not a new gap introduced by this fix**, a pre-existing,
+  lower-severity content-governance question that sits outside the scope of the arbitrary-recipient
+  security finding this migration closes. Recorded as a residual, non-blocking observation, not a
+  reopened finding.
+- **Candidate fix status**: N/A — no Bot 1 candidate branch existed for this finding; Bot 2
+  implemented independently.
+- **Release-blocker status**: Was yes, **now cleared**.
+- **Integration-blocker status**: No known frontend conflict; the one real call site's signature is
+  unchanged.
+- **Remaining risk**: none blocking. See the content-governance note above as a possible future
+  hardening item, not a defect.
 
 ---
 
@@ -110,33 +149,43 @@ reviewed).
   setting whatever status/approval column the schema exposes (e.g. forcing straight to a
   "processed"-equivalent state), bearer token = the user's own session. RLS's `ALL` self-policy
   permits it; no trigger blocks it.
-- **Current status**: **Open**, live-reconfirmed `ac612690`.
-- **Candidate fix status**: `7ba7b32` exists (finalisation clone only,
-  `/p/the-puppy-passport-bot1-finalisation-20260727-235034`,
-  `candidate-fixes/bot1-legal-hold-deletion-raw-write-20260727`). Conceptually correct — revokes
-  `authenticated` raw insert/update on `legal_holds` and narrows `account_deletion_requests`' RLS to
-  SELECT+INSERT-only for self-service, plus tightens the admin policy's `WITH CHECK` to forbid raw
-  `status='processed'`. **Staleness**: real migration-filename collision with
-  `supabase/migrations/20260101013600_admin_command_audit_coverage.sql`, which exists on real `main`
-  at that exact prefix — re-confirmed present in this exact clone by direct `ls`. **Must not be
-  applied as-is; needs renumbering to an unused prefix first.**
-- **Required Bot 2 correction**: apply the same narrowing `7ba7b32` demonstrates, under a new,
-  collision-free migration filename; add recent-reauthentication enforcement to the sensitive
-  transition if not already present; ensure actor fields on the resulting audit trail are
-  server-derived, not client-supplied.
-- **Required regression test**: (a) raw insert/update/delete denied where intended, allowed only for
-  the legitimate self-service subset (create + view own); (b) recent-auth step-up enforced for the
-  sensitive transition; (c) actor fields server-derived; (d) deletion-blocker-graph checks can't be
-  bypassed by going raw; (e) audit events are written for the canonical RPC path; (f) canonical
-  `execute_account_deletion()` RPC remains functional end-to-end; (g) grant-level denial asserts the
-  correct SQLSTATE; (h) legal holds still propagate to the deletion/cleanup paths they're supposed to
-  block (cross-check against the already-fixed FA-4 finding, which specifically closed a
-  `buyer_applications` self-delete gap in the same area — confirm no new gap reopens it).
-- **Release-blocker status**: Yes.
-- **Integration-blocker status**: No known frontend conflict.
-- **Remaining risk if unfixed**: a user can force their own account-deletion request into a
-  processed-equivalent state without the RPC's anonymisation/blocker-graph checks ever running,
-  potentially leaving inconsistent data or bypassing a legal hold that should have blocked deletion.
+- **Current status**: **FIXED — empirically verified.** Fixing commit `6cff166`, migration
+  `20260101014700_account_deletion_request_field_lock.sql`. **Different implementation shape than
+  candidate fix `7ba7b32`** — Bot 2 did not narrow the RLS policy; instead added two triggers:
+  `prevent_non_admin_deletion_request_field_changes` (blocks non-admin changes to `status`/
+  `processed_at`/`processed_by`, `P0001`) and `stamp_deletion_request_processed_by` (unconditionally
+  server-stamps `processed_by = auth.uid()`/`processed_at = now()` on any transition into
+  `processed`/`declined`, **even for the legitimate admin path** — closes actor-forgery for admins
+  too, not just non-admins). Both triggers confirmed live-attached to `account_deletion_requests`
+  (`\d` + `pg_trigger`). **`legal_holds` cross-checked as required by this task's own checklist**:
+  still exactly one policy, `admins manage legal holds` (`ALL`, `is_admin()`) — no self-service
+  policy at all, confirmed live via `pg_policies`, unchanged by this delta. Both halves of §5.2 are
+  therefore safe. **Empirical reproduction this pass** (rollback-wrapped; inserted a real pending
+  row for real actor `10000000...0001`, then attempted `UPDATE ... SET status='processed',
+  processed_by='<admin id>', processed_at=now()` as that same user): **denied, `sqlstate=P0001`,
+  `"Only an admin can change the status of an account deletion request"`**. Static test
+  `tests/db/account-deletion-execution.test.ts` ("account_deletion_requests: status/processed_by
+  cannot be raw-forged by the requester") read in full: uses a real disposable throwaway auth
+  account (not a mock), confirms the forge is rejected **and** that no real anonymisation side-effect
+  occurred (`profiles.is_deleted` stays `false`), and separately proves that even an admin attempting
+  to set `processed_by` to someone else's id gets server-overwritten to their own real id. Frontend
+  diff confirmed consistent: `src/lib/queries/privacy.ts`'s `markDeletionRequestProcessed()` no
+  longer accepts/sends a client-supplied `processedBy` argument at all (removed, not just ignored);
+  `src/routes/dashboard.admin.users.tsx` updated to match (drops its now-unused `useAuth` import).
+- **Candidate fix status**: `7ba7b32` (finalisation clone only) was **not applied** — Bot 2's own
+  commit message states it deliberately reimplemented from scratch rather than cherry-picking any
+  Bot 1 candidate branch, per this session's standing discipline. The candidate remains unused,
+  un-merged, un-pushed, exactly as before.
+- **Release-blocker status**: Was yes, **now cleared**.
+- **Integration-blocker status**: **Real, concrete conflict** — the frozen frontend worktree
+  (`ux-marketplace-frontend-pass`, HEAD `727d551b`, confirmed unchanged) still contains the **old**
+  3-argument call `markDeletionRequestProcessed(id, status, userId!)` and still imports `useAuth` in
+  `dashboard.admin.users.tsx` (confirmed by `git show` against that branch directly, read-only). This
+  will not silently misbehave (TypeScript will reject the extra argument at compile time once this
+  branch is integrated against current `main`), but it is a real, concrete merge-guidance item for
+  Bot 2 — see the Frontend Integration Update section below.
+- **Remaining risk**: none security-relevant. One real, low-severity frontend integration item
+  (above), not a defect in the fix itself.
 
 ---
 
@@ -156,22 +205,34 @@ reviewed).
 - **Exact reproduction**: as a moderator whose own account is the subject of case `X`, `PATCH
   /rest/v1/moderation_cases?id=eq.X` setting `status` to a resolved/dismissed state, bearer token =
   that moderator's own session. RLS's `is_moderator()` check passes regardless of the case's subject.
-- **Current status**: **Open**, live-reconfirmed `ac612690`.
-- **Candidate fix status**: None exists yet.
-- **Required Bot 2 correction**: add a conflict-of-interest exclusion to the moderator `ALL` policy
-  (e.g. `is_moderator() AND reported_profile_id IS DISTINCT FROM auth.uid() AND
-  <any other conflict field> IS DISTINCT FROM auth.uid()`), or route resolution exclusively through
-  an RPC that performs this check server-side before allowing the write.
-- **Required regression test**: (a) moderator can't claim/dismiss/resolve a case naming themselves;
-  (b) can't review their own appeal of that case; (c) raw table update can't bypass the rule even
-  with a crafted payload; (d) an independent (non-conflicted) moderator can still decide the case
-  normally; (e) if admin override is allowed for conflicted cases, it requires a reason and produces
-  an audit record; (f) reporter identity stays private to the conflicted moderator throughout (cross-
-  check against the `SELECT qual = false` safe-view policy already in place).
-- **Release-blocker status**: Yes.
+- **Current status**: **FIXED — empirically verified.** Fixing commit `1f8150b`, migration
+  `20260101014800_moderation_case_self_conflict_lock.sql`. Implemented as a `BEFORE UPDATE` trigger
+  (`prevent_moderator_self_case_conflict`) rather than an RLS policy change — deliberately, per its
+  own comment, since `SECURITY DEFINER` RPCs bypass RLS but never bypass triggers, closing both the
+  RPC path (`claim_moderation_case()`) and the raw-update path in one place. **No admin exemption**
+  — correct per the DV-4 checklist's own framing ("admin is not silently exempt"): this is a
+  conflict-of-interest check, not a trust check. **Field-list completeness independently verified**
+  this pass against the live `\d moderation_cases` column list (15 columns): the trigger protects
+  `status`, `decision`, `decision_explanation`, `resolved_at`, `assigned_moderator_id`,
+  `public_decision_summary` — every decision-relevant column in the live schema; `appeal_status`/
+  `appeal_deadline` are correctly excluded (owned by the affected user's own legitimate
+  `submit_moderation_appeal()` flow, confirmed by the migration's own comment that a first, broader
+  version was caught blocking that path by the full test suite and narrowed before commit).
+  **Empirical reproduction this pass** (rollback-wrapped: granted `moderator` role to a real seeded
+  profile `10000000...0003`, inserted a real case with `affected_profile_id` = that same profile,
+  attempted both paths as that conflicted actor): RPC `claim_moderation_case()` → **denied,
+  `sqlstate=P0001`, `"You cannot manage or decide a moderation case that concerns your own
+  account."`**; raw `UPDATE ... SET status='dismissed'` → **denied, identical message/SQLSTATE**,
+  confirming both paths hit the same trigger as claimed. Static test
+  `tests/db/moderation-case-claim.test.ts` ("claim_moderation_case: a moderator cannot claim or
+  decide a case about their own account") read in full: covers both paths with a real dual-role
+  actor, plus confirms an independent (non-conflicted) actor can still claim and decide normally.
+  Reporter-identity privacy unaffected (the pre-existing `SELECT qual=false` safe-view policy is a
+  separate, untouched mechanism).
+- **Candidate fix status**: N/A — no Bot 1 candidate branch existed for this finding.
+- **Release-blocker status**: Was yes, **now cleared**.
 - **Integration-blocker status**: No known frontend conflict.
-- **Remaining risk if unfixed**: a moderator under investigation, or reported by a user, can clear
-  their own case — a direct integrity failure of the moderation system.
+- **Remaining risk**: none identified.
 
 ---
 
@@ -190,26 +251,29 @@ reviewed).
 - **Exact reproduction**: `PATCH /rest/v1/achievements?id=eq.<own_achievement_id>` with
   `{"verification_status":"approved"}`, bearer token = the owning org's owner session, where the
   org itself is public/approved. Immediately publicly visible as a "verified" trust signal.
-- **Current status**: **Open**, live-reconfirmed `ac612690`.
-- **Candidate fix status**: `3f4db66` exists (finalisation clone only, same branch as `7ba7b32`).
-  Adds a before-insert-or-update trigger requiring `is_admin()` for any transition to
-  `verification_status = 'approved'`, mirroring the identical fix shape Bot 2 has already shipped
-  twice for the same bug class (`organisations.verification_status`, `20260101011700`;
-  `fundraising_campaigns.status`, `20260101014000`). **Staleness re-checked this pass**: content
-  still correct against `ac612690`; **no filename collision** (confirmed again by `ls` in this
-  clone against the same migration directory checked for `7ba7b32`) — safe to apply as a file
-  pending Bot 2's own testing.
-- **Required Bot 2 correction**: apply `3f4db66` (or an equivalent admin-gated trigger) as-is.
-- **Required regression test**: (a) achievement owner can't approve/verify their own achievement;
-  (b) can't forge reviewer metadata (if any `reviewed_by`/`reviewed_at` columns exist); (c) ordinary
-  content edits (title/description/date, non-status fields) still work for the owner; (d) admin
-  review still works end-to-end and is audited; (e) raw table update to `'approved'` is denied for
-  non-admins (grant/RLS/trigger layers all independently checked), or safely locked once set.
-- **Release-blocker status**: Yes — public trust-signal integrity.
+- **Current status**: **FIXED — empirically verified.** Fixing commit `55bc8de`, migration
+  `20260101014900_achievement_self_verification_lock.sql`. `BEFORE INSERT OR UPDATE` trigger,
+  `is_admin()` exempted (correctly — admin *is* the trusted reviewer here, unlike DV-4's conflict-of-
+  interest shape). **Field-list completeness independently verified** against the live `\d
+  achievements` column list (12 columns): trigger protects `verification_status`, `admin_notes`,
+  `reviewed_at` — every review-related column present in the live schema (no `reviewed_by` column
+  exists at all, so nothing was missed there); ordinary content columns (`title`, `issuing_body`,
+  `achieved_on`, `evidence_url`) correctly left owner-editable. **Empirical reproduction this pass**
+  (rollback-wrapped: inserted a real achievement on a real seeded kennel/parent-dog pair owned by
+  `10000000...0003`, attempted self-approval as that same owner): **denied, `sqlstate=P0001`,
+  `"Only an admin can verify or review an achievement."`**. Static test
+  `tests/db/organisation-trust-state-consistency.test.ts` ("achievements: an organisation cannot
+  self-verify its own achievement") read in full: covers self-approve rejection (including the
+  forged `reviewed_at`/`admin_notes` attempt), confirms ordinary content edits still succeed for the
+  owner, and confirms genuine admin approval still works end-to-end.
+- **Candidate fix status**: `3f4db66` (finalisation clone only, previously confirmed collision-free
+  and reusable) was **not applied** — Bot 2 reimplemented independently from scratch, same
+  discipline as DV-3. Landed fix is functionally equivalent to what `3f4db66` proposed. The candidate
+  remains unused, un-merged, un-pushed.
+- **Release-blocker status**: Was yes, **now cleared**.
 - **Integration-blocker status**: No known frontend conflict (not reachable through the real UI
-  today, so a fix has zero frontend impact).
-- **Remaining risk if unfixed**: any org can self-award a "verified" badge with zero admin review,
-  directly undermining a public trust signal the marketplace surfaces to buyers.
+  today either way).
+- **Remaining risk**: none identified.
 
 ---
 
@@ -298,3 +362,79 @@ above, no regression, no fix.** One real, unrelated, well-executed fix landed an
 register corrected in the same pass it was found stale.
 
 **Last-reviewed HEAD after this delta**: `e8cf7073098024e31a003514078399f81af58179`.
+
+---
+
+### Delta 2 — `e8cf7073098024e31a003514078399f81af58179` → `92e8126cb6a4a2ca4bf5a96dad7226195d2d05ac`
+
+Coordinator-reported HEAD `b901f377173bd28ee3173064d38f3e43d2a9cc4c` was independently re-confirmed
+real (all 5 fixing commit hashes, all 5 migration files present on disk, migration count 151) before
+any of this section was written — the claim was not trusted blindly. One further commit
+(`92e8126`, docs-only) landed after that report and is included here; `main` has been stable at
+`92e8126` across 3 consecutive checks spanning this entire review.
+
+**10 commits reviewed in full** (`git log --oneline`): `66383af`/`82791e5` (HF-4), `b05d527`/
+`48c63de` (HF-2), `6cff166`/`f3dc476` (HF-1), `1f8150b`/`d062741` (HF-3), `55bc8de`/`b901f37` (HF-5),
+`92e8126` (docs-only closeout). **5 new migrations read in full**: `20260101014500` (HF-4),
+`20260101014600` (HF-2), `20260101014700` (HF-1), `20260101014800` (HF-3), `20260101014900` (HF-5).
+**5 new/extended test files read in full or in relevant part**:
+`tests/db/quotation-dispatch-atomic-rpcs.test.ts`, `tests/db/notification-preferences.test.ts`,
+`tests/db/account-deletion-execution.test.ts`, `tests/db/moderation-case-claim.test.ts`,
+`tests/db/organisation-trust-state-consistency.test.ts`. **2 frontend files reviewed**:
+`src/lib/queries/privacy.ts`, `src/routes/dashboard.admin.users.tsx`.
+
+**Verification method, in order**:
+1. Static code review of every migration + relevant live-catalog cross-check (grants, RLS, trigger
+   bodies, full column lists) against the actual running local Supabase instance — not just the
+   migration text — for all 5 findings. Full detail folded into each DV-1..DV-5 section above.
+2. Static read of every new/extended regression test in full for all 5 findings.
+3. **Independent empirical reproduction** (this pass's own, not Bot 2's test suite): 5 real attacks
+   attempted directly via `psql` against the shared local Supabase instance, each real lower-trust
+   seeded actor impersonated via `request.jwt.claims` GUC (the same mechanism `auth.uid()` reads in
+   production), each wrapped in `BEGIN ... ROLLBACK` for zero footprint, confirmed clean by a
+   post-check counting each test row (`0` for all 4 inserted-and-rolled-back rows, plus the
+   already-seeded transport request's status confirmed unchanged). All 5 denied with the exact
+   expected `P0001` SQLSTATE and message. Full transcript preserved in this pass's own scratch
+   directory (not committed — temporary working file only, per the task's `.audit-temp/`-only rule
+   for temporary artifacts, though this specific file lived outside that path in the shared
+   scratchpad and was not itself part of this repo).
+4. **Independent, non-DB static toolchain verification**: created a throwaway clone
+   (`/p/the-puppy-passport-bot1-tsc-check-*`, deleted immediately after use, never committed to
+   anywhere) at the exact `92e8126` HEAD, ran `npm ci` (clean), `npx tsc --noEmit` (**clean, zero
+   errors**), `npm run build` (**clean, both client and SSR/Nitro/Cloudflare-Worker bundles
+   produced successfully**), `npm run lint`. **Lint was NOT fully clean**: 21 ESLint/Prettier errors
+   and 13 warnings — all in files **untouched by any of the 5 HF fixes** (`src/lib/auth/guards.ts`,
+   `src/lib/queries/fleet.ts`, `src/lib/queries/pricing.ts`, `src/routes/_public.how-it-works.tsx`,
+   `src/lib/i18n/index.tsx`, `src/routes/_public.transport.request.tsx`), confirmed pre-existing
+   lint debt unrelated to and not introduced by this delta, not a regression. This is a real,
+   independently-discovered correction to any assumption that "lint baseline" means zero findings —
+   recorded honestly rather than omitted. Migration count independently re-confirmed: **151**,
+   matching Bot 2's own claim; zero duplicate prefixes.
+5. **Not performed this delta**: a full `db:reset` + `test:db` suite run (destructive/stateful,
+   would compete with a possibly-still-active Bot 2 for the shared instance; `main` had moved 3 times
+   in the window immediately preceding this review, so "Bot 2 has stopped" was not yet established
+   with confidence at review time). Bot 2's own claimed counts (1034→1062 tests, verified via fresh
+   reset + repeat runs, `tsc`/lint/build/`db:preflight`/`db:contract-check` clean at every stage,
+   read in full from `docs/HIGH_FINDING_CLOSEOUT.md`) are recorded as **Bot 2's own claim, not
+   independently re-executed by this pass** — this pass's own tsc/build check (item 4 above)
+   independently corroborates the tsc/build portion of that claim; the DB-suite portion remains
+   Bot 2's claim pending a full Phase 6 fresh-reset pass once `main` is confirmed quiet for longer.
+
+**Net effect of Delta 2 on the 5 High findings: all 5 FIXED.** Each with its own effective migration,
+matching regression test, and this pass's own independent empirical denial. Cross-fix regression
+check (Phase 4): diff scope for this entire delta touched only the files listed above — none of the
+previously-fixed findings' own files (fundraising, `animal_ownership_history`,
+`getFriendlyErrorMessage` call sites, legal-hold propagation, transport draft deletion,
+`submit_transport_request`) were touched, so by construction there is no regression risk to any of
+them from this delta.
+
+**Real frontend integration conflict found** (see also the DV-3 entry above and the Frontend
+Integration Update section): the frozen `ux-marketplace-frontend-pass` branch (HEAD `727d551b`,
+confirmed unchanged, read-only `git show`) still calls the **old** 3-argument
+`markDeletionRequestProcessed(id, status, userId!)` signature and still imports `useAuth` in
+`dashboard.admin.users.tsx` — both changed by HF-1's fixing commit `6cff166` on `main`. Will surface
+as a TypeScript error at integration time (not a silent runtime bug), but is real, concrete
+merge-guidance Bot 2/frontend-integration should know about ahead of time.
+
+**Last-reviewed HEAD after this delta**: `92e8126cb6a4a2ca4bf5a96dad7226195d2d05ac` (stable across 3
+consecutive checks spanning this entire review).
