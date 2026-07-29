@@ -224,7 +224,7 @@ reviewed).
 | Raw Postgres error sanitisation | `getFriendlyErrorMessage`, 34 call sites | Customer-facing errors remain sanitised; no raw SQLSTATE/constraint-name leakage in new code paths |
 | Legal-hold protection for self-delete paths | `58c1589`/`6dbba45` (Stage FA-4) | Legal holds still block the specific `buyer_applications` self-delete path FA-4 closed, and any newly-added self-delete path is checked against the same blocker graph |
 | Transport draft deletion | migration `20260101014100_draft_delete_cascade_lock_fix.sql` (test-hygiene fix) | Normal (unsubmitted) draft deletion still works; a *submitted* request remains protected from deletion |
-| `submit_transport_request` atomicity and saved-draft submission | `20260101006700_create_transport_draft_rpc.sql` / related dispatch RPCs | The RPC remains atomic (all-or-nothing); submitting a previously-saved draft updates the existing row in place rather than creating a duplicate; request actor (`requester_profile_id`) remains server-derived, not client-suppliable; status history is written exactly once per transition, not duplicated on retry |
+| `submit_transport_request` atomicity and saved-draft submission | **`20260101014400_submit_transport_request_atomic_rpc.sql`, commits `50f1565`/`2fb1541`** — fixed in the `ac61269→e8cf707` delta, corrected from this register's own first draft which mis-cited an earlier, unrelated migration as already having closed this. See the Delta Verification Log below for full detail. | The RPC remains atomic (all-or-nothing); submitting a previously-saved draft updates the existing row in place rather than creating a duplicate; request actor (`requester_profile_id`) remains server-derived, not client-suppliable; status history is written exactly once per transition, not duplicated on retry |
 
 ---
 
@@ -232,5 +232,69 @@ reviewed).
 
 This register is updated at each delta-verification checkpoint (Phase 3 of the current task) as
 each finding's status changes. See `docs/BOT1_OVERNIGHT_FINAL_HANDOFF.md` for the broader pass
-history this register sits within, and the delta log appended to this same `docs/` directory (or
-inline below, once the first delta is reviewed) for the exact commit-by-commit verification trail.
+history this register sits within.
+
+---
+
+## Delta Verification Log
+
+### Delta 1 — `ac612690` → `e8cf7073098024e31a003514078399f81af58179`
+
+Reviewed via `git -C /p/the-puppy-passport log --oneline`/`diff --stat`/`diff` between the two HEADs
+(committed source only, no uncommitted files inspected). 3 commits:
+
+1. **`50f1565` "Convert createTransportRequest to an atomic RPC, fix a real submit bug"** +
+   **`2fb1541`** (commit-hash-fill-in follow-up). New migration
+   `supabase/migrations/20260101014400_submit_transport_request_atomic_rpc.sql` (220 lines, read in
+   full), new RPC `public.submit_transport_request(p_request jsonb, p_draft_id uuid default null)`
+   (`SECURITY DEFINER`, `EXECUTE` revoked from `public`/granted only to `authenticated`). Closes a
+   real, previously-open item from `docs/TRANSACTIONAL_WORKFLOW_BOUNDARIES_AUDIT.md` (non-
+   transactional request+history writes) **and** a second, more severe, previously-undocumented bug:
+   the public standalone transport-request form always auto-saves a draft first, then resubmission
+   attempted a second `INSERT` with the *same* id, which necessarily violated the primary key and
+   always failed — i.e. submitting any previously-saved draft was completely broken before this fix.
+   - **Relation to the 5 open Highs**: **none — disjoint code path.** This RPC only ever transitions
+     `status: 'draft' → 'submitted'` (guarded by `t.requester_profile_id = v_requester and
+     t.status = 'draft'` in its own `WHERE` clause, not relying on RLS alone). DV-1/NEW-H1 concerns
+     the unrelated `quotation_sent → accepted_by_customer` transition on an already-submitted
+     request, gated by a different trigger clause entirely. No overlap, no regression risk to DV-1.
+   - **Own-merit review**: ownership + current-status checked server-side in the `UPDATE ... WHERE`
+     clause (defense in depth beyond RLS); `requester_profile_id` is always `auth.uid()`-derived,
+     never taken from the client payload (confirmed by reading the function body — the payload's
+     `id` is extracted and passed as `p_draft_id`, never as `requester_profile_id`); initial
+     `transport_status_history` row written in the same transaction/statement list. `src/lib/queries/
+     transport.ts`'s `createTransportRequest()` now calls this RPC instead of two raw writes;
+     `src/routes/_public.transport.request.tsx` no longer performs the now-unnecessary
+     separate best-effort draft-delete after submission. New tests added in
+     `tests/db/transport-domain.test.ts` (read by name, not re-executed live this round): fresh-
+     submission atomicity, in-place draft update with no duplicate-key failure, ownership
+     enforcement ("cannot submit another user's draft"), re-submission guard ("cannot re-submit an
+     already-submitted request"), and actor-forgery resistance ("a forged requester_profile_id in
+     the payload is ignored") — directly matching the regression-test shape this register itself
+     specifies for this finding. Commit message states "1034/1034 tests, verified on a fresh reset
+     plus one more run without reset" — **not independently re-executed by this Bot 1 pass**, taken
+     as Bot 2's own claim, not verified firsthand.
+   - **Register correction**: this register's own first draft (committed `84c0cf5`, minutes earlier)
+     mis-cited this exact gap as already closed by an older migration
+     (`20260101006700_create_transport_draft_rpc.sql`, which only ever built the *draft-saving* RPC,
+     not final submission atomicity). Corrected above. This is exactly the kind of drift the
+     delta-verification loop exists to catch.
+   - **Status**: **Fixed** (new fix, not a regression check of a prior fix — this was genuinely open
+     immediately prior to this delta).
+
+2. **`e8cf707` "Correct the record: Bot 1 is a real independent auditor after all"**. Docs-only,
+   2 lines added to `docs/AUTONOMOUS_BACKEND_PROGRESS.md`. Bot 2 correcting its own earlier-recorded
+   conclusion (an "FA-2" self-audit stage had concluded "no Bot 1 process exists" because it only
+   checked the primary repo; Bot 2 now documents that Bot 1 runs from sibling read-only clones, each
+   a real git clone of this repo's history). No code/schema/security change. No action required.
+
+3. **Migration-prefix/count check**: `20260101014400` — no collision with any existing prefix on
+   `main` (including the two prefixes this register already tracks for candidate-fix staleness,
+   `20260101013600` and the finalisation-clone-only candidate fixes, neither of which this delta
+   touches).
+
+**Net effect of Delta 1 on the 5 open High findings**: **none — all 5 remain exactly as recorded
+above, no regression, no fix.** One real, unrelated, well-executed fix landed and is recorded;
+register corrected in the same pass it was found stale.
+
+**Last-reviewed HEAD after this delta**: `e8cf7073098024e31a003514078399f81af58179`.
