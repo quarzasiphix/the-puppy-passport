@@ -89,6 +89,16 @@ admin-only policy, unchanged.
 
 ## Fresh reset / test count / repeat runs / third stateful run
 
+**UPDATE (later round, superseding the "not performed" note below, kept for history):** performed
+in full in a subsequent round, once main had stayed quiet for 5+ consecutive checks and
+`pg_stat_activity` confirmed idle. **1062/1062 tests pass, 0 failures, 3 consecutive full runs**
+(fresh-reset-equivalent state, then 2 repeats without reset). Full account, including a real,
+disclosed `supabase db reset` CLI infrastructure failure and its manual recovery (not a Bot 2
+defect), is in `docs/BOT1_LATEST_HIGH_FINDING_REGISTER.md`'s "Domain 7" section and
+`docs/BOT1_RELEASE_AND_REAL_BETA_DECISION.md`. This independently confirms Bot 2's own claimed final
+count of 1062, not merely trusts it.
+
+*(Original note from the round this section was first written, kept verbatim for the record:)*
 **Not performed this round.** A full `db:reset` + `npm run test:db` cycle is destructive/stateful
 against a shared instance; `main` moved 3 times in the window immediately preceding this review
 (`ac61269`→`e8cf707`→`b901f37`→`92e8126`), so a confirmed Bot 2 "stopped" state was not established
@@ -121,8 +131,11 @@ the SSR/Nitro/Cloudflare-Worker server bundle built successfully.
 
 ## Preflight / contract-check
 
-Not independently re-executed this round (both require DB connectivity in a way this round avoided
-per the destructive-cycle caution above). Bot 2's own claim: clean at every HF stage.
+**UPDATE**: independently re-executed in the subsequent round referenced above — both **clean**
+(`db:preflight`: 151 migrations scanned, no unsafe patterns; `db:contract-check`: 70 tables/43 RPCs
+match baseline). Original note kept for history: not independently re-executed this round (both
+require DB connectivity in a way this round avoided per the destructive-cycle caution above). Bot
+2's own claim: clean at every HF stage.
 
 ## Migration count / duplicate prefixes
 
