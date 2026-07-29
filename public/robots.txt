@@ -1,0 +1,8 @@
+# All dashboard routes (buyer, breeder, foundation, driver, operations, admin) require
+# authentication and are role-gated by RLS — nothing behind /dashboard/ should ever be indexed.
+User-agent: *
+Disallow: /dashboard/
+
+# No sitemap.xml yet (no production domain is configured — see docs/PRODUCTION_SETUP.md) and no
+# dynamic sitemap-generation route exists in this codebase. Add a `Sitemap:` line here once both
+# exist; do not guess a domain in the meantime.
