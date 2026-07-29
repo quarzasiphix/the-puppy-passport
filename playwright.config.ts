@@ -16,7 +16,12 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Run with `npm run test:e2e:mobile` — a real device profile (viewport + touch + UA), not
+    // just a resized desktop window, so tap-target and layout regressions are caught for real.
+    { name: "mobile", use: { ...devices["iPhone 13"] } },
+  ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
