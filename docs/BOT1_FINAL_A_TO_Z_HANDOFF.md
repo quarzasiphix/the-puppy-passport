@@ -7,17 +7,22 @@ number below is independently verified this session, not carried from memory.
 
 - Audit clone: `/p/the-puppy-passport-bot1-overnight-20260728-233809`, branch
   `audit/bot1-overnight-20260728-233809`.
-- Real backend: `/p/the-puppy-passport`, branch `main`. **Certified HEAD**:
-  `54b06d79bdaec4c44ea8947bf20e9585108bc2aa`. **Current tip at handoff time**:
-  `54846e0036c117eec5078cfa41ffb95dc6e803bf` (one docs-only commit atop the certified HEAD,
-  Bot 2's own freeze announcement — `docs/CURRENT_RELEASE_STATUS.md`).
+- Real backend: `/p/the-puppy-passport`, branch `main`. **CERTIFIED HEAD (final, authoritative):
+  `54846e0036c117eec5078cfa41ffb95dc6e803bf`** — independently, freshly empirically re-certified
+  directly against this exact HEAD (not merely inherited from the earlier `54b06d79` certification).
+  **Formal statement issued**: "Frontend integration may now begin from frozen backend HEAD
+  54846e0036c117eec5078cfa41ffb95dc6e803bf."
 - Frozen frontend: `ux-marketplace-frontend-pass`,
   `/p/the-puppy-passport-ux/.claude/worktrees/marketplace-ux-pass`, HEAD `727d551b8306cf6bd5ce8a2b542ac118b1c4f417`
   — confirmed unchanged across this entire session, every round.
-- Integration worktree/branch: **does not exist yet** — `/p/the-puppy-passport-integration` /
-  `integration/frontend-backend-rc` checked and confirmed absent as of this handoff.
+- Integration worktree/branch: **now exists** — `/p/the-puppy-passport-integration`,
+  `integration/frontend-backend-rc`, HEAD `0d946e6c7291f1e1bfc497537863dfb279b11cbf`, **currently
+  dirty with an active, unresolved merge conflict** (`UU src/lib/queries/marketplace.ts`) — Bot 2
+  appears to be mid-integration, using the exact certified HEAD this session named. Read-only
+  `git status`/`git log` metadata only; no file content read; worktree not entered or modified, per
+  the hard safety rules. Not yet in a reviewable (clean, committed) state.
 
-## Test/toolchain results (final certification, `54b06d79`)
+## Test/toolchain results (final certification, `54846e0036c117eec5078cfa41ffb95dc6e803bf`)
 
 1062/1062 tests, 3 consecutive clean runs (after diagnosing and resolving 2 real, disclosed
 infrastructure incidents along the way — a `db:reset` CLI crash and a container-settling-period
@@ -51,9 +56,12 @@ is confirmed available.
 
 ## All 10 decisions (never collapsed)
 
-1. **Backend technical certification**: **GO** (`docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`).
-2. **Frontend integration**: **NO-GO, not yet applicable** — no integration branch exists yet;
-   pre-staged conflict guidance ready (`docs/BOT1_FINAL_INTEGRATION_CERTIFICATION.md`).
+1. **Backend technical certification**: **GO**, formally issued for
+   `54846e0036c117eec5078cfa41ffb95dc6e803bf` (`docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`).
+2. **Frontend integration**: **NO-GO, genuinely in progress** — the integration branch now exists
+   and appears to be actively mid-merge against the certified HEAD (real, unresolved conflict
+   observed in `src/lib/queries/marketplace.ts`); not yet in a clean/reviewable state
+   (`docs/BOT1_FINAL_INTEGRATION_CERTIFICATION.md`).
 3. **Integrated release candidate**: not applicable, same reason as #2.
 4. **Controlled real-beta**: **Conditional GO** for a small, technically-supervised pilot
    (`docs/BOT1_FINAL_REAL_BETA_DECISION.md`) — upgraded this round on real browser evidence.

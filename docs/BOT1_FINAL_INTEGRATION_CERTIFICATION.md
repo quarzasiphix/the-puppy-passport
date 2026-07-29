@@ -1,14 +1,32 @@
 # Bot 1 — Final Integration Certification
 
-## Status: Domains R/S/T/U not yet applicable
+## UPDATE — integration worktree now exists, actively mid-write, not yet reviewable
 
-`/p/the-puppy-passport-integration` **does not exist** — confirmed by direct `ls /p` at multiple
-points across this session's final rounds, most recently alongside the Domain P certification work.
-No `integration/frontend-backend-rc` branch has been created by Bot 2 yet. Per the task's own
-framework, Domains R (integration branch provenance), S (known conflict audit against a real
-integration branch), T (post-integration technical certification), and U (integrated browser
-journeys) are **not yet applicable** — there is nothing to audit at those domains until Bot 2 (or
-whoever performs the actual integration) creates that worktree.
+`/p/the-puppy-passport-integration` **now exists** (it did not in every prior round) — branch
+`integration/frontend-backend-rc`, HEAD `0d946e6c7291f1e1bfc497537863dfb279b11cbf`. **Directly
+following this session's own formal backend certification GO statement** ("Frontend integration
+may now begin from frozen backend HEAD `54846e0`"), Bot 2 appears to have begun the actual
+integration almost immediately.
+
+**Confirmed via read-only `git status`/`git log` only, no file content read**: the worktree is
+**currently dirty with an active, unresolved merge conflict** —
+`UU src/lib/queries/marketplace.ts` (git's "both modified, unmerged" status, i.e. a live conflict
+mid-resolution), plus `M docs/MARKETPLACE_UX_AUDIT.md`, `M src/lib/queries/buyer-activity.ts`, and
+two new untracked files (`docs/FRONTEND_52_COMMIT_MANIFEST.md`,
+`docs/FRONTEND_INTEGRATION_CONFLICT_LEDGER.md` — names only noted, content not read).
+`src/lib/queries/marketplace.ts` being the live conflict is notable: it's exactly the file this
+session's own Q-1 pagination fix touched, and exactly the kind of conflict this document's own
+pre-staged checklist anticipated.
+
+**Per this session's hard safety rules** ("do not modify... any integration worktree", "do not use
+Bot 2 uncommitted files as evidence"), this worktree was not entered as a working directory, no file
+content was read, and nothing here is treated as reviewable evidence yet. **Domains R (branch
+provenance), S (conflict audit), T (post-integration certification), and U (integrated browser
+journeys) remain not yet performable** — not because the worktree doesn't exist, but because it is
+mid-write with a live, unresolved conflict, which is the same "actively being written, come back
+once committed and clean" situation this session has correctly deferred on every time it's arisen
+with the real backend main. **This is genuinely good news, not a blocker finding**: it means
+integration has started, using the exact certified HEAD this session's own GO statement named.
 
 ## What is certified and ready as of this round
 
@@ -29,11 +47,15 @@ whoever performs the actual integration) creates that worktree.
 
 ## Decision 2 of 10 — Frontend integration
 
-**NO-GO — not applicable yet**, not because of any known blocker, but because the integration
-branch this decision is meant to certify does not exist. The moment `/p/the-puppy-passport-integration`
-is created, Domains R/S/T (and U, if browser tooling is available) should be run against it using
-this document's pre-identified conflict list as the starting checklist, plus a fresh read of
-whatever else changed between the frozen frontend's base and its actual integration commits.
+**NO-GO — integration genuinely in progress, not yet complete.** The backend side of this decision
+is fully satisfied (certified GO, formal statement issued for `54846e0036c117eec5078cfa41ffb95dc6e803bf`
+— see `docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`). The integration branch now exists and is being
+worked on using that exact certified HEAD, which is exactly the intended sequence. **The moment
+`/p/the-puppy-passport-integration` is next found clean and committed** (no `UU`/`M`/`??` in `git
+status`), Domains R/S/T (and U, if browser tooling is available — confirmed functional this
+session) should be run against it immediately, using this document's pre-identified conflict list
+as the starting checklist, cross-checked against whatever `docs/FRONTEND_INTEGRATION_CONFLICT_LEDGER.md`
+turns out to say once it's committed and readable.
 
-**Certified backend base ready for that work**: `54b06d79bdaec4c44ea8947bf20e9585108bc2aa` (frozen
-by Bot 2 itself, GO per `docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`).
+**Certified backend base ready for that work**: `54846e0036c117eec5078cfa41ffb95dc6e803bf` (frozen
+by Bot 2 itself, GO per `docs/BOT1_FINAL_BACKEND_CERTIFICATION.md`, formal statement issued).
