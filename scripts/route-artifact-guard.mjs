@@ -29,9 +29,7 @@ let warnings = [];
 // prefix) either forwards to <Outlet/> or has no such sibling to worry about. A route file is a
 // suspected layout if some *other* route file shares its dot-path as a strict prefix (e.g.
 // `_public.foundations.tsx` is a prefix of `_public.foundations.$slug.tsx`).
-const routeFiles = readdirSync(ROUTES_DIR).filter(
-  (f) => f.endsWith(".tsx") && !f.startsWith("__"),
-);
+const routeFiles = readdirSync(ROUTES_DIR).filter((f) => f.endsWith(".tsx") && !f.startsWith("__"));
 
 function dotPath(filename) {
   return filename.replace(/\.tsx$/, "");
