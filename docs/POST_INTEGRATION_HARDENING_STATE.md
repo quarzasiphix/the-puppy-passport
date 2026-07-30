@@ -37,7 +37,25 @@ the integration snapshot. Until Bot 1's work is confirmed finished:
 Full isolated DB verification for this branch is deferred to its own phase, using a distinct local
 Supabase project/ports once safe to do so — never pointed at Bot 1's certification database.
 
-## Status
+## Isolated Supabase environment (established mid-pass)
 
-Phase 0 (verify inputs) and Phase 1 (create isolated worktree) complete. Proceeding to Phase 2
-(baseline the integrated product).
+This branch runs its own local Supabase stack: `project_id = "the-puppy-passport-hardening"`,
+every port shifted +1000 (API 55321, DB 55322, Studio 55323, Inbucket 55324, analytics 55327,
+pooler 55329, shadow 55320). Verified running alongside the shared instance with zero container-
+name/port collision. `supabase stop`/`start` alone does not recreate the Docker volume — use
+`docker volume rm supabase_db_the-puppy-passport-hardening supabase_edge_runtime_the-puppy-passport-hardening
+supabase_storage_the-puppy-passport-hardening` before `db:start` for a genuinely fresh database.
+Full detail: `docs/HARDENING_ISOLATED_DB_ENVIRONMENT.md`,
+`docs/HARDENING_ISOLATED_DB_VERIFICATION.md`.
+
+## Status: complete
+
+All phases done. Final hardening HEAD: `5344687` (27 commits on `e925089`..HEAD). See
+`docs/POST_INTEGRATION_HARDENING_REPORT.md` for the complete final report — isolated DB (1062/1062
+× 3 clean), Playwright E2E (34/34 on desktop + mobile), accessibility/i18n/query-bounding fixes,
+lint 0/14, and a real cross-worktree isolation bug found and fixed in this repo's own DB test
+tooling.
+
+Stopped cleanly: dev server and this branch's isolated Supabase containers stopped, working tree
+clean, `main`/frozen-frontend/integration snapshots confirmed untouched, nothing pushed or
+deployed.
