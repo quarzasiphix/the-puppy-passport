@@ -20,7 +20,12 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     // Run with `npm run test:e2e:mobile` — a real device profile (viewport + touch + UA), not
     // just a resized desktop window, so tap-target and layout regressions are caught for real.
-    { name: "mobile", use: { ...devices["iPhone 13"] } },
+    // Pixel 7 (Chromium-based "Mobile Chrome"), not an iPhone preset (WebKit-based) -- only the
+    // Chromium browser binary is installed in this sandbox (confirmed: WebKit's pw_run.sh doesn't
+    // exist under ~/.cache/ms-playwright, and `npx playwright install webkit` is a real download
+    // this environment doesn't have set up), so a WebKit device profile would fail to launch at
+    // all rather than test anything.
+    { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined

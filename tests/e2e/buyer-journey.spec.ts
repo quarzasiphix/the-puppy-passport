@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { DEMO_ACCOUNTS, expectNoPageErrors, signIn, trackPageErrors } from "./helpers";
+import {
+  DEMO_ACCOUNTS,
+  expectNoPageErrors,
+  signIn,
+  trackPageErrors,
+  waitForDataSettled,
+} from "./helpers";
 
 test.describe("buyer journey @critical", () => {
   test("save and unsave a puppy from find-a-dog, reflected on the saved-dogs dashboard", async ({
@@ -14,7 +20,7 @@ test.describe("buyer journey @critical", () => {
     // happened yet, and a click landing before it does can act on stale state. See the matching
     // comment in follow-report-controls.spec.ts for the fuller diagnosis of this exact class of
     // race, found the same way here.
-    await page.waitForLoadState("networkidle");
+    await waitForDataSettled(page);
     const saveBtn = page.getByRole("button", { name: /^Save$|^Remove from saved$/ }).first();
     await expect(saveBtn).toBeVisible();
     const wasSaved = (await saveBtn.getAttribute("aria-label")) === "Remove from saved";

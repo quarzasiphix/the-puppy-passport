@@ -18,6 +18,19 @@ export const DEMO_ACCOUNTS = {
   admin: "admin@havenpaw.test",
 } as const;
 
+// Many interactive controls in this app (Follow, Save, Sign out) branch their behavior or
+// rendered state on a React Query result that starts undefined and only settles once its fetch
+// resolves. `waitForLoadState("networkidle")` alone is necessary but not quite sufficient —
+// confirmed by repeated real intermittent failures under this sandbox's variable load: network
+// finishing isn't the same instant as React finishing its own re-render from that data. Centralized
+// here (rather than a bare networkidle call duplicated at every call site) so the reasoning and the
+// fix live in one place; every navigation followed by an interaction with a data-dependent control
+// should call this instead of waitForLoadState("networkidle") directly.
+export async function waitForDataSettled(page: Page) {
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
+}
+
 export type DemoAccountKey = keyof typeof DEMO_ACCOUNTS;
 
 // Every auth form on this app disables its submit button until client hydration completes (see
@@ -45,9 +58,36 @@ export async function signIn(page: Page, email: string, password = DEMO_PASSWORD
 // real page snapshot: signIn() lands on /dashboard/buyer, whose sidebar has "Account" (a link to
 // the profile page) but no "Sign out" anywhere. Navigate to a public page first, matching the real
 // flow a user would actually have to follow (dashboard -> "Back to Havenpaw" -> Sign out).
+//
+// The desktop Sign out button is `hidden lg:inline-flex` (site-chrome.tsx) -- on a real mobile
+// viewport it's genuinely not in the DOM's visible set at all; sign-out there only exists behind
+// the hamburger ("Open menu") panel. Confirmed via a real failed run on the mobile project before
+// adding this branch, not assumed.
 export async function signOut(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: "Sign out" }).click();
+  // The header's own isSignedIn (useAuth(), a React Query call) has to settle before either the
+  // desktop Sign out button or the mobile Sheet's signed-in branch renders -- same query-settle
+  // race as elsewhere (see follow-report-controls.spec.ts). networkidle alone isn't quite enough
+  // to rule this out (confirmed by a real failure: React hadn't finished its own re-render from
+  // already-idle network data yet), so the desktop-vs-mobile branch below uses a genuinely
+  // *retrying* wait (expect().toBeVisible(), not the instantaneous, non-retrying .isVisible())
+  // before falling back to the mobile path -- otherwise a slow render reads as "not desktop" and
+  // clicks a hamburger menu that was never actually needed (confirmed by a real failure on the
+  // desktop chromium project specifically, its widest, least-ambiguous viewport).
+  await page.waitForLoadState("networkidle");
+  const desktopBtn = page.getByRole("button", { name: "Sign out" });
+  let isDesktop = true;
+  try {
+    await expect(desktopBtn).toBeVisible({ timeout: 3_000 });
+  } catch {
+    isDesktop = false;
+  }
+  if (isDesktop) {
+    await desktopBtn.click();
+  } else {
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await page.getByRole("button", { name: "Sign out" }).click();
+  }
   await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible({ timeout: 10_000 });
 }
 
