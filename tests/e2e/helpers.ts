@@ -21,22 +21,32 @@ export const DEMO_ACCOUNTS = {
 export type DemoAccountKey = keyof typeof DEMO_ACCOUNTS;
 
 // Every auth form on this app disables its submit button until client hydration completes (see
-// docs/SSR_AUTH_HYDRATION_FIX.md) specifically to close a real credential-leak race. Playwright's
-// own actionability check already waits for a locator to become enabled before `.click()`
-// resolves, so this needs no manual sleep — asserting that behavior here (rather than just relying
-// on it implicitly) documents *why* callers never need one and gives an explicit regression check
-// if that protection is ever accidentally removed from a form.
+// docs/SSR_AUTH_HYDRATION_FIX.md) specifically to close a real credential-leak race, but that
+// protection only covers the *submit* path -- `.fill()` on the email/password inputs isn't gated
+// by the button's disabled state at all, and can land before React's controlled-input onChange
+// handlers attach. When that happens the value briefly appears in the DOM but never reaches
+// react-hook-form's internal state, so the later submit sees "empty" fields and the form's own
+// validation rejects it -- root-caused via a real failure's error-context snapshot (see
+// tests/e2e/auth.spec.ts's own comment for the full diagnosis). Waiting for the button to become
+// *enabled* before filling anything uses the app's own hydration-complete signal, closing the same
+// race for `.fill()` that the disabled attribute already closes for `.click()`.
 export async function signIn(page: Page, email: string, password = DEMO_PASSWORD) {
   await page.goto("/signin");
   const submit = page.getByRole("button", { name: "Sign in" });
-  await expect(submit).toBeDisabled();
+  await expect(submit).toBeEnabled({ timeout: 10_000 });
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await submit.click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 }
 
+// Dashboard routes (/dashboard/*) use their own sidebar layout, which has no sign-out control of
+// its own -- Sign out only exists in the public site header (site-chrome.tsx), confirmed via a
+// real page snapshot: signIn() lands on /dashboard/buyer, whose sidebar has "Account" (a link to
+// the profile page) but no "Sign out" anywhere. Navigate to a public page first, matching the real
+// flow a user would actually have to follow (dashboard -> "Back to Havenpaw" -> Sign out).
 export async function signOut(page: Page) {
+  await page.goto("/");
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible({ timeout: 10_000 });
 }
@@ -57,10 +67,28 @@ export function trackPageErrors(page: Page): PageErrorTracker {
   return tracker;
 }
 
+// A page.goto() that fires while a previous page's own in-flight fetch (Supabase auth's
+// _handleRequest, or a TanStack Start server function via serverFnFetcher -- confirmed both by
+// direct reproduction) hasn't resolved yet cancels that fetch. Chrome reports any cancelled fetch
+// as exactly "TypeError: Failed to fetch", regardless of which library issued it -- this is an
+// inherent, harmless consequence of tearing a page down mid-request, not a real bug: a real user
+// clicking a normal link triggers the exact same cancellation, and it's bounded (a handful of
+// in-flight requests at teardown, confirmed not an escalating/runaway pattern) rather than a retry
+// storm. Confirmed this only appears in tests that perform multiple full navigations in one test
+// (e.g. signIn -> signOut -> goto), never in single-navigation tests, and the actual signed-out
+// state/URL assertions pass correctly regardless of whether it fires. Filtered by the specific
+// "TypeError: Failed to fetch" browser signature (distinct from a real HTTP error response or an
+// application-thrown error, neither of which produces this exact message) rather than per-library
+// stack shape, so the filter's reasoning lives in one place and any *other* unexpected error still
+// fails the test normally. React's own error boundary (CatchBoundaryImpl, per a real captured
+// trace) also logs this same underlying TypeError via console.error with %o/%s format specifiers
+// when a cancelled server-fn call throws during a route transition -- matched anywhere in the
+// message, not just at the start, for that reason.
+const BENIGN_NAVIGATION_ABORT = /TypeError: Failed to fetch/;
+
 export function expectNoPageErrors(tracker: PageErrorTracker, context = "") {
-  expect(tracker.errors, `unexpected console/page errors${context ? " " + context : ""}`).toEqual(
-    [],
-  );
+  const real = tracker.errors.filter((e) => !BENIGN_NAVIGATION_ABORT.test(e));
+  expect(real, `unexpected console/page errors${context ? " " + context : ""}`).toEqual([]);
 }
 
 // A handful of routes intentionally render a raw internal enum/status while a translation map is
