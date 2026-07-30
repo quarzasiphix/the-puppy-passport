@@ -26,7 +26,19 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const BASELINE_PATH = join(import.meta.dirname, "..", "docs", "backend-api-contract-baseline.json");
-const CONTAINER = "supabase_db_the-puppy-passport";
+// Derived from this worktree's own supabase/config.toml rather than hardcoded -- a hardcoded
+// "supabase_db_the-puppy-passport" silently targets the *main* worktree's shared container even
+// when run from a worktree configured with a different project_id (confirmed the hard way: this
+// exact bug sent this script's real queries at the shared instance while a hardening branch's own
+// isolated instance, on different ports/container names, sat right there unqueried -- see
+// docs/HARDENING_ISOLATED_DB_VERIFICATION.md for the full incident).
+function currentProjectId() {
+  const configPath = join(import.meta.dirname, "..", "supabase", "config.toml");
+  const match = readFileSync(configPath, "utf8").match(/^project_id\s*=\s*"([^"]+)"/m);
+  if (!match) throw new Error(`Could not find project_id in ${configPath}`);
+  return match[1];
+}
+const CONTAINER = `supabase_db_${currentProjectId()}`;
 
 const TABLE_GRANTS_SQL = `
 select t.table_name,

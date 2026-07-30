@@ -18,8 +18,19 @@
 // schema-drift-check.mjs -- not wired into the fast no-Docker CI job.
 
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const CONTAINER = "supabase_db_the-puppy-passport";
+// Derived from this worktree's own supabase/config.toml rather than hardcoded -- see the matching
+// fix (and its full incident writeup) in scripts/contract-drift-check.mjs /
+// docs/HARDENING_ISOLATED_DB_VERIFICATION.md.
+function currentProjectId() {
+  const configPath = join(import.meta.dirname, "..", "supabase", "config.toml");
+  const match = readFileSync(configPath, "utf8").match(/^project_id\s*=\s*"([^"]+)"/m);
+  if (!match) throw new Error(`Could not find project_id in ${configPath}`);
+  return match[1];
+}
+const CONTAINER = `supabase_db_${currentProjectId()}`;
 const TOP_N = Number(process.argv.find((a) => a.startsWith("--top="))?.split("=")[1] ?? 20);
 
 function runSql(sql) {

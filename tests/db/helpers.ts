@@ -7,8 +7,36 @@
 // database themselves (same rule as tests/e2e — resetting would wipe demo data other tests and
 // developers rely on). See docs/DATABASE_TESTING.md.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
+// Derived from this worktree's own supabase/config.toml (falls back to the documented default
+// port if that can't be read) rather than a bare hardcoded 54321 -- confirmed the hard way that a
+// hardcoded default silently sends every test:db run at whichever worktree happens to be using the
+// real default port, even from a worktree deliberately configured with different ports for
+// isolation (see docs/HARDENING_ISOLATED_DB_VERIFICATION.md for the full incident). SUPABASE_URL
+// env var still wins if explicitly set, same as before.
+function defaultSupabaseUrl(): string {
+  try {
+    const configPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "..",
+      "supabase",
+      "config.toml",
+    );
+    const config = readFileSync(configPath, "utf8");
+    const apiSection = config.slice(config.indexOf("[api]"));
+    const port = apiSection.match(/^port\s*=\s*(\d+)/m)?.[1];
+    if (port) return `http://127.0.0.1:${port}`;
+  } catch {
+    // fall through to the documented default below
+  }
+  return "http://127.0.0.1:54321";
+}
+
+const SUPABASE_URL = process.env.SUPABASE_URL ?? defaultSupabaseUrl();
 // Well-known local-only demo keys printed by `supabase status` — not secrets, never valid against
 // a real project. Overridable via env in case a future session changes supabase/config.toml.
 const ANON_KEY =
