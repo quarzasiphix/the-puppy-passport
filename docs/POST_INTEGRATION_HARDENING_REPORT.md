@@ -4,7 +4,7 @@
 independent Bot 1 certification — never modified from this branch).
 **Hardening branch**: `hardening/post-integration-qa`, worktree
 `/p/the-puppy-passport-post-integration-hardening`.
-**Final hardening HEAD**: `f914887` — 30 commits on top of the integration base.
+**Final hardening HEAD**: `fc1e378` — 34 commits on top of the integration base.
 **Not pushed, not deployed, not merged.** `main`, the frozen frontend worktree, and the audited
 integration branch were never touched at any point in this pass.
 
@@ -64,8 +64,11 @@ using it everywhere (commit `f914887`). Full incident and fix for both rounds:
 
 ## E2E (Playwright) results
 
-**34/34 on both `chromium` and `mobile` projects, clean solo runs** (2.9min / 3.2min respectively).
-Full detail, including 8 real test-infrastructure bugs found and fixed (all root-caused by direct
+**37/37 on `chromium`, 36/37 on `mobile`** (re-verified in a later session; the mobile gap is one
+already-retry-scoped, environment-sensitive test that hit genuinely extreme host load — see
+`docs/HARDENING_E2E_VERIFICATION.md` for the full, honest account, including a stray unrelated
+dev server that briefly caused several false-alarm failures before being root-caused). Full
+detail, including 10 real test-infrastructure bugs found and fixed (all root-caused by direct
 reproduction, never guessed): `docs/HARDENING_E2E_VERIFICATION.md`. Highlights:
 
 1. `.fill()` on auth forms can race ahead of React hydration (the disabled-until-hydrated submit
@@ -166,11 +169,15 @@ instance.
 - **Phase 20 (local-only demo-data extension mechanism)** — deliberately deferred; building it
   correctly (idempotent, dry-run, environment refusal) deserves its own focused pass rather than a
   rushed addition at the end of an already long session.
-- **Dashboard home-page loading states** (6 files: admin/breeder/foundation/operations index
-  pages) — real gap found (multiple parallel `useQuery`s with no loading state), deliberately not
-  fixed without live verification of the resulting UI. See `docs/STATE_COVERAGE_AUDIT.md`.
 - **`db:schema-drift`** — blocked by the disclosed, pre-existing shadow-DB container crash, not
-  something this pass could fix (a Docker/CLI-level issue, not a schema issue).
+  something this pass could fix (a Docker/CLI-level issue, not a schema issue). Confirmed again on
+  the final `quality:integration:full` run: 10/11 checks pass cleanly, this is the one disclosed
+  exception.
+
+**Dashboard home-page loading states** (6 files: admin/breeder/foundation/operations index pages),
+originally deferred in `docs/STATE_COVERAGE_AUDIT.md` pending live verification, was completed in
+a later session once a live dev server against the isolated DB was available — see the isolated DB
+environment section above.
 
 ## Recommended next action
 
