@@ -50,11 +50,13 @@ Full detail: `docs/HARDENING_ISOLATED_DB_ENVIRONMENT.md`,
 
 ## Status: complete
 
-All phases done. Final hardening HEAD: `5344687` (27 commits on `e925089`..HEAD). See
+All phases done. Final hardening HEAD: `f914887` (30 commits on `e925089`..HEAD). See
 `docs/POST_INTEGRATION_HARDENING_REPORT.md` for the complete final report — isolated DB (1062/1062
-× 3 clean), Playwright E2E (34/34 on desktop + mobile), accessibility/i18n/query-bounding fixes,
-lint 0/14, and a real cross-worktree isolation bug found and fixed in this repo's own DB test
-tooling.
+× 3 clean, genuinely deterministic — re-verified after a second round of the same isolation bug was
+found and fixed in a later session, see `docs/HARDENING_ISOLATED_DB_VERIFICATION.md`), Playwright
+E2E (34/34 on desktop + mobile), accessibility/i18n/query-bounding fixes, lint 0/14, and two rounds
+of a real cross-worktree isolation bug found and fixed in this repo's own DB test tooling (first in
+`helpers.ts` + 2 scripts, then independently duplicated in 9 more test files).
 
 Stopped cleanly: dev server and this branch's isolated Supabase containers stopped, working tree
 clean, `main`/frozen-frontend/integration snapshots confirmed untouched, nothing pushed or

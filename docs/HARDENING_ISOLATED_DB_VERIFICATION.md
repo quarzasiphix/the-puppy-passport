@@ -61,22 +61,46 @@ See commit `14c38da`.
 - Storage policies: **19** (same), matching the documented baseline.
 - Secret scan: clean. `git diff --check` across every commit in this branch: clean.
 
-## Later runs: genuine, disclosed flakiness under sustained session load
+## Second incident (later session): the "flakiness" above was misdiagnosed
 
-Several further `test:db` runs later in this same session (after extensive additional Playwright,
-build, and manual-debugging activity against this same long-lived container) showed **different,
-non-overlapping sets of failures each time** — never the same test twice, spanning unrelated files
-(welfare-cases, account-deletion/anonymisation, risk-signals, verification-approval concurrency,
-workflows). This pattern — different failures each run, rather than the same one repeating — is the
-signature of genuine environmental/timing flakiness under load, not a deterministic code defect:
-several of the affected tests are explicitly concurrency/race tests (e.g. "two concurrent approval
-calls: exactly one succeeds", "10 concurrent review calls... serialize"), which are exactly the
-class of test most sensitive to real scheduling variance under a busy, long-running sandbox. This
-matches and extends the same category of issue Bot 1's own certification reports already disclosed
-independently (a `db:reset` CLI crash and a "container-settling-period transient flake, neither a
-Bot 2 defect"). Not chased further within this pass's time budget; the three genuinely clean,
-back-to-back 1062/1062 runs immediately after establishing correct isolation remain the trustworthy
-evidence that the mechanism itself is sound.
+The "genuine, disclosed flakiness under sustained session load" explanation originally written in
+this section was wrong, and is kept below (struck through in spirit, not in fact — left visible
+deliberately) rather than deleted, since getting this wrong once is itself worth recording.
+
+In a later session, re-running `test:db` — including immediately after a genuinely fresh
+`docker volume rm` at the very start of a session, with no prior "sustained load" possible —
+reproduced the same symptom: a different, non-overlapping set of failures each run
+(`execute_account_deletion`, `anonymisation consistency`, `get_account_deletion_blockers`,
+`risk_signals` rate-limit crossing, `approve_user_verification` idempotency/concurrency,
+`signup consent recording`, `legal hold` blocking). Reproducing it on a fresh volume at session
+start ruled out "sustained load" as the cause, so this time it was investigated properly instead of
+re-attributed to load.
+
+Root cause: `tests/db/helpers.ts` was already fixed (see above) to derive `SUPABASE_URL`/`ANON_KEY`
+correctly from this worktree's own `supabase/config.toml`. But **9 test files each independently
+duplicated their own local disposable-signup client** with the old hardcoded
+`http://127.0.0.1:54321` default, bypassing that fix entirely: `account-deletion-execution.test.ts`,
+`risk-signals.test.ts`, `verification-approval-idempotency.test.ts`,
+`legal-consent-versioning.test.ts`, `deletion-blocker-graph.test.ts`, `duplicate-detection.test.ts`,
+`legal-holds.test.ts`, `recent-auth-step-up.test.ts`, `support-case-rate-limits.test.ts`. Each of
+these files creates a throwaway `auth.signUp()` account via its own local client (correctly against
+the isolated instance in some call sites, wrongly against the shared instance in these 9), then
+operates on the resulting row via `as("admin")` (correctly against the isolated instance) — a
+genuine cross-database mismatch, not a race. Which specific test failed on a given run depended on
+execution order and exact timing of unrelated activity on the *shared* instance (Bot 1's own
+concurrent work, etc.), which is exactly why the failing set looked different every time and mimicked
+the signature of real scheduling flakiness without being one.
+
+Fixed by exporting a single `freshClient()` from `helpers.ts` (verified identical auth options at
+every one of the 9 files' call sites first) and replacing every local `createClient(SUPABASE_URL,
+ANON_KEY, {...})` call with it. See commit `f914887`.
+
+**Corrected verified result**: 1062/1062 × 3 consecutive clean runs, immediately reproducible,
+genuinely deterministic — no more run-to-run variance. The three "clean" runs originally documented
+above (right after the first fix) most likely were not actually free of this second bug; they either
+got lucky on execution order or this bug simply hadn't been triggered by whichever subset of tests
+happened to run in that exact interleaving. Only the runs after commit `f914887` should be treated as
+trustworthy evidence.
 
 ## `db:schema-drift`
 
@@ -93,8 +117,10 @@ Matches item 7 of Bot 1's own disclosed action list — a known, pre-existing sa
 The real, correctly-isolated result: 1062/1062 × 3 consecutive clean runs, 94/94 SECURITY DEFINER,
 70/70 RLS, 19 Storage policies, clean contract check, clean secret scan — matching the certified
 backend baseline exactly, now genuinely verified against this branch's own isolated instance rather
-than accidentally against the shared one. The subsequent flakiness under sustained load and the
-`db:schema-drift` container crash are both independently attributable to already-disclosed,
-pre-existing infrastructure patterns, not new defects in the integrated product or in this
-hardening branch's own changes. The real, useful defect this investigation *did* find — three
-hardcoded shared-instance references defeating cross-worktree isolation — is fixed.
+than accidentally against the shared one. The `db:schema-drift` container crash remains
+independently attributable to an already-disclosed, pre-existing infrastructure pattern, not a new
+defect. The real, useful defects this investigation found — first three, then a further nine —
+hardcoded shared-instance references defeating cross-worktree isolation, are all fixed. Nothing
+observed across either investigation was ever genuine environmental flakiness; both rounds were
+deterministic cross-database mismatches, and the second round's initial "flakiness" explanation was
+a misdiagnosis, corrected above rather than quietly replaced.

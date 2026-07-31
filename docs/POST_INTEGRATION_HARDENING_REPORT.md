@@ -4,7 +4,7 @@
 independent Bot 1 certification — never modified from this branch).
 **Hardening branch**: `hardening/post-integration-qa`, worktree
 `/p/the-puppy-passport-post-integration-hardening`.
-**Final hardening HEAD**: `2f60c29` — 27 commits on top of the integration base.
+**Final hardening HEAD**: `f914887` — 30 commits on top of the integration base.
 **Not pushed, not deployed, not merged.** `main`, the frozen frontend worktree, and the audited
 integration branch were never touched at any point in this pass.
 
@@ -15,14 +15,25 @@ This branch runs its own local Supabase stack — distinct `project_id`
 etc.) — verified running alongside the shared instance with zero container-name or port collision.
 Full detail: `docs/HARDENING_ISOLATED_DB_ENVIRONMENT.md`.
 
-**A real isolation bug was found and fixed mid-pass**: `tests/db/helpers.ts` and two tooling
-scripts (`contract-drift-check.mjs`, `query-performance-report.mjs`) had the shared instance's
-URL/container name hardcoded, so `test:db` and `db:contract-check` runs in this branch were
-silently hitting the shared instance the whole time, not the isolated one — surfaced by a
-reproducible rate-limit failure that turned out to be a real, accumulated (2857-row, dating to
-2026-07-29) `rate_limit_events` state on the shared instance, correctly enforcing its own real
-50/day threshold — not a code defect. Fixed by deriving the URL/container name from this worktree's
-own `supabase/config.toml` at runtime instead of a hardcoded default. Full incident and fix:
+**Two rounds of the same real isolation bug were found and fixed mid-pass.** First:
+`tests/db/helpers.ts` and two tooling scripts (`contract-drift-check.mjs`,
+`query-performance-report.mjs`) had the shared instance's URL/container name hardcoded, so
+`test:db` and `db:contract-check` runs in this branch were silently hitting the shared instance the
+whole time, not the isolated one — surfaced by a reproducible rate-limit failure that turned out to
+be a real, accumulated (2857-row, dating to 2026-07-29) `rate_limit_events` state on the shared
+instance, correctly enforcing its own real 50/day threshold — not a code defect. Fixed by deriving
+the URL/container name from this worktree's own `supabase/config.toml` at runtime instead of a
+hardcoded default (commit `14c38da`).
+
+Second, in a later session: 9 test files (`account-deletion-execution.test.ts`,
+`risk-signals.test.ts`, `verification-approval-idempotency.test.ts`,
+`legal-consent-versioning.test.ts`, `deletion-blocker-graph.test.ts`, `duplicate-detection.test.ts`,
+`legal-holds.test.ts`, `recent-auth-step-up.test.ts`, `support-case-rate-limits.test.ts`) each
+independently duplicated their own local disposable-signup client with the same old hardcoded URL,
+bypassing the first fix entirely. This produced a "different failures every run" symptom on a
+genuinely fresh volume that was initially (wrongly) attributed to environmental flakiness under
+load, then correctly root-caused and fixed by exporting one `freshClient()` from `helpers.ts` and
+using it everywhere (commit `f914887`). Full incident and fix for both rounds:
 `docs/HARDENING_ISOLATED_DB_VERIFICATION.md`.
 
 ## Isolated database results
@@ -31,17 +42,21 @@ own `supabase/config.toml` at runtime instead of a hardcoded default. Full incid
   genuinely against the isolated instance after the fix above).
 - `npm run test:db`: **1062/1062, three consecutive clean runs**, against a freshly
   volume-recreated isolated instance (`supabase stop`/`start` alone was found to preserve the
-  Docker volume — `docker volume rm` was needed for a genuinely fresh database).
+  Docker volume — `docker volume rm` was needed for a genuinely fresh database), re-verified after
+  the second isolation-bug fix (commit `f914887`) — genuinely deterministic, immediately
+  reproducible, no run-to-run variance. An earlier round of this same "1062/1062 × 3" claim, made
+  right after the first isolation fix, was not actually trustworthy: the second, still-undiscovered
+  bug (9 test files independently bypassing the fixed default) meant those earlier "clean" runs
+  either got lucky on execution order or hadn't triggered the affected tests in that interleaving.
+  Only the post-`f914887` runs should be treated as trustworthy evidence.
 - 114/114 targeted security/workflow tests (HF-2 authorization boundary, quotation-expiry
   enforcement, quotation field lock, account deletion, legal holds).
 - `SECURITY DEFINER` search_path: 94/94 functions pinned. RLS: 70/70 tables. Storage policies: 19.
   Secret scan clean.
-- Later `test:db` runs (after extensive further Playwright/build activity on the same long-lived
-  container) showed genuine, non-deterministic flakiness under sustained session load — different,
-  non-overlapping failures each run, concentrated in concurrency/race tests, matching a pattern
-  Bot 1's own reports already disclosed independently. Not a regression; not chased further within
-  this pass's time budget. The three genuinely clean, back-to-back runs remain the trustworthy
-  evidence the mechanism itself is sound.
+- What was originally logged here as "genuine, non-deterministic flakiness under sustained session
+  load" was a misdiagnosis, corrected in a later session: it was the second isolation bug above
+  (deterministic, not load-related) — see `docs/HARDENING_ISOLATED_DB_VERIFICATION.md` for the full
+  corrected account.
 - `npm run db:schema-drift`: fails with a reproducible container crash (`exit 139`) provisioning
   the shadow database — a known, pre-existing Docker/CLI limitation (Bot 1's own disclosed item),
   unrelated to the URL/container bug above, and not a finding about the actual schema (which
@@ -69,14 +84,16 @@ reproduction, never guessed): `docs/HARDENING_E2E_VERIFICATION.md`. Highlights:
    concurrently with itself or with source-file edits (Vite HMR mid-run) — both procedural
    mistakes, not product or test defects, corrected by always running solo.
 
-## Commits (27, chronological)
+## Commits (30, chronological)
 
 Setup/plan (2), Playwright foundation + journey coverage (4), accessibility fixes (3) +
 documentation (1), i18n fix (1), query bounding fix (1) + documentation (1), lint cleanup (1),
 SEO (1) + documentation (1), route/artifact guard (1) + security audit documentation (1), quality
 gate (2), final hardening evidence (1), isolated DB environment setup (1) + verification (1),
-Playwright infrastructure fixes (3), E2E verification documentation (1), the shared-instance
-isolation bug fix (1) + corrected documentation (1). Full list: `git log --oneline e925089..2f60c29`.
+Playwright infrastructure fixes (3), E2E verification documentation (1), the first shared-instance
+isolation bug fix (1) + corrected documentation (1), state doc finalized (1), the second
+shared-instance isolation bug fix — 9 more test files (1). Full list:
+`git log --oneline e925089..f914887`.
 
 ## Lint before/after
 
