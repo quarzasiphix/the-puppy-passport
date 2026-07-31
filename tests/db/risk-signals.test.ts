@@ -17,13 +17,7 @@
 // transport_amendment_request's threshold is 15 (max_count 20, see 20260101010500).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as, ids, isBlocked, isForbidden, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { as, freshClient, ids, isBlocked, isForbidden, uniqueTestEmail } from "./helpers.ts";
 
 test("risk_signals: repeatedly crossing a real rate-limit threshold produces a signal, later crossings increment it", async (t) => {
   const admin = await as("admin");
@@ -33,9 +27,7 @@ test("risk_signals: repeatedly crossing a real rate-limit threshold produces a s
   let requestId: string | undefined;
 
   await t.test("setup: a disposable account with a real submitted transport request", async () => {
-    const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
+    const disposableClient = freshClient();
     const email = uniqueTestEmail("risk-signal");
     const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
     assert.equal(signUp.error, null);

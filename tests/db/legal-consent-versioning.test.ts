@@ -9,13 +9,7 @@
 // actually works end to end.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { anon, as, ids, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { anon, as, freshClient, ids, uniqueTestEmail } from "./helpers.ts";
 
 test("legal_document_versions: publicly readable, exactly one current per document type", async () => {
   const anonClient = anon();
@@ -112,9 +106,7 @@ test("user_consents: a user can only record consent to a real current version, n
 });
 
 test("signup consent recording: the exact sequence signUp() performs works end to end", async () => {
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
   const email = uniqueTestEmail("consent-signup-test");
   const signUp = await disposableClient.auth.signUp({ email, password: "password123" });
   assert.equal(signUp.error, null);

@@ -6,13 +6,7 @@
 // execute_account_deletion(), place_legal_hold(), release_legal_hold().
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { as, freshClient, uniqueTestEmail } from "./helpers.ts";
 
 test("require_recent_auth: valid marker, expired marker, missing marker", async (t) => {
   const admin = await as("admin");
@@ -44,9 +38,7 @@ test("require_recent_auth: valid marker, expired marker, missing marker", async 
     // unauthenticated caller is stopped at the grant layer before the function body's own
     // `auth.uid() is null` fail-closed branch ever runs. Defense in depth, not a gap: the same
     // request is rejected either way, just by an earlier line of defense.
-    const anon = createClient(SUPABASE_URL, ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
+    const anon = freshClient();
     const call = await anon.rpc("require_recent_auth", {
       p_operation: "test.no_session",
       p_max_age: "10 years",
@@ -59,9 +51,7 @@ test("require_recent_auth: valid marker, expired marker, missing marker", async 
 test("wired RPCs: authorization is checked before reauthentication, and a fresh admin session succeeds", async (t) => {
   const admin = await as("admin");
   const ops = await as("ops");
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
   let disposableId: string | undefined;
   let requestId: string | undefined;
   let holdId: string | undefined;

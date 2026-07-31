@@ -6,13 +6,7 @@
 // BL-addendum's support cases); this proves the backend contract.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as, ids, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { as, freshClient, ids, uniqueTestEmail } from "./helpers.ts";
 
 test("place_legal_hold/release_legal_hold: admin-only, server-stamped actor", async (t) => {
   const admin = await as("admin");
@@ -138,9 +132,7 @@ test("place_legal_hold/release_legal_hold: both transitions are recorded in the 
 
 test("execute_account_deletion: refuses while an active legal hold exists", async (t) => {
   const admin = await as("admin");
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
   let disposableId: string | undefined;
   let requestId: string | undefined;
   let holdId: string | undefined;
@@ -191,9 +183,7 @@ test("execute_account_deletion: refuses while an active legal hold exists", asyn
 // knew legal holds existed. 20260101014200_legal_hold_self_delete_lock.sql closes both.
 test("an active legal hold blocks self-service deletion of comments and applications", async (t) => {
   const admin = await as("admin");
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
   let disposableId: string | undefined;
   let postId: string | undefined;
   let commentId: string | undefined;

@@ -13,21 +13,14 @@
 // relies on staying available.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { as, freshClient } from "./helpers.ts";
 
 async function disposableAccount(): Promise<{
-  client: ReturnType<typeof createClient>;
+  client: SupabaseClient;
   id: string;
 }> {
-  const client = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const client = freshClient();
   const email = `cjp-rate-limit-test-${Date.now()}-${Math.random().toString(36).slice(2)}@havenpaw.test`;
   const signUp = await client.auth.signUp({ email, password: "password123" });
   assert.equal(signUp.error, null);
@@ -38,7 +31,7 @@ async function disposableAccount(): Promise<{
 
 test("support_cases: creation is rate-limited", async (t) => {
   const admin = await as("admin");
-  let account: { client: ReturnType<typeof createClient>; id: string };
+  let account: { client: SupabaseClient; id: string };
 
   await t.test("setup: a disposable account", async () => {
     account = await disposableAccount();
@@ -91,7 +84,7 @@ test("support_cases: creation is rate-limited", async (t) => {
 
 test("support_case_messages: sending is rate-limited", async (t) => {
   const admin = await as("admin");
-  let account: { client: ReturnType<typeof createClient>; id: string };
+  let account: { client: SupabaseClient; id: string };
   let caseId: string | undefined;
 
   await t.test("setup: a disposable account with a real support case", async () => {

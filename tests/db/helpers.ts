@@ -99,7 +99,20 @@ export type Persona = keyof typeof personas;
 const clientCache = new Map<Persona, Promise<SupabaseClient>>();
 let anonClient: SupabaseClient | undefined;
 
-function freshClient(): SupabaseClient {
+/**
+ * A brand-new, uncached anonymous client against the correctly-resolved local instance (see
+ * defaultSupabaseUrl() above). Exported specifically for test files that need their own disposable
+ * signed-up-throwaway-user client (account deletion, legal holds, risk signals, verification
+ * approval, consent versioning, etc.) rather than the shared cached `anon()`/`as()` clients --
+ * those files used to each duplicate their own local `SUPABASE_URL`/`ANON_KEY` constants with the
+ * bare hardcoded 54321 default, silently pointing every disposable-signup test at the shared
+ * instance even when the rest of the same file correctly used the isolated one via `as()`. That
+ * cross-database mismatch (a verification/case/request created via a disposable client on one
+ * database, then operated on via `as("admin")` on a *different* one) is what actually produced the
+ * "invalid input syntax for type uuid: 'undefined'" and "not found" failures traced back here --
+ * not environmental flakiness. See docs/HARDENING_ISOLATED_DB_VERIFICATION.md.
+ */
+export function freshClient(): SupabaseClient {
   return createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });

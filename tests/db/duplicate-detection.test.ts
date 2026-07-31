@@ -7,13 +7,7 @@
 // request twice within 24 hours -- fuzzy, so never auto-blocked.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as, ids, isBlocked, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { as, freshClient, ids, isBlocked, uniqueTestEmail } from "./helpers.ts";
 
 test("animals.microchip_number: unique, case/whitespace-insensitive, nulls allowed to repeat", async (t) => {
   const breeder = await as("breeder1");
@@ -111,9 +105,7 @@ test("transport_requests: submitting a lookalike request twice raises an advisor
   // instead sidesteps the problem entirely, the same reasoning Stage BN's own test already used.
   const admin = await as("admin");
   const ops = await as("ops");
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
   let subjectId: string | undefined;
   let firstId: string | undefined;
   let secondId: string | undefined;

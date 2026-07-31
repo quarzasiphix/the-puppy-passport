@@ -14,21 +14,13 @@
 // shared personas because they only ever prove *rejection*, never mutate anything.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "@supabase/supabase-js";
-import { as, createTestTransportRequest, ids, uniqueTestEmail } from "./helpers.ts";
-
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
-const ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+import { as, createTestTransportRequest, freshClient, ids, uniqueTestEmail } from "./helpers.ts";
 
 test("execute_account_deletion: real anonymisation, on a disposable throwaway account", async (t) => {
   const admin = await as("admin");
   let disposableId: string | undefined;
   let requestId: string | undefined;
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
 
   await t.test("setup: a fresh throwaway account requests its own deletion", async () => {
     const email = uniqueTestEmail("deletion-test");
@@ -161,9 +153,7 @@ test("anonymisation consistency: the dry-run predicts the real outcome, and hist
   let disposableId: string | undefined;
   let requestId: string | undefined;
   let postId: string | undefined;
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
 
   await t.test(
     "setup: a fresh throwaway account with a real public post, and one real blocker",
@@ -294,9 +284,7 @@ test("account_deletion_requests: status/processed_by cannot be raw-forged by the
   const admin = await as("admin");
   let disposableId: string | undefined;
   let requestId: string | undefined;
-  const disposableClient = createClient(SUPABASE_URL, ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  const disposableClient = freshClient();
 
   try {
     await t.test("setup: a fresh throwaway account requests its own deletion", async () => {
