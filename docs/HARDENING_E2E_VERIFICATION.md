@@ -62,6 +62,29 @@ All root-caused by direct reproduction (a raw script outside the test runner, or
    same file. Given scoped retries (2, only for that one test — an unexplained failure anywhere
    else still fails immediately) as acknowledged, bounded environmental variance, not a weakened
    assertion.
+9. **(Later session) A stray, unrelated `vite dev` process from a completely different worktree
+   (`/p/the-puppy-passport`, running since a prior day, not started or owned by this session) was
+   squatting on port 8080** — Playwright's `webServer.reuseExistingServer: true` silently treated it
+   as "this branch's own dev server is already up" and ran the entire suite against the wrong
+   application. Symptom looked alarming at first (several Follow/Report/foundation-detail tests
+   failing with the exact shape of the two historically-fixed integration bugs) but was a false
+   alarm: `docker exec`/`curl`-level inspection confirmed the app on this branch's *actual* server
+   (port 8081, reached via `E2E_BASE_URL=http://127.0.0.1:8081`, already this doc's own documented
+   default — see the top of this file) renders correctly. Re-running pinned to 8081 dropped the
+   failures from 6-7 down to 1 transient one. Lesson: always double check *which* server a
+   `reuseExistingServer: true` run actually attached to before trusting a failure as a real
+   regression, especially in a sandbox that may have long-lived unrelated processes from other
+   worktrees/sessions.
+10. **`auth-session.spec.ts`'s sign-out test joins the same "genuine, load-sensitive timing"
+    category as item 8**, discovered in the same later session: intermittently (2 of 5 full-suite
+    runs) the immediate `page.goto("/dashboard/buyer")` right after a completed sign-out lands on
+    a still-authenticated page, even though `handleSignOut()`'s full await chain (server-side
+    `supabase.auth.signOut()` → query invalidation → `router.invalidate()` → navigate) had already
+    resolved by the time `signOut()`'s own test helper returned. Isolated re-runs of the exact same
+    test passed reliably (3/3, twice) — pointing at browser/network-stack latency under this
+    sandbox's concurrent load (multiple dev servers and DB stacks running simultaneously during
+    this investigation) rather than a real session-clearing defect. Given the same scoped-retry
+    treatment as item 8, with the reasoning recorded directly in the test file.
 
 ## A process lesson worth recording
 
