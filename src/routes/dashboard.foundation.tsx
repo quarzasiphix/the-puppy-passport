@@ -14,6 +14,7 @@ import {
   HeartHandshake,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { requireRole } from "@/lib/auth/guards";
 import { getMyFoundationProfile } from "@/lib/queries/foundation";
@@ -52,11 +53,19 @@ function FoundationDashboardLayout() {
       statusLine={
         <>
           <div className="mt-2 text-xs text-muted-foreground">Organisation</div>
-          <div className="text-sm font-semibold">{orgQuery.data?.name ?? "Not published yet"}</div>
-          {orgQuery.data && (
-            <Badge variant="secondary" className="mt-1 capitalize">
-              {orgQuery.data.verification_status}
-            </Badge>
+          {orgQuery.isLoading ? (
+            <Skeleton className="mt-1 h-5 w-24" />
+          ) : (
+            <>
+              <div className="text-sm font-semibold">
+                {orgQuery.data?.name ?? "Not published yet"}
+              </div>
+              {orgQuery.data && (
+                <Badge variant="secondary" className="mt-1 capitalize">
+                  {orgQuery.data.verification_status}
+                </Badge>
+              )}
+            </>
           )}
         </>
       }

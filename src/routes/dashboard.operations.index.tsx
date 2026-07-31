@@ -12,6 +12,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { getOpsKpiCounts } from "@/lib/queries/operations";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/dashboard/operations/")({
   component: OperationsOverview,
@@ -88,19 +89,29 @@ function OperationsOverview() {
         </p>
       </header>
       <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-        {cards.map((c) => (
-          <Link
-            key={c.label}
-            to={c.to}
-            className="rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
-          >
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <c.icon className="size-4" />
-              <span className="text-xs uppercase tracking-wide">{c.label}</span>
-            </div>
-            <div className="mt-2 font-display text-2xl font-semibold">{c.value ?? "—"}</div>
-          </Link>
-        ))}
+        {query.isLoading
+          ? Array.from({ length: cards.length }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border/70 bg-card p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Skeleton className="size-4 rounded" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="mt-3 h-6 w-8" />
+              </div>
+            ))
+          : cards.map((c) => (
+              <Link
+                key={c.label}
+                to={c.to}
+                className="rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
+              >
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <c.icon className="size-4" />
+                  <span className="text-xs uppercase tracking-wide">{c.label}</span>
+                </div>
+                <div className="mt-2 font-display text-2xl font-semibold">{c.value ?? "—"}</div>
+              </Link>
+            ))}
       </div>
     </div>
   );

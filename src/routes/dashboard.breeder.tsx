@@ -16,6 +16,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { requireRole } from "@/lib/auth/guards";
 import { getMyKennelProfile } from "@/lib/queries/breeder";
@@ -59,13 +60,19 @@ function BreederDashboardLayout() {
       statusLine={
         <>
           <div className="mt-2 text-xs text-muted-foreground">Kennel</div>
-          <div className="text-sm font-semibold">
-            {kennelQuery.data?.name ?? "Not published yet"}
-          </div>
-          {kennelQuery.data && (
-            <Badge variant="secondary" className="mt-1 capitalize">
-              {kennelQuery.data.verification_status}
-            </Badge>
+          {kennelQuery.isLoading ? (
+            <Skeleton className="mt-1 h-5 w-24" />
+          ) : (
+            <>
+              <div className="text-sm font-semibold">
+                {kennelQuery.data?.name ?? "Not published yet"}
+              </div>
+              {kennelQuery.data && (
+                <Badge variant="secondary" className="mt-1 capitalize">
+                  {kennelQuery.data.verification_status}
+                </Badge>
+              )}
+            </>
           )}
         </>
       }

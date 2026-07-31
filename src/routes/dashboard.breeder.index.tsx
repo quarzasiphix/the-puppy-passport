@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Dog, CalendarCheck, Truck, PawPrint, ArrowUpRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getMyKennel, listKennelLitters, listKennelPuppies } from "@/lib/queries/breeder";
 import { listReservationsForMyKennel } from "@/lib/queries/reservations";
 import { listTransportRequestsForKennel } from "@/lib/queries/transport";
@@ -12,32 +13,48 @@ export const Route = createFileRoute("/dashboard/breeder/")({
 
 function BreederOverview() {
   const { userId } = useAuth();
-  const { data: kennel } = useQuery({
+  const kennelQuery = useQuery({
     queryKey: ["my-kennel", userId],
     enabled: !!userId,
     queryFn: () => getMyKennel(userId!),
   });
+  const kennel = kennelQuery.data;
 
-  const { data: litters } = useQuery({
+  const littersQuery = useQuery({
     queryKey: ["kennel-litters", kennel?.id],
     enabled: !!kennel?.id,
     queryFn: () => listKennelLitters(kennel!.id),
   });
-  const { data: puppies } = useQuery({
+  const puppiesQuery = useQuery({
     queryKey: ["kennel-puppies", kennel?.id],
     enabled: !!kennel?.id,
     queryFn: () => listKennelPuppies(kennel!.id),
   });
-  const { data: reservations } = useQuery({
+  const reservationsQuery = useQuery({
     queryKey: ["kennel-reservations", kennel?.id],
     enabled: !!kennel?.id,
     queryFn: () => listReservationsForMyKennel(kennel!.id),
   });
-  const { data: transportRequests } = useQuery({
+  const transportRequestsQuery = useQuery({
     queryKey: ["kennel-transport-requests", kennel?.id],
     enabled: !!kennel?.id,
     queryFn: () => listTransportRequestsForKennel(kennel!.id),
   });
+  const { data: litters } = littersQuery;
+  const { data: puppies } = puppiesQuery;
+  const { data: reservations } = reservationsQuery;
+  const { data: transportRequests } = transportRequestsQuery;
+
+  // Still resolving the kennel, or the kennel resolved and its dependent queries are still
+  // in flight -- either way, the KPI/list cards below would otherwise flash a misleading "0"/
+  // "no data yet" before real numbers are known.
+  const isLoading =
+    kennelQuery.isPending ||
+    (!!kennel?.id &&
+      (littersQuery.isLoading ||
+        puppiesQuery.isLoading ||
+        reservationsQuery.isLoading ||
+        transportRequestsQuery.isLoading));
 
   const activePuppies = (puppies ?? []).filter(
     (p) => p.availability_status !== "sold" && p.availability_status !== "withdrawn",
@@ -57,20 +74,30 @@ function BreederOverview() {
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Kpi icon={PawPrint} label="Litters" value={litters?.length ?? 0} />
-        <Kpi icon={Dog} label="Active puppies" value={activePuppies} />
-        <Kpi
-          icon={CalendarCheck}
-          label="Reservations awaiting action"
-          value={pendingReservations}
-        />
-        <Kpi icon={Truck} label="Transport requests" value={transportRequests?.length ?? 0} />
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <KpiSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Kpi icon={PawPrint} label="Litters" value={litters?.length ?? 0} />
+          <Kpi icon={Dog} label="Active puppies" value={activePuppies} />
+          <Kpi
+            icon={CalendarCheck}
+            label="Reservations awaiting action"
+            value={pendingReservations}
+          />
+          <Kpi icon={Truck} label="Transport requests" value={transportRequests?.length ?? 0} />
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Recent litters" cta="View all" ctaTo="/dashboard/breeder/litters">
-          {!litters?.length ? (
+          {isLoading ? (
+            <ListSkeleton />
+          ) : !litters?.length ? (
             <p className="text-sm text-muted-foreground">
               No litters yet. Start from the Litters page.
             </p>
@@ -91,7 +118,9 @@ function BreederOverview() {
           )}
         </Card>
         <Card title="Reservations" cta="View all" ctaTo="/dashboard/breeder/reservations">
-          {!reservations?.length ? (
+          {isLoading ? (
+            <ListSkeleton />
+          ) : !reservations?.length ? (
             <p className="text-sm text-muted-foreground">No reservations yet.</p>
           ) : (
             <ul className="divide-y divide-border/60">
@@ -111,6 +140,34 @@ function BreederOverview() {
           )}
         </Card>
       </div>
+    </div>
+  );
+}
+
+function KpiSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card p-5">
+      <div className="flex items-center justify-between">
+        <Skeleton className="size-10 rounded-xl" />
+      </div>
+      <Skeleton className="mt-4 h-8 w-12" />
+      <Skeleton className="mt-2 h-4 w-24" />
+    </div>
+  );
+}
+
+export function ListSkeleton() {
+  return (
+    <div className="space-y-3 py-1">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between gap-3 py-2">
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+      ))}
     </div>
   );
 }
