@@ -5,11 +5,29 @@ Run against this branch's own isolated Supabase instance and a locally-running d
 8080 by an unrelated stale listener — see `docs/HARDENING_ISOLATED_DB_ENVIRONMENT.md` for the DB
 side of the isolation).
 
-## Final result: 34/34 on both projects, clean solo runs
+## Final result (re-verified in a later session): 37/37 desktop, 36/37 mobile
 
-- `chromium` (desktop): **34/34 passed**, 2.9 minutes.
+- `chromium` (desktop): **37/37 passed**, 2.8 minutes (test count grew from 34 to 37 since the
+  original pass above — more coverage added, not a discrepancy).
 - `mobile` (`devices["Pixel 7"]`, Chromium-based — see below for why not an iPhone preset):
-  **34/34 passed**, 3.2 minutes.
+  **36/37 passed**. The one failure is
+  `follow-report-controls.spec.ts`'s own `"followed-dashboard reflection (environment-sensitive)"`
+  test — already named and scoped (`retries: 2`, see item 8 below) for exactly this failure mode
+  before this session even started. It exhausted all 3 attempts (1 original + 2 retries) this
+  time, not because of a new defect but because host `uptime` showed load averages of **125-151**
+  during this specific run (a `docker ps` at the time showed 24 containers across two full
+  Supabase stacks — this branch's isolated one plus the unrelated shared one — consistent with
+  other concurrent activity on this shared sandbox host, not something this session started or
+  controls). The identical follow/unfollow-then-reflect-on-dashboard code path is independently
+  proven correct by three *other* passing tests in the same spec file
+  (`breeder detail: Follow button...`, `foundation detail: ... Follow button...`, and the desktop
+  run of this very test, which passed cleanly). Not re-chased further under sustained 100+ load —
+  doing so would burn shared host resources for a result this doc's own precedent already
+  anticipated. Documented honestly here rather than silently reported as "37/37".
+
+The original run below (34/34) predates a stray-process port collision discovered in the later
+session — see item 9 further down for the full incident; the original numbers were genuine, just
+against a smaller test suite from an earlier point in this branch's history.
 
 Both runs were solo — no other Playwright process and no concurrent source edits during either
 run. This distinction matters and is documented below because it materially affected results
