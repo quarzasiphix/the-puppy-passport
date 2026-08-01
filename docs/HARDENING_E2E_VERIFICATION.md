@@ -5,12 +5,19 @@ Run against this branch's own isolated Supabase instance and a locally-running d
 8080 by an unrelated stale listener — see `docs/HARDENING_ISOLATED_DB_ENVIRONMENT.md` for the DB
 side of the isolation).
 
-## Final result (re-verified in a later session): 37/37 desktop, 36/37 mobile
+## Final result (re-verified in a later session): 40/43 desktop, 36/37 mobile (a11y suite desktop-only)
 
-- `chromium` (desktop): **37/37 passed**, 2.8 minutes (test count grew from 34 to 37 since the
-  original pass above — more coverage added, not a discrepancy).
+- `chromium` (desktop): **40/43 passed**, 3.6 minutes. Total grew from 37 to 43 with the addition
+  of `tests/e2e/accessibility.spec.ts` (6 new `@a11y` tests, see
+  `docs/ACCESSIBILITY_HARDENING_REPORT.md`'s "Later session" addendum) — 2 real bugs found and
+  fixed by that pass (an unlabeled `Select`, 3 color-only links), and 3 tests fail for a real,
+  intentionally undocumented-not-hidden reason: a shared `--accent` brand-color token fails WCAG AA
+  contrast at small text sizes, which needs a design decision, not a code fix — full detail in that
+  doc. Not run on `mobile` in this pass (desktop-only automated a11y scan; the existing 37 functional
+  tests below still run on both projects).
 - `mobile` (`devices["Pixel 7"]`, Chromium-based — see below for why not an iPhone preset):
-  **36/37 passed**. The one failure is
+  **36/37 passed** (of the original 37 functional tests, not counting the new a11y suite). The one
+  failure is
   `follow-report-controls.spec.ts`'s own `"followed-dashboard reflection (environment-sensitive)"`
   test — already named and scoped (`retries: 2`, see item 8 below) for exactly this failure mode
   before this session even started. It exhausted all 3 attempts (1 original + 2 retries) this

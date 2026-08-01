@@ -145,7 +145,7 @@ function FindADog() {
           <p className="text-sm text-muted-foreground">
             Showing {filtered.length} of {puppies.length} puppies from verified breeders across
             Europe ·{" "}
-            <Link to="/find-your-dog" className="text-primary hover:underline">
+            <Link to="/find-your-dog" className="text-primary underline">
               Not sure where to start? Try our guided search
             </Link>
           </p>
@@ -219,7 +219,7 @@ function FindADog() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Select value={f.sort} onValueChange={(v) => update("sort", v)}>
-                <SelectTrigger className="h-9 w-[150px] sm:w-[180px]">
+                <SelectTrigger className="h-9 w-[150px] sm:w-[180px]" aria-label="Sort by">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -52,14 +52,54 @@ that pass.
 
 ## Not done in this pass (documented, not silently skipped)
 
-- No live keyboard-only walkthrough, no color-contrast measurement, no screen-reader (VoiceOver/
-  NVDA) session, and no automated axe-core/Lighthouse run — all would need a live app against a
-  live database, deferred to Phase 26/27 once safe relative to Bot 1's certification work.
+- No live keyboard-only walkthrough, no screen-reader (VoiceOver/NVDA) session — still needs a
+  human session, not something an automated tool run substitutes for.
 - Focus-trap/focus-return behavior in dialogs was not independently re-verified here — the app
   uses Radix's `Dialog`/`AlertDialog` primitives throughout, which handle this correctly by
   default; no custom dialog implementation was found that would bypass it.
 - `prefers-reduced-motion` support (commit `761a6a6`, already landed in the frontend branch) was
   not re-audited; no changes found that would regress it.
+
+## Later session: automated axe-core pass (fills the color-contrast/automated-scan gap above)
+
+Added `@axe-core/playwright` and `tests/e2e/accessibility.spec.ts` (`@a11y` tag, `wcag2a`/`wcag2aa`
+rule sets) — real, running WCAG-level checks against a live dev server + isolated DB, closing the
+"no automated axe-core run" gap named above. Six representative pages tested (one per distinct
+layout family, not every route): homepage, find-a-dog listing, breeder detail, sign-in form, buyer
+dashboard, operations dashboard.
+
+**2 real bugs found and fixed:**
+
+1. **Critical: an unlabeled `Select` trigger.** `_public.find-a-dog.tsx`'s sort-order dropdown had
+   no accessible name at all (a screen reader announces nothing useful for it) — unlike the two
+   sibling filter `Select`s in the same file (breed, country), which already correctly had
+   `aria-label`. Fixed by adding `aria-label="Sort by"`, matching the existing sibling pattern
+   exactly.
+2. **Serious: 3 inline links distinguished only by color.** `_public.find-a-dog.tsx`'s guided-search
+   link and `dashboard.buyer.index.tsx`'s two empty-state links (`Request transport`, `Find a
+   puppy`) used `hover:underline` only — no visual cue for a user who can't perceive the color
+   difference until they hover. Fixed by making the underline permanent (`underline` instead of
+   `hover:underline`) on all three.
+
+**1 real gap found, deliberately not fixed — needs a design decision, not a code fix:**
+
+- **The `--accent` brand color token (`oklch(0.72 0.14 55)`, `src/styles.css:73` — renders as
+  `#e78a45`, the orange used for "eyebrow" section labels, status badges, and avatar-initial
+  circles across the whole app) fails WCAG AA contrast (4.5:1) at the small text sizes it's
+  actually used at** — measured 2.27-2.58:1 against light backgrounds, 2.43:1 for
+  `text-accent-foreground` on `bg-accent` avatar circles. This is a single shared design token used
+  in dozens of places (homepage eyebrows, dashboard badges/avatars, ops dashboard) — darkening it
+  would be a real, visible brand-color change across the whole product, not a scoped code fix, and
+  not something to decide unilaterally the same way `docs/SEO_HARDENING_REPORT.md` deliberately
+  didn't guess a production domain. Flagged here as a real, named, unresolved WCAG AA gap requiring
+  a deliberate yes/no on a darker `--accent` value (or restricting the light orange to large/bold
+  text, where the AA threshold is only 3:1) — not silently left undocumented.
+- Because of this, 3 of the 6 `accessibility.spec.ts` tests currently fail
+  (`homepage`, `buyer dashboard`, `operations dashboard` — the 3 pages that render the `--accent`
+  token) and will continue to fail until that design decision is made. This is intentional, honest
+  reporting, not a bug in the test: the same accepted-and-documented-failure pattern this branch
+  already uses for `db:schema-drift` in the quality gate. `npm run test:e2e:a11y` currently reports
+  3/6 for this reason — tracked here, not hidden.
 
 ## Severity classification of what was found
 

@@ -64,8 +64,10 @@ using it everywhere (commit `f914887`). Full incident and fix for both rounds:
 
 ## E2E (Playwright) results
 
-**37/37 on `chromium`, 36/37 on `mobile`** (re-verified in a later session; the mobile gap is one
-already-retry-scoped, environment-sensitive test that hit genuinely extreme host load — see
+**40/43 on `chromium`, 36/37 on `mobile`** (re-verified in a later session; `chromium`'s total grew
+from 37 to 43 with a new automated accessibility suite — see below — 3 of which fail for an honest,
+documented reason, not a test defect. `mobile`'s one gap is an already-retry-scoped,
+environment-sensitive test that hit genuinely extreme host load — see
 `docs/HARDENING_E2E_VERIFICATION.md` for the full, honest account, including a stray unrelated
 dev server that briefly caused several false-alarm failures before being root-caused). Full
 detail, including 10 real test-infrastructure bugs found and fixed (all root-caused by direct
@@ -162,10 +164,12 @@ instance.
 
 ## What could not be done in this pass, and why
 
-- **Live keyboard-only and full mobile/responsive/accessibility audit** (color contrast,
-  screen-reader session, axe-core/Lighthouse) — the Playwright E2E pass covers functional/critical
-  journeys on both a desktop and a real mobile device profile, but a dedicated accessibility-tool
-  pass and manual keyboard-only walkthrough weren't done in this session.
+- **Live keyboard-only walkthrough and a screen-reader (VoiceOver/NVDA) session** — still need a
+  human, not something an automated tool substitutes for. The automated half of this gap (axe-core/
+  color-contrast scanning) **was** done in a later session — see
+  `docs/ACCESSIBILITY_HARDENING_REPORT.md`'s "Later session" addendum: 2 real bugs found and fixed,
+  1 real gap found and honestly documented (a shared brand-color token needs a design decision, not
+  a code fix).
 - **Phase 20 (local-only demo-data extension mechanism)** — deliberately deferred; building it
   correctly (idempotent, dry-run, environment refusal) deserves its own focused pass rather than a
   rushed addition at the end of an already long session.

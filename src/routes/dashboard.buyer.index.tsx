@@ -115,7 +115,7 @@ function BuyerOverview() {
         {transportQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
             No transport requests yet.{" "}
-            <Link to="/transport/request" className="text-primary hover:underline">
+            <Link to="/transport/request" className="text-primary underline">
               Request transport
             </Link>
           </div>
@@ -153,7 +153,7 @@ function BuyerOverview() {
         {applicationsQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
             No applications yet.{" "}
-            <Link to="/find-a-dog" className="text-primary hover:underline">
+            <Link to="/find-a-dog" className="text-primary underline">
               Find a puppy
             </Link>
           </div>
