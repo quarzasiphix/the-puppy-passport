@@ -29,7 +29,7 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/_public/reset-password")({
-  head: () => ({ meta: [{ title: "Choose a new password — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Choose a new password — Anemalo" }] }),
   component: ResetPassword,
 });
 
@@ -73,7 +73,7 @@ function ResetPassword() {
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
           </span>
-          <span className="font-display text-xl font-semibold">Havenpaw</span>
+          <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
         <h1 className="mt-6 font-display text-3xl font-medium">Choose a new password</h1>
 

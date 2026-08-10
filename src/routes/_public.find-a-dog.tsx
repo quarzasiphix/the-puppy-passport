@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_public/find-a-dog")({
   loader: () => listPublishedPuppies(),
   head: () => ({
     meta: [
-      { title: "Find a dog — Havenpaw" },
+      { title: "Find a dog — Anemalo" },
       { name: "description", content: "Browse puppies from verified European breeders." },
     ],
   }),

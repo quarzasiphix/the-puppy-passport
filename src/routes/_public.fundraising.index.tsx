@@ -6,7 +6,7 @@ import { FundraisingDisabledNotice } from "@/components/fundraising-disabled-not
 import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/fundraising/")({
-  head: () => ({ meta: [{ title: "Support animal transport — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Support animal transport — Anemalo" }] }),
   loader: () => (FUNDRAISING_ENABLED ? listPublicCampaigns() : Promise.resolve([])),
   component: FundraisingListPage,
 });

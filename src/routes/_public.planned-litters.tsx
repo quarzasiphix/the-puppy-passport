@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/public/empty-state";
 
 export const Route = createFileRoute("/_public/planned-litters")({
   loader: () => listPublishedLitters("planned"),
-  head: () => ({ meta: [{ title: "Planned litters — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Planned litters — Anemalo" }] }),
   component: PlannedLittersPage,
 });
 

@@ -1,4 +1,4 @@
-# Havenpaw — Database & API Regression Testing
+# Anemalo — Database & API Regression Testing
 
 Written 2026-07-22, alongside the first database/API regression suite (`tests/db/`). This
 complements `docs/E2E_TESTING.md` (browser-driven Playwright) with fast, browser-free integration
@@ -9,7 +9,7 @@ runner (`node:test`) runs the `.ts` files directly via Node 24's built-in TypeSc
 
 ## Why this exists
 
-Havenpaw's RLS layer has a real history of subtle, previously-shipped bugs — missing table grants,
+Anemalo's RLS layer has a real history of subtle, previously-shipped bugs — missing table grants,
 PII over-exposure, RLS recursion, `INSERT ... RETURNING` treated as `SELECT`, and a column-shadowing
 bug that silently returned empty results instead of erroring (see `docs/MVP_TEST_REPORT.md` §3).
 Every one of those was only ever caught by testing real authenticated API calls, not by reading the
@@ -96,7 +96,7 @@ npx tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --sk
   (`docs/adr/TRANSPORT_DATA_MODEL.md`): `create_transport_draft()`'s happy path with multiple
   animals and parties, atomic creation (a mid-call failure leaves no orphan rows), the
   'requester'-party-is-automatic rule, the legal_owner/sender/payer forgery block (naming another
-  Havenpaw user as recipient is allowed, the same roles via profile_id are not), the animal
+  Anemalo user as recipient is allowed, the same roles via profile_id are not), the animal
   entitlement check (a customer can't attach an animal they have no real connection to; the owning
   organisation's own member can), the post-draft snapshot lock on `transport_requests` (ops can still
   correct it directly, the requester can't), the equivalent lock on

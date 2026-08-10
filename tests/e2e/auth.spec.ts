@@ -23,7 +23,7 @@ async function fillAfterHydration(page: Page, submitButton: Locator, fields: [st
 // account (unique email per run) rather than reusing seed data, so this also exercises the real
 // signUp code path end to end, not just signIn against a pre-seeded account.
 test("a new visitor can register and is signed in immediately", async ({ page }) => {
-  const email = `e2e-${Date.now()}@havenpaw.test`;
+  const email = `e2e-${Date.now()}@anemalo.test`;
 
   await page.goto("/signup");
   await page.getByText("Request animal transport", { exact: false }).click();
@@ -48,7 +48,7 @@ test("an existing demo account can sign in and see its own dashboard", async ({ 
   await page.goto("/signin");
   const signInBtn = page.getByRole("button", { name: "Sign in" });
   await fillAfterHydration(page, signInBtn, [
-    ["Email", "buyer@havenpaw.test"],
+    ["Email", "buyer@anemalo.test"],
     ["Password", "password123"],
   ]);
   await signInBtn.click();
@@ -63,7 +63,7 @@ test("wrong password is rejected with a real error, not a silent redirect", asyn
   await page.goto("/signin");
   const signInBtn = page.getByRole("button", { name: "Sign in" });
   await fillAfterHydration(page, signInBtn, [
-    ["Email", "buyer@havenpaw.test"],
+    ["Email", "buyer@anemalo.test"],
     ["Password", "wrong-password"],
   ]);
   await signInBtn.click();

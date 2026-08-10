@@ -46,7 +46,7 @@ const POST_TYPE_LABELS: Record<string, string> = {
 export const Route = createFileRoute("/_public/community/")({
   head: () => ({
     meta: [
-      { title: "Community — Havenpaw" },
+      { title: "Community — Anemalo" },
       {
         name: "description",
         content: "Updates, questions and stories from breeders, foundations and fellow dog people.",
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_public/community/")({
 });
 
 function authorName(p: PostRow) {
-  return p.organisations?.name ?? p.profiles?.display_name ?? "Havenpaw member";
+  return p.organisations?.name ?? p.profiles?.display_name ?? "Anemalo member";
 }
 
 function CommunityPage() {

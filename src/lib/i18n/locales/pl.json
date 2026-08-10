@@ -35,7 +35,7 @@
     "transportSection": "Transport",
     "account": "Konto",
     "rightsReserved": "Wszelkie prawa zastrzeżone.",
-    "welfareDisclaimer": "Havenpaw nie gwarantuje stanu zdrowia ani zachowania żadnego zwierzęcia, ani stałego terminu dostawy transportu przed weryfikacją.",
+    "welfareDisclaimer": "Anemalo nie gwarantuje stanu zdrowia ani zachowania żadnego zwierzęcia, ani stałego terminu dostawy transportu przed weryfikacją.",
     "linkMarketplace": "Rynek ogłoszeń",
     "linkFindYourDog": "Znajdź idealnego psa",
     "linkVerifiedBreeders": "Zweryfikowani hodowcy",
@@ -95,11 +95,11 @@
     "statAssociation": "Zrzeszenie",
     "statResponseTime": "Czas odpowiedzi",
     "noAnimalsPublished": "Ta organizacja nie ma obecnie opublikowanych psów do adopcji — zajrzyj tu wkrótce.",
-    "transportAvailableDesc": "Najpierw zapytaj o psa lub zgłoś zainteresowanie — transport jest organizowany dopiero po zatwierdzeniu adopcji przez organizację, nigdy automatycznie. Po zatwierdzeniu Havenpaw może zorganizować transport dla konkretnej trasy i terminu; dokładny adres odbioru i dostawy pozostaje prywatny i jest ustalany podczas składania wniosku o transport.",
+    "transportAvailableDesc": "Najpierw zapytaj o psa lub zgłoś zainteresowanie — transport jest organizowany dopiero po zatwierdzeniu adopcji przez organizację, nigdy automatycznie. Po zatwierdzeniu Anemalo może zorganizować transport dla konkretnej trasy i terminu; dokładny adres odbioru i dostawy pozostaje prywatny i jest ustalany podczas składania wniosku o transport.",
     "transportUnknownDesc": "Ta organizacja nie potwierdziła jeszcze dostępności transportu — zapytaj ją bezpośrednio lub uzyskaj ogólną wycenę. Podobnie jak w każdej adopcji, transport organizowany jest dopiero po zatwierdzeniu przez organizację, nigdy automatycznie.",
     "seeTransportOptions": "Zobacz opcje transportu",
     "contactProcessTitle": "Kontakt i proces adopcji",
-    "contactProcessDesc": "Pierwszy kontakt zawsze odbywa się przez Havenpaw. Wyraź zainteresowanie konkretnym psem, a będziesz mógł napisać bezpośrednio do fundacji w sprawie swojego zgłoszenia — odpowiedzą z dalszymi krokami przed potwierdzeniem adopcji.",
+    "contactProcessDesc": "Pierwszy kontakt zawsze odbywa się przez Anemalo. Wyraź zainteresowanie konkretnym psem, a będziesz mógł napisać bezpośrednio do fundacji w sprawie swojego zgłoszenia — odpowiedzą z dalszymi krokami przed potwierdzeniem adopcji.",
     "viewAnimals": "Zobacz psy do adopcji"
   }
 }

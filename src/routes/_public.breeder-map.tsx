@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_public/breeder-map")({
   loader: () => listApprovedKennels(),
   head: () => ({
     meta: [
-      { title: "Breeder map — Havenpaw" },
+      { title: "Breeder map — Anemalo" },
       {
         name: "description",
         content: "Browse verified breeders by country and city across Europe.",
@@ -51,7 +51,7 @@ function BreederMapPage() {
         <h1 className="mt-2 font-display text-3xl font-medium">Breeder map</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Verified breeders grouped by country and city. Only approximate locations are ever shown —
-          exact addresses stay private, even from Havenpaw's own team until a transport is being
+          exact addresses stay private, even from Anemalo's own team until a transport is being
           arranged.
         </p>
       </header>

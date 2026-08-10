@@ -38,12 +38,12 @@ export const Route = createFileRoute("/_public/breeders/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.b.kennel} — Havenpaw` : "Breeder — Havenpaw" },
+      { title: loaderData ? `${loaderData.b.kennel} — Anemalo` : "Breeder — Anemalo" },
       {
         name: "description",
         content: loaderData
-          ? `${loaderData.b.kennel} in ${loaderData.b.city}, ${loaderData.b.country} — ${loaderData.b.breeds.join(", ") || "dog breeder"} on Havenpaw.`
-          : "A breeder profile on Havenpaw.",
+          ? `${loaderData.b.kennel} in ${loaderData.b.city}, ${loaderData.b.country} — ${loaderData.b.breeds.join(", ") || "dog breeder"} on Anemalo.`
+          : "A breeder profile on Anemalo.",
       },
     ],
   }),
@@ -182,7 +182,7 @@ function BreederProfile() {
             <Card>
               <h3 className="mb-3 font-display text-xl font-semibold">How applications work</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>· First contact happens through Havenpaw</li>
+                <li>· First contact happens through Anemalo</li>
                 <li>· The breeder reviews and responds to your application</li>
                 <li>· Reservation terms are agreed directly with the breeder</li>
               </ul>
@@ -307,7 +307,7 @@ function BreederProfile() {
           <TabsContent value="reviews" className="mt-6">
             <Card>
               <p className="text-muted-foreground">
-                Reviews aren't available yet — they open up once transports through Havenpaw start
+                Reviews aren't available yet — they open up once transports through Anemalo start
                 completing.
               </p>
             </Card>
@@ -320,7 +320,7 @@ function BreederProfile() {
                 <div>
                   <h3 className="font-display text-xl font-semibold">Transport</h3>
                   <p className="mt-1 text-muted-foreground">
-                    Havenpaw can arrange transport for puppies from this kennel. Get an estimate or
+                    Anemalo can arrange transport for puppies from this kennel. Get an estimate or
                     submit a transport request for the exact route and dates you need.
                   </p>
                   <Button asChild variant="outline" className="mt-4">
@@ -337,7 +337,7 @@ function BreederProfile() {
                 Contact & application rules
               </h3>
               <p className="text-muted-foreground">
-                All first contact happens through Havenpaw. Apply for a specific puppy, and you can
+                All first contact happens through Anemalo. Apply for a specific puppy, and you can
                 message the breeder directly about your application — after they approve it, direct
                 contact details are shared.
               </p>

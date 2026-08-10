@@ -40,7 +40,7 @@ export function AccountPrivacyCard({ userId }: { userId: string }) {
   const exportMutation = useMutation({
     mutationFn: () => exportMyData(userId),
     onSuccess: (data) => {
-      downloadJson(data, `havenpaw-my-data-${new Date().toISOString().slice(0, 10)}.json`);
+      downloadJson(data, `anemalo-my-data-${new Date().toISOString().slice(0, 10)}.json`);
       toast.success("Downloaded.");
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not export data."),

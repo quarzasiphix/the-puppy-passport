@@ -86,7 +86,7 @@ function ProfilePage() {
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-medium">Public profile</h1>
-          <p className="text-sm text-muted-foreground">How buyers see your kennel on Havenpaw.</p>
+          <p className="text-sm text-muted-foreground">How buyers see your kennel on Anemalo.</p>
         </div>
         {query.data?.slug && (
           <Button asChild variant="outline">

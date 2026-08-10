@@ -6,16 +6,16 @@ import { expect } from "@playwright/test";
 export const DEMO_PASSWORD = "password123";
 
 export const DEMO_ACCOUNTS = {
-  customer: "customer@havenpaw.test",
-  buyer: "buyer@havenpaw.test",
-  breeder: "breeder1@havenpaw.test",
-  breederSecondary: "breeder2@havenpaw.test",
-  breederPending: "breeder3-pending@havenpaw.test",
-  foundation: "foundation1@havenpaw.test",
-  foundationPending: "foundation2-pending@havenpaw.test",
-  ops: "ops@havenpaw.test",
-  driver: "driver@havenpaw.test",
-  admin: "admin@havenpaw.test",
+  customer: "customer@anemalo.test",
+  buyer: "buyer@anemalo.test",
+  breeder: "breeder1@anemalo.test",
+  breederSecondary: "breeder2@anemalo.test",
+  breederPending: "breeder3-pending@anemalo.test",
+  foundation: "foundation1@anemalo.test",
+  foundationPending: "foundation2-pending@anemalo.test",
+  ops: "ops@anemalo.test",
+  driver: "driver@anemalo.test",
+  admin: "admin@anemalo.test",
 } as const;
 
 // Many interactive controls in this app (Follow, Save, Sign out) branch their behavior or
@@ -57,7 +57,7 @@ export async function signIn(page: Page, email: string, password = DEMO_PASSWORD
 // its own -- Sign out only exists in the public site header (site-chrome.tsx), confirmed via a
 // real page snapshot: signIn() lands on /dashboard/buyer, whose sidebar has "Account" (a link to
 // the profile page) but no "Sign out" anywhere. Navigate to a public page first, matching the real
-// flow a user would actually have to follow (dashboard -> "Back to Havenpaw" -> Sign out).
+// flow a user would actually have to follow (dashboard -> "Back to Anemalo" -> Sign out).
 //
 // The desktop Sign out button is `hidden lg:inline-flex` (site-chrome.tsx) -- on a real mobile
 // viewport it's genuinely not in the DOM's visible set at all; sign-out there only exists behind

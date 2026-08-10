@@ -32,7 +32,7 @@ const routeStatusLabels: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/_public/planned-routes")({
-  head: () => ({ meta: [{ title: "Planned routes — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Planned routes — Anemalo" }] }),
   loader: async () => {
     const supabase = getSupabaseBrowserClient();
     const { data } = await supabase

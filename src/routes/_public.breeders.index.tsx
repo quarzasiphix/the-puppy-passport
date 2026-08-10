@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
   head: () => ({
     meta: [
-      { title: "Verified breeders — Havenpaw" },
+      { title: "Verified breeders — Anemalo" },
       {
         name: "description",
         content:

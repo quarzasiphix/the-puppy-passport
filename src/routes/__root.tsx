@@ -84,13 +84,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Havenpaw — Find, adopt and welcome a dog, the right way" },
+      { title: "Anemalo — Find, adopt and welcome a dog, the right way" },
       {
         name: "description",
         content:
           "A dedicated European animal ecosystem: verified breeders, foundation and rescue adoptions, and a trusted community — with safe, professional transport available once a purchase or adoption is agreed.",
       },
-      { property: "og:title", content: "Havenpaw — Find, adopt and welcome a dog, the right way" },
+      { property: "og:title", content: "Anemalo — Find, adopt and welcome a dog, the right way" },
       {
         property: "og:description",
         content:

@@ -34,14 +34,14 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
     meta: [
       {
         title: loaderData
-          ? `${loaderData.name} — ${loaderData.breed} — Adoption — Havenpaw`
-          : "Adoption — Havenpaw",
+          ? `${loaderData.name} — ${loaderData.breed} — Adoption — Anemalo`
+          : "Adoption — Anemalo",
       },
       {
         name: "description",
         content: loaderData
           ? `${loaderData.name}, a ${loaderData.breed} looking for a new home from ${loaderData.orgName} in ${loaderData.city}, ${loaderData.country}.`
-          : "A dog looking for a new home on Havenpaw.",
+          : "A dog looking for a new home on Anemalo.",
       },
     ],
   }),

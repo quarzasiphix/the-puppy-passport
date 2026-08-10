@@ -1,4 +1,4 @@
-# Havenpaw — Current State Audit (historical)
+# Anemalo — Current State Audit (historical)
 
 **This entire document is a historical snapshot from mid-build (originally written before
 auth/onboarding, operations tooling, or marketplace-on-real-data work existed, with one later

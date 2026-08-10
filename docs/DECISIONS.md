@@ -1,4 +1,4 @@
-# Havenpaw — Decisions Log
+# Anemalo — Decisions Log
 
 Architectural and product decisions already made, with the reasoning, so later work doesn't
 quietly contradict earlier work. Newest at the bottom of each section is not implied — read the
@@ -6,29 +6,29 @@ whole thing before making a conflicting choice.
 
 ## Product direction
 
-- **Scope correction, 2026-07-22: Havenpaw is a dedicated animal ecosystem; transport is a major
+- **Scope correction, 2026-07-22: Anemalo is a dedicated animal ecosystem; transport is a major
   advantage, not the primary identity.** This explicitly **reverses** the earlier decision directly
   below ("transport is the primary commercial service"). That framing drove a transport-first
   homepage hero, nav order, and header CTA, which have now all been corrected back toward
   animal-discovery-first (see `src/routes/_public.index.tsx`, `src/components/site-chrome.tsx`).
   The permanent priority order is now: (1) animal discovery/marketplace, (2) breeder/foundation/
   public profiles, (3) social feed/communication/community, (4) applications/reservations/adoption/
-  handover, (5) integrated Havenpaw transport after a purchase or adoption, (6) standalone transport
+  handover, (5) integrated Anemalo transport after a purchase or adoption, (6) standalone transport
   requests, (7) verified-organisation fundraising (see `docs/FUNDRAISING_POLICY.md`), (8)
   animal-related services/products/events/education. See `docs/PRODUCT_VISION.md` for the full
-  hierarchy and the main customer journey. **Havenpaw must never expand into unrelated
+  hierarchy and the main customer journey. **Anemalo must never expand into unrelated
   general-marketplace categories** (cars, electronics, furniture, tools, etc.) — every feature must
   trace back to this hierarchy.
 - ~~Transport is the primary commercial service; marketplace/adoption/community are supporting
   pillars.~~ **Superseded by the correction above.** This had itself superseded an earlier "puppy
   marketplace first" framing and a separate "breeder map + achievements" request — kept here as a
   historical record of how the framing has moved over time, not as current guidance.
-- **Fundraising is verified-organisation-only, transport/welfare-only, never a Havenpaw wallet.**
+- **Fundraising is verified-organisation-only, transport/welfare-only, never an Anemalo wallet.**
   See `docs/FUNDRAISING_POLICY.md` for the complete policy, decided 2026-07-22 ahead of any
   implementation. Key points worth restating here so they can't be quietly relaxed by a later
   feature request: only approved organisations (never private users/buyers/adopters) may create a
   campaign; a campaign never funds the purchase/adoption fee of an animal, only transport and
-  related welfare costs; collected funds go directly to the connected Havenpaw transport balance,
+  related welfare costs; collected funds go directly to the connected Anemalo transport balance,
   never to a freely-withdrawable personal balance; and no payment provider is integrated until one
   is explicitly approved — until then this stays behind a feature flag.
 - **VIP transport is privacy/scheduling/communication, never a higher minimum welfare standard.**
@@ -48,7 +48,7 @@ whole thing before making a conflicting choice.
 - **No staff "sign in as user" impersonation feature exists, and none should be built without a
   deliberate, separate design pass — decided 2026-07-25 (Stage CJL of the autonomous backend-
   hardening session).** Confirmed nothing of the kind exists anywhere in this codebase today
-  (grepped `src/`, `supabase/migrations/*.sql`, and every doc). Havenpaw's own domain is animal
+  (grepped `src/`, `supabase/migrations/*.sql`, and every doc). Anemalo's own domain is animal
   ownership/trust relationships — a support agent silently browsing the app as a real user (seeing
   their private messages, exact addresses, saved animals, draft applications) is a materially
   different, much larger trust concession than the operational `is_ops_staff()` "manage all" access

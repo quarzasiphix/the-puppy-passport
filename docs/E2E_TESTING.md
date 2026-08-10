@@ -1,4 +1,4 @@
-# Havenpaw — End-to-End Testing
+# Anemalo — End-to-End Testing
 
 Written 2026-07-22, alongside the first Playwright spec (`tests/e2e/auth.spec.ts`). This is the
 only automated test coverage in the repo so far — see `docs/MVP_TEST_REPORT.md` §4 for how
@@ -10,13 +10,13 @@ everything else has been verified (manual `curl` calls against the local PostgRE
   false` and `workers: 1` (several specs sign in as the same shared seeded demo accounts, so
   parallel runs would race each other's session cookies against one dev server).
 - `tests/e2e/auth.spec.ts` — three specs against real Supabase auth: a brand-new visitor can
-  register and land on `/dashboard/buyer`, a seeded demo account (`buyer@havenpaw.test`) can sign
+  register and land on `/dashboard/buyer`, a seeded demo account (`buyer@anemalo.test`) can sign
   in, and a wrong password is rejected with a real error rather than a silent redirect.
 
 ## Prerequisites
 
 1. Local Supabase stack running with seed data: `npm run db:start` (see `docs/LOCAL_SETUP.md` for
-   demo account credentials — the suite assumes `buyer@havenpaw.test` / `password123` exists).
+   demo account credentials — the suite assumes `buyer@anemalo.test` / `password123` exists).
 2. Playwright's browser binaries installed: `npx playwright install chromium` (plus, on Linux,
    `npx playwright install-deps chromium` for OS-level shared libraries — see "Known sandbox gap"
    below if that command itself can't reach a package mirror).
@@ -50,7 +50,7 @@ local Supabase auth stack.
 All 3 specs in `auth.spec.ts` now fail, but not on a launch/environment problem — on what looks
 like a genuine SSR-hydration race in `src/routes/_public.signin.tsx`/`_public.signup.tsx`: the
 failing sign-in spec's URL after clicking "Sign in" was
-`http://127.0.0.1:8080/signin?email=buyer%40havenpaw.test&password=password123` — a plain HTML
+`http://127.0.0.1:8080/signin?email=buyer%40anemalo.test&password=password123` — a plain HTML
 form GET submission with credentials in the query string, not the expected client-side
 `form.handleSubmit(onSubmit)` (react-hook-form) call. That only happens if the browser's native
 form submission fires because React hasn't finished attaching its `onSubmit` handler yet when

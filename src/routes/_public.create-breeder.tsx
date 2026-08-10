@@ -21,7 +21,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export const Route = createFileRoute("/_public/create-breeder")({
-  head: () => ({ meta: [{ title: "Apply for verification — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Apply for verification — Anemalo" }] }),
   component: CreateBreeder,
 });
 
@@ -137,7 +137,7 @@ function CreateBreeder() {
           <PawPrint className="mx-auto size-8 text-primary" />
           <h1 className="mt-4 font-display text-3xl font-medium">Create an account first</h1>
           <p className="mt-2 text-muted-foreground">
-            To apply as a breeder or foundation, first create a Havenpaw account — you'll be brought
+            To apply as a breeder or foundation, first create an Anemalo account — you'll be brought
             straight back here to submit your application.
           </p>
           <Button asChild size="lg" className="mt-6">

@@ -1,4 +1,4 @@
-# Havenpaw — MVP Integration Review
+# Anemalo — MVP Integration Review
 
 Snapshot as of 2026-07-17, after the local Supabase foundation, auth, homepage/nav, transport
 request flow, operations dashboard, matching engine, pricing, marketplace-on-real-data, breeder
@@ -179,7 +179,7 @@ Worth reading in full — these were all caught by testing actual API calls, not
    row for the *buyer* (`profile_id = buyer_id`, not the caller). The only pre-existing insert
    policy for notifying another user was moderator/admin-only — a real breeder approving an
    application would have hit `42501`. Caught during verification (not by a user report) by
-   deliberately testing the write as `breeder1@havenpaw.test` before considering the feature done,
+   deliberately testing the write as `breeder1@anemalo.test` before considering the feature done,
    and fixed with a narrowly-scoped policy: an org owner may notify a profile only if that profile
    has an actual `buyer_applications` row against their organisation (migration
    `20260101004900_notifications_org_owner_notify_applicants.sql`). Also negative-tested that a

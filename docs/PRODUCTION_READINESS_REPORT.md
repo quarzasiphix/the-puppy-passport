@@ -1,4 +1,4 @@
-# Havenpaw — Production Readiness Report
+# Anemalo — Production Readiness Report
 
 Original snapshot: 2026-07-17. **Reconciled 2026-07-24** (Stage P of the autonomous
 backend-hardening session, see `docs/AUTONOMOUS_BACKEND_PROGRESS.md`) against everything that
@@ -8,7 +8,7 @@ rate limiting) were true in the original snapshot and are no longer true; they'r
 place below with a note on what changed. Anything not called out as updated is unchanged from the
 2026-07-17 snapshot and still reflects the current repo state as of this reconciliation pass — this
 was a documentation-reconciliation stage, not a re-audit of every category from scratch. This
-report answers "can Havenpaw launch, and what specifically stands in the way" by combining the
+report answers "can Anemalo launch, and what specifically stands in the way" by combining the
 verified findings already recorded in `docs/CURRENT_STATE_AUDIT.md` and `docs/MVP_TEST_REPORT.md`
 (both same-day as the original snapshot, both verified against a real local Supabase instance with
 actual API calls and cross-tenant negative tests — not just code review; both are now themselves

@@ -14,7 +14,7 @@ import { ErrorState } from "@/components/public/error-state";
 export const Route = createFileRoute("/_public/find-your-dog")({
   head: () => ({
     meta: [
-      { title: "Find your ideal dog — Havenpaw" },
+      { title: "Find your ideal dog — Anemalo" },
       {
         name: "description",
         content: "A short guided search to narrow down available puppies to what fits your home.",

@@ -27,7 +27,7 @@ export {
 // Locale is currently client-side only (localStorage), not SSR-aware via a cookie yet — a signed-
 // in visitor's very first server-rendered paint is always English, then re-renders in their saved
 // language on the client. Documented as a known gap, not silently accepted as "done".
-const STORAGE_KEY = "havenpaw-locale";
+const STORAGE_KEY = "anemalo-locale";
 const FALLBACK_LOCALE: Locale = "en";
 
 function isLocale(value: string | null): value is Locale {

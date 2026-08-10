@@ -7,7 +7,7 @@ test.describe("public discovery @critical", () => {
   test("homepage loads with real stats and no console errors", async ({ page }) => {
     const tracker = trackPageErrors(page);
     await page.goto("/");
-    await expect(page).toHaveTitle(/Havenpaw/);
+    await expect(page).toHaveTitle(/Anemalo/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expectNoPageErrors(tracker, "on homepage");
   });

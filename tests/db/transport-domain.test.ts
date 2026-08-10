@@ -301,7 +301,7 @@ test("create_transport_draft: a customer cannot pass a 'requester' party explici
   assert.ok(error, "expected an error rejecting an explicit requester party");
 });
 
-test("create_transport_draft: a customer cannot forge another Havenpaw user as legal_owner/sender/payer", async () => {
+test("create_transport_draft: a customer cannot forge another Anemalo user as legal_owner/sender/payer", async () => {
   const customer = await as("customer");
   const { data, error } = await customer.rpc("create_transport_draft", {
     p_request: {},

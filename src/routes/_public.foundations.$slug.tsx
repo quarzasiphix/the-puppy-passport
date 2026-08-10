@@ -31,12 +31,12 @@ export const Route = createFileRoute("/_public/foundations/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.f.name} — Havenpaw` : "Foundation — Havenpaw" },
+      { title: loaderData ? `${loaderData.f.name} — Anemalo` : "Foundation — Anemalo" },
       {
         name: "description",
         content: loaderData
-          ? `${loaderData.f.name} in ${loaderData.f.city}, ${loaderData.f.country} — a verified foundation on Havenpaw.`
-          : "A foundation profile on Havenpaw.",
+          ? `${loaderData.f.name} in ${loaderData.f.city}, ${loaderData.f.country} — a verified foundation on Anemalo.`
+          : "A foundation profile on Anemalo.",
       },
     ],
   }),

@@ -1,4 +1,4 @@
-# Havenpaw — Domain Model
+# Anemalo — Domain Model
 
 Principal entities and relationships as currently implemented in `supabase/migrations/`. This is a
 living document — column-level detail lives in the migrations themselves; this file describes the
@@ -79,7 +79,7 @@ shape and *why*, not every field.
   amendment workflow below instead.
 - **`transport_request_animals`** (added in the transport-data-model hardening pass) — one row per
   animal on the request (`position` 1..N), each either linked to a real `animals.id` or carrying its
-  own inline snapshot for an animal never registered in Havenpaw. Finally gives
+  own inline snapshot for an animal never registered in Anemalo. Finally gives
   `transport_requests.number_of_animals > 1` an actual, queryable representation — previously just a
   plain integer with no linkage to which animals those were. `create_transport_draft()` also
   validates that any linked `animal_id` is one the caller actually has a real connection to
@@ -93,7 +93,7 @@ shape and *why*, not every field.
   compatibility). Existed since 2026-07-22 with correct RLS but zero real callers; backfilled from
   the legacy inline columns and given a real writer (`create_transport_draft()`) in the hardening
   pass. `legal_owner`/`sender`/`payer` may only carry a bare `profile_id` equal to the requester's
-  own id — a customer cannot claim an arbitrary other Havenpaw user already agreed to own/send/pay.
+  own id — a customer cannot claim an arbitrary other Anemalo user already agreed to own/send/pay.
   `recipient` and organisation-based parties of any role carry no such restriction.
 - **`transport_request_amendments`** + `request_transport_amendment()`/`review_transport_amendment()`
   — the deliberate path for a legitimate post-submission change (the task's own example: "changed
@@ -209,8 +209,8 @@ column per capability (`marketplace_state`/`breeder_verification_state`/`adoptio
 `transport_post_state`/`transport_full_state`/`fundraising_state`) so a market's readiness is
 honest per-feature rather than a single all-or-nothing flag. States range `unavailable` →
 `discovery_only` → `listings_available`/`adoption_available`/`transport_requests_available` →
-`partner_transport` → `full_havenpaw_service`. Seeded: Poland, Germany, Netherlands, Belgium —
-deliberately no market is `full_havenpaw_service` yet, since the app itself isn't fully translated
+`partner_transport` → `full_anemalo_service`. Seeded: Poland, Germany, Netherlands, Belgium —
+deliberately no market is `full_anemalo_service` yet, since the app itself isn't fully translated
 (see `docs/IMPLEMENTATION_PLAN.md` phase 14).
 
 ## Cross-cutting patterns worth knowing before extending this schema

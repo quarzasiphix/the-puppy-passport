@@ -1,18 +1,18 @@
-# Havenpaw — Fundraising Policy
+# Anemalo — Fundraising Policy
 
 Written 2026-07-22 as a product/policy decision, **implemented the same day** (see
 `docs/IMPLEMENTATION_PLAN.md` phase 13 for the full build detail, `docs/DOMAIN_MODEL.md` for the
 schema, `tests/db/fundraising.test.ts` for the security test coverage). This document remains the
-authoritative statement of **what fundraising on Havenpaw is and is not allowed to do** — the
+authoritative statement of **what fundraising on Anemalo is and is not allowed to do** — the
 implementation must conform to this policy, not the other way around. There is still no real
 payment provider integration or wallet, and the whole feature stays disabled by default behind
 `VITE_FUNDRAISING_ENABLED` (`src/lib/fundraising-flag.ts`) until one is approved along with refund
 rules and legal texts.
 
-## Why fundraising exists on Havenpaw at all
+## Why fundraising exists on Anemalo at all
 
 Transport is a real cost, and a distant adoption (an approved organisation or adopter who can't
-fully cover an eligible Havenpaw transport) is exactly the situation where community support has
+fully cover an eligible Anemalo transport) is exactly the situation where community support has
 genuine value — matching hierarchy pillar 7 in `docs/PRODUCT_VISION.md`. Fundraising is a supporting
 feature for the animal-welfare mission, not a payments product in its own right and not a way to
 crowdfund the purchase of an animal.
@@ -46,7 +46,7 @@ A transport fundraiser must be connected with all of the following — never cre
 - a real animal (or adoption listing);
 - an approved or active adoption process (a real `buyer_applications` relationship, not just
   interest expressed);
-- a real Havenpaw transport request;
+- a real Anemalo transport request;
 - an approved transport quotation;
 - a fixed funding target (the quotation's total, or a defined portion of it — never an open-ended
   ask).
@@ -60,10 +60,10 @@ transport data — the same privacy boundary already enforced elsewhere for tran
 
 ## Financial rules
 
-- **No Havenpaw wallet.** Money is never held by Havenpaw as a balance a user can spend elsewhere.
+- **No Anemalo wallet.** Money is never held by Anemalo as a balance a user can spend elsewhere.
 - The payment flow is designed around a **replaceable, licensed external payment provider** — not
   built into this policy, decided at implementation time.
-- Money collected for a transport campaign is **applied directly to the connected Havenpaw
+- Money collected for a transport campaign is **applied directly to the connected Anemalo
   transport balance** — never freely withdrawable by the adopter or any other private person.
 - **Not permitted, ever**:
   - private cash withdrawal;
@@ -73,8 +73,8 @@ transport data — the same privacy boundary already enforced elsewhere for tran
   - creating a duplicate campaign for the same quotation;
   - raising money to purchase an animal;
   - a campaign from an unverified organisation.
-- Havenpaw must **never claim every payment is a tax-deductible charitable donation** — that
-  depends on the receiving organisation's own legal/tax status in its jurisdiction, which Havenpaw
+- Anemalo must **never claim every payment is a tax-deductible charitable donation** — that
+  depends on the receiving organisation's own legal/tax status in its jurisdiction, which Anemalo
   cannot universally guarantee.
 
 ## Campaign states

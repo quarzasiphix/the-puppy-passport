@@ -1,7 +1,7 @@
 // Stage BK (supplemental queue): legal-document/consent versioning.
 // 20260101010200_legal_consent_versioning.sql adds a real, auditable record of what a user
 // actually consented to and when, matching the promise already made on the signup page ("By
-// creating an account, you agree to Havenpaw's Terms and Privacy"). Tests the DB layer directly
+// creating an account, you agree to Anemalo's Terms and Privacy"). Tests the DB layer directly
 // (RLS, constraints) plus the exact sequence of operations signUp() performs server-side
 // (src/lib/auth/actions.ts) against a disposable throwaway account -- this harness talks to
 // Supabase directly, not through the app server, so it can't invoke the TanStack Start server

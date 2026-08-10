@@ -51,7 +51,7 @@ export function NotificationPreferences({ userId }: { userId: string }) {
         </div>
       ))}
       <p className="text-xs text-muted-foreground">
-        In-app only — Havenpaw doesn't send email or push notifications yet.
+        In-app only — Anemalo doesn't send email or push notifications yet.
       </p>
     </div>
   );

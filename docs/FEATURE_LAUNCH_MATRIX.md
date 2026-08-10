@@ -1,6 +1,6 @@
 # Feature launch matrix
 
-Classification of every significant Havenpaw feature area, verified against the real repository
+Classification of every significant Anemalo feature area, verified against the real repository
 state (routes in `src/routes/`, migrations in `supabase/migrations/`, `package.json` dependencies)
 — not assumed from memory. See `docs/BETA_SCOPE.md` for the resulting beta scope decision.
 

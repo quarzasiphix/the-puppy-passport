@@ -1,4 +1,4 @@
-# Havenpaw — Cloudflare Deployment Checklist
+# Anemalo — Cloudflare Deployment Checklist
 
 Written 2026-07-17. Verified by actually running `npm run build` and inspecting the real output —
 nothing here is guessed. No production deploy has happened; this is the checklist to follow when
@@ -28,14 +28,14 @@ production traffic against different Supabase projects. Practical flow:
 ```bash
 # Staging
 cp .env.staging .env && npm run build
-npx wrangler --cwd .output/server deploy --name havenpaw-staging
+npx wrangler --cwd .output/server deploy --name anemalo-staging
 
 # Production (separate step, explicit)
 cp .env.production .env && npm run build
-npx wrangler --cwd .output/server deploy --name havenpaw
+npx wrangler --cwd .output/server deploy --name anemalo
 ```
 
-Never deploy production automatically on every commit — require the explicit `--name havenpaw`
+Never deploy production automatically on every commit — require the explicit `--name anemalo`
 production step as a deliberate, separate action (see also `docs/PRODUCTION_READINESS_REPORT.md`,
 which flags "no CI pipeline" as a launch blocker; when CI is added, gate the production deploy
 step behind manual approval, auto-deploy staging only).

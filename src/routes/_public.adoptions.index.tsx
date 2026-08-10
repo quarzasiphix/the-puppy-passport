@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_public/adoptions/")({
   loader: () => listPublishedAdoptions(),
   head: () => ({
     meta: [
-      { title: "Dogs for adoption — Havenpaw" },
+      { title: "Dogs for adoption — Anemalo" },
       {
         name: "description",
         content: "Browse dogs looking for a new home from verified foundations and private owners.",

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalDraftNotice, PendingLegalDrafting } from "@/components/legal-notice";
 
 export const Route = createFileRoute("/_public/terms")({
-  head: () => ({ meta: [{ title: "Terms of Service — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Terms of Service — Anemalo" }] }),
   component: TermsPage,
 });
 
@@ -19,9 +19,9 @@ function TermsPage() {
 
       <div className="space-y-8 text-sm leading-relaxed text-foreground">
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">1. What Havenpaw is</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">1. What Anemalo is</h2>
           <p>
-            Havenpaw is a platform that connects verified dog breeders, approved foundations and
+            Anemalo is a platform that connects verified dog breeders, approved foundations and
             shelters, private owners, and a licensed animal transport service. It is not a general
             classifieds site, not a pet shop, and not an open marketplace where anyone can list or
             transport an animal without review.
@@ -44,8 +44,8 @@ function TermsPage() {
           <p>
             Breeders and foundations are responsible for the accuracy and legality of their own
             listings, including compliance with breeding, sales, and animal welfare law in their
-            country. Havenpaw reviews organisations before they can publish, but this review is not
-            a legal certification of any individual listing, sale, or adoption.
+            country. Anemalo reviews organisations before they can publish, but this review is not a
+            legal certification of any individual listing, sale, or adoption.
           </p>
         </section>
 

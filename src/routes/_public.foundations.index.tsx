@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_public/foundations/")({
   loader: () => listApprovedFoundations(),
   head: () => ({
     meta: [
-      { title: "Foundations and rescues — Havenpaw" },
+      { title: "Foundations and rescues — Anemalo" },
       {
         name: "description",
         content:

@@ -646,7 +646,7 @@ export type TransportDraftAnimalInput = {
 };
 
 // legal_owner/sender/payer here may only carry a profile_id equal to the caller's own id (enforced
-// server-side by the RPC) — naming another Havenpaw user as already having agreed to own/send/pay
+// server-side by the RPC) — naming another Anemalo user as already having agreed to own/send/pay
 // is not something a requester can claim unilaterally. recipient and organisation-based parties of
 // any role are unrestricted, since naming who an animal is going *to* is inherent to the request.
 export type TransportDraftPartyInput = {
@@ -868,7 +868,7 @@ const statusEventLabels: Record<string, string> = {
   completed: "Completed",
   rejected: "Request not accepted",
   cancelled_by_customer: "Cancelled by you",
-  cancelled_by_operations: "Cancelled by Havenpaw",
+  cancelled_by_operations: "Cancelled by Anemalo",
   veterinary_hold: "Placed on veterinary hold",
   compliance_hold: "Placed on compliance hold",
   route_postponed: "Route postponed",

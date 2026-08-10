@@ -33,8 +33,8 @@ export const Route = createFileRoute("/_public/profile/$profileId")({
     meta: [
       {
         title: loaderData
-          ? `${loaderData.profile.display_name ?? "Havenpaw member"} — Havenpaw`
-          : "Profile — Havenpaw",
+          ? `${loaderData.profile.display_name ?? "Anemalo member"} — Anemalo`
+          : "Profile — Anemalo",
       },
     ],
   }),
@@ -83,7 +83,7 @@ function ProfilePage() {
           </Avatar>
           <div>
             <h1 className="font-display text-2xl font-semibold">
-              {profile.display_name ?? "Havenpaw member"}
+              {profile.display_name ?? "Anemalo member"}
             </h1>
             {(profile.city || profile.country) && (
               <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">

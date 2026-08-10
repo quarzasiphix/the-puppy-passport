@@ -50,6 +50,6 @@ test.describe("auth session @critical", () => {
     // The regression this fix closed: a fast pre-hydration click used to fire a native GET
     // submission with credentials in the query string. Assert the final URL is clean.
     expect(page.url()).not.toContain("password");
-    expect(page.url()).not.toContain("@havenpaw.test");
+    expect(page.url()).not.toContain("@anemalo.test");
   });
 });

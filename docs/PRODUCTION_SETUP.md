@@ -1,4 +1,4 @@
-# Havenpaw — Production Supabase Setup Guide
+# Anemalo — Production Supabase Setup Guide
 
 Written 2026-07-17, before any production Supabase project exists. This is preparation only — no
 production project has been created and no credentials are configured. Do not follow the "go live"
@@ -32,7 +32,7 @@ mistake this separation prevents.
 ## 2. Creating the production project (when approved)
 
 1. `supabase projects create` (or via dashboard) — pick region close to the actual user base
-   (Havenpaw targets EU transport routes; an EU region avoids unnecessary latency and keeps data
+   (Anemalo targets EU transport routes; an EU region avoids unnecessary latency and keeps data
    in-region, relevant given cross-border personal data like exact pickup addresses).
 2. `supabase link --project-ref <ref>` locally (or in CI) to associate this repo with the project
    **without** switching local dev away from the Docker stack — `link` only matters for `db push`.

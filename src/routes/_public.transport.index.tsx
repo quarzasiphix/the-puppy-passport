@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/i18n";
 import { formatDate } from "@/lib/presentation/date";
 
 export const Route = createFileRoute("/_public/transport/")({
-  head: () => ({ meta: [{ title: "Transport services — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Transport services — Anemalo" }] }),
   loader: async () => {
     const supabase = getSupabaseBrowserClient();
     const [{ data }, rating] = await Promise.all([

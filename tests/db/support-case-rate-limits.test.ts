@@ -21,7 +21,7 @@ async function disposableAccount(): Promise<{
   id: string;
 }> {
   const client = freshClient();
-  const email = `cjp-rate-limit-test-${Date.now()}-${Math.random().toString(36).slice(2)}@havenpaw.test`;
+  const email = `cjp-rate-limit-test-${Date.now()}-${Math.random().toString(36).slice(2)}@anemalo.test`;
   const signUp = await client.auth.signUp({ email, password: "password123" });
   assert.equal(signUp.error, null);
   const id = signUp.data.user?.id;

@@ -61,7 +61,7 @@ test("a client retry of an idempotent RPC + its notification call produces exact
       p_category: "adoption",
       p_notification_type: "rehoming_approved",
       p_title: "Your rehoming listing was approved",
-      p_body: "It's now visible to people looking to adopt on Havenpaw.",
+      p_body: "It's now visible to people looking to adopt on Anemalo.",
       p_link_url: `/adoptions/${animalId}`,
       p_dedup_key: dedupKey(),
       p_template_version: 1,

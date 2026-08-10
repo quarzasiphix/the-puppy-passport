@@ -82,16 +82,16 @@ export const ids = {
 } as const;
 
 export const personas = {
-  customer: "customer@havenpaw.test",
-  buyer: "buyer@havenpaw.test",
-  breeder1: "breeder1@havenpaw.test",
-  breeder2: "breeder2@havenpaw.test",
-  breederPending: "breeder3-pending@havenpaw.test",
-  foundation1: "foundation1@havenpaw.test",
-  foundationPending: "foundation2-pending@havenpaw.test",
-  ops: "ops@havenpaw.test",
-  driver: "driver@havenpaw.test",
-  admin: "admin@havenpaw.test",
+  customer: "customer@anemalo.test",
+  buyer: "buyer@anemalo.test",
+  breeder1: "breeder1@anemalo.test",
+  breeder2: "breeder2@anemalo.test",
+  breederPending: "breeder3-pending@anemalo.test",
+  foundation1: "foundation1@anemalo.test",
+  foundationPending: "foundation2-pending@anemalo.test",
+  ops: "ops@anemalo.test",
+  driver: "driver@anemalo.test",
+  admin: "admin@anemalo.test",
 } as const;
 
 export type Persona = keyof typeof personas;
@@ -223,7 +223,7 @@ export async function createTestTransportRequest(
 
 /**
  * Stage XR-19: fixture determinism audit. Several test files independently generate a disposable
- * `auth.signUp()` email as `` `prefix-test-${Date.now()}@havenpaw.test` `` with no random
+ * `auth.signUp()` email as `` `prefix-test-${Date.now()}@anemalo.test` `` with no random
  * component — the exact "theoretically collision-prone in a fast run" shape Stage AM's own
  * `createTestTransportRequest()` comment already named and fixed for request numbers, just never
  * re-applied here. A collision here is more severe than most: `auth.signUp()` fails outright with
@@ -235,5 +235,5 @@ export async function createTestTransportRequest(
  * own precedent, rather than fixing each call site's ad hoc template string individually.
  */
 export function uniqueTestEmail(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@havenpaw.test`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@anemalo.test`;
 }

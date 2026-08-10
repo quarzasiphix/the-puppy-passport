@@ -37,11 +37,11 @@ already-large pass.
 
 ## Product tour, using what's real today
 
-1. Sign in as `buyer@havenpaw.test` → browse `/find-a-dog`, view a real animal detail page, view a
+1. Sign in as `buyer@anemalo.test` → browse `/find-a-dog`, view a real animal detail page, view a
    real breeder profile.
-2. Sign in as `breeder1@havenpaw.test` → real dashboard with real litters/puppies/applications.
-3. Sign in as `ops@havenpaw.test` → real transport dispatch, routes, vehicles, drivers.
-4. Sign in as `admin@havenpaw.test` → real verification queues, audit logs.
+2. Sign in as `breeder1@anemalo.test` → real dashboard with real litters/puppies/applications.
+3. Sign in as `ops@anemalo.test` → real transport dispatch, routes, vehicles, drivers.
+4. Sign in as `admin@anemalo.test` → real verification queues, audit logs.
 
 Moderation and messaging can be demonstrated by _creating_ a real case/conversation live during the
 tour (both are fully real, tested features — just starting from an empty table, not a broken one).

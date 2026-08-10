@@ -1,4 +1,4 @@
-// Regression coverage for specific, previously-documented Havenpaw security bugs (see
+// Regression coverage for specific, previously-documented Anemalo security bugs (see
 // docs/MVP_TEST_REPORT.md §3) plus two additional checks this pass found were never actually
 // fixed (clearly marked below as "OPEN FINDING", not "regression guard" — see
 // docs/DATABASE_TESTING.md and the task report for detail). Every historical bug here was

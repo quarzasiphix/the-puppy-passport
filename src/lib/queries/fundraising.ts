@@ -94,7 +94,7 @@ async function withAmountCollected(rows: CampaignJoinRow[]): Promise<CampaignSum
     currency: r.currency,
     deadline: r.deadline,
     status: r.status,
-    organisationName: r.organisations?.name ?? "Havenpaw organisation",
+    organisationName: r.organisations?.name ?? "Anemalo organisation",
     animalName: r.animals?.name ?? "Animal",
     pickupCountry: routeByRequestId.get(r.transport_request_id)?.pickup_country ?? null,
     destinationCountry: routeByRequestId.get(r.transport_request_id)?.destination_country ?? null,

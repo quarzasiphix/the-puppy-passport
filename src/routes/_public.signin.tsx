@@ -27,7 +27,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/_public/signin")({
-  head: () => ({ meta: [{ title: "Sign in — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Anemalo" }] }),
   component: SignIn,
 });
 
@@ -72,7 +72,7 @@ function SignIn() {
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
           </span>
-          <span className="font-display text-xl font-semibold">Havenpaw</span>
+          <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
         <h1 className="mt-6 font-display text-3xl font-medium">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">

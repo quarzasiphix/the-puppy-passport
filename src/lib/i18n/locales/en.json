@@ -35,7 +35,7 @@
     "transportSection": "Transport",
     "account": "Account",
     "rightsReserved": "All rights reserved.",
-    "welfareDisclaimer": "Havenpaw does not guarantee the health or behaviour of any animal, nor a fixed transport delivery time before review.",
+    "welfareDisclaimer": "Anemalo does not guarantee the health or behaviour of any animal, nor a fixed transport delivery time before review.",
     "linkMarketplace": "Marketplace",
     "linkFindYourDog": "Find your ideal dog",
     "linkVerifiedBreeders": "Verified breeders",
@@ -95,11 +95,11 @@
     "statAssociation": "Association",
     "statResponseTime": "Response time",
     "noAnimalsPublished": "No dogs currently published for adoption from this organisation — check back soon.",
-    "transportAvailableDesc": "Apply or ask about a dog first — transport is only arranged after the organisation approves your adoption, never booked automatically. Once approved, Havenpaw can arrange transport for the exact route and dates you need; the exact pickup and delivery address stay private and are confirmed during the transport request.",
+    "transportAvailableDesc": "Apply or ask about a dog first — transport is only arranged after the organisation approves your adoption, never booked automatically. Once approved, Anemalo can arrange transport for the exact route and dates you need; the exact pickup and delivery address stay private and are confirmed during the transport request.",
     "transportUnknownDesc": "This organisation hasn't confirmed transport availability yet — ask them directly, or get a general estimate. As with every adoption, transport is only ever arranged after they approve you, never automatically.",
     "seeTransportOptions": "See transport options",
     "contactProcessTitle": "Contact & adoption process",
-    "contactProcessDesc": "All first contact happens through Havenpaw. Express interest in a specific dog, and you can message the foundation directly about your application — they'll follow up with any next steps before confirming an adoption.",
+    "contactProcessDesc": "All first contact happens through Anemalo. Express interest in a specific dog, and you can message the foundation directly about your application — they'll follow up with any next steps before confirming an adoption.",
     "viewAnimals": "View dogs for adoption"
   }
 }

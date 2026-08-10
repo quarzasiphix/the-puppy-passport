@@ -42,7 +42,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/_public/signup")({
-  head: () => ({ meta: [{ title: "Create an account — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Create an account — Anemalo" }] }),
   component: SignUp,
 });
 
@@ -78,7 +78,7 @@ const intents = [
     value: "operations" as const,
     label: "Manage transport operations",
     icon: Headset,
-    desc: "Requires approval from a Havenpaw administrator.",
+    desc: "Requires approval from an Anemalo administrator.",
   },
 ];
 
@@ -113,7 +113,7 @@ function SignUp() {
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
-    toast.success("Account created — welcome to Havenpaw.");
+    toast.success("Account created — welcome to Anemalo.");
     if (values.intent === "breeder" || values.intent === "foundation") {
       await navigate({ to: "/create-breeder" });
     } else if (values.intent === "operations") {
@@ -131,7 +131,7 @@ function SignUp() {
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
           </span>
-          <span className="font-display text-xl font-semibold">Havenpaw</span>
+          <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
         <h1 className="mt-6 font-display text-3xl font-medium">Create an account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -299,7 +299,7 @@ function SignUp() {
                 </p>
 
                 <p className="text-xs text-muted-foreground">
-                  By creating an account, you agree to Havenpaw's{" "}
+                  By creating an account, you agree to Anemalo's{" "}
                   <Link to="/terms" className="text-primary hover:underline">
                     Terms of Service
                   </Link>{" "}
