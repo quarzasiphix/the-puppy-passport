@@ -1,24 +1,21 @@
-# Cloudflare Workers config for the built app.
+# Cloudflare config, version-controlled so the deploy has an explicit source of truth for the
+# worker name, compat date, and the nodejs_compat flag SSR needs.
 #
-# The build (`npm run build`, nitro `cloudflare-module` preset) generates
-# `.output/server/wrangler.json` with these same fields plus the asset-serving glue. This root
-# file exists so the deploy has an explicit, version-controlled source of truth: a STABLE worker
-# name (the generated one is derived from the git remote and can change), the compat date, and
-# the nodejs_compat flag SSR needs.
+# Keep ONLY fields valid for BOTH nitro cloudflare targets. The build picks the target from the
+# environment: `cloudflare-module` locally (.output/, emits its own `main` + ASSETS binding) and
+# `cloudflare-pages` on Cloudflare (dist/_worker.js, emits `pages_build_output_dir`). nitro merges
+# THIS file over its generated config (defu in _presets.mjs writeWranglerConfig), so anything set
+# here that only fits one target leaks into the other — e.g. an `[assets] binding = "ASSETS"` here
+# breaks the Pages build because "ASSETS" is a reserved binding name in Pages projects. Do not add
+# `main`, `[assets]`, or `pages_build_output_dir` here; let the preset supply those.
 #
-# NOTE: [vars] below are RUNTIME worker bindings. The app reads Supabase config through
-# `import.meta.env.VITE_*`, which Vite inlines at BUILD time — so the values that actually make
-# the app boot live in `.env.production` (committed), not here. These entries are kept only so a
-# runtime `env.VITE_*` lookup (health checks, future server code) resolves too.
+# [vars] are RUNTIME bindings only. The app reads Supabase config via `import.meta.env.VITE_*`,
+# which Vite inlines at BUILD time — the values that make the app boot live in `.env.production`
+# (committed). These are kept for any runtime `env.VITE_*` lookup.
 
 name = "the-puppy-passport"
-main = ".output/server/index.mjs"
 compatibility_date = "2026-09-03"
 compatibility_flags = ["nodejs_compat"]
-
-[assets]
-binding = "ASSETS"
-directory = ".output/public"
 
 [vars]
 VITE_SUPABASE_URL = "https://pgzvkkybqrhxedjoyjzy.supabase.co"
