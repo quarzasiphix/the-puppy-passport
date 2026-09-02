@@ -5,7 +5,7 @@ import { useAuth } from "@/domains/identity";
 // The single "what can I do here" launcher, shown on the homepage and the customer dashboard.
 // Six actions only — no sub-categories up front. Each card links straight into the correct flow
 // (an already-approved breeder/foundation skips the application step); the user never needs to
-// understand Havenpaw's internal role model to get moving.
+// understand Anemalo's internal role model to get moving.
 export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" | "dashboard" }) {
   const { roles, isSignedIn } = useAuth();
   const isBreeder = roles.some((r) => r.role === "breeder" && r.status === "active");

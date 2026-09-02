@@ -17,7 +17,7 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 const resources: Record<Locale, typeof en> = { en, pl: pl as typeof en };
 
-const STORAGE_KEY = "havenpaw-locale";
+const STORAGE_KEY = "anemalo-locale";
 const FALLBACK_LOCALE: Locale = "en";
 
 function isLocale(value: string | null): value is Locale {

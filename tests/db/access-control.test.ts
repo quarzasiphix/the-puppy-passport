@@ -34,7 +34,7 @@ test("profiles and private contact data", async (t) => {
     const buyer = await as("buyer");
     const { data, error } = await buyer.rpc("get_my_profile");
     assert.equal(error, null);
-    assert.equal(data?.email, "buyer@havenpaw.test");
+    assert.equal(data?.email, "buyer@anemalo.test");
     assert.equal(data?.phone, "+48 555 123 456");
   });
 
@@ -505,7 +505,9 @@ test("private documents and storage access", async (t) => {
       // reference (`storage.foldername(objects.name)`) — confirmed against the live policy in
       // pg_policies, not just the migration source. Each access boundary below is tested
       // explicitly, not just the one previously-broken happy path.
-      const upload = await (await as("customer")).storage
+      const upload = await (
+        await as("customer")
+      ).storage
         .from("transport-documents")
         .upload(path, contents, { contentType: "text/plain", upsert: true });
       assert.equal(upload.error, null);
@@ -518,7 +520,7 @@ test("private documents and storage access", async (t) => {
         });
 
         await t.test("the assigned driver can read the document for their active job", async () => {
-          // a1 (ids.transportWarsawAmsterdam) is assigned to driver@havenpaw.test and its status
+          // a1 (ids.transportWarsawAmsterdam) is assigned to driver@anemalo.test and its status
           // ('ready_for_scheduling') is not one of the excluded draft/submitted/rejected/cancelled
           // states, so the assigned driver should be able to read the file for this active job.
           const driver = await as("driver");

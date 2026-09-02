@@ -1,4 +1,4 @@
-// End-to-end workflow coverage: each test drives a real multi-step Havenpaw scenario across two
+// End-to-end workflow coverage: each test drives a real multi-step Anemalo scenario across two
 // or more personas, against the real local Supabase API, asserting actual state at each step
 // rather than just "no error was thrown". See docs/DATABASE_TESTING.md.
 import { test } from "node:test";

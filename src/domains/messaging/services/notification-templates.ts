@@ -35,7 +35,7 @@ export const notificationTemplates = {
     category: "adoption" as NotificationCategory,
     render: (payload: RehomingDecisionPayload) => ({
       title: "Your rehoming listing was approved",
-      body: "It's now visible to people looking to adopt on Havenpaw.",
+      body: "It's now visible to people looking to adopt on Anemalo.",
       linkUrl: `/adoptions/${payload.animalId}`,
     }),
   },
@@ -62,7 +62,7 @@ export const notificationTemplates = {
     category: "moderation" as NotificationCategory,
     render: (payload: ModerationDecisionPayload) => ({
       title: "A moderation decision affects you",
-      body: "Havenpaw has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
+      body: "Anemalo has made a decision on a report involving you. You can view it and, if eligible, appeal it.",
       linkUrl: `/moderation/${payload.caseId}`,
     }),
   },

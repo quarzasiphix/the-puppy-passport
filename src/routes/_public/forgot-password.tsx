@@ -14,7 +14,7 @@ const schema = z.object({ email: z.string().email("Enter a valid email") });
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/_public/forgot-password")({
-  head: () => ({ meta: [{ title: "Reset your password — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Reset your password — Anemalo" }] }),
   component: ForgotPassword,
 });
 
@@ -40,7 +40,7 @@ function ForgotPassword() {
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
           </span>
-          <span className="font-display text-xl font-semibold">Havenpaw</span>
+          <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
 
         {sent ? (

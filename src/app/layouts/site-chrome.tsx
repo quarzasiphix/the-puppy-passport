@@ -16,7 +16,7 @@ import { signOut } from "@/domains/identity";
 import { NotificationBell } from "@/domains/messaging";
 import { useTranslation, SUPPORTED_LOCALES, LOCALE_DISPLAY_NAMES } from "@/shared/i18n";
 
-// Animal discovery leads the navigation — Havenpaw is a dedicated animal ecosystem, not a
+// Animal discovery leads the navigation — Anemalo is a dedicated animal ecosystem, not a
 // transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
 // prominent, real feature, just not the first thing a visitor sees.
 const nav = [
@@ -77,7 +77,7 @@ export function SiteHeader() {
           <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-5" />
           </span>
-          <span className="font-display text-xl font-semibold tracking-tight">Havenpaw</span>
+          <span className="font-display text-xl font-semibold tracking-tight">Anemalo</span>
         </Link>
 
         <nav className="hidden items-center gap-0.5 xl:flex">
@@ -141,7 +141,7 @@ export function SiteHeader() {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="right" className="w-full max-w-xs">
           <SheetHeader>
-            <SheetTitle className="font-display text-lg">Havenpaw</SheetTitle>
+            <SheetTitle className="font-display text-lg">Anemalo</SheetTitle>
           </SheetHeader>
           <nav className="mt-4 flex flex-col gap-1">
             {nav.map((item) => (
@@ -205,7 +205,7 @@ export function SiteFooter() {
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
               <PawPrint className="size-5" />
             </span>
-            <span className="font-display text-lg font-semibold">Havenpaw</span>
+            <span className="font-display text-lg font-semibold">Anemalo</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("footer.tagline")}</p>
         </div>
@@ -240,7 +240,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-5 text-xs text-muted-foreground">
-          <span>© 2026 Havenpaw. {t("footer.rightsReserved")}</span>
+          <span>© 2026 Anemalo. {t("footer.rightsReserved")}</span>
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link to="/terms" className="hover:text-foreground hover:underline">
               Terms

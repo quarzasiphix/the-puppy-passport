@@ -16,7 +16,7 @@ function threadLabel(c: NonNullable<ConversationListRow["conversations"]>, curre
   if (c.conversation_type === "transport") {
     return {
       title: c.transport_requests?.request_number ?? "Transport",
-      subtitle: "Havenpaw operations",
+      subtitle: "Anemalo operations",
     };
   }
   const other = c.conversation_participants.find((p) => p.profile_id !== currentUserId);

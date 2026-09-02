@@ -19,7 +19,7 @@ const GROUP_TYPE_LABELS: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/_public/community/groups/")({
-  head: () => ({ meta: [{ title: "Groups — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Groups — Anemalo" }] }),
   component: GroupsPage,
 });
 

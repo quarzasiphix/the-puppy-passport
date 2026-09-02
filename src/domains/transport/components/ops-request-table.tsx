@@ -68,8 +68,7 @@ export function OpsRequestTable({
             ? undefined
             : statusFilter) as TransportStatus | undefined,
         serviceType: (serviceFilter === "all" ? undefined : serviceFilter) as
-          | TransportServiceType
-          | undefined,
+          TransportServiceType | undefined,
       }),
   });
 

@@ -154,7 +154,7 @@ export function TransportDocumentChecklist({
                     onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Private — only you and Havenpaw operations can view it.
+                    Private — only you and Anemalo operations can view it.
                   </p>
                 </div>
                 <div>

@@ -178,7 +178,7 @@ export function ApplyDialog({
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">Sign in to apply</DialogTitle>
             <DialogDescription>
-              You need a Havenpaw account so the breeder knows who's applying and you can follow the
+              You need a Anemalo account so the breeder knows who's applying and you can follow the
               outcome in your dashboard.
             </DialogDescription>
           </DialogHeader>

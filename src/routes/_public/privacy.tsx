@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalDraftNotice, PendingLegalDrafting } from "@/shared/ui/legal-notice";
 
 export const Route = createFileRoute("/_public/privacy")({
-  head: () => ({ meta: [{ title: "Privacy Policy — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Privacy Policy — Anemalo" }] }),
   component: PrivacyPage,
 });
 
@@ -32,8 +32,8 @@ function PrivacyPage() {
           <h2 className="mb-2 font-display text-xl font-semibold">1. Data controller</h2>
           <PendingLegalDrafting>
             <p>
-              The registered legal entity operating Havenpaw, its address, and a contact for data
-              protection questions will be published here once finalised.
+              Anemalo is operated by Tovernet. The full registered legal form, address, and a
+              contact for data protection questions will be published here once finalised.
             </p>
           </PendingLegalDrafting>
         </section>

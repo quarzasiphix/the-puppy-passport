@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_public/community/groups/$slug")({
     return { group, memberCount };
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData ? `${loaderData.group.name} — Havenpaw` : "Group — Havenpaw" }],
+    meta: [{ title: loaderData ? `${loaderData.group.name} — Anemalo` : "Group — Anemalo" }],
   }),
   component: GroupDetailPage,
 });

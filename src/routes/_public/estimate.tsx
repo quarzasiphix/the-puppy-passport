@@ -11,7 +11,7 @@ import { calculateEstimate, type PricingBreakdown } from "@/domains/transport";
 import { findLikelyRouteMatch } from "@/domains/transport";
 
 export const Route = createFileRoute("/_public/estimate")({
-  head: () => ({ meta: [{ title: "Transport price estimate — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Transport price estimate — Anemalo" }] }),
   component: EstimatePage,
 });
 

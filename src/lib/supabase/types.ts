@@ -5603,7 +5603,7 @@ export type Database = {
         | "adoption_available"
         | "transport_requests_available"
         | "partner_transport"
-        | "full_havenpaw_service"
+        | "full_anemalo_service"
       message_kind:
         | "customer_info"
         | "document_request"
@@ -6175,7 +6175,7 @@ export const Constants = {
         "adoption_available",
         "transport_requests_available",
         "partner_transport",
-        "full_havenpaw_service",
+        "full_anemalo_service",
       ],
       message_kind: [
         "customer_info",

@@ -44,7 +44,7 @@ test("invitation eligibility: only the owner may invite an administrator", async
   await t.test("setup: the owner invites buyer@ as a volunteer and buyer accepts", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "buyer@havenpaw.test",
+      p_email: "buyer@anemalo.test",
       p_role: "volunteer",
     });
     assert.equal(invite.error, null);
@@ -77,7 +77,7 @@ test("invitation eligibility: only the owner may invite an administrator", async
     const buyer = await as("buyer");
     const attempt = await buyer.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "someone-else@havenpaw.test",
+      p_email: "someone-else@anemalo.test",
       p_role: "volunteer",
     });
     assert.ok(attempt.error, "expected a volunteer to have no invite capability");
@@ -102,7 +102,7 @@ test("an administrator-tier member cannot invite or manage another administrator
   await t.test("setup: owner invites buyer@ as administrator, buyer accepts", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "buyer@havenpaw.test",
+      p_email: "buyer@anemalo.test",
       p_role: "administrator",
     });
     assert.equal(invite.error, null);
@@ -129,7 +129,7 @@ test("an administrator-tier member cannot invite or manage another administrator
     const buyer = await as("buyer");
     const attempt = await buyer.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "customer@havenpaw.test",
+      p_email: "customer@anemalo.test",
       p_role: "administrator",
     });
     assert.ok(attempt.error, "expected only the true owner to be able to invite an administrator");
@@ -139,7 +139,7 @@ test("an administrator-tier member cannot invite or manage another administrator
     const buyer = await as("buyer");
     const invite = await buyer.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "customer@havenpaw.test",
+      p_email: "customer@anemalo.test",
       p_role: "volunteer",
     });
     assert.equal(invite.error, null);
@@ -171,7 +171,7 @@ test("suspended membership loses org access immediately", async (t) => {
   await t.test("setup: buyer joins as volunteer", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "buyer@havenpaw.test",
+      p_email: "buyer@anemalo.test",
       p_role: "volunteer",
     });
     const row = await foundation1
@@ -255,7 +255,7 @@ test("invitation token lifecycle: expiry, wrong email, single-use, and no public
   await t.test("setup: invite customer@", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "customer@havenpaw.test",
+      p_email: "customer@anemalo.test",
       p_role: "volunteer",
     });
     assert.equal(invite.error, null);
@@ -328,7 +328,7 @@ test("leave_organisation removes the caller's own membership", async (t) => {
   await t.test("setup and leave", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "buyer@havenpaw.test",
+      p_email: "buyer@anemalo.test",
       p_role: "volunteer",
     });
     const row = await foundation1
@@ -369,7 +369,7 @@ test("change_org_member_role: self-escalation and cross-tier attempts are reject
     async () => {
       const inviteAdmin = await foundation1.rpc("invite_org_member", {
         p_org_id: ids.orgFundacja,
-        p_email: "buyer@havenpaw.test",
+        p_email: "buyer@anemalo.test",
         p_role: "administrator",
       });
       assert.equal(inviteAdmin.error, null);
@@ -383,7 +383,7 @@ test("change_org_member_role: self-escalation and cross-tier attempts are reject
 
       const inviteVolunteer = await foundation1.rpc("invite_org_member", {
         p_org_id: ids.orgFundacja,
-        p_email: "customer@havenpaw.test",
+        p_email: "customer@anemalo.test",
         p_role: "volunteer",
       });
       assert.equal(inviteVolunteer.error, null);
@@ -494,7 +494,7 @@ test("decline_org_invitation: only the actually-invited email can decline it", a
   await t.test("setup: invite customer@", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "customer@havenpaw.test",
+      p_email: "customer@anemalo.test",
       p_role: "volunteer",
     });
     assert.equal(invite.error, null);
@@ -568,7 +568,7 @@ test("cross-organisation isolation: one org's owner cannot manage another org's 
   await t.test("breeder1 (owns orgCichyLas) cannot invite into orgFundacja", async () => {
     const attempt = await breeder1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "someone@havenpaw.test",
+      p_email: "someone@anemalo.test",
       p_role: "volunteer",
     });
     assert.ok(attempt.error, "expected a cross-organisation invite to be rejected");
@@ -577,7 +577,7 @@ test("cross-organisation isolation: one org's owner cannot manage another org's 
   await t.test("breeder1 cannot revoke an invitation belonging to orgFundacja", async () => {
     const invite = await foundation1.rpc("invite_org_member", {
       p_org_id: ids.orgFundacja,
-      p_email: "someone2@havenpaw.test",
+      p_email: "someone2@anemalo.test",
       p_role: "volunteer",
     });
     assert.equal(invite.error, null);

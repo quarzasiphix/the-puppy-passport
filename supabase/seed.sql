@@ -1,4 +1,4 @@
--- Local demo data for Havenpaw. Realistic Polish/European names, cities and prices — no inflated
+-- Local demo data for Anemalo. Realistic Polish/European names, cities and prices — no inflated
 -- platform statistics; homepage counts are plain `select count(*)` against these rows.
 --
 -- All 10 demo accounts share the password: password123
@@ -13,44 +13,44 @@ insert into auth.users (
   confirmation_token, email_change, email_change_token_new, recovery_token, is_sso_user, is_anonymous
 ) values
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated',
-   'customer@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'customer@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Marta","last_name":"Zielińska","phone":"+48 601 111 222","country":"Poland","city":"Łódź"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated',
-   'buyer@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'buyer@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Julia","last_name":"Kowalczyk","phone":"+48 555 123 456","country":"Poland","city":"Warsaw"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated',
-   'breeder1@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'breeder1@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Anna","last_name":"Kowalska","phone":"+48 601 222 333","country":"Poland","city":"Warsaw"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated',
-   'breeder2@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'breeder2@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Tomasz","last_name":"Nowak","phone":"+48 602 333 444","country":"Poland","city":"Kraków"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated',
-   'breeder3-pending@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'breeder3-pending@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Katarzyna","last_name":"Wiśniewska","phone":"+48 603 444 555","country":"Poland","city":"Wrocław"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000006', 'authenticated', 'authenticated',
-   'foundation1@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'foundation1@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Aleksandra","last_name":"Nowicka","phone":"+48 604 555 666","country":"Poland","city":"Poznań"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000007', 'authenticated', 'authenticated',
-   'foundation2-pending@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'foundation2-pending@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Bartłomiej","last_name":"Sikora","phone":"+48 605 666 777","country":"Poland","city":"Gdańsk"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000008', 'authenticated', 'authenticated',
-   'ops@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'ops@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Kasia","last_name":"Woźniak","phone":"+48 606 777 888","country":"Poland","city":"Poznań"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000009', 'authenticated', 'authenticated',
-   'driver@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
+   'driver@anemalo.test', crypt('password123', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}', '{"first_name":"Marek","last_name":"Dąbrowski","phone":"+48 607 888 999","country":"Poland","city":"Poznań"}',
    now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000', '10000000-0000-0000-0000-000000000010', 'authenticated', 'authenticated',
-   'admin@havenpaw.test', crypt('password123', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{"first_name":"Havenpaw","last_name":"Admin","phone":"+48 600 000 000","country":"Poland","city":"Warsaw"}',
+   'admin@anemalo.test', crypt('password123', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}', '{"first_name":"Anemalo","last_name":"Admin","phone":"+48 600 000 000","country":"Poland","city":"Warsaw"}',
    now(), now(), '', '', '', '', false, false);
 
 insert into auth.identities (id, user_id, provider_id, identity_data, provider, created_at, updated_at, last_sign_in_at)
@@ -317,7 +317,7 @@ insert into public.saved_animals (buyer_id, animal_id) values
 -- ---------------------------------------------------------------------------------------------
 
 insert into public.vehicles (id, name, registration_number, vehicle_type, active, crates, temperature_monitoring, camera_available) values
-  ('80000000-0000-0000-0000-000000000001', 'Havenpaw Transporter 1', 'PO 1234H', 'van', true,
+  ('80000000-0000-0000-0000-000000000001', 'Anemalo Transporter 1', 'PO 1234H', 'van', true,
    '[{"size":"medium","quantity":6},{"size":"large","quantity":2}]', true, true);
 
 insert into public.drivers (id, profile_id, name, contact, availability_status, internal_verification_status, emergency_contact) values

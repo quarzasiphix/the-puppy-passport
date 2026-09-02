@@ -1,6 +1,6 @@
-# Havenpaw — project context for Claude
+# Anemalo — project context for Claude
 
-Havenpaw is a **dedicated European animal ecosystem** — animal discovery/marketplace, breeder and
+Anemalo is a **dedicated European animal ecosystem** — animal discovery/marketplace, breeder and
 foundation profiles, community, adoption/handover, and (once a purchase or adoption is agreed)
 professional animal transport — being rebuilt from a static TanStack Start visual prototype into a
 real application on a **local Supabase** database.
@@ -94,7 +94,7 @@ should we collect the dog?", "My dates are flexible", "We found a possible route
 system nouns ("logistics request", "compliance classification", "operational assignment",
 "dispatch state", "route compatibility score") in anything a buyer/breeder/foundation/driver sees.
 Internal dashboards (ops/admin) can and should stay precise and technical — the translation only
-has to happen at the customer-facing edge. The bar: an ordinary user should find Havenpaw easier
+has to happen at the customer-facing edge. The bar: an ordinary user should find Anemalo easier
 than a Facebook group, a phone call, or a private message thread — immediate understanding, not
 just a working feature.
 
@@ -134,8 +134,8 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
 
 ## Where to look next
 
-- `docs/PRODUCT_VISION.md` — what Havenpaw is, the permanent priority hierarchy, and the staged
-  roadmap. Read this before touching product scope — Havenpaw is a dedicated animal ecosystem, not
+- `docs/PRODUCT_VISION.md` — what Anemalo is, the permanent priority hierarchy, and the staged
+  roadmap. Read this before touching product scope — Anemalo is a dedicated animal ecosystem, not
   a transport company or a general marketplace.
 - `docs/FUNDRAISING_POLICY.md` — the authoritative fundraising policy (eligibility, campaign
   requirements, financial rules); no fundraising code exists yet.

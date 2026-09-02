@@ -21,7 +21,7 @@ alter table public.animals
 
 -- transport_parties separates who's actually involved in a transport request — legal owner,
 -- requester, sender, recipient, payer, pickup contact, delivery contact may all be different
--- people, and not everyone involved is necessarily a Havenpaw user.
+-- people, and not everyone involved is necessarily a Anemalo user.
 create type public.transport_party_role as enum (
   'legal_owner', 'requester', 'sender', 'recipient', 'payer', 'pickup_contact', 'delivery_contact'
 );
@@ -32,7 +32,7 @@ create table public.transport_parties (
   party_role public.transport_party_role not null,
   profile_id uuid references public.profiles (id),
   organisation_id uuid references public.organisations (id),
-  -- External (non-Havenpaw-user) contact — kept private, never selectable by anyone except the
+  -- External (non-Anemalo-user) contact — kept private, never selectable by anyone except the
   -- request owner and ops/admin (same policy shape as the rest of this table).
   external_name text,
   external_phone text,

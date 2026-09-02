@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.name} — Adoption — Havenpaw` : "Adoption — Havenpaw" },
+      { title: loaderData ? `${loaderData.name} — Adoption — Anemalo` : "Adoption — Anemalo" },
     ],
   }),
   component: AdoptionDetail,

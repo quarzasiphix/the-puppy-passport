@@ -1,4 +1,4 @@
-# Havenpaw — Social Login Setup (Google / Facebook)
+# Anemalo — Social Login Setup (Google / Facebook)
 
 Google and Facebook sign-in are wired into the sign-in page (`src/routes/_public.signin.tsx`,
 calling `supabase.auth.signInWithOAuth`) and declared in `supabase/config.toml`

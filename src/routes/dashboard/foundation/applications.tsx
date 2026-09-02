@@ -237,7 +237,7 @@ function ApplicationsPage() {
                 </Field>
                 <Field label="Collection">
                   {active.collection_method?.replace(/_/g, " ") || "Not specified"}
-                  {active.transport_required && " · Interested in Havenpaw transport"}
+                  {active.transport_required && " · Interested in Anemalo transport"}
                   {active.preferred_collection_date &&
                     ` · Preferred ${new Date(active.preferred_collection_date).toLocaleDateString("en-GB")}`}
                 </Field>

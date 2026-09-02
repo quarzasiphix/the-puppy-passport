@@ -1,6 +1,6 @@
 # Customer data requirements
 
-What a new organisation genuinely needs to provide to onboard onto Havenpaw, derived from real
+What a new organisation genuinely needs to provide to onboard onto Anemalo, derived from real
 required (`NOT NULL`) columns and the real onboarding form (`_public.create-breeder.tsx`) — not a
 speculative checklist.
 
@@ -35,7 +35,7 @@ unpublished draft and completed incrementally, matching the same progressive-dis
 - Payment information (no payment provider exists in this codebase yet).
 - Bulk historical records — see `docs/IMPORT_AND_DATA_MIGRATION.md` for why this isn't a blocker.
 
-## Data Havenpaw never asks for at onboarding
+## Data Anemalo never asks for at onboarding
 
 Anything that would only matter once a real transaction (application, transport, handover) is in
 progress: buyer housing details, medical history beyond what a listing itself needs, or documents

@@ -63,7 +63,7 @@ export const Route = createFileRoute("/_public/")({
 });
 
 function Home() {
-  // Animal discovery and the marketplace come first — Havenpaw is a dedicated animal ecosystem,
+  // Animal discovery and the marketplace come first — Anemalo is a dedicated animal ecosystem,
   // not a transport company with a marketplace bolted on (see docs/PRODUCT_VISION.md). Transport
   // is a major advantage of the platform, not its primary identity, so its sections appear after
   // the animal-discovery content, not before it.

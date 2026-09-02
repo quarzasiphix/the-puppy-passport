@@ -9,7 +9,7 @@ export function LegalDraftNotice() {
     <div className="mb-8 flex gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm">
       <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
       <p>
-        <strong>Draft — pending legal review.</strong> This page describes how Havenpaw is designed
+        <strong>Draft — pending legal review.</strong> This page describes how Anemalo is designed
         to work today. It is not final legal wording, has not been reviewed by a lawyer, and
         sections marked <em>"pending legal drafting"</em> are placeholders, not commitments. Do not
         treat this as binding until it is replaced with a reviewed version.

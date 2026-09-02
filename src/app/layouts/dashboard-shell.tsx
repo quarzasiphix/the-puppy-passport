@@ -82,7 +82,7 @@ export function DashboardShell({
               <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
                 <PawPrint className="size-5" />
               </span>
-              <span className="font-display text-lg font-semibold">Havenpaw</span>
+              <span className="font-display text-lg font-semibold">Anemalo</span>
             </Link>
             <div className="mt-4 rounded-xl border border-sidebar-border bg-background p-3">
               <WorkspaceSwitcher current={current} />
@@ -113,7 +113,7 @@ export function DashboardShell({
               to="/"
               className="block rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent"
             >
-              ← Back to Havenpaw
+              ← Back to Anemalo
             </Link>
           </div>
         </aside>

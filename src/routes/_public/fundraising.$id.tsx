@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_public/fundraising/$id")({
     return campaign;
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData ? `${loaderData.title} — Havenpaw` : "Campaign — Havenpaw" }],
+    meta: [{ title: loaderData ? `${loaderData.title} — Anemalo` : "Campaign — Anemalo" }],
   }),
   component: CampaignPage,
 });
@@ -114,7 +114,7 @@ function CampaignPage() {
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground">
-          When the target is reached, funds are applied directly to this animal's Havenpaw transport
+          When the target is reached, funds are applied directly to this animal's Anemalo transport
           — never paid out to an individual. This is not a donation toward the cost of the animal
           itself.
         </p>

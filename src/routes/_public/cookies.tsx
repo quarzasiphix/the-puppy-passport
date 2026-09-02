@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LegalDraftNotice } from "@/shared/ui/legal-notice";
 
 export const Route = createFileRoute("/_public/cookies")({
-  head: () => ({ meta: [{ title: "Cookie Policy — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Cookie Policy — Anemalo" }] }),
   component: CookiesPage,
 });
 
@@ -29,7 +29,7 @@ function CookiesPage() {
 
       <div className="space-y-6 text-sm leading-relaxed text-foreground">
         <p>
-          Havenpaw currently uses only the cookies required to keep you signed in. We don't run
+          Anemalo currently uses only the cookies required to keep you signed in. We don't run
           analytics, advertising, or third-party tracking scripts on this platform today — if that
           changes, this page and a consent banner will be added before any such cookie is set.
         </p>

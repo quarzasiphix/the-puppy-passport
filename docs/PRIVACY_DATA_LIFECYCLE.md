@@ -1,7 +1,7 @@
 # Privacy & Data Lifecycle Audit
 
 Stage O of the autonomous backend-hardening session (see
-`docs/AUTONOMOUS_BACKEND_PROGRESS.md`). Backend-only audit of what personal data Havenpaw stores,
+`docs/AUTONOMOUS_BACKEND_PROGRESS.md`). Backend-only audit of what personal data Anemalo stores,
 how it's protected, what data-subject-rights mechanisms already exist end-to-end vs. are only
 partially built, and what's deliberately deferred to a later stage. This is a snapshot of the real
 schema/RLS/Storage state as verified against a running local Supabase instance
@@ -9,7 +9,7 @@ schema/RLS/Storage state as verified against a running local Supabase instance
 and the query layer in `src/lib/queries/*.ts`) — not a claim about legal sufficiency. Nothing here
 constitutes legal advice; a real GDPR compliance sign-off needs a lawyer, not just this document.
 
-## What personal data Havenpaw stores
+## What personal data Anemalo stores
 
 | Category | Where | Who can read it (besides the owner/admin) |
 |---|---|---|
@@ -17,7 +17,7 @@ constitutes legal advice; a real GDPR compliance sign-off needs a lawyer, not ju
 | Contact details (email, phone) | `profiles.email`/`profiles.phone` | Nobody except the owner and `service_role`. Locked down at the column-grant level (`20260101003200_profiles_contact_lockdown.sql`) after a real bulk-harvesting gap was found and fixed — `authenticated`'s column grant excludes `email`/`phone` entirely, and `get_my_profile()` is the only path back to your own contact details. |
 | Exact pickup/delivery addresses | `transport_requests.pickup_address_exact`/`destination_address_exact` | Requester, named parties, ops/admin only (RLS-restricted; public map views never expose this — see `docs/PRODUCT_VISION.md` rule 6) |
 | Private residential/organisation addresses | `private_addresses` | Owner (user or org), admins only |
-| External (non-Havenpaw) contact for transport parties | `transport_parties.external_name`/`external_phone`/`external_email` | Request owner and ops/admin only |
+| External (non-Anemalo) contact for transport parties | `transport_parties.external_name`/`external_phone`/`external_email` | Request owner and ops/admin only |
 | Welfare-case contact/location | `welfare_cases.contact_phone`/`location_address_exact` | Members of the reporting organisation and ops/admin only — entire row is org+ops scoped, no public policy exists at all |
 | Adoption questionnaire answers | `buyer_applications` (housing, children, income-adjacent fields like `working_schedule`, landlord permission, vet plan) | The applicant and the reviewing organisation's members/ops only |
 | Identity documents (passport/health-certificate scans, welfare-case evidence) | Supabase Storage, `transport-documents` and `welfare-case-documents` buckets, metadata rows in `transport_documents`/`welfare_case_documents` | Both buckets are **private** (`public = false`); access is via short-lived signed URLs generated per request, never a public/static link (verified in `tests/db/transport-domain.test.ts`, "real document upload flow: private Storage object + signed URL, not a public link") |
@@ -88,7 +88,7 @@ Postgres instance and Storage buckets described above; no outbound sharing exist
 
 ## What this audit did not find wrong
 
-Everything under "What personal data Havenpaw stores" above was checked against its actual RLS
+Everything under "What personal data Anemalo stores" above was checked against its actual RLS
 policies and, where relevant, Storage bucket configuration (not just read from a comment) — no new
 column-level or bucket-level leak was found. This is a narrower claim than "the whole schema is
 GDPR-compliant": it means the specific personal-data columns/tables enumerated here are access-

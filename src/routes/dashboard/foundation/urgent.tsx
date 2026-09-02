@@ -137,8 +137,8 @@ function UrgentCasesPage() {
         <div>
           <h1 className="font-display text-2xl font-medium">Urgent cases</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Flag a welfare-urgent animal or transport need for Havenpaw operations. Submitting a
-            case does not itself grant transport priority, bypass review, or confirm anything —
+            Flag a welfare-urgent animal or transport need for Anemalo operations. Submitting a case
+            does not itself grant transport priority, bypass review, or confirm anything —
             operations assesses every case before it becomes a real transport request.
           </p>
         </div>

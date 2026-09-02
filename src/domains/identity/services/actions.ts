@@ -61,7 +61,7 @@ export const signUp = createServerFn({ method: "POST" })
     });
     if (roleError) return { error: roleError.message };
 
-    // The signup page's own copy already says "By creating an account, you agree to Havenpaw's
+    // The signup page's own copy already says "By creating an account, you agree to Anemalo's
     // Terms and Privacy" -- record it as a real, versioned fact rather than just UI text with
     // nothing behind it. Best-effort: a consent-recording failure must never block account
     // creation itself, which has already succeeded by this point.

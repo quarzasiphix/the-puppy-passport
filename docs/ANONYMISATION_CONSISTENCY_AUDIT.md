@@ -14,7 +14,7 @@ gap this stage's name and its "dry-run and execution tests" requirement point at
   `avatar_url`, `city`, `country` are all cleared; `is_deleted`/`deleted_at` are stamped.
 - **Frontend graceful degradation for anonymised authors**: confirmed by reading real consumers
   (`_public.community.index.tsx`, `_public.community.groups.$slug.tsx`) — every place a post/
-  comment's author `display_name` is rendered already has a null-safe fallback (`?? "Havenpaw
+  comment's author `display_name` is rendered already has a null-safe fallback (`?? "Anemalo
   member"`, `?? "Member"`), so content authored by a since-deleted account renders sensibly rather
   than blank or broken. Not a new fix; already correct, confirmed rather than assumed.
 

@@ -28,7 +28,7 @@ import {
 import { getPuppyById } from "@/domains/marketplace";
 
 export const Route = createFileRoute("/_public/transport/request")({
-  head: () => ({ meta: [{ title: "Request transport — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Request transport — Anemalo" }] }),
   component: TransportRequestPage,
 });
 

@@ -84,13 +84,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Havenpaw — Professional animal transport across Europe" },
+      { title: "Anemalo — Professional animal transport across Europe" },
       {
         name: "description",
         content:
           "Request individual, express, VIP or shared transport for a dog. We verify the required information, plan the journey and handle transport from pickup to handover. Also home to verified breeders, foundations and adoption listings.",
       },
-      { property: "og:title", content: "Havenpaw — Professional animal transport across Europe" },
+      { property: "og:title", content: "Anemalo — Professional animal transport across Europe" },
       {
         property: "og:description",
         content:

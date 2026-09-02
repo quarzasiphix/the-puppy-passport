@@ -24,7 +24,7 @@ UI: a "Contact support" form for customers, and a queue/case view for staff.
 
 ## The real process for this beta, until that UI exists
 
-1. **Intake**: a pilot participant emails or otherwise directly contacts a real Havenpaw
+1. **Intake**: a pilot participant emails or otherwise directly contacts a real Anemalo
    staff member (define the actual channel before any pilot goes live — not specified here, since
    it's an operational decision, not a code fact).
 2. **Triage taxonomy** (apply manually, matches the categories a future UI would offer):

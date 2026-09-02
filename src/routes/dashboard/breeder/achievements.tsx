@@ -37,7 +37,7 @@ function AchievementsPage() {
           <h1 className="font-display text-3xl font-medium">Achievements</h1>
           <p className="text-sm text-muted-foreground">
             Add titles, competition results and diplomas for your dogs — evidence is kept private
-            until a Havenpaw administrator verifies it.
+            until a Anemalo administrator verifies it.
           </p>
         </div>
         {kennel?.id && (

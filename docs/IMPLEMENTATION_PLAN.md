@@ -1,4 +1,4 @@
-# Havenpaw — Implementation Plan
+# Anemalo — Implementation Plan
 
 Phased build order. **Status below was rewritten 2026-07-22 against the actual code and
 `docs/MVP_TEST_REPORT.md`/`docs/PRODUCTION_READINESS_REPORT.md`, which are the source of truth for
@@ -32,14 +32,14 @@ session-expiry handling, a dedicated multi-step onboarding flow, an account-stat
 
 **Data model hardened** (see `docs/adr/TRANSPORT_DATA_MODEL.md` for the full audit and decision).
 `transport_parties` (legal_owner/requester/sender/recipient/payer/pickup_contact/delivery_contact,
-including non-Havenpaw external contacts with a real name+phone+email) existed since 2026-07-22 with
+including non-Anemalo external contacts with a real name+phone+email) existed since 2026-07-22 with
 correct RLS but zero callers — now backfilled from the legacy inline columns, hardened (3 integrity
 fixes), and given a real writer. A new `transport_request_animals` table gives
 `number_of_animals > 1` an actual, safe, queryable representation (previously just a plain integer
 with zero linkage to which animals those were). `create_transport_draft()` is the single atomic RPC
 creating a request + its animals + its parties in one transaction, with a real animal-entitlement
 check (a customer can't attach an arbitrary animal's uuid they don't have a genuine connection to) and
-a real forgery check (can't claim another Havenpaw user as legal_owner/sender/payer). A post-draft
+a real forgery check (can't claim another Anemalo user as legal_owner/sender/payer). A post-draft
 snapshot lock + a deliberate amendment workflow (`transport_request_amendments`,
 `request_transport_amendment()`/`review_transport_amendment()`) close the gap where nothing
 previously stopped a customer from directly rewriting their submitted request's booking-time
@@ -249,9 +249,9 @@ that would violate this project's own no-fabrication rule. What's real:
   Belgium seeded, honest per-market state (`marketplace_state`, `adoption_state`,
   `transport_post_state`, `transport_full_state`, `fundraising_state`, each one of `unavailable` /
   `discovery_only` / `listings_available` / `adoption_available` / `transport_requests_available`
-  / `partner_transport` / `full_havenpaw_service`), `supported_locales` as an array (never assumes
+  / `partner_transport` / `full_anemalo_service`), `supported_locales` as an array (never assumes
   one language per country — Belgium has `nl-BE`/`fr-BE`/`en`), `legal_content_ready` boolean.
-  **Deliberately no market is marked `full_havenpaw_service`** — the app itself isn't fully
+  **Deliberately no market is marked `full_anemalo_service`** — the app itself isn't fully
   translated yet, so claiming full service readiness would overclaim what this migration alone
   delivered. `profiles.preferred_language`/`preferred_currency` already existed as columns.
 - **Not built**: locale-aware URLs, currency/date/unit formatting beyond native `Intl` already used

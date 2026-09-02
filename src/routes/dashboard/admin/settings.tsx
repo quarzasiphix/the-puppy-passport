@@ -17,7 +17,7 @@ const stateLabels: Record<string, string> = {
   adoption_available: "Adoption available",
   transport_requests_available: "Transport requests available",
   partner_transport: "Partner transport",
-  full_havenpaw_service: "Full Havenpaw service",
+  full_anemalo_service: "Full Anemalo service",
 };
 
 function SettingsPage() {

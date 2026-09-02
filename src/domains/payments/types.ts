@@ -28,12 +28,7 @@ export type PayoutState = "not_scheduled" | "in_transit" | "paid" | "failed" | "
 export type RefundState = "none" | "requested" | "processing" | "succeeded" | "failed";
 
 export type DisputeState =
-  | "none"
-  | "warning_needs_response"
-  | "needs_response"
-  | "under_review"
-  | "won"
-  | "lost";
+  "none" | "warning_needs_response" | "needs_response" | "under_review" | "won" | "lost";
 
 export type ReservationDeposit = {
   reservationId: string;

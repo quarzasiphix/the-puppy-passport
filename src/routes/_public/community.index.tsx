@@ -38,12 +38,12 @@ const POST_TYPE_LABELS: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/_public/community/")({
-  head: () => ({ meta: [{ title: "Community — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Community — Anemalo" }] }),
   component: CommunityPage,
 });
 
 function authorName(p: PostRow) {
-  return p.organisations?.name ?? p.profiles?.display_name ?? "Havenpaw member";
+  return p.organisations?.name ?? p.profiles?.display_name ?? "Anemalo member";
 }
 
 function CommunityPage() {

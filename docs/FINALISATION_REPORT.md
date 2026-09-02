@@ -1,8 +1,8 @@
-# Havenpaw — Finalisation Report
+# Anemalo — Finalisation Report
 
 Snapshot: 2026-07-23, after a 13-phase product pass (scope correction through this report — see
 `docs/IMPLEMENTATION_PLAN.md` for the full phase-by-phase build log and `git log` for the
-individual commits). This report is the single answer to "where does Havenpaw actually stand, and
+individual commits). This report is the single answer to "where does Anemalo actually stand, and
 what specifically is left before launch" — it supersedes nothing (see `docs/MVP_TEST_REPORT.md` and
 `docs/PRODUCTION_READINESS_REPORT.md` for the detailed evidence this report summarises), it
 consolidates. Where this report's classification differs from an older document, this report is
@@ -144,7 +144,7 @@ checked, not that the code merely looks correct.
 - The entire fundraising module (commit `ac0d8da`) — schema, RLS, org/admin/public UI and a
   development-only *simulated* contribution flow are real and tested, but stay behind
   `VITE_FUNDRAISING_ENABLED` (default off) until a real payment provider, refund rules and legal
-  texts are approved. No Havenpaw wallet exists or is planned.
+  texts are approved. No Anemalo wallet exists or is planned.
 
 ### Blocked (by this sandbox, not by the product)
 

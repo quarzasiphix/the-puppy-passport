@@ -7,7 +7,7 @@ import { getPublicTransportRating } from "@/domains/transport";
 import transportImg from "@/assets/transport.jpg";
 
 export const Route = createFileRoute("/_public/transport/")({
-  head: () => ({ meta: [{ title: "Transport services — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Transport services — Anemalo" }] }),
   loader: async () => {
     const supabase = getSupabaseBrowserClient();
     const [{ data }, rating] = await Promise.all([

@@ -205,7 +205,7 @@ begin
     v_org_id := nullif(v_party ->> 'organisation_id', '')::uuid;
 
     if v_role in ('legal_owner', 'sender', 'payer') and v_profile_id is not null and v_profile_id <> v_requester then
-      raise exception 'only the requester themselves can be named as % via a profile id — naming another Havenpaw user in this role requires their own action, not a claim by this requester', v_role
+      raise exception 'only the requester themselves can be named as % via a profile id — naming another Anemalo user in this role requires their own action, not a claim by this requester', v_role
         using errcode = 'P0001';
     end if;
 

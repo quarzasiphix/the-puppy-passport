@@ -39,7 +39,7 @@ a collision there produces an ordinary, informative assertion failure or a Postg
 constraint error inside a single test, not an opaque `auth.signUp()` infrastructure failure that
 aborts the run. Fixing every one would have been implementing speculative robustness with no
 corresponding gap ever observed, contrary to the "don't invent unnecessary work" standing
-instruction. `rate-limiting.test.ts`'s `rate-limit-wiring-check-${Date.now()}@havenpaw.test` is a
+instruction. `rate-limiting.test.ts`'s `rate-limit-wiring-check-${Date.now()}@anemalo.test` is a
 `p_email` argument to an org-invitation RPC, not an `auth.signUp()` call, so it carries none of the
 severity that motivated this fix and was left as-is.
 

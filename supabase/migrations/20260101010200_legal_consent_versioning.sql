@@ -1,5 +1,5 @@
 -- Stage BK (supplemental queue): legal-document/consent versioning. The signup page
--- (_public.signup.tsx) already says "By creating an account, you agree to Havenpaw's Terms and
+-- (_public.signup.tsx) already says "By creating an account, you agree to Anemalo's Terms and
 -- Privacy" -- but nothing anywhere records that a specific user actually consented to a specific
 -- version of either document. This makes that promise real and auditable, without inventing new
 -- UI: the signup server action (src/lib/auth/actions.ts, not a frontend-owned file) already runs

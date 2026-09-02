@@ -50,7 +50,7 @@ reconcile.
 - Full `npm run test:db`: unaffected (no schema change), still passing at the same count as YR-8.
 - `npm run build` — clean.
 - **Attempted a real live browser check, did not complete it**: started `npm run dev`, wrote a
-  throwaway Playwright spec signing in as `ops@havenpaw.test` and asserting the dispatch page's new
+  throwaway Playwright spec signing in as `ops@anemalo.test` and asserting the dispatch page's new
   warning text renders. Hit the same pre-existing, already-documented frontend issue from
   `docs/E2E_TESTING.md` (2026-07-27 update) — sign-in never completes in this environment, the page
   stays on `/signin` with no navigation at all even after a multi-second wait, a deeper instance of

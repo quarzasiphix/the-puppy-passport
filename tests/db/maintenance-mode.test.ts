@@ -14,7 +14,7 @@ test("app_maintenance_mode: single row, public read, admin-only write, non-forge
       .from("app_maintenance_mode")
       .update({
         enabled: false,
-        message: "Havenpaw is temporarily down for maintenance. Please check back shortly.",
+        message: "Anemalo is temporarily down for maintenance. Please check back shortly.",
       })
       .eq("id", true)
       .select("enabled")
@@ -107,7 +107,7 @@ test("app_maintenance_mode: single row, public read, admin-only write, non-forge
       .from("app_maintenance_mode")
       .update({
         enabled: false,
-        message: "Havenpaw is temporarily down for maintenance. Please check back shortly.",
+        message: "Anemalo is temporarily down for maintenance. Please check back shortly.",
       })
       .eq("id", true);
   });

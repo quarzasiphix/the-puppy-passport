@@ -243,7 +243,7 @@ test("organisation invitations are wired to rate limiting (100/hour)", async (t)
       performAction: async () => {
         const { data, error } = await foundation1.rpc("invite_org_member", {
           p_org_id: ids.orgFundacja,
-          p_email: `rate-limit-wiring-check-${Date.now()}@havenpaw.test`,
+          p_email: `rate-limit-wiring-check-${Date.now()}@anemalo.test`,
           p_role: "volunteer",
         });
         invitationId = data as string | undefined;

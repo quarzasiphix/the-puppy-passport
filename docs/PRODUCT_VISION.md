@@ -1,13 +1,13 @@
-# Havenpaw — Product Vision
+# Anemalo — Product Vision
 
 **Scope corrected 2026-07-22 — this supersedes any earlier framing that described animal transport
-as Havenpaw's primary identity.** Transport is a major advantage of the platform, not what Havenpaw
+as Anemalo's primary identity.** Transport is a major advantage of the platform, not what Anemalo
 fundamentally is. See `docs/DECISIONS.md` for the full record of this correction and why it was
 made.
 
-## What Havenpaw is
+## What Anemalo is
 
-Havenpaw is a **dedicated European animal ecosystem**: a trustworthy home for finding, adopting,
+Anemalo is a **dedicated European animal ecosystem**: a trustworthy home for finding, adopting,
 and welcoming an animal, built around verified breeders and organisations, a real community, and —
 once a purchase or adoption is agreed — safe, professional transport.
 
@@ -17,11 +17,11 @@ It is **not**:
 - a childish dog website;
 - an unmoderated Facebook group;
 - an open marketplace where random transporters can accept jobs;
-- **a general marketplace.** Havenpaw must never expand into unrelated categories — cars,
+- **a general marketplace.** Anemalo must never expand into unrelated categories — cars,
   electronics, furniture, tools, or any other classifieds vertical. Everything on the platform stays
   animal-related: discovery, profiles, community, adoption, transport, fundraising for animal
   welfare, and animal-related products/services/events/education. A new feature request that isn't
-  clearly traceable to the animal-ecosystem hierarchy below does not belong on Havenpaw, however
+  clearly traceable to the animal-ecosystem hierarchy below does not belong on Anemalo, however
   commercially tempting it might look.
 
 The platform connects: breeders, people looking for a dog, existing animal owners, foundations,
@@ -39,17 +39,17 @@ ones, not the other way around:
    trust them.
 3. **Social feed, communication and community** — following, posting, messaging.
 4. **Applications, reservations, adoption and handover** — the actual transaction/relationship.
-5. **Integrated Havenpaw transport after a purchase or adoption** — the natural next step once an
+5. **Integrated Anemalo transport after a purchase or adoption** — the natural next step once an
    animal has a new home to go to.
 6. **Standalone animal transport requests** — transport as a real, independently useful service,
-   for people who aren't buying/adopting through Havenpaw at all.
+   for people who aren't buying/adopting through Anemalo at all.
 7. **Verified-organisation fundraising for animal welfare and adoption transport** — see
    `docs/FUNDRAISING_POLICY.md` for the full policy.
 8. **Animal-related services, products, events and education** — a real future differentiator, kept
    strictly within the animal ecosystem (see "It is not: a general marketplace" above).
 
 **The main customer journey**: find an animal → inspect the breeder or organisation → communicate →
-apply or express interest → agree the purchase or adoption → choose collection or Havenpaw transport
+apply or express interest → agree the purchase or adoption → choose collection or Anemalo transport
 → complete the handover. Transport is a strong, differentiating advantage available at the right
 moment in this journey — never the first thing a visitor is asked to do.
 
@@ -108,7 +108,7 @@ final transport approval, legal assessment, route approval and quotation approva
 See `docs/FUNDRAISING_POLICY.md` for the complete policy. In short: only verified non-profit
 organisations (foundations, registered associations, shelters, rescues) may create fundraisers,
 never private individuals; fundraising never funds the purchase of an animal, only transport and
-related animal-welfare costs; and collected funds are applied directly to the connected Havenpaw
+related animal-welfare costs; and collected funds are applied directly to the connected Anemalo
 transport balance, never freely withdrawable by an adopter or other private person.
 
 ## Geographic direction
@@ -129,7 +129,7 @@ attempted up front. See `DECISIONS.md`.
 
 ## Design direction
 
-Preserve the existing professional Havenpaw visual identity (typography, spacing, restrained
+Preserve the existing professional Anemalo visual identity (typography, spacing, restrained
 colour, existing shadcn component set). The platform should feel **emotionally warm, trustworthy,
 professional, and fully focused on animals** — European, premium-but-not-fake-luxury — appropriate
 for breeders, adopters, foundations and transport customers alike. Warmth and professionalism are
@@ -139,7 +139,7 @@ breeder or transport customer finds credible, at the same time.
 Avoid: excessive paw graphics, cartoon dogs, childish copy, generic pet-shop design, excessive
 gold/trophy decoration, "add to cart" language, unsupported legal guarantees, inflated statistics,
 and — per the corrected scope above — any visual or navigational hierarchy that presents transport
-as Havenpaw's primary identity rather than one of its real advantages.
+as Anemalo's primary identity rather than one of its real advantages.
 
 ## Staged roadmap (high level — see IMPLEMENTATION_PLAN.md for the working phase order and current,
 verified per-phase status)
@@ -168,7 +168,7 @@ breakdown and `docs/MVP_TEST_REPORT.md` for the verification evidence behind eac
 9. **Breeder achievement & champion-dog profiles**. **Done.**
 10. **Verified-organisation fundraising** — see `docs/FUNDRAISING_POLICY.md`. **Policy defined,
     not yet built.** Stays behind a feature flag until a real payment provider, refund rules and
-    legal texts are approved — no Havenpaw wallet, no personal/purchase fundraising.
+    legal texts are approved — no Anemalo wallet, no personal/purchase fundraising.
 11. **Internationalisation** — additional countries/languages/currencies, legal knowledge base.
     **Not started** beyond schema readiness (`preferred_language`/`preferred_currency` columns
     exist; no translation infrastructure or additional-locale copy exists yet).
@@ -177,5 +177,5 @@ breakdown and `docs/MVP_TEST_REPORT.md` for the verification evidence behind eac
     exhibition calendar, service marketplace (behaviourists, trainers, photographers), multi-species
     support, a European market/locale registry. Animal-related products/services/events/education
     (hierarchy pillar 8) are real ideas worth keeping on the list, not commitments for the near-term
-    build — and, per "What Havenpaw is" above, never an opening to add unrelated general-marketplace
+    build — and, per "What Anemalo is" above, never an opening to add unrelated general-marketplace
     categories.

@@ -17,10 +17,10 @@ import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/rehome")({
   head: () => ({
     meta: [
-      { title: "Find a new home for your dog — Havenpaw" },
+      { title: "Find a new home for your dog — Anemalo" },
       {
         name: "description",
-        content: "Submit your dog for a moderated private rehoming listing on Havenpaw.",
+        content: "Submit your dog for a moderated private rehoming listing on Anemalo.",
       },
     ],
   }),
@@ -90,7 +90,7 @@ function RehomePage() {
         <HeartHandshake className="mx-auto size-10 text-primary" />
         <h1 className="mt-4 font-display text-3xl font-medium">Find a new home for your dog</h1>
         <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-          Sign in to submit your dog for review — this keeps rehoming listings on Havenpaw
+          Sign in to submit your dog for review — this keeps rehoming listings on Anemalo
           accountable to a real account.
         </p>
         <Button asChild className="mt-4">
@@ -108,7 +108,7 @@ function RehomePage() {
         <p className="mx-auto mt-2 max-w-md text-muted-foreground">
           Thank you — {form.name}'s listing has been submitted. It is{" "}
           <strong>not public yet</strong>. An admin reviews every private rehoming submission before
-          it appears on Havenpaw, usually within a couple of days. We'll let you know once it's
+          it appears on Anemalo, usually within a couple of days. We'll let you know once it's
           approved.
         </p>
         <Button asChild variant="outline" className="mt-4">

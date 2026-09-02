@@ -18,7 +18,7 @@ function mapComment(r: CommentQueryRow): CommentSummary {
     postId: r.post_id,
     parentCommentId: r.parent_comment_id,
     authorProfileId: r.author_profile_id,
-    authorName: r.profiles?.display_name ?? "Havenpaw member",
+    authorName: r.profiles?.display_name ?? "Anemalo member",
     authorAvatarUrl: r.profiles?.avatar_url ?? null,
     // Soft-deleted/moderated content keeps its place in the thread (replies may reference it) but
     // never shows its real text — matches "use soft deletion where discussion continuity requires

@@ -23,7 +23,7 @@ compliance questionnaire answers, and party-adjacent inline columns: `current_ow
 `sender_org_id`, `release_authorized_by` and `receive_authorized_by` are ever actually set by the
 real UI. `sender_profile_id`, `recipient_profile_id` and `payer_profile_id` exist as columns but are
 **never populated by any code path** — there is no way today for a customer to say "the recipient is
-this other Havenpaw user" or "someone else is paying." `release_authorized_by`/`receive_authorized_by`
+this other Anemalo user" or "someone else is paying." `release_authorized_by`/`receive_authorized_by`
 are a single free-text name each — no phone, no email, no structured record.
 
 ### `transport_parties` — exists, fully built, RLS-complete, **zero rows, zero callers**
@@ -159,7 +159,7 @@ directly, as today): `legal_owner`, `sender`, `recipient`, `payer`, `pickup_cont
 
 ### New: explicit animal linkage (`transport_request_animals`)
 One row per animal on the request (position 1..N), each either linked to a real `animals.id` or
-carrying its own inline snapshot for an animal never registered in Havenpaw — finally giving
+carrying its own inline snapshot for an animal never registered in Anemalo — finally giving
 `number_of_animals > 1` an actual, safe, queryable representation.
 
 ### New: a deliberate amendment workflow (`transport_request_amendments`)
@@ -199,7 +199,7 @@ column directly; ops calls `review_transport_amendment()` to approve (applies th
   to — identical to how the pre-existing inline `current_owner_profile_id`/`sender_org_id` columns
   already worked. What *is* new: the creation RPC requires that for these three specific roles
   (`legal_owner`, `sender`, `payer`), a bare `profile_id` (not `organisation_id`) must equal the
-  requester's own id — a real customer cannot claim an arbitrary *other* Havenpaw user already
+  requester's own id — a real customer cannot claim an arbitrary *other* Anemalo user already
   agreed to own/send/pay. Naming another user as `recipient` (or naming an organisation for any
   role) is unrestricted, since that's inherent to "sending an animal to someone else."
 - **The quotation column-scoping gap found during the audit is not fixed here** — recorded as a new

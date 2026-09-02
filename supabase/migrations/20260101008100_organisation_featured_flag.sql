@@ -20,11 +20,11 @@ begin
     return new;
   end if;
   if new.owner_user_id is distinct from old.owner_user_id then
-    raise exception 'Organisation ownership can only be transferred by Havenpaw staff — contact support to change the accountable owner.'
+    raise exception 'Organisation ownership can only be transferred by Anemalo staff — contact support to change the accountable owner.'
       using errcode = 'P0001';
   end if;
   if new.is_featured is distinct from old.is_featured then
-    raise exception 'Only Havenpaw staff can feature or unfeature an organisation.'
+    raise exception 'Only Anemalo staff can feature or unfeature an organisation.'
       using errcode = 'P0001';
   end if;
   return new;

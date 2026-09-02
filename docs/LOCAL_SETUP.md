@@ -1,6 +1,6 @@
-# Havenpaw — Local Setup
+# Anemalo — Local Setup
 
-Havenpaw runs entirely against a **local** Supabase stack (Docker). No production Supabase
+Anemalo runs entirely against a **local** Supabase stack (Docker). No production Supabase
 project is used or referenced anywhere in this repo.
 
 ## Prerequisites
@@ -111,18 +111,18 @@ never reuse them anywhere real.
 
 | Email                               | Persona                                                        | Role(s)                      |
 | ----------------------------------- | -------------------------------------------------------------- | ---------------------------- |
-| `customer@havenpaw.test`            | Marta Zielińska — private transport customer                   | `customer` (active)          |
-| `buyer@havenpaw.test`               | Julia Kowalczyk — buyer looking for a puppy                    | `buyer` (active)             |
-| `breeder1@havenpaw.test`            | Anna Kowalska — owns Cichy Las Kennel (approved)               | `breeder` (active)           |
-| `breeder2@havenpaw.test`            | Tomasz Nowak — owns Wolna Dolina (approved)                    | `breeder` (active)           |
-| `breeder3-pending@havenpaw.test`    | Katarzyna Wiśniewska — Srebrna Rzeka, awaiting verification    | `breeder` (pending)          |
-| `foundation1@havenpaw.test`         | Aleksandra Nowicka — owns Fundacja Ratunek dla Psów (approved) | `foundation_member` (active) |
-| `foundation2-pending@havenpaw.test` | Bartłomiej Sikora — Schronisko Nadzieja, awaiting verification | `shelter_member` (pending)   |
-| `ops@havenpaw.test`                 | Kasia Woźniak — transport operations                           | `operations` (active)        |
-| `driver@havenpaw.test`              | Marek Dąbrowski — driver                                       | `driver` (active)            |
-| `admin@havenpaw.test`               | Havenpaw Admin                                                 | `admin` (active)             |
+| `customer@anemalo.test`            | Marta Zielińska — private transport customer                   | `customer` (active)          |
+| `buyer@anemalo.test`               | Julia Kowalczyk — buyer looking for a puppy                    | `buyer` (active)             |
+| `breeder1@anemalo.test`            | Anna Kowalska — owns Cichy Las Kennel (approved)               | `breeder` (active)           |
+| `breeder2@anemalo.test`            | Tomasz Nowak — owns Wolna Dolina (approved)                    | `breeder` (active)           |
+| `breeder3-pending@anemalo.test`    | Katarzyna Wiśniewska — Srebrna Rzeka, awaiting verification    | `breeder` (pending)          |
+| `foundation1@anemalo.test`         | Aleksandra Nowicka — owns Fundacja Ratunek dla Psów (approved) | `foundation_member` (active) |
+| `foundation2-pending@anemalo.test` | Bartłomiej Sikora — Schronisko Nadzieja, awaiting verification | `shelter_member` (pending)   |
+| `ops@anemalo.test`                 | Kasia Woźniak — transport operations                           | `operations` (active)        |
+| `driver@anemalo.test`              | Marek Dąbrowski — driver                                       | `driver` (active)            |
+| `admin@anemalo.test`               | Anemalo Admin                                                 | `admin` (active)             |
 
-A pending breeder/foundation account can sign in and use Havenpaw as a transport customer, but
+A pending breeder/foundation account can sign in and use Anemalo as a transport customer, but
 cannot publish listings — their organisation doesn't exist yet (only a `user_verifications` row
 with `status = 'pending'`). Approve it as the admin account via
 `select public.approve_user_verification('<verification id>')` in Studio's SQL editor (a proper
@@ -147,9 +147,9 @@ trusting the schema:
    enums declared before use, no leftover references to renamed tables).
 3. `npm run dev`, then sign in as each demo account above and confirm:
    - the homepage stat counts are non-zero and plausible (not fake/rounded numbers);
-   - `buyer@havenpaw.test` can submit a transport request at `/transport/request` and see it at
+   - `buyer@anemalo.test` can submit a transport request at `/transport/request` and see it at
      `/dashboard/buyer/transport`;
-   - `breeder3-pending@havenpaw.test` cannot see a live kennel profile (still pending);
-   - `admin@havenpaw.test` can query `user_verifications`/`organisations` directly in Studio.
+   - `breeder3-pending@anemalo.test` cannot see a live kennel profile (still pending);
+   - `admin@anemalo.test` can query `user_verifications`/`organisations` directly in Studio.
 4. `npm run lint` and `"node" node_modules/typescript/bin/tsc --noEmit` (or just `npx tsc
 --noEmit`) should both be clean.

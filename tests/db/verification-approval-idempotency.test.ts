@@ -24,7 +24,7 @@ async function signUpDisposableUser() {
   const client = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  const email = `verification-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@havenpaw.test`;
+  const email = `verification-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@anemalo.test`;
   const signUp = await client.auth.signUp({ email, password: "password123" });
   assert.equal(signUp.error, null);
   const userId = signUp.data.user!.id;

@@ -17,7 +17,7 @@ alter table public.legal_requirements
 comment on column public.legal_requirements.species_id is
   'Null means the rule applies across all species (e.g. a general transport document rule); set for a species-specific rule (e.g. a prohibited-species import restriction).';
 comment on column public.legal_requirements.effective_date is
-  'When the underlying legal rule itself takes effect — distinct from last_reviewed_at, which tracks when Havenpaw staff last checked the source is still current.';
+  'When the underlying legal rule itself takes effect — distinct from last_reviewed_at, which tracks when Anemalo staff last checked the source is still current.';
 comment on column public.legal_requirements.reviewer_id is
   'The staff member who actually reviewed this rule against its source, distinct from created_by (who entered the row).';
 comment on column public.legal_requirements.enforcement_level is

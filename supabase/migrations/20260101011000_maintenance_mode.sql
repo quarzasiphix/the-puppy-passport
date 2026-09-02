@@ -6,7 +6,7 @@
 create table public.app_maintenance_mode (
   id boolean primary key default true,
   enabled boolean not null default false,
-  message text not null default 'Havenpaw is temporarily down for maintenance. Please check back shortly.',
+  message text not null default 'Anemalo is temporarily down for maintenance. Please check back shortly.',
   enabled_by uuid references public.profiles (id),
   enabled_at timestamptz,
   updated_at timestamptz not null default now(),

@@ -274,7 +274,9 @@ test("submit_transport_request: a forged requester_profile_id in the payload is 
   assert.equal(submit.error, null);
   const row = submit.data?.[0];
 
-  const stored = await (await as("ops"))
+  const stored = await (
+    await as("ops")
+  )
     .from("transport_requests")
     .select("requester_profile_id")
     .eq("id", row!.id)
@@ -299,7 +301,7 @@ test("create_transport_draft: a customer cannot pass a 'requester' party explici
   assert.ok(error, "expected an error rejecting an explicit requester party");
 });
 
-test("create_transport_draft: a customer cannot forge another Havenpaw user as legal_owner/sender/payer", async () => {
+test("create_transport_draft: a customer cannot forge another Anemalo user as legal_owner/sender/payer", async () => {
   const customer = await as("customer");
   const { data, error } = await customer.rpc("create_transport_draft", {
     p_request: {},

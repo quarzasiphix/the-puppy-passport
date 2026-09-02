@@ -59,14 +59,14 @@ export const Route = createFileRoute("/_public/puppies/$id")({
     meta: [
       {
         title: loaderData
-          ? `${loaderData.puppy.name} — ${loaderData.puppy.breed} — Havenpaw`
-          : "Puppy — Havenpaw",
+          ? `${loaderData.puppy.name} — ${loaderData.puppy.breed} — Anemalo`
+          : "Puppy — Anemalo",
       },
       {
         name: "description",
         content: loaderData
           ? `${loaderData.puppy.name}, a ${loaderData.puppy.breed} puppy from ${loaderData.puppy.kennel} in ${loaderData.puppy.city}, ${loaderData.puppy.country}.`
-          : "A puppy listing on Havenpaw.",
+          : "A puppy listing on Anemalo.",
       },
     ],
   }),
@@ -259,7 +259,7 @@ function PuppyDetail() {
               <TabsContent value="health" className="mt-6">
                 <SectionCard title="Health & documents">
                   <p className="mb-4 text-sm text-muted-foreground">
-                    Havenpaw breeders are expected to provide the following before handover. Ask the
+                    Anemalo breeders are expected to provide the following before handover. Ask the
                     breeder to confirm exactly what's ready for this puppy — final documents are
                     verified during the transport request review, not shown here as a claim.
                   </p>
@@ -475,7 +475,7 @@ function PuppyDetail() {
                 <div className="flex items-start gap-2">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
                   <span>
-                    Havenpaw does not sell puppies directly. Applying opens a conversation with the
+                    Anemalo does not sell puppies directly. Applying opens a conversation with the
                     breeder, who decides who they place their puppies with.
                   </span>
                 </div>

@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { ShieldCheck, FileCheck2, Stethoscope, HeartHandshake, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/_public/how-it-works")({
-  head: () => ({ meta: [{ title: "How it works — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "How it works — Anemalo" }] }),
   component: HowItWorks,
 });
 
@@ -62,7 +62,7 @@ function HowItWorks() {
             A calm, transparent way to find a puppy
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Havenpaw is a specialist marketplace for responsibly bred puppies — not a classified ads
+            Anemalo is a specialist marketplace for responsibly bred puppies — not a classified ads
             site. Every kennel is verified, every litter is confirmed, and every application flows
             through a structured process.
           </p>

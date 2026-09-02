@@ -83,7 +83,7 @@ function ProfilePage() {
       <header className="mb-6">
         <h1 className="font-display text-3xl font-medium">Organisation profile</h1>
         <p className="text-sm text-muted-foreground">
-          How adopters see your organisation on Havenpaw.
+          How adopters see your organisation on Anemalo.
         </p>
       </header>
 

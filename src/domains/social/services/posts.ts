@@ -47,7 +47,7 @@ function mapAuthor(r: PostQueryRow): PostAuthorSummary {
   return {
     profileId: r.author_profile_id,
     organisationId: null,
-    name: r.profiles?.display_name ?? "Havenpaw member",
+    name: r.profiles?.display_name ?? "Anemalo member",
     avatarUrl: r.profiles?.avatar_url ?? null,
   };
 }

@@ -5,7 +5,7 @@
 
 create type public.market_state as enum (
   'unavailable', 'discovery_only', 'listings_available', 'adoption_available',
-  'transport_requests_available', 'partner_transport', 'full_havenpaw_service'
+  'transport_requests_available', 'partner_transport', 'full_anemalo_service'
 );
 
 create table public.markets (
@@ -53,7 +53,7 @@ grant select, insert, update, delete on public.markets to authenticated;
 -- Initial operational focus per docs/PRODUCT_VISION.md: Poland, Germany, Netherlands, Belgium,
 -- Polish/English, PLN/EUR. Honest current state: the app itself is English-only today (see
 -- docs/IMPLEMENTATION_PLAN.md phase 14/this migration's own follow-up) even though Polish is the
--- named initial language, so no market is marked ready for "full_havenpaw_service" by this
+-- named initial language, so no market is marked ready for "full_anemalo_service" by this
 -- migration alone -- that would overclaim readiness this schema change didn't itself deliver.
 insert into public.markets (
   country_code, display_name, enabled, default_locale, supported_locales, currency,

@@ -35,7 +35,7 @@ begin
      and new.status = 'active'
      and old.status <> 'approved'
   then
-    raise exception 'A fundraising campaign can only go live after Havenpaw staff have approved it.'
+    raise exception 'A fundraising campaign can only go live after Anemalo staff have approved it.'
       using errcode = 'P0001';
   end if;
 

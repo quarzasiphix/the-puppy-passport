@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
-  head: () => ({ meta: [{ title: "Verified breeders — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Verified breeders — Anemalo" }] }),
   component: BreedersList,
 });
 

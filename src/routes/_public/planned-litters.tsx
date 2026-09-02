@@ -4,7 +4,7 @@ import { LitterCard } from "@/domains/marketplace";
 
 export const Route = createFileRoute("/_public/planned-litters")({
   loader: () => listPublishedLitters("planned"),
-  head: () => ({ meta: [{ title: "Planned litters — Havenpaw" }] }),
+  head: () => ({ meta: [{ title: "Planned litters — Anemalo" }] }),
   component: PlannedLittersPage,
 });
 
