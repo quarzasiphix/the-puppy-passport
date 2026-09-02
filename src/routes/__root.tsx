@@ -10,10 +10,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
-import { Toaster } from "@/components/ui/sonner";
-import { I18nProvider } from "@/lib/i18n";
+import { reportLovableError } from "@/app/lovable-error-reporting";
+import { getCurrentUser, type CurrentUser } from "@/domains/identity";
+import { Toaster } from "@/shared/ui/sonner";
+import { I18nProvider } from "@/shared/i18n";
 
 function NotFoundComponent() {
   return (

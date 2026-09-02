@@ -505,9 +505,7 @@ test("private documents and storage access", async (t) => {
       // reference (`storage.foldername(objects.name)`) — confirmed against the live policy in
       // pg_policies, not just the migration source. Each access boundary below is tested
       // explicitly, not just the one previously-broken happy path.
-      const upload = await (
-        await as("customer")
-      ).storage
+      const upload = await (await as("customer")).storage
         .from("transport-documents")
         .upload(path, contents, { contentType: "text/plain", upsert: true });
       assert.equal(upload.error, null);

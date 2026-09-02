@@ -1,8 +1,8 @@
-import "./lib/error-capture";
+import "./app/error-capture";
 
-import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
-import { renderMaintenancePage } from "./lib/maintenance-page";
+import { consumeLastCapturedError } from "./app/error-capture";
+import { renderErrorPage } from "./app/error-page";
+import { renderMaintenancePage } from "./app/maintenance-page";
 import { getSupabaseBrowserClient } from "./lib/supabase/browser";
 
 type ServerEntry = {

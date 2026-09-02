@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { SiteHeader, SiteFooter } from "@/components/site-chrome";
+import { SiteHeader, SiteFooter } from "@/app/layouts/site-chrome";
 
 export const Route = createFileRoute("/_public")({
   component: PublicLayout,

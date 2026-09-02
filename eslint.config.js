@@ -38,10 +38,51 @@ export default tseslint.config(
                 "TanStack Start does not use the Next.js `server-only` package. Rename the module to `*.server.ts` or mark it with `@tanstack/react-start/server-only`.",
             },
           ],
+          patterns: [
+            {
+              // Domains expose an intentional public API through their index.ts barrel. Deep
+              // imports (`@/domains/reservations/status`) couple to internals. See
+              // docs/FRONTEND_ARCHITECTURE.md. Files inside a domain import their own siblings
+              // with relative paths, which this does not restrict.
+              group: ["@/domains/*/*"],
+              message:
+                "Import from the domain's public barrel instead: `@/domains/<domain>`. Deep-importing a domain's internals is not allowed.",
+            },
+            {
+              // A route module is a router entry point, not a shared library. Extract shared code
+              // to `@/shared/*` or the owning `@/domains/<domain>`.
+              group: [
+                "**/routes/dashboard.*",
+                "**/routes/_public.*",
+                "./dashboard.*",
+                "./_public.*",
+              ],
+              message:
+                "Route modules are not import targets. Move shared code to `@/shared/*` or the owning `@/domains/<domain>`.",
+            },
+          ],
         },
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    // `shared/` is the dependency floor — generic primitives only. It must never depend on a
+    // business domain (that would create a cycle the moment a domain imports shared).
+    files: ["src/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/domains/*", "@/domains/*/*", "@/app/*"],
+              message: "shared/ must not import from a domain or from app/. Keep it generic.",
+            },
+          ],
+        },
+      ],
     },
   },
   eslintPluginPrettier,

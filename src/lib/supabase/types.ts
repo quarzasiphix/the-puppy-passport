@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -674,22 +654,37 @@ export type Database = {
           author_profile_id: string
           content: string
           created_at: string
+          deleted_at: string | null
           id: string
+          is_edited: boolean
+          moderation_status: Database["public"]["Enums"]["content_moderation_status"]
+          parent_comment_id: string | null
           post_id: string
+          updated_at: string
         }
         Insert: {
           author_profile_id: string
           content: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
+          is_edited?: boolean
+          moderation_status?: Database["public"]["Enums"]["content_moderation_status"]
+          parent_comment_id?: string | null
           post_id: string
+          updated_at?: string
         }
         Update: {
           author_profile_id?: string
           content?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
+          is_edited?: boolean
+          moderation_status?: Database["public"]["Enums"]["content_moderation_status"]
+          parent_comment_id?: string | null
           post_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -697,6 +692,13 @@ export type Database = {
             columns: ["author_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {
@@ -933,6 +935,10 @@ export type Database = {
       follows: {
         Row: {
           created_at: string
+          followed_animal_id: string | null
+          followed_breed_id: string | null
+          followed_group_id: string | null
+          followed_litter_id: string | null
           followed_organization_id: string | null
           followed_profile_id: string | null
           follower_profile_id: string
@@ -940,6 +946,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          followed_animal_id?: string | null
+          followed_breed_id?: string | null
+          followed_group_id?: string | null
+          followed_litter_id?: string | null
           followed_organization_id?: string | null
           followed_profile_id?: string | null
           follower_profile_id: string
@@ -947,12 +957,44 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          followed_animal_id?: string | null
+          followed_breed_id?: string | null
+          followed_group_id?: string | null
+          followed_litter_id?: string | null
           followed_organization_id?: string | null
           followed_profile_id?: string | null
           follower_profile_id?: string
           id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "follows_followed_animal_id_fkey"
+            columns: ["followed_animal_id"]
+            isOneToOne: false
+            referencedRelation: "animals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_followed_breed_id_fkey"
+            columns: ["followed_breed_id"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_followed_group_id_fkey"
+            columns: ["followed_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_followed_litter_id_fkey"
+            columns: ["followed_litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "follows_followed_organization_id_fkey"
             columns: ["followed_organization_id"]
@@ -1888,6 +1930,50 @@ export type Database = {
           },
         ]
       }
+      organisation_domains: {
+        Row: {
+          created_at: string
+          hostname: string
+          id: string
+          is_primary: boolean
+          organisation_id: string
+          status: Database["public"]["Enums"]["organisation_domain_status"]
+          type: Database["public"]["Enums"]["organisation_domain_type"]
+          updated_at: string
+          verification_token: string | null
+        }
+        Insert: {
+          created_at?: string
+          hostname: string
+          id?: string
+          is_primary?: boolean
+          organisation_id: string
+          status?: Database["public"]["Enums"]["organisation_domain_status"]
+          type: Database["public"]["Enums"]["organisation_domain_type"]
+          updated_at?: string
+          verification_token?: string | null
+        }
+        Update: {
+          created_at?: string
+          hostname?: string
+          id?: string
+          is_primary?: boolean
+          organisation_id?: string
+          status?: Database["public"]["Enums"]["organisation_domain_status"]
+          type?: Database["public"]["Enums"]["organisation_domain_type"]
+          updated_at?: string
+          verification_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_domains_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organisation_invitations: {
         Row: {
           accepted_by: string | null
@@ -1994,6 +2080,62 @@ export type Database = {
           },
         ]
       }
+      organisation_site_configurations: {
+        Row: {
+          contact_mode: Database["public"]["Enums"]["kennel_contact_mode"]
+          cover_asset_id: string | null
+          created_at: string
+          default_language: string
+          logo_asset_id: string | null
+          organisation_id: string
+          primary_color: string | null
+          section_order: Database["public"]["Enums"]["kennel_section"][]
+          show_anemalo_branding: boolean
+          supported_languages: string[]
+          theme: Database["public"]["Enums"]["kennel_theme"]
+          updated_at: string
+          visible_sections: Database["public"]["Enums"]["kennel_section"][]
+        }
+        Insert: {
+          contact_mode?: Database["public"]["Enums"]["kennel_contact_mode"]
+          cover_asset_id?: string | null
+          created_at?: string
+          default_language?: string
+          logo_asset_id?: string | null
+          organisation_id: string
+          primary_color?: string | null
+          section_order?: Database["public"]["Enums"]["kennel_section"][]
+          show_anemalo_branding?: boolean
+          supported_languages?: string[]
+          theme?: Database["public"]["Enums"]["kennel_theme"]
+          updated_at?: string
+          visible_sections?: Database["public"]["Enums"]["kennel_section"][]
+        }
+        Update: {
+          contact_mode?: Database["public"]["Enums"]["kennel_contact_mode"]
+          cover_asset_id?: string | null
+          created_at?: string
+          default_language?: string
+          logo_asset_id?: string | null
+          organisation_id?: string
+          primary_color?: string | null
+          section_order?: Database["public"]["Enums"]["kennel_section"][]
+          show_anemalo_branding?: boolean
+          supported_languages?: string[]
+          theme?: Database["public"]["Enums"]["kennel_theme"]
+          updated_at?: string
+          visible_sections?: Database["public"]["Enums"]["kennel_section"][]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_site_configurations_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: true
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organisations: {
         Row: {
           association_name: string | null
@@ -2011,6 +2153,7 @@ export type Database = {
           name: string
           org_type: Database["public"]["Enums"]["org_type"]
           owner_user_id: string
+          plan: string
           private_address_id: string | null
           public_location: string | null
           registration_number: string | null
@@ -2037,6 +2180,7 @@ export type Database = {
           name: string
           org_type: Database["public"]["Enums"]["org_type"]
           owner_user_id: string
+          plan?: string
           private_address_id?: string | null
           public_location?: string | null
           registration_number?: string | null
@@ -2063,6 +2207,7 @@ export type Database = {
           name?: string
           org_type?: Database["public"]["Enums"]["org_type"]
           owner_user_id?: string
+          plan?: string
           private_address_id?: string | null
           public_location?: string | null
           registration_number?: string | null
@@ -2165,6 +2310,57 @@ export type Database = {
           },
         ]
       }
+      post_media: {
+        Row: {
+          alt_text: string | null
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          media_type: Database["public"]["Enums"]["post_media_type"]
+          media_url: string
+          post_id: string
+        }
+        Insert: {
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          media_type?: Database["public"]["Enums"]["post_media_type"]
+          media_url: string
+          post_id: string
+        }
+        Update: {
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          media_type?: Database["public"]["Enums"]["post_media_type"]
+          media_url?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_media_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           author_organization_id: string | null
@@ -2172,12 +2368,16 @@ export type Database = {
           auto_published: boolean
           content: string | null
           created_at: string
+          deleted_at: string | null
           group_id: string | null
           id: string
           image_urls: string[]
+          linked_achievement_id: string | null
           linked_animal_id: string | null
+          linked_litter_id: string | null
           linked_route_id: string | null
           linked_transport_request_id: string | null
+          moderation_status: Database["public"]["Enums"]["content_moderation_status"]
           post_type: Database["public"]["Enums"]["post_type"]
           updated_at: string
           visibility: Database["public"]["Enums"]["post_visibility"]
@@ -2188,12 +2388,16 @@ export type Database = {
           auto_published?: boolean
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
           group_id?: string | null
           id?: string
           image_urls?: string[]
+          linked_achievement_id?: string | null
           linked_animal_id?: string | null
+          linked_litter_id?: string | null
           linked_route_id?: string | null
           linked_transport_request_id?: string | null
+          moderation_status?: Database["public"]["Enums"]["content_moderation_status"]
           post_type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string
           visibility?: Database["public"]["Enums"]["post_visibility"]
@@ -2204,12 +2408,16 @@ export type Database = {
           auto_published?: boolean
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
           group_id?: string | null
           id?: string
           image_urls?: string[]
+          linked_achievement_id?: string | null
           linked_animal_id?: string | null
+          linked_litter_id?: string | null
           linked_route_id?: string | null
           linked_transport_request_id?: string | null
+          moderation_status?: Database["public"]["Enums"]["content_moderation_status"]
           post_type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string
           visibility?: Database["public"]["Enums"]["post_visibility"]
@@ -2237,10 +2445,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "posts_linked_achievement_id_fkey"
+            columns: ["linked_achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "posts_linked_animal_id_fkey"
             columns: ["linked_animal_id"]
             isOneToOne: false
             referencedRelation: "animals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_linked_litter_id_fkey"
+            columns: ["linked_litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
             referencedColumns: ["id"]
           },
           {
@@ -4968,6 +5190,7 @@ export type Database = {
         Args: { p_animal_id: string }
         Returns: boolean
       }
+      can_view_post: { Args: { p_post_id: string }; Returns: boolean }
       change_ops_request_status: {
         Args: {
           p_customer_note?: string
@@ -5113,6 +5336,13 @@ export type Database = {
       }
       is_eligible_fundraising_org: {
         Args: { p_org_id: string }
+        Returns: boolean
+      }
+      is_following_target: {
+        Args: {
+          p_followed_organization_id: string
+          p_followed_profile_id: string
+        }
         Returns: boolean
       }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
@@ -5281,6 +5511,7 @@ export type Database = {
         | "pickup"
         | "domestic_transport"
         | "international_transport"
+      content_moderation_status: "visible" | "hidden" | "removed"
       conversation_participant_role:
         | "requester"
         | "ops"
@@ -5333,6 +5564,22 @@ export type Database = {
         | "document_issue"
         | "weather"
         | "other"
+      kennel_contact_mode: "anemalo" | "external" | "both"
+      kennel_section:
+        | "about"
+        | "gallery"
+        | "posts"
+        | "dogs"
+        | "litters"
+        | "planned_litters"
+        | "listings"
+        | "pedigrees"
+        | "health"
+        | "achievements"
+        | "reviews"
+        | "transport"
+        | "contact"
+      kennel_theme: "classic" | "editorial" | "modern"
       legal_document_type: "terms" | "privacy" | "cookies"
       legal_requirement_category:
         | "transport"
@@ -5409,6 +5656,13 @@ export type Database = {
         | "kennel_club"
         | "other"
       org_verification_status: "pending" | "approved" | "rejected" | "suspended"
+      organisation_domain_status:
+        | "pending"
+        | "verifying"
+        | "active"
+        | "failed"
+        | "disabled"
+      organisation_domain_type: "anemalo_subdomain" | "custom_domain"
       platform_role:
         | "customer"
         | "buyer"
@@ -5420,6 +5674,7 @@ export type Database = {
         | "driver"
         | "moderator"
         | "admin"
+      post_media_type: "image" | "video"
       post_type:
         | "general"
         | "transport_update"
@@ -5427,7 +5682,21 @@ export type Database = {
         | "litter_announcement"
         | "adoption_post"
         | "achievement"
-      post_visibility: "public" | "followers" | "group"
+        | "photo"
+        | "video"
+        | "health_update"
+        | "dog_update"
+        | "planned_mating"
+        | "availability_announcement"
+        | "transport_availability"
+        | "educational"
+        | "registry_announcement"
+      post_visibility:
+        | "public"
+        | "followers"
+        | "group"
+        | "private"
+        | "litter_members"
       pricing_rule_type:
         | "base_fee"
         | "distance_band"
@@ -5653,12 +5922,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5682,11 +5951,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5707,11 +5976,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5732,11 +6001,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5749,11 +6018,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5763,9 +6032,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       account_deletion_status: ["pending", "processed", "declined"],
@@ -5808,6 +6074,7 @@ export const Constants = {
         "domestic_transport",
         "international_transport",
       ],
+      content_moderation_status: ["visible", "hidden", "removed"],
       conversation_participant_role: [
         "requester",
         "ops",
@@ -5866,6 +6133,23 @@ export const Constants = {
         "weather",
         "other",
       ],
+      kennel_contact_mode: ["anemalo", "external", "both"],
+      kennel_section: [
+        "about",
+        "gallery",
+        "posts",
+        "dogs",
+        "litters",
+        "planned_litters",
+        "listings",
+        "pedigrees",
+        "health",
+        "achievements",
+        "reviews",
+        "transport",
+        "contact",
+      ],
+      kennel_theme: ["classic", "editorial", "modern"],
       legal_document_type: ["terms", "privacy", "cookies"],
       legal_requirement_category: [
         "transport",
@@ -5952,6 +6236,14 @@ export const Constants = {
         "other",
       ],
       org_verification_status: ["pending", "approved", "rejected", "suspended"],
+      organisation_domain_status: [
+        "pending",
+        "verifying",
+        "active",
+        "failed",
+        "disabled",
+      ],
+      organisation_domain_type: ["anemalo_subdomain", "custom_domain"],
       platform_role: [
         "customer",
         "buyer",
@@ -5964,6 +6256,7 @@ export const Constants = {
         "moderator",
         "admin",
       ],
+      post_media_type: ["image", "video"],
       post_type: [
         "general",
         "transport_update",
@@ -5971,8 +6264,23 @@ export const Constants = {
         "litter_announcement",
         "adoption_post",
         "achievement",
+        "photo",
+        "video",
+        "health_update",
+        "dog_update",
+        "planned_mating",
+        "availability_announcement",
+        "transport_availability",
+        "educational",
+        "registry_announcement",
       ],
-      post_visibility: ["public", "followers", "group"],
+      post_visibility: [
+        "public",
+        "followers",
+        "group",
+        "private",
+        "litter_members",
+      ],
       pricing_rule_type: [
         "base_fee",
         "distance_band",
@@ -6206,4 +6514,3 @@ export const Constants = {
     },
   },
 } as const
-

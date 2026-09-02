@@ -13,7 +13,7 @@
 // (Stage CJS) depends on.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { notificationTemplates } from "../../src/lib/notification-templates.ts";
+import { notificationTemplates } from "../../src/domains/messaging/services/notification-templates.ts";
 
 const REAL_CATEGORIES = new Set(["applications", "adoption", "moderation", "security"]);
 

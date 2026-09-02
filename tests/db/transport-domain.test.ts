@@ -274,9 +274,7 @@ test("submit_transport_request: a forged requester_profile_id in the payload is 
   assert.equal(submit.error, null);
   const row = submit.data?.[0];
 
-  const stored = await (
-    await as("ops")
-  )
+  const stored = await (await as("ops"))
     .from("transport_requests")
     .select("requester_profile_id")
     .eq("id", row!.id)
