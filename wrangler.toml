@@ -13,8 +13,11 @@
 # which Vite inlines at BUILD time — the values that make the app boot live in `.env.production`
 # (committed). These are kept for any runtime `env.VITE_*` lookup.
 
+# Must be a date Cloudflare has already shipped a runtime for — a future date (incl. today, if
+# CF's clock lags the build machine) fails deploy with "Can't set compatibility date in the
+# future". 2025-06-01 is well past the 2024-09-23 nodejs_compat-v2 cutover.
 name = "the-puppy-passport"
-compatibility_date = "2026-09-03"
+compatibility_date = "2025-06-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
