@@ -1,0 +1,25 @@
+# Cloudflare Workers config for the built app.
+#
+# The build (`npm run build`, nitro `cloudflare-module` preset) generates
+# `.output/server/wrangler.json` with these same fields plus the asset-serving glue. This root
+# file exists so the deploy has an explicit, version-controlled source of truth: a STABLE worker
+# name (the generated one is derived from the git remote and can change), the compat date, and
+# the nodejs_compat flag SSR needs.
+#
+# NOTE: [vars] below are RUNTIME worker bindings. The app reads Supabase config through
+# `import.meta.env.VITE_*`, which Vite inlines at BUILD time — so the values that actually make
+# the app boot live in `.env.production` (committed), not here. These entries are kept only so a
+# runtime `env.VITE_*` lookup (health checks, future server code) resolves too.
+
+name = "the-puppy-passport"
+main = ".output/server/index.mjs"
+compatibility_date = "2026-09-03"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+binding = "ASSETS"
+directory = ".output/public"
+
+[vars]
+VITE_SUPABASE_URL = "https://pgzvkkybqrhxedjoyjzy.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnenZra3licXJoeGVkam95anp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxODI4NTIsImV4cCI6MjEwMjc1ODg1Mn0.Jbqq1AlQK545wup_dq2dyLLbPzrclrZip9RUuGov7qk"
