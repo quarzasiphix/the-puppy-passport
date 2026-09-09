@@ -362,6 +362,7 @@ async function orgAvailablePuppyCount(orgId: string) {
 function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Breeder {
   return {
     id: o.id,
+    ownerId: o.owner_user_id,
     name: o.profiles?.display_name ?? o.name,
     kennel: o.name,
     slug: o.slug,
@@ -471,6 +472,11 @@ export async function getKennelBySlug(slug: string) {
   return mapOrgToBreeder(data as unknown as OrgRow);
 }
 
+// "Current" puppies only — available/applications_open/reserved. Sold/adopted puppies are
+// deliberately excluded here (previously this query had no availability_status filter at all, so
+// a sold puppy stayed mixed into "current puppies" indefinitely) and surface instead through
+// listAlumniForKennel() below, per the breeder-profile redesign: a placed puppy moves into
+// permanent history, it never just disappears.
 export async function listPuppiesForKennel(kennelId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -478,7 +484,25 @@ export async function listPuppiesForKennel(kennelId: string) {
     .select(animalSelect)
     .eq("organization_id", kennelId)
     .eq("listing_category", "breeder_puppy")
-    .eq("is_published", true);
+    .eq("is_published", true)
+    .in("availability_status", ["available", "applications_open", "reserved"]);
+  if (error) throw error;
+  return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
+}
+
+// A breeder's placed puppies — permanent "alumni" history, not a temporary listing. Same
+// underlying `animals` row as when it was for sale, just a different availability_status; nothing
+// is ever deleted or hidden on sale. Ordered newest-placed first.
+export async function listAlumniForKennel(kennelId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("animals")
+    .select(animalSelect)
+    .eq("organization_id", kennelId)
+    .eq("listing_category", "breeder_puppy")
+    .eq("is_published", true)
+    .in("availability_status", ["sold", "adopted"])
+    .order("updated_at", { ascending: false });
   if (error) throw error;
   return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
 }

@@ -6,7 +6,7 @@ import type {
 } from "../types";
 
 const reservationSelect =
-  "id, status, agreed_price, currency, deposit_status, agreement_status, planned_collection_date, created_at, animal_id, animals(name, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
+  "id, status, agreed_price, currency, deposit_amount, deposit_status, deposit_requested_at, deposit_paid_at, agreement_status, planned_collection_date, created_at, animal_id, animals(name, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
 
 function mapReservation(r: ReservationRow): ReservationSummary {
   return {
@@ -17,7 +17,10 @@ function mapReservation(r: ReservationRow): ReservationSummary {
     status: r.status,
     agreedPrice: r.agreed_price,
     currency: r.currency ?? "PLN",
+    depositAmount: r.deposit_amount,
     depositStatus: r.deposit_status,
+    depositRequestedAt: r.deposit_requested_at,
+    depositPaidAt: r.deposit_paid_at,
     agreementStatus: r.agreement_status,
     plannedCollectionDate: r.planned_collection_date,
     buyerName: [r.profiles?.first_name, r.profiles?.last_name].filter(Boolean).join(" ") || "Buyer",
@@ -67,4 +70,22 @@ export async function convertApplicationToReservation(
   });
   if (error) throw error;
   return data as string;
+}
+
+// Breeder-only: moves deposit_status from 'not_required' to 'pending', so the buyer can pay it.
+// All the actual authorization/state-machine rules (owns_org, reservation not cancelled/completed,
+// deposit not already requested) live server-side in request_reservation_deposit() — see
+// supabase/migrations/20260909000100_reservation_deposit_payments.sql — this is a thin wrapper.
+export async function requestReservationDeposit(
+  reservationId: string,
+  depositAmount: number,
+  currency?: string,
+): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("request_reservation_deposit", {
+    p_reservation_id: reservationId,
+    p_deposit_amount: depositAmount,
+    p_currency: currency ?? undefined,
+  });
+  if (error) throw error;
 }

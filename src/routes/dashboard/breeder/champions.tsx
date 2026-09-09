@@ -40,8 +40,8 @@ function ChampionsPage() {
           admin-verified achievements appear here.{" "}
           {kennel?.slug && (
             <Link
-              to="/breeders/$slug"
-              params={{ slug: kennel.slug }}
+              to="/@$handle"
+              params={{ handle: kennel.slug }}
               className="text-primary hover:underline"
             >
               View public page

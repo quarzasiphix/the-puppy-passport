@@ -1,5 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import {
+  getSignedFileUrl,
+  removeFile,
+  sanitizeFilenameForStoragePath,
+  uploadPrivateFile,
+} from "@/lib/storage/media";
 
 // Stage D: urgent animal welfare / rescue transport. Eligible creators are restricted at the
 // database layer (RLS insert policy on welfare_cases, 20260101007600_welfare_cases.sql) to members
@@ -100,10 +106,6 @@ export async function convertWelfareCaseToTransportDraft(caseId: string): Promis
 // --- Documents (real Storage upload, private bucket — same pattern as transport documents) ------
 const WELFARE_DOCUMENTS_BUCKET = "welfare-case-documents";
 
-function sanitizeFilenameForStoragePath(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
 export async function listWelfareCaseDocuments(welfareCaseId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -123,10 +125,7 @@ export async function uploadWelfareCaseDocument(input: {
 }) {
   const supabase = getSupabaseBrowserClient();
   const objectPath = `${input.welfareCaseId}/${Date.now()}-${sanitizeFilenameForStoragePath(input.file.name)}`;
-  const { error: uploadError } = await supabase.storage
-    .from(WELFARE_DOCUMENTS_BUCKET)
-    .upload(objectPath, input.file, { contentType: input.file.type || undefined });
-  if (uploadError) throw uploadError;
+  await uploadPrivateFile(WELFARE_DOCUMENTS_BUCKET, objectPath, input.file);
 
   const { error } = await supabase.from("welfare_case_documents").insert({
     welfare_case_id: input.welfareCaseId,
@@ -135,18 +134,13 @@ export async function uploadWelfareCaseDocument(input: {
     notes: input.notes ?? null,
   });
   if (error) {
-    await supabase.storage.from(WELFARE_DOCUMENTS_BUCKET).remove([objectPath]);
+    await removeFile(WELFARE_DOCUMENTS_BUCKET, objectPath);
     throw error;
   }
 }
 
 export async function getSignedWelfareDocumentUrl(objectPath: string): Promise<string> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.storage
-    .from(WELFARE_DOCUMENTS_BUCKET)
-    .createSignedUrl(objectPath, 300);
-  if (error) throw error;
-  return data.signedUrl;
+  return getSignedFileUrl(WELFARE_DOCUMENTS_BUCKET, objectPath);
 }
 
 // --- Operations side -------------------------------------------------------------------------

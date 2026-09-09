@@ -61,7 +61,7 @@ function FollowedBreeders() {
                 </div>
                 <div className="mt-4 flex gap-2">
                   <Button asChild size="sm" variant="outline">
-                    <Link to="/breeders/$slug" params={{ slug: b.slug }}>
+                    <Link to="/@$handle" params={{ handle: b.slug }}>
                       View kennel
                     </Link>
                   </Button>

@@ -306,8 +306,8 @@ export function BreederCard({ b }: { b: Breeder }) {
           <span>{b.availablePuppies} puppies available</span>
         </div>
         <Button asChild variant="outline" className="mt-1">
-          <Link to="/breeders/$slug" params={{ slug: b.slug }}>
-            View kennel
+          <Link to="/@$handle" params={{ handle: b.slug }}>
+            View profile
           </Link>
         </Button>
       </div>

@@ -59,6 +59,9 @@ export type Litter = {
 
 export type Breeder = {
   id: string;
+  /** Optional because the demo `breeders` array below predates it — every real mapping
+   * (buildBreeder in domains/marketplace/services/marketplace.ts) always sets it. */
+  ownerId?: string;
   name: string;
   kennel: string;
   slug: string;

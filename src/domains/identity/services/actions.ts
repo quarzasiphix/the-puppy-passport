@@ -104,3 +104,22 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
   await supabase.auth.signOut();
   return { error: null };
 });
+
+// Completes an OAuth (Google, etc.) sign-in. `supabase.auth.signInWithOAuth()` on the browser
+// client only ever *starts* the redirect to the provider — it cannot itself create a session,
+// because @supabase/ssr's PKCE flow requires the authorization code Google/etc. hands back to be
+// exchanged for a session **server-side**, through this exact cookie-aware client (see
+// src/lib/supabase/server.ts's own comment: "for use ONLY inside createServerFn handlers, so
+// Set-Cookie lands on the actual response"). A client-side-only exchange would put the session in
+// the browser client's storage but never in the cookies the SSR loaders/getCurrentUser() read,
+// producing the classic "signed in on the client, signed out on every server-rendered page" bug.
+// Used by src/routes/auth.callback.tsx, the route every OAuth provider redirects back to.
+const exchangeOAuthCodeSchema = z.object({ code: z.string().min(1) });
+
+export const exchangeOAuthCode = createServerFn({ method: "GET" })
+  .validator(exchangeOAuthCodeSchema)
+  .handler(async ({ data }) => {
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(data.code);
+    return { error: error?.message ?? null };
+  });

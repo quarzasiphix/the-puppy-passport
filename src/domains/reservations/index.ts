@@ -5,6 +5,7 @@ export {
   listMyReservationsAsBuyer,
   listReservationsForMyKennel,
   convertApplicationToReservation,
+  requestReservationDeposit,
 } from "./services/reservations";
 
 export type {
@@ -28,3 +29,5 @@ export type { ReservationStatus, ReservationStatusRoadmap } from "./status";
 
 export { BreederReservationsPage } from "./pages/breeder-reservations-page";
 export { BuyerReservationsPage } from "./pages/buyer-reservations-page";
+export { RequestDepositDialog } from "./components/request-deposit-dialog";
+export { PayDepositButton } from "./components/pay-deposit-button";

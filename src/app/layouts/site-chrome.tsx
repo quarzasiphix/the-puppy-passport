@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { PawPrint, Menu, Search, LogOut, LayoutDashboard, Languages } from "lucide-react";
+import { PawPrint, Menu, Search, LogOut, LayoutDashboard, Languages, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
@@ -19,13 +19,22 @@ import { useTranslation, SUPPORTED_LOCALES, LOCALE_DISPLAY_NAMES } from "@/share
 // Animal discovery leads the navigation — Anemalo is a dedicated animal ecosystem, not a
 // transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
 // prominent, real feature, just not the first thing a visitor sees.
+//
+// Redesign 2026-09-09: the old flat 8-item nav gave "Breeder map", "Planned routes" and "How it
+// works" the same visual weight as the five primary destinations, which is exactly what the
+// breeder-identity redesign brief flagged ("too many similarly weighted items"). Those three move
+// into the "More" dropdown below — still one click away, just not fighting the primary five for
+// navbar space.
 const nav = [
   { to: "/find-a-dog", labelKey: "nav.findADog" },
-  { to: "/breeder-map", labelKey: "nav.breederMap" },
   { to: "/breeders", labelKey: "nav.breeders" },
   { to: "/adoptions", labelKey: "nav.adoptions" },
-  { to: "/community", labelKey: "nav.community" },
   { to: "/transport", labelKey: "nav.transport" },
+  { to: "/community", labelKey: "nav.community" },
+] as const;
+
+const moreNav = [
+  { to: "/breeder-map", labelKey: "nav.breederMap" },
   { to: "/planned-routes", labelKey: "nav.plannedRoutes" },
   { to: "/how-it-works", labelKey: "nav.howItWorks" },
 ] as const;
@@ -91,6 +100,20 @@ export function SiteHeader() {
               {t(item.labelKey)}
             </Link>
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="inline-flex items-center gap-0.5 rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                {t("nav.more")} <ChevronDown className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {moreNav.map((item) => (
+                <DropdownMenuItem key={item.to} asChild>
+                  <Link to={item.to}>{t(item.labelKey)}</Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -150,6 +173,17 @@ export function SiteHeader() {
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
                 className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                {t(item.labelKey)}
+              </Link>
+            ))}
+            <div className="my-1 border-t border-border/60" />
+            {moreNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setMobileOpen(false)}
+                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary"
               >
                 {t(item.labelKey)}
               </Link>

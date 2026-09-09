@@ -2,5 +2,6 @@
 // ./services, ./components or ./hooks directly (enforced by eslint.config.js).
 
 export * from "./services/moderation";
+export * from "./services/trust-claims";
 export * from "./components/report-dialog";
 export * from "./components/verification-review-list";

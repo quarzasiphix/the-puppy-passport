@@ -11,6 +11,9 @@ import {
   Zap,
   Crown,
   Package,
+  GitBranch,
+  Heart,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -70,11 +73,14 @@ function Home() {
   return (
     <div>
       <Hero />
+      <ForBreedersBanner />
       <ActionLauncher variant="homepage" />
       <Trust />
       <FeaturedPuppies />
-      <UpcomingLitters />
       <VerifiedBreeders />
+      <UpcomingLitters />
+      <FollowTheJourney />
+      <Pedigrees />
       <ServiceCategories />
       <TransportSection />
       <HowItWorksStrip />
@@ -174,6 +180,28 @@ function Stat({ label, value }: { label: string; value: string }) {
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="font-display text-2xl font-semibold text-foreground">{value}</dd>
     </div>
+  );
+}
+
+// A compact, high-visibility strip right under the hero — the redesign brief is explicit that
+// Anemalo is a two-sided platform and the breeder side needs to read as clearly as the buyer side,
+// not be buried at the very bottom of the page behind everything else.
+function ForBreedersBanner() {
+  const { t } = useTranslation();
+  return (
+    <section className="border-b border-border/60 bg-primary/5">
+      <div className="container-page flex flex-wrap items-center justify-between gap-4 py-4">
+        <p className="text-sm">
+          <span className="font-semibold text-primary">{t("home.forBreedersEyebrow")}</span>
+          <span className="text-muted-foreground"> — {t("home.forBreedersBannerDesc")}</span>
+        </p>
+        <Button asChild size="sm" variant="outline" className="shrink-0">
+          <Link to="/create-breeder">
+            {t("home.forBreedersBannerCta")} <ChevronRight className="ml-1 size-3.5" />
+          </Link>
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -345,14 +373,108 @@ function VerifiedBreeders() {
   return (
     <section className="container-page py-16">
       <SectionHeader
-        eyebrow="Verified breeders"
+        eyebrow="Discover breeders"
         title="Kennels we've vetted personally"
-        cta={{ label: "Browse breeders", to: "/breeders" }}
+        desc="Follow a kennel's profile — litters, dogs and history — whether or not they have puppies available right now."
+        cta={{ label: "Browse all breeders", to: "/breeders" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {verifiedBreeders.map((b) => (
           <BreederCard key={b.id} b={b} />
         ))}
+      </div>
+    </section>
+  );
+}
+
+// Explains the breeder-profile + puppy-alumni model in plain terms — the redesign brief's
+// "Follow the journey" section. No new data fetch needed here: this is homepage positioning
+// copy about a real, already-built feature (@$handle.tsx), not a preview of fabricated data.
+function FollowTheJourney() {
+  const { t } = useTranslation();
+  return (
+    <section className="border-y border-border/60 bg-secondary/40 py-16">
+      <div className="container-page grid items-center gap-10 lg:grid-cols-2">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-accent">
+            {t("home.followJourneyEyebrow")}
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-medium tracking-tight md:text-4xl">
+            {t("home.followJourneyTitle")}
+          </h2>
+          <p className="mt-3 max-w-lg text-muted-foreground">{t("home.followJourneyDesc")}</p>
+          <Button asChild className="mt-6">
+            <Link to="/breeders">
+              Discover breeders <ChevronRight className="ml-1 size-4" />
+            </Link>
+          </Button>
+        </div>
+        <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Heart className="size-5" />
+            </div>
+            <div>
+              <div className="font-medium">Follow a kennel</div>
+              <div className="text-xs text-muted-foreground">
+                Hear about their next litter before it's born
+              </div>
+            </div>
+          </div>
+          <div className="my-3 h-px bg-border/60" />
+          <ul className="space-y-3 text-sm">
+            {[
+              ["Planned litter announced", "3 places already on the waiting list"],
+              ["Puppies available", "4 puppies ready in 2 weeks"],
+              ["Bella placed with her new family", "Now part of the kennel's Alumni history"],
+            ].map(([title, desc]) => (
+              <li key={title} className="flex items-start gap-2">
+                <Sparkles className="mt-0.5 size-3.5 shrink-0 text-accent" />
+                <div>
+                  <div className="font-medium">{title}</div>
+                  <div className="text-xs text-muted-foreground">{desc}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Pedigrees() {
+  const { t } = useTranslation();
+  return (
+    <section className="container-page py-16">
+      <div className="grid items-center gap-10 lg:grid-cols-2">
+        <div className="order-2 flex justify-center lg:order-1">
+          <div className="grid w-full max-w-sm gap-2 rounded-2xl border border-border/70 bg-card p-6">
+            {[
+              ["Sire & dam", "Breeder-confirmed"],
+              ["Grandparents", "Document-supported"],
+              ["Registry record", "Coming as breeders connect their kennel club"],
+            ].map(([label, level]) => (
+              <div key={label} className="rounded-xl border border-border/60 bg-secondary/40 p-3">
+                <div className="text-sm font-medium">{label}</div>
+                <div className="text-xs text-muted-foreground">{level}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="order-1 lg:order-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-accent">
+            {t("home.pedigreesEyebrow")}
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-medium tracking-tight md:text-4xl">
+            {t("home.pedigreesTitle")}
+          </h2>
+          <p className="mt-3 max-w-lg text-muted-foreground">{t("home.pedigreesDesc")}</p>
+          <div className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <GitBranch className="size-3.5" /> Full pedigree graphs are coming as breeders add
+            their dogs' family history.
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -439,14 +561,11 @@ function TransportSection() {
 
 function HowItWorksStrip() {
   const steps = [
-    [
-      "Submit a transport or dog request",
-      "Tell us what you need — transport, a puppy, or an adoption.",
-    ],
-    ["We review the information", "Documents, animal fitness and compliance are checked."],
-    ["Get a quotation", "Final service type and price are confirmed after review."],
-    ["Schedule pickup", "Route, vehicle and driver are assigned."],
-    ["Track to handover", "Status updates through collection, transit and delivery."],
+    ["Discover & follow", "Find a breeder, browse their litters, and follow their profile."],
+    ["Apply", "Apply for a specific puppy — the breeder reviews and responds."],
+    ["Reserve with a deposit", "Once approved, pay a deposit through Anemalo to reserve."],
+    ["Arrange transport", "Optional — request pickup, and we plan the route and handover."],
+    ["Stay connected", "Follow-up photos, and your puppy's permanent Alumni history."],
   ];
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">

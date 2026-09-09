@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -19,20 +20,55 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const searchSchema = z.object({ oauthError: z.string().optional() });
+
 export const Route = createFileRoute("/_public/signin")({
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Sign in — Anemalo" }] }),
   component: SignIn,
 });
+
+// Google-branded "G" mark, inline (no icon library ships this — lucide-react is intentionally
+// brand-neutral) — real, current Google sign-in button colors, not a generic lock/user icon.
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="size-4" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+      />
+      <path
+        fill="#FF3D00"
+        d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+      />
+    </svg>
+  );
+}
 
 function SignIn() {
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
   const hydrated = useHydrated();
+  const { oauthError } = Route.useSearch();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
+
+  // The OAuth round trip always leaves auth.callback.tsx and lands back here on failure — surface
+  // whatever it found (provider not enabled, user cancelled, etc.) once, not as loader-blocking UI.
+  useEffect(() => {
+    if (oauthError) toast.error(oauthError);
+  }, [oauthError]);
 
   async function onSubmit(values: FormValues) {
     const result = await signIn({ data: values });
@@ -45,17 +81,15 @@ function SignIn() {
     await navigate({ to: "/dashboard/buyer" });
   }
 
-  async function onOAuth(provider: "google" | "facebook") {
+  async function onGoogleSignIn() {
     const supabase = getSupabaseBrowserClient();
+    // exchangeCodeForSession (the part that actually creates the session) happens server-side in
+    // auth.callback.tsx, not here — this call only ever starts the redirect to Google.
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: `${window.location.origin}/dashboard/buyer` },
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (error) {
-      toast.error(
-        `${provider === "google" ? "Google" : "Facebook"} sign-in isn't configured on this server yet — see docs/SOCIAL_AUTH_SETUP.md.`,
-      );
-    }
+    if (error) toast.error(error.message);
   }
 
   return (
@@ -72,8 +106,29 @@ function SignIn() {
           Sign in to manage transport requests, applications and reservations.
         </p>
 
+        {/* Google is the fastest path for most people and is the only social provider actually
+            configured (see docs/SOCIAL_AUTH_SETUP.md) — it leads, full width, not a small icon
+            button competing with a since-removed Facebook option. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="mt-6 w-full gap-2 bg-background"
+          onClick={onGoogleSignIn}
+        >
+          <GoogleIcon /> Continue with Google
+        </Button>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            Or with email
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
         <Form {...form}>
-          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -110,6 +165,7 @@ function SignIn() {
             />
             <Button
               type="submit"
+              variant="secondary"
               className="w-full"
               size="lg"
               disabled={!hydrated || form.formState.isSubmitting}
@@ -121,15 +177,6 @@ function SignIn() {
         <p className="mt-3 text-center text-xs text-muted-foreground">
           Local demo accounts use the password <code>password123</code> — see docs/LOCAL_SETUP.md.
         </p>
-
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button variant="outline" onClick={() => onOAuth("google")}>
-            Continue with Google
-          </Button>
-          <Button variant="outline" onClick={() => onOAuth("facebook")}>
-            Continue with Facebook
-          </Button>
-        </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           New here?{" "}

@@ -111,6 +111,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "achievements_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "achievements_parent_dog_id_fkey"
             columns: ["parent_dog_id"]
             isOneToOne: false
@@ -199,6 +206,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_ownership_history_owner_organization_id_fkey"
+            columns: ["owner_organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "animal_ownership_history_owner_profile_id_fkey"
@@ -375,6 +389,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "animals_owner_profile_id_fkey"
@@ -646,6 +667,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_applications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
         ]
       }
@@ -1003,6 +1031,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "follows_followed_organization_id_fkey"
+            columns: ["followed_organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "follows_followed_profile_id_fkey"
             columns: ["followed_profile_id"]
             isOneToOne: false
@@ -1097,6 +1132,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fundraising_campaigns_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "fundraising_campaigns_quotation_id_fkey"
@@ -1578,6 +1620,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "litters_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "litters_mother_id_fkey"
             columns: ["mother_id"]
             isOneToOne: false
@@ -1972,6 +2021,13 @@ export type Database = {
             referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "organisation_domains_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
         ]
       }
       organisation_invitations: {
@@ -2036,6 +2092,13 @@ export type Database = {
             referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "organisation_invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
         ]
       }
       organisation_members: {
@@ -2070,6 +2133,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "organisation_members_profile_id_fkey"
@@ -2132,6 +2202,71 @@ export type Database = {
             columns: ["organisation_id"]
             isOneToOne: true
             referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_site_configurations_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: true
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
+      }
+      organisation_trust_claims: {
+        Row: {
+          claim_type: Database["public"]["Enums"]["organisation_trust_claim_type"]
+          created_at: string
+          evidence_note: string | null
+          id: string
+          organisation_id: string
+          status: Database["public"]["Enums"]["organisation_trust_claim_status"]
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          claim_type: Database["public"]["Enums"]["organisation_trust_claim_type"]
+          created_at?: string
+          evidence_note?: string | null
+          id?: string
+          organisation_id: string
+          status?: Database["public"]["Enums"]["organisation_trust_claim_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          claim_type?: Database["public"]["Enums"]["organisation_trust_claim_type"]
+          created_at?: string
+          evidence_note?: string | null
+          id?: string
+          organisation_id?: string
+          status?: Database["public"]["Enums"]["organisation_trust_claim_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_trust_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_trust_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
+            foreignKeyName: "organisation_trust_claims_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2308,6 +2443,13 @@ export type Database = {
             referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "parent_dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
         ]
       }
       post_media: {
@@ -2429,6 +2571,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_author_organization_id_fkey"
+            columns: ["author_organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "posts_author_profile_id_fkey"
@@ -2600,6 +2749,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_addresses_owner_org_id_fkey"
+            columns: ["owner_org_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "private_addresses_owner_user_id_fkey"
@@ -2965,6 +3121,44 @@ export type Database = {
           },
         ]
       }
+      reservation_payment_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          occurred_at: string
+          raw: Json
+          reservation_id: string
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          occurred_at: string
+          raw: Json
+          reservation_id: string
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          raw?: Json
+          reservation_id?: string
+          stripe_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_payment_events_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           agreed_price: number | null
@@ -2978,6 +3172,8 @@ export type Database = {
           created_at: string
           currency: string | null
           deposit_amount: number | null
+          deposit_paid_at: string | null
+          deposit_requested_at: string | null
           deposit_status: Database["public"]["Enums"]["deposit_status"]
           id: string
           litter_id: string | null
@@ -2985,6 +3181,8 @@ export type Database = {
           organization_id: string
           planned_collection_date: string | null
           status: Database["public"]["Enums"]["reservation_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2999,6 +3197,8 @@ export type Database = {
           created_at?: string
           currency?: string | null
           deposit_amount?: number | null
+          deposit_paid_at?: string | null
+          deposit_requested_at?: string | null
           deposit_status?: Database["public"]["Enums"]["deposit_status"]
           id?: string
           litter_id?: string | null
@@ -3006,6 +3206,8 @@ export type Database = {
           organization_id: string
           planned_collection_date?: string | null
           status?: Database["public"]["Enums"]["reservation_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3020,6 +3222,8 @@ export type Database = {
           created_at?: string
           currency?: string | null
           deposit_amount?: number | null
+          deposit_paid_at?: string | null
+          deposit_requested_at?: string | null
           deposit_status?: Database["public"]["Enums"]["deposit_status"]
           id?: string
           litter_id?: string | null
@@ -3027,6 +3231,8 @@ export type Database = {
           organization_id?: string
           planned_collection_date?: string | null
           status?: Database["public"]["Enums"]["reservation_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3064,6 +3270,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
         ]
       }
@@ -3835,6 +4048,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transport_parties_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "transport_parties_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
@@ -4335,6 +4555,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_requests_sender_org_id_fkey"
+            columns: ["sender_org_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
           {
             foreignKeyName: "transport_requests_sender_profile_id_fkey"
@@ -4852,6 +5079,13 @@ export type Database = {
             referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "welfare_cases_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
         ]
       }
     }
@@ -5055,6 +5289,42 @@ export type Database = {
           total_collected: number | null
         }
         Relationships: []
+      }
+      public_kennel_owner_identity_verification: {
+        Row: {
+          identity_verified: boolean | null
+          identity_verified_at: string | null
+          organisation_id: string | null
+        }
+        Relationships: []
+      }
+      public_organisation_trust_claims: {
+        Row: {
+          claim_type:
+            | Database["public"]["Enums"]["organisation_trust_claim_type"]
+            | null
+          organisation_id: string | null
+          status:
+            | Database["public"]["Enums"]["organisation_trust_claim_status"]
+            | null
+          verified_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_trust_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_trust_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
       }
       public_routes: {
         Row: {
@@ -5393,6 +5663,14 @@ export type Database = {
         Returns: undefined
       }
       remove_org_member: { Args: { p_member_id: string }; Returns: undefined }
+      request_reservation_deposit: {
+        Args: {
+          p_currency?: string
+          p_deposit_amount: number
+          p_reservation_id: string
+        }
+        Returns: undefined
+      }
       request_transport_amendment: {
         Args: {
           p_field_name: string
@@ -5663,6 +5941,15 @@ export type Database = {
         | "failed"
         | "disabled"
       organisation_domain_type: "anemalo_subdomain" | "custom_domain"
+      organisation_trust_claim_status:
+        | "unverified"
+        | "pending"
+        | "verified"
+        | "rejected"
+      organisation_trust_claim_type:
+        | "association"
+        | "pedigrees"
+        | "health_documents"
       platform_role:
         | "customer"
         | "buyer"
@@ -6244,6 +6531,17 @@ export const Constants = {
         "disabled",
       ],
       organisation_domain_type: ["anemalo_subdomain", "custom_domain"],
+      organisation_trust_claim_status: [
+        "unverified",
+        "pending",
+        "verified",
+        "rejected",
+      ],
+      organisation_trust_claim_type: [
+        "association",
+        "pedigrees",
+        "health_documents",
+      ],
       platform_role: [
         "customer",
         "buyer",

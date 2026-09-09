@@ -7,7 +7,10 @@ export type ReservationRow = {
   status: ReservationStatus;
   agreed_price: number | null;
   currency: string | null;
+  deposit_amount: number | null;
   deposit_status: string;
+  deposit_requested_at: string | null;
+  deposit_paid_at: string | null;
   agreement_status: string;
   planned_collection_date: string | null;
   created_at: string;
@@ -31,7 +34,10 @@ export type ReservationSummary = {
   status: ReservationStatus;
   agreedPrice: number | null;
   currency: string;
+  depositAmount: number | null;
   depositStatus: string;
+  depositRequestedAt: string | null;
+  depositPaidAt: string | null;
   agreementStatus: string;
   plannedCollectionDate: string | null;
   buyerName: string;

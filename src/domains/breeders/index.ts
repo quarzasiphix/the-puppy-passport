@@ -11,3 +11,4 @@ export * from "../animals/services/breeder";
 export * from "../animals/services/foundation";
 export * from "./types";
 export * from "./services/kennel-site";
+export * from "./services/breeder-stats";

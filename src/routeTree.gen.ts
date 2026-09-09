@@ -17,6 +17,7 @@ import { Route as DashboardDriverRouteImport } from './routes/dashboard/driver'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard/buyer'
 import { Route as DashboardBreederRouteImport } from './routes/dashboard/breeder'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard/admin'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as PublicTransportRouteImport } from './routes/_public/transport'
 import { Route as PublicTermsRouteImport } from './routes/_public/terms'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
@@ -39,6 +40,7 @@ import { Route as PublicCommunityRouteImport } from './routes/_public/community'
 import { Route as PublicBreedersRouteImport } from './routes/_public/breeders'
 import { Route as PublicBreederMapRouteImport } from './routes/_public/breeder-map'
 import { Route as PublicAdoptionsRouteImport } from './routes/_public/adoptions'
+import { Route as PublicAthandleRouteImport } from './routes/_public/@$handle'
 import { Route as DashboardOperationsIndexRouteImport } from './routes/dashboard/operations/index'
 import { Route as DashboardFoundationIndexRouteImport } from './routes/dashboard/foundation/index'
 import { Route as DashboardDriverIndexRouteImport } from './routes/dashboard/driver/index'
@@ -167,6 +169,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/dashboard/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicTransportRoute = PublicTransportRouteImport.update({
   id: '/transport',
   path: '/transport',
@@ -275,6 +282,11 @@ const PublicBreederMapRoute = PublicBreederMapRouteImport.update({
 const PublicAdoptionsRoute = PublicAdoptionsRouteImport.update({
   id: '/adoptions',
   path: '/adoptions',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicAthandleRoute = PublicAthandleRouteImport.update({
+  id: '/@$handle',
+  path: '/@$handle',
   getParentRoute: () => PublicRoute,
 } as any)
 const DashboardOperationsIndexRoute =
@@ -774,6 +786,7 @@ const PublicCommunityGroupsSlugRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
+  '/@$handle': typeof PublicAthandleRoute
   '/adoptions': typeof PublicAdoptionsRouteWithChildren
   '/breeder-map': typeof PublicBreederMapRoute
   '/breeders': typeof PublicBreedersRouteWithChildren
@@ -796,6 +809,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof PublicSignupRoute
   '/terms': typeof PublicTermsRoute
   '/transport': typeof PublicTransportRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
@@ -892,6 +906,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/@$handle': typeof PublicAthandleRoute
   '/breeder-map': typeof PublicBreederMapRoute
   '/cookies': typeof PublicCookiesRoute
   '/create-breeder': typeof PublicCreateBreederRoute
@@ -909,6 +924,7 @@ export interface FileRoutesByTo {
   '/signin': typeof PublicSigninRoute
   '/signup': typeof PublicSignupRoute
   '/terms': typeof PublicTermsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
@@ -998,6 +1014,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_public': typeof PublicRouteWithChildren
+  '/_public/@$handle': typeof PublicAthandleRoute
   '/_public/adoptions': typeof PublicAdoptionsRouteWithChildren
   '/_public/breeder-map': typeof PublicBreederMapRoute
   '/_public/breeders': typeof PublicBreedersRouteWithChildren
@@ -1020,6 +1037,7 @@ export interface FileRoutesById {
   '/_public/signup': typeof PublicSignupRoute
   '/_public/terms': typeof PublicTermsRoute
   '/_public/transport': typeof PublicTransportRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
@@ -1120,6 +1138,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/@$handle'
     | '/adoptions'
     | '/breeder-map'
     | '/breeders'
@@ -1142,6 +1161,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/transport'
+    | '/auth/callback'
     | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
@@ -1238,6 +1258,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/routes/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/@$handle'
     | '/breeder-map'
     | '/cookies'
     | '/create-breeder'
@@ -1255,6 +1276,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/terms'
+    | '/auth/callback'
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
@@ -1343,6 +1365,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_public'
+    | '/_public/@$handle'
     | '/_public/adoptions'
     | '/_public/breeder-map'
     | '/_public/breeders'
@@ -1365,6 +1388,7 @@ export interface FileRouteTypes {
     | '/_public/signup'
     | '/_public/terms'
     | '/_public/transport'
+    | '/auth/callback'
     | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
@@ -1464,6 +1488,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   PublicRoute: typeof PublicRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardBreederRoute: typeof DashboardBreederRouteWithChildren
   DashboardBuyerRoute: typeof DashboardBuyerRouteWithChildren
@@ -1528,6 +1553,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/admin'
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_public/transport': {
@@ -1682,6 +1714,13 @@ declare module '@tanstack/react-router' {
       path: '/adoptions'
       fullPath: '/adoptions'
       preLoaderRoute: typeof PublicAdoptionsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/@$handle': {
+      id: '/_public/@$handle'
+      path: '/@$handle'
+      fullPath: '/@$handle'
+      preLoaderRoute: typeof PublicAthandleRouteImport
       parentRoute: typeof PublicRoute
     }
     '/dashboard/operations/': {
@@ -2388,6 +2427,7 @@ const PublicTransportRouteWithChildren = PublicTransportRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
+  PublicAthandleRoute: typeof PublicAthandleRoute
   PublicAdoptionsRoute: typeof PublicAdoptionsRouteWithChildren
   PublicBreederMapRoute: typeof PublicBreederMapRoute
   PublicBreedersRoute: typeof PublicBreedersRouteWithChildren
@@ -2418,6 +2458,7 @@ interface PublicRouteChildren {
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicAthandleRoute: PublicAthandleRoute,
   PublicAdoptionsRoute: PublicAdoptionsRouteWithChildren,
   PublicBreederMapRoute: PublicBreederMapRoute,
   PublicBreedersRoute: PublicBreedersRouteWithChildren,
@@ -2696,6 +2737,7 @@ const DashboardOperationsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   PublicRoute: PublicRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardBreederRoute: DashboardBreederRouteWithChildren,
   DashboardBuyerRoute: DashboardBuyerRouteWithChildren,

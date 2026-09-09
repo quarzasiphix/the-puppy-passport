@@ -1,5 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import {
+  getSignedFileUrl,
+  removeFile,
+  sanitizeFilenameForStoragePath,
+  uploadPrivateFile,
+} from "@/lib/storage/media";
 
 type MessageKind = Database["public"]["Tables"]["messages"]["Row"]["message_kind"];
 
@@ -63,10 +69,6 @@ export async function listConversationMessages(conversationId: string) {
 
 const MESSAGE_ATTACHMENTS_BUCKET = "message-attachments";
 
-function sanitizeFilenameForStoragePath(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
 export async function sendMessage(params: {
   conversationId: string;
   senderId: string;
@@ -80,12 +82,7 @@ export async function sendMessage(params: {
   let attachmentUrl: string | null = null;
   if (params.attachment) {
     const objectPath = `${params.conversationId}/${Date.now()}-${sanitizeFilenameForStoragePath(params.attachment.name)}`;
-    const { error: uploadError } = await supabase.storage
-      .from(MESSAGE_ATTACHMENTS_BUCKET)
-      .upload(objectPath, params.attachment, {
-        contentType: params.attachment.type || undefined,
-      });
-    if (uploadError) throw uploadError;
+    await uploadPrivateFile(MESSAGE_ATTACHMENTS_BUCKET, objectPath, params.attachment);
     attachmentUrl = objectPath;
   }
 
@@ -99,22 +96,16 @@ export async function sendMessage(params: {
   });
   if (error) {
     if (attachmentUrl) {
-      await supabase.storage.from(MESSAGE_ATTACHMENTS_BUCKET).remove([attachmentUrl]);
+      await removeFile(MESSAGE_ATTACHMENTS_BUCKET, attachmentUrl);
     }
     throw error;
   }
 }
 
 // The bucket is private — a stored object path is only ever useful through a short-lived signed
-// URL generated on demand, never persisted or shown as a bare link. Same 5-minute window as
-// getSignedDocumentUrl() in src/lib/queries/transport.ts.
+// URL generated on demand, never persisted or shown as a bare link.
 export async function getSignedAttachmentUrl(objectPath: string): Promise<string> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.storage
-    .from(MESSAGE_ATTACHMENTS_BUCKET)
-    .createSignedUrl(objectPath, 300);
-  if (error) throw error;
-  return data.signedUrl;
+  return getSignedFileUrl(MESSAGE_ATTACHMENTS_BUCKET, objectPath);
 }
 
 export async function startApplicationConversation(animalId: string, buyerId?: string) {

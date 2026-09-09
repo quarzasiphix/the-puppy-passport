@@ -11,6 +11,7 @@ import {
 } from "@/domains/transport";
 import { listMyReservationsAsBuyer } from "../services/reservations";
 import { reservationStatusLabel } from "../status";
+import { PayDepositButton } from "../components/pay-deposit-button";
 
 export function BuyerReservationsPage() {
   const { userId } = useAuth();
@@ -64,7 +65,9 @@ export function BuyerReservationsPage() {
               <div className="mt-3 grid gap-2 text-sm md:grid-cols-3">
                 <div>
                   <span className="text-muted-foreground">Deposit: </span>
-                  {r.depositStatus.replace(/_/g, " ")}
+                  {r.depositStatus === "paid" && r.depositPaidAt
+                    ? `Paid ${new Date(r.depositPaidAt).toLocaleDateString("en-GB")}`
+                    : r.depositStatus.replace(/_/g, " ")}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Agreement: </span>
@@ -77,6 +80,15 @@ export function BuyerReservationsPage() {
                   </div>
                 )}
               </div>
+              {r.depositStatus === "pending" && r.depositAmount != null && (
+                <div className="mt-4">
+                  <PayDepositButton
+                    reservationId={r.id}
+                    depositAmount={r.depositAmount}
+                    currency={r.currency}
+                  />
+                </div>
+              )}
               {r.status === "confirmed" &&
                 (() => {
                   const existing = transportByAnimalQuery.data?.get(r.animalId);

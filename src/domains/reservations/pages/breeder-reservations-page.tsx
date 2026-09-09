@@ -6,6 +6,7 @@ import { useAuth } from "@/domains/identity";
 import { getMyKennel } from "@/domains/breeders";
 import { listReservationsForMyKennel } from "../services/reservations";
 import { reservationStatusLabel } from "../status";
+import { RequestDepositDialog } from "../components/request-deposit-dialog";
 
 export function BreederReservationsPage() {
   const { userId } = useAuth();
@@ -74,13 +75,18 @@ export function BreederReservationsPage() {
                   </td>
                   <td className="p-4">{reservationStatusLabel(r.status)}</td>
                   <td className="p-4 text-right">
-                    {r.status === "confirmed" && (
-                      <Button size="sm" variant="outline" asChild>
-                        <Link to="/transport/request" search={{ animalId: r.animalId }}>
-                          Request transport
-                        </Link>
-                      </Button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {r.depositStatus === "not_required" &&
+                        r.status !== "cancelled" &&
+                        r.status !== "completed" && <RequestDepositDialog reservationId={r.id} />}
+                      {r.status === "confirmed" && (
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to="/transport/request" search={{ animalId: r.animalId }}>
+                            Request transport
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

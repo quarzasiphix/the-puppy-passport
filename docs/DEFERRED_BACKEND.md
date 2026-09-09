@@ -6,11 +6,14 @@ functions and/or third-party accounts.
 
 ## Payments (Stripe)
 
-Nothing exists. No Stripe dependency, no connected accounts, no payment tables.
-Needed: Connect onboarding, Checkout/Payment Element for deposits, platform fee + transfers,
-refunds, disputes, webhook processing with idempotency, an internal ledger. See
-`docs/RESERVATION_PAYMENT_DESIGN.md`. Frontend `domains/payments/` will be typed interfaces +
-`// BACKEND: not wired` stubs until the edge functions and `stripe_*` tables exist.
+Updated 2026-09-09: **deposit (zaliczka) checkout is wired** — schema, RPC, `create-deposit-checkout-
+session`/`stripe-webhook` edge functions, and buyer/breeder UI all exist (see
+`docs/RESERVATION_PAYMENT_DESIGN.md`). Still nothing exists for: Stripe Connect onboarding
+(deliberately deferred — v1 is "platform collects, breeders paid out manually"), platform fee +
+transfers, refunds, disputes. `getConnectedAccountState`/`startConnectOnboarding`/`requestRefund`
+in `domains/payments/services/payments.ts` remain `// BACKEND: not wired` stubs. No Stripe account
+exists yet either — `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` are unset, so the real edge
+functions return a 503 "not configured" until they're added.
 
 ## Reservation lifecycle widening
 

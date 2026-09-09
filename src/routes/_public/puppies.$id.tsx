@@ -310,7 +310,7 @@ function PuppyDetail() {
                         <span>{breeder.availablePuppies} puppies available</span>
                       </div>
                       <Button asChild variant="outline" size="sm" className="mt-4">
-                        <Link to="/breeders/$slug" params={{ slug: breeder.slug }}>
+                        <Link to="/@$handle" params={{ handle: breeder.slug }}>
                           View kennel profile
                         </Link>
                       </Button>

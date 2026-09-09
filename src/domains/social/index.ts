@@ -7,3 +7,4 @@ export * from "./services/posts";
 export * from "./services/comments";
 export * from "./services/reactions";
 export * from "./services/follows";
+export * from "./components/kennel-post-composer";

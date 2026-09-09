@@ -153,16 +153,20 @@ production:
   `127.0.0.1:3000`/`localhost:3000`) **only affects the local stack**. A hosted project's redirect
   allow-list is configured separately, via the Supabase dashboard (Authentication → URL
   Configuration) or `supabase config push` — set it to the real production domain before enabling
-  sign-in against that project, or every auth redirect will fail.
+  sign-in against that project, or every auth redirect will fail. The real production domain is
+  **anemalo.com** — the Redirect URLs allow-list must include `https://anemalo.com/auth/callback`
+  (see `docs/SOCIAL_AUTH_SETUP.md`).
 - **Email**: `[local_smtp]` (port 54324) is a local dev-only mail catcher — no real emails are ever
   sent locally. Production needs a real SMTP provider configured
   (`[auth.email.smtp]` block in a project-linked config, or dashboard equivalent) before signup
   confirmation / password reset emails can actually be delivered. This is currently unconfigured
   anywhere in the repo — needs a real provider decision (e.g. SendGrid, Postmark) plus API key as a
   Supabase project secret, never committed to this repo.
-- **Google/Facebook OAuth**: `enabled = false` for both, by design, until real credentials exist
-  (`docs/SOCIAL_AUTH_SETUP.md`). When enabling for production, the redirect URI registered with
-  Google/Meta must point at the production Supabase project's `/auth/v1/callback`, not local.
+- **Google OAuth**: live in production as of 2026-09-09, configured directly in the Supabase
+  Dashboard (not via `supabase/config.toml`, which still shows `enabled = false` — that only ever
+  governed the local stack). See `docs/SOCIAL_AUTH_SETUP.md` for the full round trip, including the
+  app-side `/auth/callback` route this required. Facebook was never configured and its button has
+  since been removed from the sign-in page.
 
 ## 8. Database functions
 

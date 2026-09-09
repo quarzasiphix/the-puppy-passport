@@ -11,6 +11,25 @@ Facebook group, an open marketplace where random transporters can accept jobs, o
 Transport is a major advantage of the platform, not its primary identity — see the corrected
 hierarchy in `docs/PRODUCT_VISION.md`, which you must read before touching product scope.
 
+## Production
+
+Live at **https://anemalo.com** (added to this file 2026-09-09 at the user's explicit instruction
+— don't re-derive or guess this, it's a fact, not inferred). Backed by a real production Supabase
+project, `anemalo` (ref `pgzvkkybqrhxedjoyjzy`, `eu-west-1`) — `.env.production`'s
+`VITE_SUPABASE_URL`/`wrangler.toml`'s `[vars]` both point at it. Google sign-in is live against
+this project (Dashboard-configured, not `supabase/config.toml` — see `docs/SOCIAL_AUTH_SETUP.md`).
+The Supabase project's Auth → URL Configuration → Redirect URLs must include
+`https://anemalo.com/auth/callback` for Google sign-in to complete (see `src/routes/auth.callback.tsx`).
+
+The exact deployed Cloudflare Worker name/binding for anemalo.com could not be independently
+confirmed from a coding session — the Cloudflare MCP access available in at least one session only
+showed an unrelated worker (`scalpr`) on that account, so it's either a different Cloudflare
+account/token or the worker wasn't visible to that connection. `wrangler.toml`'s `name` is
+`the-puppy-passport`; `docs/DEPLOYMENT_CHECKLIST.md` separately mentions both an auto-derived name
+and `--name anemalo` in its example deploy commands — these have never been reconciled against
+what's actually bound to the domain. Confirm the real worker name/custom-domain binding in the
+Cloudflare dashboard before trusting either doc's deploy command verbatim.
+
 ## Repo orientation
 
 - **Framework**: TanStack Start (React 19, SSR, file-based router via `@tanstack/react-router`),
@@ -30,9 +49,12 @@ hierarchy in `docs/PRODUCT_VISION.md`, which you must read before touching produ
 - **UI kit**: shadcn/Radix components in `src/components/ui/*` — reuse these, don't add a second
   design system. Shared marketplace cards live in `src/components/cards.tsx`, site chrome in
   `src/components/site-chrome.tsx`.
-- **Database**: local Supabase only (`supabase/config.toml`, `supabase/migrations/*.sql`,
-  `supabase/seed.sql`). No production Supabase project is configured. See `docs/LOCAL_SETUP.md` for
-  commands and demo credentials, and `docs/DOMAIN_MODEL.md` for the schema.
+- **Database**: `supabase/config.toml`/`supabase/migrations/*.sql`/`supabase/seed.sql` describe the
+  local stack, used for day-to-day development. A **real production Supabase project also exists**
+  — see "Production" above — migrations get applied there too (directly, via MCP `apply_migration`
+  in this session's workflow; keep the local migration files and the live project in sync, never
+  let them drift). See `docs/LOCAL_SETUP.md` for local commands/demo credentials, and
+  `docs/DOMAIN_MODEL.md` for the schema.
 - **Supabase clients**: `src/lib/supabase/browser.ts` (isomorphic, used for all data queries) and
   `src/lib/supabase/server.ts` (cookie-aware, used only inside `createServerFn` handlers for
   session lookup and sign-in/up/out). Don't create a third pattern.
@@ -158,3 +180,5 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
   (`npm run test:db`), and the real, currently-open bugs it found (read before assuming an RLS
   policy "works" just because it reads correctly).
 - `docs/LOCAL_SETUP.md` — how to run the local Supabase stack and demo logins.
+- `docs/STORAGE_AND_MEDIA.md` — the file-storage abstraction (`src/lib/storage/media.ts`), current
+  buckets, and the prepared-but-not-built Cloudflare R2 migration path.

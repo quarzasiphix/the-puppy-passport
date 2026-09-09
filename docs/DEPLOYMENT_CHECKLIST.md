@@ -1,8 +1,15 @@
 # Anemalo — Cloudflare Deployment Checklist
 
 Written 2026-07-17. Verified by actually running `npm run build` and inspecting the real output —
-nothing here is guessed. No production deploy has happened; this is the checklist to follow when
-one is explicitly approved.
+nothing here is guessed.
+
+**Update 2026-09-09**: a production deploy has since happened — the app is live at
+**https://anemalo.com** (see the "Production" section of `CLAUDE.md`). The exact Cloudflare Worker
+name/custom-domain binding actually in use for that domain could not be confirmed from a coding
+session (the Cloudflare MCP access available in at least one session showed only an unrelated
+worker on that account) — §3 and §2 below describe the *intended* mechanism, not a verified
+after-the-fact snapshot of what's actually bound to anemalo.com. Confirm in the Cloudflare
+dashboard before assuming either.
 
 ## 1. How the build/deploy mechanism actually works (confirmed)
 
@@ -42,7 +49,7 @@ step behind manual approval, auto-deploy staging only).
 
 ## 3. Custom domain
 
-Two supported paths — pick one when a real domain exists:
+The real domain is **anemalo.com** (live). Two supported paths — pick one:
 - **Cloudflare dashboard** (Workers & Pages → the deployed worker → Triggers → Custom Domains) —
   simplest, survives redeploys since it's configured server-side, not in this repo.
 - **`routes` in a hand-written `wrangler.toml`** — only needed if domain config must be
@@ -63,9 +70,10 @@ is needed yet.
 
 ## 5. Auth callback URLs
 
-Set on the **Supabase project side** (dashboard → Authentication → URL Configuration), not in this
-repo — see `docs/PRODUCTION_SETUP.md` §7. Must point at the real production domain before OAuth or
-email-confirmation redirects will work.
+Set on the **Supabase project side** (dashboard → Authentication → URL Configuration → Redirect
+URLs), not in this repo — see `docs/PRODUCTION_SETUP.md` §7 and `docs/SOCIAL_AUTH_SETUP.md`. Must
+include `https://anemalo.com/auth/callback` (the app's OAuth callback route,
+`src/routes/auth.callback.tsx`) before Google sign-in or email-confirmation redirects will work.
 
 ## 6. Asset and image handling
 

@@ -1,5 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { TransportStatus } from "@/lib/supabase/enums";
+import {
+  getSignedFileUrl,
+  removeFile,
+  sanitizeFilenameForStoragePath,
+  uploadPrivateFile,
+} from "@/lib/storage/media";
 
 export async function getMyDriverRecord(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -103,10 +109,6 @@ export const driverStatusSteps = [
 
 const TRANSPORT_EVIDENCE_BUCKET = "transport-evidence";
 
-function sanitizeFilenameForStoragePath(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
 // The status update, history insert and (optional) evidence upload used to be separate
 // client-side writes with a client-supplied driverProfileId trusted as the actor -- the same
 // non-atomic + forgeable-actor shape already fixed for changeOpsRequestStatus() and
@@ -125,12 +127,7 @@ export async function advanceJobStatus(input: {
   let evidenceObjectPath: string | undefined;
   if (input.evidencePhoto) {
     const objectPath = `${input.transportRequestId}/${input.newStatus}-${Date.now()}-${sanitizeFilenameForStoragePath(input.evidencePhoto.name)}`;
-    const { error: uploadError } = await supabase.storage
-      .from(TRANSPORT_EVIDENCE_BUCKET)
-      .upload(objectPath, input.evidencePhoto, {
-        contentType: input.evidencePhoto.type || undefined,
-      });
-    if (uploadError) throw uploadError;
+    await uploadPrivateFile(TRANSPORT_EVIDENCE_BUCKET, objectPath, input.evidencePhoto);
     evidenceObjectPath = objectPath;
   }
 
@@ -142,7 +139,7 @@ export async function advanceJobStatus(input: {
   });
   if (error) {
     if (evidenceObjectPath) {
-      await supabase.storage.from(TRANSPORT_EVIDENCE_BUCKET).remove([evidenceObjectPath]);
+      await removeFile(TRANSPORT_EVIDENCE_BUCKET, evidenceObjectPath);
     }
     throw error;
   }
@@ -151,12 +148,7 @@ export async function advanceJobStatus(input: {
 // The bucket is private -- a stored object path is only ever useful through a short-lived signed
 // URL generated on demand, same pattern as getSignedDocumentUrl()/getSignedAttachmentUrl().
 export async function getSignedEvidenceUrl(objectPath: string): Promise<string> {
-  const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.storage
-    .from(TRANSPORT_EVIDENCE_BUCKET)
-    .createSignedUrl(objectPath, 300);
-  if (error) throw error;
-  return data.signedUrl;
+  return getSignedFileUrl(TRANSPORT_EVIDENCE_BUCKET, objectPath);
 }
 
 // Driver-minimum timeline (Stage C): the same status_history rows a driver already has RLS access

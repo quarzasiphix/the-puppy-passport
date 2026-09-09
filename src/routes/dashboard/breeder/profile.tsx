@@ -90,7 +90,7 @@ function ProfilePage() {
         </div>
         {query.data?.slug && (
           <Button asChild variant="outline">
-            <Link to="/breeders/$slug" params={{ slug: query.data.slug }}>
+            <Link to="/@$handle" params={{ handle: query.data.slug }}>
               View live profile
             </Link>
           </Button>
