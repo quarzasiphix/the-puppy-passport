@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/domains/identity";
 import { listBreeds } from "@/domains/breeders";
 import { submitRehomingRequest } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/rehome")({
@@ -55,6 +56,7 @@ const emptyForm: FormState = {
 
 function RehomePage() {
   const { userId, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const [step, setStep] = useState<"form" | "preview" | "success">("form");
   const [form, setForm] = useState<FormState>(emptyForm);
   const breedsQuery = useQuery({ queryKey: ["breeds"], queryFn: listBreeds });
@@ -76,7 +78,7 @@ function RehomePage() {
       }),
     onSuccess: () => setStep("success"),
     onError: (err) =>
-      toast.error(getFriendlyErrorMessage(err, "Could not submit — please try again.")),
+      toast.error(getFriendlyErrorMessage(err, t("rehomePage.couldNotSubmit"))),
   });
 
   const canPreview = form.name.trim() && form.reasonForRehoming.trim() && form.ownershipDeclaration;
@@ -88,13 +90,12 @@ function RehomePage() {
     return (
       <div className="container-page max-w-lg py-24 text-center">
         <HeartHandshake className="mx-auto size-10 text-primary" />
-        <h1 className="mt-4 font-display text-3xl font-medium">Find a new home for your dog</h1>
+        <h1 className="mt-4 font-display text-3xl font-medium">{t("rehomePage.title")}</h1>
         <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-          Sign in to submit your dog for review — this keeps rehoming listings on Anemalo
-          accountable to a real account.
+          {t("rehomePage.signInSubtitle")}
         </p>
         <Button asChild className="mt-4">
-          <Link to="/signin">Sign in</Link>
+          <Link to="/signin">{t("nav.signIn")}</Link>
         </Button>
       </div>
     );
@@ -104,15 +105,16 @@ function RehomePage() {
     return (
       <div className="container-page max-w-lg py-24 text-center">
         <CheckCircle2 className="mx-auto size-10 text-success" />
-        <h1 className="mt-4 font-display text-3xl font-medium">Submitted for review</h1>
+        <h1 className="mt-4 font-display text-3xl font-medium">{t("rehomePage.successTitle")}</h1>
         <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-          Thank you — {form.name}'s listing has been submitted. It is{" "}
-          <strong>not public yet</strong>. An admin reviews every private rehoming submission before
-          it appears on Anemalo, usually within a couple of days. We'll let you know once it's
-          approved.
+          {t("rehomePage.successBodyPrefix")}
+          {form.name}
+          {t("rehomePage.successBodyMid")}
+          <strong>{t("rehomePage.notPublicYet")}</strong>
+          {t("rehomePage.successBodySuffix")}
         </p>
         <Button asChild variant="outline" className="mt-4">
-          <Link to="/adoptions">Browse dogs for adoption</Link>
+          <Link to="/adoptions">{t("rehomePage.browseAdoptions")}</Link>
         </Button>
       </div>
     );
@@ -121,40 +123,39 @@ function RehomePage() {
   return (
     <div className="container-page max-w-2xl py-10">
       <header className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-accent">Private rehoming</p>
-        <h1 className="mt-2 font-display text-3xl font-medium">Find a new home for your dog</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tell us about your dog and why you're looking to rehome them. Every submission is reviewed
-          by our team before it's shown publicly — this isn't an open classifieds board.
+        <p className="text-xs font-medium uppercase tracking-wider text-accent">
+          {t("rehomePage.eyebrow")}
         </p>
+        <h1 className="mt-2 font-display text-3xl font-medium">{t("rehomePage.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("rehomePage.headerSubtitle")}</p>
       </header>
 
       {step === "form" && (
         <div className="space-y-4">
           <div>
-            <Label>Your dog's name</Label>
+            <Label>{t("rehomePage.dogName")}</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Sex</Label>
+              <Label>{t("rehomePage.sex")}</Label>
               <Select
                 value={form.sex}
                 onValueChange={(v) => setForm({ ...form, sex: v as "male" | "female" })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t("rehomePage.selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">{t("rehomePage.female")}</SelectItem>
+                  <SelectItem value="male">{t("rehomePage.male")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Approximate age</Label>
+              <Label>{t("rehomePage.approximateAge")}</Label>
               <Input
-                placeholder="e.g. About 3 years"
+                placeholder={t("rehomePage.approximateAgePlaceholder")}
                 value={form.approximateAge}
                 onChange={(e) => setForm({ ...form, approximateAge: e.target.value })}
               />
@@ -162,10 +163,10 @@ function RehomePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Breed (if known)</Label>
+              <Label>{t("rehomePage.breedIfKnown")}</Label>
               <Select value={form.breedId} onValueChange={(v) => setForm({ ...form, breedId: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Mixed / unknown" />
+                  <SelectValue placeholder={t("rehomePage.mixedUnknown")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(breedsQuery.data ?? []).map((b) => (
@@ -177,7 +178,7 @@ function RehomePage() {
               </Select>
             </div>
             <div>
-              <Label>Color</Label>
+              <Label>{t("rehomePage.color")}</Label>
               <Input
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
@@ -185,33 +186,33 @@ function RehomePage() {
             </div>
           </div>
           <div>
-            <Label>Why are you looking to rehome them?</Label>
+            <Label>{t("rehomePage.reasonLabel")}</Label>
             <Textarea
               rows={3}
               value={form.reasonForRehoming}
               onChange={(e) => setForm({ ...form, reasonForRehoming: e.target.value })}
-              placeholder="This is only seen by our review team, never shown publicly."
+              placeholder={t("rehomePage.reasonPlaceholder")}
             />
           </div>
           <div>
-            <Label>Tell adopters about them (optional)</Label>
+            <Label>{t("rehomePage.descLabel")}</Label>
             <Textarea
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Personality, habits, what they're like day to day…"
+              placeholder={t("rehomePage.descPlaceholder")}
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Temperament (optional)</Label>
+              <Label>{t("rehomePage.temperament")}</Label>
               <Input
                 value={form.temperament}
                 onChange={(e) => setForm({ ...form, temperament: e.target.value })}
               />
             </div>
             <div>
-              <Label>Ideal home (optional)</Label>
+              <Label>{t("rehomePage.idealHome")}</Label>
               <Input
                 value={form.idealHome}
                 onChange={(e) => setForm({ ...form, idealHome: e.target.value })}
@@ -225,11 +226,11 @@ function RehomePage() {
               onCheckedChange={(v) => setForm({ ...form, ownershipDeclaration: v === true })}
             />
             <Label htmlFor="ownership" className="text-sm font-normal leading-snug">
-              I confirm I am the legal owner of this dog and have the right to rehome them.
+              {t("rehomePage.ownershipDeclaration")}
             </Label>
           </div>
           <Button className="w-full" disabled={!canPreview} onClick={() => setStep("preview")}>
-            Review before submitting
+            {t("rehomePage.reviewBeforeSubmitting")}
           </Button>
         </div>
       )}
@@ -239,45 +240,56 @@ function RehomePage() {
           <div className="rounded-2xl border border-border/70 bg-card p-5">
             <div className="flex items-center gap-2">
               <ShieldCheck className="size-4 text-primary" />
-              <h2 className="font-display text-lg font-semibold">Review before you submit</h2>
+              <h2 className="font-display text-lg font-semibold">{t("rehomePage.reviewHeading")}</h2>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <Item label="Name" value={form.name} />
-              <Item label="Sex" value={form.sex || "Not set"} />
-              <Item label="Breed" value={breedName ?? "Mixed / unknown"} />
-              <Item label="Approximate age" value={form.approximateAge || "Not set"} />
-              <Item label="Color" value={form.color || "Not set"} />
+              <Item label={t("rehomePage.itemName")} value={form.name} />
+              <Item
+                label={t("rehomePage.sex")}
+                value={
+                  form.sex
+                    ? form.sex === "female"
+                      ? t("rehomePage.female")
+                      : t("rehomePage.male")
+                    : t("rehomePage.notSet")
+                }
+              />
+              <Item label={t("rehomePage.itemBreed")} value={breedName ?? t("rehomePage.mixedUnknown")} />
+              <Item
+                label={t("rehomePage.approximateAge")}
+                value={form.approximateAge || t("rehomePage.notSet")}
+              />
+              <Item label={t("rehomePage.color")} value={form.color || t("rehomePage.notSet")} />
             </dl>
             <div className="mt-4 space-y-3 text-sm">
               <div>
-                <p className="font-medium text-foreground">Reason for rehoming</p>
-                <p className="text-muted-foreground">{form.reasonForRehoming}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Private — only seen by our review team, never shown publicly.
+                <p className="font-medium text-foreground">
+                  {t("rehomePage.reasonForRehomingLabel")}
                 </p>
+                <p className="text-muted-foreground">{form.reasonForRehoming}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("rehomePage.privateNote")}</p>
               </div>
               {form.description && (
                 <div>
-                  <p className="font-medium text-foreground">Public description</p>
+                  <p className="font-medium text-foreground">{t("rehomePage.publicDescription")}</p>
                   <p className="text-muted-foreground">{form.description}</p>
                 </div>
               )}
             </div>
             <p className="mt-4 rounded-lg bg-warning/10 p-3 text-xs text-foreground">
-              This will be submitted for review, not published immediately. An admin checks every
-              private rehoming submission before it's visible to anyone else.
+              {t("rehomePage.previewWarning")}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("form")} className="flex-1">
-              Back and edit
+              {t("rehomePage.backAndEdit")}
             </Button>
             <Button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending}
               className="flex-1"
             >
-              Submit for review
+              {t("rehomePage.submitForReview")}
             </Button>
           </div>
         </div>

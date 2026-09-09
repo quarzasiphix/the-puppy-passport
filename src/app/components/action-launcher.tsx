@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Truck, Search, Dog, HeartHandshake, Users, Home, ArrowRight } from "lucide-react";
 import { useAuth } from "@/domains/identity";
+import { useTranslation } from "@/shared/i18n";
 
 // The single "what can I do here" launcher, shown on the homepage and the customer dashboard.
 // Six actions only — no sub-categories up front. Each card links straight into the correct flow
@@ -8,6 +9,7 @@ import { useAuth } from "@/domains/identity";
 // understand Anemalo's internal role model to get moving.
 export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" | "dashboard" }) {
   const { roles, isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const isBreeder = roles.some((r) => r.role === "breeder" && r.status === "active");
   const isFoundation = roles.some(
     (r) => (r.role === "foundation_member" || r.role === "shelter_member") && r.status === "active",
@@ -17,34 +19,36 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
     {
       to: isBreeder ? "/dashboard/breeder/puppies" : "/create-breeder",
       icon: Dog,
-      title: "Publish an animal",
-      desc: isBreeder ? "Add a puppy to your kennel." : "Apply as a breeder to publish puppies.",
+      title: t("actionLauncher.publishAnimalTitle"),
+      desc: isBreeder
+        ? t("actionLauncher.publishAnimalDescActive")
+        : t("actionLauncher.publishAnimalDescInactive"),
     },
     {
       to: isFoundation ? "/dashboard/foundation/animals" : "/create-breeder",
       icon: HeartHandshake,
-      title: "Publish an adoption listing",
+      title: t("actionLauncher.publishAdoptionTitle"),
       desc: isFoundation
-        ? "Add an animal for adoption."
-        : "Apply as a foundation or shelter to publish adoptions.",
+        ? t("actionLauncher.publishAdoptionDescActive")
+        : t("actionLauncher.publishAdoptionDescInactive"),
     },
     {
       to: "/find-a-dog",
       icon: Search,
-      title: "Find a dog",
-      desc: "Browse puppies from verified breeders.",
+      title: t("actionLauncher.findDogTitle"),
+      desc: t("actionLauncher.findDogDesc"),
     },
     {
       to: "/breeders",
       icon: Users,
-      title: "Find a breeder",
-      desc: "Search verified kennels by breed and location.",
+      title: t("actionLauncher.findBreederTitle"),
+      desc: t("actionLauncher.findBreederDesc"),
     },
     {
       to: "/rehome",
       icon: Home,
-      title: "Find a new home for my dog",
-      desc: "Submit your dog for review before it's shown to anyone.",
+      title: t("actionLauncher.rehomeTitle"),
+      desc: t("actionLauncher.rehomeDesc"),
     },
   ] as const;
 
@@ -52,9 +56,11 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
     <section className={variant === "homepage" ? "container-page py-16" : "mb-8"}>
       {variant === "homepage" && (
         <div className="mb-8">
-          <p className="text-xs font-medium uppercase tracking-wider text-accent">Get started</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-accent">
+            {t("actionLauncher.getStarted")}
+          </p>
           <h2 className="mt-2 font-display text-3xl font-medium tracking-tight md:text-4xl">
-            What do you need today?
+            {t("actionLauncher.title")}
           </h2>
         </div>
       )}
@@ -68,11 +74,13 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
               <Truck className="size-6" />
             </div>
             <div>
-              <div className="font-display text-xl font-semibold">Request transport</div>
+              <div className="font-display text-xl font-semibold">
+                {t("actionLauncher.requestTransport")}
+              </div>
               <div className="text-sm text-primary-foreground/80">
                 {isSignedIn
-                  ? "Tell us where and when — takes a few minutes."
-                  : "Sign up and submit a request — takes a few minutes."}
+                  ? t("actionLauncher.requestTransportDescSignedIn")
+                  : t("actionLauncher.requestTransportDescSignedOut")}
               </div>
             </div>
           </div>

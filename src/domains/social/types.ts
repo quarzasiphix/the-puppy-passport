@@ -125,23 +125,28 @@ export type FollowTargetType = "profile" | "organisation" | "animal" | "litter" 
 
 export type FollowTarget = { type: FollowTargetType; id: string };
 
-export const POST_TYPE_LABELS: Record<PostType, string> = {
-  general: "Update",
-  transport_update: "Transport update",
-  route_announcement: "Route announcement",
-  litter_announcement: "Litter announcement",
-  adoption_post: "Adoption post",
-  achievement: "Achievement",
-  photo: "Photo",
-  video: "Video",
-  health_update: "Health update",
-  dog_update: "Dog update",
-  planned_mating: "Planned mating",
-  availability_announcement: "Puppies available",
-  transport_availability: "Transport availability",
-  educational: "Educational",
-  registry_announcement: "Registry announcement",
-};
+// Translated via the i18n `t()` function rather than a static Record, since these labels render on
+// public breeder-profile pages — see src/shared/i18n/index.tsx. Pass `useTranslation().t`.
+export function postTypeLabel(t: (key: string) => string, type: PostType): string {
+  const map: Record<PostType, string> = {
+    general: t("socialPostTypes.general"),
+    transport_update: t("socialPostTypes.transportUpdate"),
+    route_announcement: t("socialPostTypes.routeAnnouncement"),
+    litter_announcement: t("socialPostTypes.litterAnnouncement"),
+    adoption_post: t("socialPostTypes.adoptionPost"),
+    achievement: t("socialPostTypes.achievement"),
+    photo: t("socialPostTypes.photo"),
+    video: t("socialPostTypes.video"),
+    health_update: t("socialPostTypes.healthUpdate"),
+    dog_update: t("socialPostTypes.dogUpdate"),
+    planned_mating: t("socialPostTypes.plannedMating"),
+    availability_announcement: t("socialPostTypes.availabilityAnnouncement"),
+    transport_availability: t("socialPostTypes.transportAvailability"),
+    educational: t("socialPostTypes.educational"),
+    registry_announcement: t("socialPostTypes.registryAnnouncement"),
+  };
+  return map[type];
+}
 
 export const POST_VISIBILITY_LABELS: Record<PostVisibility, string> = {
   public: "Public",

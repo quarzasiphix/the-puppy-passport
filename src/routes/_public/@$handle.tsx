@@ -23,6 +23,7 @@ import { ReportDialog, getTrustClaimMap } from "@/domains/trust";
 import { getBreederStats } from "@/domains/breeders";
 import { useAuth } from "@/domains/identity";
 import { listKennelPosts, KennelPostComposer, type PostSummary } from "@/domains/social";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { IdentityCard } from "./-components/breeder-profile/identity-card";
@@ -110,6 +111,7 @@ function BreederProfile() {
   const { b, puppies, alumni, litters, parents, champions, posts, stats, trustClaims } =
     Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("home");
   const isOwner = !!userId && userId === b.ownerId;
@@ -132,26 +134,31 @@ function BreederProfile() {
       else await followOrg(userId, b.id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("breederProfile.couldNotUpdate"))),
   });
 
   // All 8 destinations stay — none are removed or demoted below a "more" menu — only restyled
   // into a scannable pill bar (see ProfileTabsNav). Counts come straight from already-loaded
   // arrays, so nothing here is a fabricated number.
   const tabs: ProfileTab[] = [
-    { value: "home", label: "Home", icon: House },
-    { value: "puppies", label: "Puppies", icon: PawPrint, count: puppies.length },
+    { value: "home", label: t("breederProfile.tabHome"), icon: House },
+    {
+      value: "puppies",
+      label: t("breederProfile.tabPuppies"),
+      icon: PawPrint,
+      count: puppies.length,
+    },
     {
       value: "litters",
-      label: "Litters",
+      label: t("breederProfile.tabLitters"),
       icon: Baby,
       count: currentLitters.length + plannedLitters.length,
     },
-    { value: "dogs", label: "Dogs", icon: Dog, count: parents.length },
-    { value: "alumni", label: "Alumni", icon: Heart, count: alumni.length },
-    { value: "posts", label: "Posts", icon: Newspaper, count: posts.length },
-    { value: "reviews", label: "Reviews", icon: Star },
-    { value: "about", label: "About", icon: Info },
+    { value: "dogs", label: t("breederProfile.tabDogs"), icon: Dog, count: parents.length },
+    { value: "alumni", label: t("breederProfile.tabAlumni"), icon: Heart, count: alumni.length },
+    { value: "posts", label: t("breederProfile.tabPosts"), icon: Newspaper, count: posts.length },
+    { value: "reviews", label: t("breederProfile.tabReviews"), icon: Star },
+    { value: "about", label: t("breederProfile.tabAbout"), icon: Info },
   ];
 
   return (
@@ -199,16 +206,17 @@ function BreederProfile() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={PawPrint} title="No puppies listed right now">
-                  Check the Litters tab for planned litters, or follow this kennel to hear when new
-                  ones open.
+                <EmptyState icon={PawPrint} title={t("breederProfile.noPuppiesTitle")}>
+                  {t("breederProfile.noPuppiesDesc")}
                 </EmptyState>
               )}
             </TabsContent>
 
             <TabsContent value="litters" className="mt-6 space-y-8">
               <div>
-                <h3 className="mb-3 font-display text-lg font-semibold">Current & planned</h3>
+                <h3 className="mb-3 font-display text-lg font-semibold">
+                  {t("breederProfile.currentAndPlanned")}
+                </h3>
                 {currentLitters.length || plannedLitters.length ? (
                   <div className="grid gap-6 lg:grid-cols-2">
                     {[...currentLitters, ...plannedLitters].map((l) => (
@@ -216,8 +224,8 @@ function BreederProfile() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState icon={Baby} title="No current or planned litters">
-                    Follow this kennel to hear as soon as a new litter is announced.
+                  <EmptyState icon={Baby} title={t("breederProfile.noLittersTitle")}>
+                    {t("breederProfile.noLittersDesc")}
                   </EmptyState>
                 )}
               </div>
@@ -231,14 +239,14 @@ function BreederProfile() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={Dog} title="No breeding dogs listed yet">
-                  This kennel hasn't added their breeding dogs yet.
+                <EmptyState icon={Dog} title={t("breederProfile.noDogsTitle")}>
+                  {t("breederProfile.noDogsDesc")}
                 </EmptyState>
               )}
               {champions.length > 0 && (
                 <div>
                   <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
-                    <Trophy className="size-4 text-accent" /> Champions
+                    <Trophy className="size-4 text-accent" /> {t("breederProfile.champions")}
                   </h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {champions.map((c) => (
@@ -248,9 +256,9 @@ function BreederProfile() {
                       >
                         <h4 className="font-display text-lg font-semibold">{c.dogName}</h4>
                         <div className="mt-2 flex flex-wrap gap-1.5">
-                          {c.titles.map((t) => (
-                            <Badge key={t} variant="secondary">
-                              {t}
+                          {c.titles.map((title) => (
+                            <Badge key={title} variant="secondary">
+                              {title}
                             </Badge>
                           ))}
                         </div>
@@ -278,37 +286,41 @@ function BreederProfile() {
             </TabsContent>
 
             <TabsContent value="reviews" className="mt-6">
-              <EmptyState icon={Star} title="Reviews aren't open yet">
-                They open up once transports through Anemalo start completing.
+              <EmptyState icon={Star} title={t("breederProfile.noReviewsTitle")}>
+                {t("breederProfile.noReviewsDesc")}
               </EmptyState>
             </TabsContent>
 
             <TabsContent value="about" className="mt-6 grid gap-6 lg:grid-cols-3">
               <div className="rounded-2xl border border-border/70 bg-card p-6 lg:col-span-2">
-                <h3 className="mb-3 font-display text-xl font-semibold">About the kennel</h3>
+                <h3 className="mb-3 font-display text-xl font-semibold">
+                  {t("breederProfile.aboutKennelTitle")}
+                </h3>
                 <p className="text-muted-foreground">
-                  {b.description || "This breeder hasn't added a description yet."}
+                  {b.description || t("breederProfile.noKennelDescription")}
                 </p>
               </div>
               <div className="space-y-4">
                 <div className="rounded-2xl border border-border/70 bg-card p-6">
-                  <h3 className="mb-3 font-display text-lg font-semibold">Verification</h3>
+                  <h3 className="mb-3 font-display text-lg font-semibold">
+                    {t("breederProfile.verificationTitle")}
+                  </h3>
                   <VerificationList b={b} trustClaims={trustClaims} stats={stats} />
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-card p-6">
-                  <h3 className="mb-3 font-display text-lg font-semibold">How applications work</h3>
+                  <h3 className="mb-3 font-display text-lg font-semibold">
+                    {t("breederProfile.howApplicationsWorkTitle")}
+                  </h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>· First contact happens through Anemalo</li>
-                    <li>· The breeder reviews and responds to your application</li>
-                    <li>
-                      · Reservation terms — including any deposit — are agreed through Anemalo
-                    </li>
+                    <li>· {t("breederProfile.applicationStep1")}</li>
+                    <li>· {t("breederProfile.applicationStep2")}</li>
+                    <li>· {t("breederProfile.applicationStep3")}</li>
                   </ul>
                 </div>
                 <ReportDialog
                   targetType="organisation"
                   targetId={b.id}
-                  triggerLabel="Report this kennel"
+                  triggerLabel={t("breederProfile.reportKennel")}
                 />
               </div>
             </TabsContent>

@@ -40,11 +40,11 @@ const moreNav = [
 ] as const;
 
 function LanguageSwitcher() {
-  const { locale, setLocale } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Language">
+        <Button variant="ghost" size="icon" aria-label={t("language.switchLabel")}>
           <Languages className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -75,7 +75,7 @@ export function SiteHeader() {
     await signOut();
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
     await router.invalidate();
-    toast.success("Signed out.");
+    toast.success(t("nav.signedOutToast"));
     await navigate({ to: "/" });
   }
 
@@ -122,7 +122,7 @@ export function SiteHeader() {
               <NotificationBell />
               <Button asChild variant="ghost" className="hidden lg:inline-flex">
                 <Link to="/dashboard/buyer">
-                  <LayoutDashboard className="mr-1 size-4" /> {firstName ?? "Dashboard"}
+                  <LayoutDashboard className="mr-1 size-4" /> {firstName ?? t("nav.dashboard")}
                 </Link>
               </Button>
               <Button
@@ -130,7 +130,7 @@ export function SiteHeader() {
                 size="icon"
                 className="hidden lg:inline-flex"
                 onClick={handleSignOut}
-                aria-label="Sign out"
+                aria-label={t("nav.signOut")}
               >
                 <LogOut className="size-4" />
               </Button>
@@ -246,29 +246,29 @@ export function SiteFooter() {
         <FooterCol
           title={t("footer.discover")}
           items={[
-            ["Marketplace", "/find-a-dog"],
-            ["Find your ideal dog", "/find-your-dog"],
-            ["Verified breeders", "/breeders"],
-            ["Foundations", "/foundations"],
-            ["Adoptions", "/adoptions"],
-            ["Rehome your dog", "/rehome"],
+            [t("footer.linkMarketplace"), "/find-a-dog"],
+            [t("footer.linkFindYourDog"), "/find-your-dog"],
+            [t("footer.linkVerifiedBreeders"), "/breeders"],
+            [t("footer.linkFoundations"), "/foundations"],
+            [t("footer.linkAdoptions"), "/adoptions"],
+            [t("footer.linkRehome"), "/rehome"],
           ]}
         />
         <FooterCol
           title={t("footer.transportSection")}
           items={[
-            ["Request transport", "/transport/request"],
-            ["Service categories", "/transport"],
-            ["Planned routes", "/planned-routes"],
+            [t("footer.linkRequestTransport"), "/transport/request"],
+            [t("footer.linkServiceCategories"), "/transport"],
+            [t("footer.linkPlannedRoutes"), "/planned-routes"],
           ]}
         />
         <FooterCol
           title={t("footer.account")}
           items={[
-            ["How it works", "/how-it-works"],
-            ["Create an account", "/signup"],
-            ["Apply as breeder / foundation", "/create-breeder"],
-            ["Sign in", "/signin"],
+            [t("footer.linkHowItWorks"), "/how-it-works"],
+            [t("footer.linkCreateAccount"), "/signup"],
+            [t("footer.linkApplyBreeder"), "/create-breeder"],
+            [t("footer.linkSignIn"), "/signin"],
           ]}
         />
       </div>
@@ -277,13 +277,13 @@ export function SiteFooter() {
           <span>© 2026 Anemalo. {t("footer.rightsReserved")}</span>
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <Link to="/terms" className="hover:text-foreground hover:underline">
-              Terms
+              {t("footer.linkTerms")}
             </Link>
             <Link to="/privacy" className="hover:text-foreground hover:underline">
-              Privacy
+              {t("footer.linkPrivacy")}
             </Link>
             <Link to="/cookies" className="hover:text-foreground hover:underline">
-              Cookies
+              {t("footer.linkCookies")}
             </Link>
           </span>
           <span>{t("footer.welfareDisclaimer")}</span>

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/domains/identity";
 import { calculateEstimate, type PricingBreakdown } from "@/domains/transport";
 import { findLikelyRouteMatch } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/estimate")({
   head: () => ({ meta: [{ title: "Transport price estimate — Anemalo" }] }),
@@ -24,6 +25,7 @@ type FormValues = {
 
 function EstimatePage() {
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const [result, setResult] = useState<PricingBreakdown | null>(null);
   const [routeMatch, setRouteMatch] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,14 +56,10 @@ function EstimatePage() {
     <div className="container-page py-14">
       <div className="mx-auto max-w-xl">
         <p className="text-xs font-medium uppercase tracking-wider text-accent">
-          Free, no account needed
+          {t("estimatePage.eyebrow")}
         </p>
-        <h1 className="mt-1 font-display text-4xl font-medium">
-          Get an approximate transport price
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          A quick estimate — no sign-up required. This is not a confirmed quotation.
-        </p>
+        <h1 className="mt-1 font-display text-4xl font-medium">{t("estimatePage.title")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("estimatePage.subtitle")}</p>
 
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -70,19 +68,19 @@ function EstimatePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Pickup country
+                {t("estimatePage.pickupCountry")}
               </Label>
               <Input {...form.register("pickupCountry")} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Destination country
+                {t("estimatePage.destinationCountry")}
               </Label>
               <Input {...form.register("destinationCountry")} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Animal size
+                {t("estimatePage.animalSize")}
               </Label>
               <Select
                 value={form.watch("sizeCategory")}
@@ -94,16 +92,16 @@ function EstimatePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="small">Small</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="large">Large</SelectItem>
-                  <SelectItem value="giant">Giant</SelectItem>
+                  <SelectItem value="small">{t("estimatePage.sizeSmall")}</SelectItem>
+                  <SelectItem value="medium">{t("estimatePage.sizeMedium")}</SelectItem>
+                  <SelectItem value="large">{t("estimatePage.sizeLarge")}</SelectItem>
+                  <SelectItem value="giant">{t("estimatePage.sizeGiant")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Service
+                {t("estimatePage.service")}
               </Label>
               <Select
                 value={form.watch("serviceType")}
@@ -113,44 +111,44 @@ function EstimatePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recommend_best">Recommend best</SelectItem>
-                  <SelectItem value="shared">Shared</SelectItem>
-                  <SelectItem value="individual">Individual</SelectItem>
-                  <SelectItem value="express">Express</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
+                  <SelectItem value="recommend_best">
+                    {t("estimatePage.serviceRecommend")}
+                  </SelectItem>
+                  <SelectItem value="shared">{t("estimatePage.serviceShared")}</SelectItem>
+                  <SelectItem value="individual">
+                    {t("estimatePage.serviceIndividual")}
+                  </SelectItem>
+                  <SelectItem value="express">{t("estimatePage.serviceExpress")}</SelectItem>
+                  <SelectItem value="vip">{t("estimatePage.serviceVip")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? "Calculating…" : "Get estimate"}
+            {loading ? t("estimatePage.calculating") : t("estimatePage.getEstimate")}
           </Button>
         </form>
 
         {result && (
           <div className="mt-6 rounded-2xl border border-border/70 bg-card p-6">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Estimated range
+              {t("estimatePage.estimatedRange")}
             </div>
             <div className="mt-1 font-display text-3xl font-semibold">
               {result.currency} {result.low} – {result.high}
             </div>
             {routeMatch && (
-              <p className="mt-2 text-sm text-success">
-                A planned shared route already heads that way — this may reduce the price.
-              </p>
+              <p className="mt-2 text-sm text-success">{t("estimatePage.routeMatch")}</p>
             )}
             <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
               <li className="flex items-start gap-1.5">
-                <Info className="mt-0.5 size-3 shrink-0" /> This is an estimated range, not a
-                confirmed quotation.
+                <Info className="mt-0.5 size-3 shrink-0" /> {t("estimatePage.note1")}
               </li>
               <li className="flex items-start gap-1.5">
-                <Info className="mt-0.5 size-3 shrink-0" /> The final price depends on exact route,
-                dates, documents and operational review.
+                <Info className="mt-0.5 size-3 shrink-0" /> {t("estimatePage.note2")}
               </li>
               <li className="flex items-start gap-1.5">
-                <Info className="mt-0.5 size-3 shrink-0" /> No transport has been reserved yet.
+                <Info className="mt-0.5 size-3 shrink-0" /> {t("estimatePage.note3")}
               </li>
             </ul>
             <div className="mt-5 flex gap-2">
@@ -164,12 +162,12 @@ function EstimatePage() {
                     serviceType: form.getValues("serviceType"),
                   }}
                 >
-                  Continue with full request
+                  {t("estimatePage.continueFullRequest")}
                 </Link>
               </Button>
               {!isSignedIn && (
                 <Button asChild variant="outline">
-                  <Link to="/signup">Create an account</Link>
+                  <Link to="/signup">{t("estimatePage.createAccount")}</Link>
                 </Button>
               )}
             </div>

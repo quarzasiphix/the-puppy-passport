@@ -12,6 +12,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { useAuth } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/create-breeder")({
   head: () => ({ meta: [{ title: "Apply for verification — Anemalo" }] }),
@@ -19,10 +20,20 @@ export const Route = createFileRoute("/_public/create-breeder")({
 });
 
 const orgTypeOptions = [
-  { value: "kennel" as const, label: "Breeder kennel" },
-  { value: "foundation" as const, label: "Foundation / rescue" },
-  { value: "shelter" as const, label: "Shelter" },
+  { value: "kennel" as const, labelKey: "createBreederPage.orgTypeKennel" },
+  { value: "foundation" as const, labelKey: "createBreederPage.orgTypeFoundation" },
+  { value: "shelter" as const, labelKey: "createBreederPage.orgTypeShelter" },
 ];
+
+const statusCopyKeys: Record<string, string> = {
+  not_started: "createBreederPage.statusNotStarted",
+  pending: "createBreederPage.statusPending",
+  more_information_required: "createBreederPage.statusMoreInfo",
+  approved: "createBreederPage.statusApproved",
+  rejected: "createBreederPage.statusRejected",
+  suspended: "createBreederPage.statusSuspended",
+  expired: "createBreederPage.statusExpired",
+};
 
 const schema = z.object({
   orgType: z.enum(["kennel", "foundation", "shelter"]),
@@ -47,6 +58,7 @@ function verificationTypeFor(orgType: FormValues["orgType"]) {
 
 function CreateBreeder() {
   const { userId, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const verificationQuery = useQuery({
@@ -110,15 +122,19 @@ function CreateBreeder() {
       },
     });
     if (error) {
-      toast.error(getFriendlyErrorMessage(error, "Could not submit your application."));
+      toast.error(getFriendlyErrorMessage(error, t("createBreederPage.couldNotSubmit")));
       return;
     }
-    toast.success("Application submitted for review.");
+    toast.success(t("createBreederPage.submittedToast"));
     queryClient.invalidateQueries({ queryKey: ["my-org-verification", userId] });
   }
 
   if (authLoading || (userId && verificationQuery.isLoading)) {
-    return <div className="container-page py-24 text-center text-muted-foreground">Loading…</div>;
+    return (
+      <div className="container-page py-24 text-center text-muted-foreground">
+        {t("createBreederPage.loading")}
+      </div>
+    );
   }
 
   if (!userId) {
@@ -126,13 +142,12 @@ function CreateBreeder() {
       <div className="container-page grid min-h-[60vh] place-items-center py-16 text-center">
         <div className="max-w-md">
           <PawPrint className="mx-auto size-8 text-primary" />
-          <h1 className="mt-4 font-display text-3xl font-medium">Create an account first</h1>
-          <p className="mt-2 text-muted-foreground">
-            To apply as a breeder or foundation, first create a Anemalo account — you'll be brought
-            straight back here to submit your application.
-          </p>
+          <h1 className="mt-4 font-display text-3xl font-medium">
+            {t("createBreederPage.noAccountTitle")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">{t("createBreederPage.noAccountBody")}</p>
           <Button asChild size="lg" className="mt-6">
-            <Link to="/signup">Create an account</Link>
+            <Link to="/signup">{t("createBreederPage.createAccount")}</Link>
           </Button>
         </div>
       </div>
@@ -143,18 +158,21 @@ function CreateBreeder() {
 
   if (verification) {
     const submittedName =
-      (verification.submitted_data as { name?: string } | null)?.name ?? "Your application";
+      (verification.submitted_data as { name?: string } | null)?.name ??
+      t("createBreederPage.defaultAppName");
     return (
       <div className="container-page py-14">
         <div className="mx-auto max-w-xl rounded-3xl border border-border/70 bg-card p-8 text-center">
           <StatusIcon status={verification.status} />
           <h1 className="mt-4 font-display text-2xl font-medium">{submittedName}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {statusCopy[verification.status] ?? verification.status}
+            {statusCopyKeys[verification.status]
+              ? t(statusCopyKeys[verification.status])
+              : verification.status}
           </p>
           {verification.status === "approved" && (
             <Button asChild size="lg" className="mt-6">
-              <Link to="/dashboard/breeder">Go to your dashboard</Link>
+              <Link to="/dashboard/breeder">{t("createBreederPage.goToDashboard")}</Link>
             </Button>
           )}
         </div>
@@ -167,19 +185,16 @@ function CreateBreeder() {
       <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
-            Verification application
+            {t("createBreederPage.eyebrow")}
           </p>
           <h1 className="mt-1 font-display text-4xl font-medium">
-            Apply as a breeder or foundation
+            {t("createBreederPage.title")}
           </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Publish litters, puppies or adoption listings once your kennel or organisation is
-            verified. Verification typically takes 2–5 working days.
-          </p>
+          <p className="mt-2 max-w-2xl text-muted-foreground">{t("createBreederPage.subtitle")}</p>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
-              <Section title="Type of application">
+              <Section title={t("createBreederPage.sectionType")}>
                 <div className="grid gap-2 md:grid-cols-3">
                   {orgTypeOptions.map((opt) => (
                     <button
@@ -192,20 +207,20 @@ function CreateBreeder() {
                           : "border-border bg-background hover:bg-secondary/50"
                       }`}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </div>
               </Section>
 
-              <Section title="Organisation">
+              <Section title={t("createBreederPage.sectionOrganisation")}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kennel / organisation name</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldName")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -218,7 +233,7 @@ function CreateBreeder() {
                     name="yearsExperience"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Years of experience</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldYears")}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -231,7 +246,7 @@ function CreateBreeder() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldCity")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -244,7 +259,7 @@ function CreateBreeder() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldCountry")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -255,14 +270,14 @@ function CreateBreeder() {
                 </div>
               </Section>
 
-              <Section title="Association & breeds">
+              <Section title={t("createBreederPage.sectionAssociation")}>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="associationName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kennel club / association</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldAssociation")}</FormLabel>
                         <FormControl>
                           <Input placeholder="ZKwP / FCI" {...field} />
                         </FormControl>
@@ -275,7 +290,7 @@ function CreateBreeder() {
                     name="membershipNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Membership number</FormLabel>
+                        <FormLabel>{t("createBreederPage.fieldMembership")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -289,7 +304,7 @@ function CreateBreeder() {
                   name="breeds"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Breeds you work with (comma separated)</FormLabel>
+                      <FormLabel>{t("createBreederPage.fieldBreeds")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Golden Retriever, Labrador Retriever" {...field} />
                       </FormControl>
@@ -302,7 +317,7 @@ function CreateBreeder() {
                   name="website"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Website (optional)</FormLabel>
+                      <FormLabel>{t("createBreederPage.fieldWebsite")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -312,17 +327,17 @@ function CreateBreeder() {
                 />
               </Section>
 
-              <Section title="About">
+              <Section title={t("createBreederPage.sectionAbout")}>
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Short description</FormLabel>
+                      <FormLabel>{t("createBreederPage.fieldDescription")}</FormLabel>
                       <FormControl>
                         <Textarea
                           rows={5}
-                          placeholder="Share your breeding philosophy, how puppies are raised, or your organisation's mission."
+                          placeholder={t("createBreederPage.descriptionPlaceholder")}
                           {...field}
                         />
                       </FormControl>
@@ -333,7 +348,9 @@ function CreateBreeder() {
               </Section>
 
               <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Submitting…" : "Submit for verification"}
+                {form.formState.isSubmitting
+                  ? t("createBreederPage.submitting")
+                  : t("createBreederPage.submit")}
               </Button>
             </form>
           </Form>
@@ -343,21 +360,23 @@ function CreateBreeder() {
           <div className="rounded-2xl border border-border/70 bg-card p-6">
             <div className="flex items-center gap-2 text-primary">
               <ShieldCheck className="size-5" />
-              <span className="text-sm font-semibold">What verification checks</span>
+              <span className="text-sm font-semibold">
+                {t("createBreederPage.sidebarChecksTitle")}
+              </span>
             </div>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>· Owner or organisation identity</li>
-              <li>· Registration / association membership</li>
-              <li>· Reference from vet or association where relevant</li>
-              <li>· Sample health or intake records</li>
+              <li>· {t("createBreederPage.check1")}</li>
+              <li>· {t("createBreederPage.check2")}</li>
+              <li>· {t("createBreederPage.check3")}</li>
+              <li>· {t("createBreederPage.check4")}</li>
             </ul>
             <div className="mt-6 rounded-xl border border-border/70 bg-secondary/50 p-4">
               <div className="flex items-center gap-2">
                 <PawPrint className="size-4 text-primary" />
-                <span className="text-sm font-semibold">Free to publish</span>
+                <span className="text-sm font-semibold">{t("createBreederPage.freeTitle")}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                We take a small fee only when a reservation goes through. No listing fees, no ads.
+                {t("createBreederPage.freeBody")}
               </p>
             </div>
           </div>
@@ -375,17 +394,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </section>
   );
 }
-
-const statusCopy: Record<string, string> = {
-  not_started: "Your application is saved as a draft.",
-  pending: "Your application is waiting for review. This usually takes 2–5 working days.",
-  more_information_required:
-    "We need a bit more information before we can review this application.",
-  approved: "Your application has been approved — your public profile is now live.",
-  rejected: "Your application was not approved. Contact us for details.",
-  suspended: "Your organisation's verification has been suspended. Contact us for details.",
-  expired: "Your application has expired — please submit a new one.",
-};
 
 function StatusIcon({ status }: { status: string }) {
   if (status === "approved") return <CheckCircle2 className="mx-auto size-8 text-success" />;

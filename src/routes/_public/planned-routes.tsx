@@ -17,6 +17,7 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useAuth } from "@/domains/identity";
 import { joinRouteWaitlist } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/planned-routes")({
@@ -34,20 +35,19 @@ export const Route = createFileRoute("/_public/planned-routes")({
 
 function PlannedRoutesPage() {
   const { routes } = Route.useLoaderData();
+  const { t } = useTranslation();
 
   return (
     <div className="container-page py-10">
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-accent">Planned routes</p>
-          <h1 className="mt-1 font-display text-4xl font-medium">
-            Upcoming shared transport routes
-          </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            A professional schedule of planned journeys — approximate regions and dates only. Exact
-            stops, addresses and vehicle details are confirmed privately once your request is
-            accepted.
+          <p className="text-xs font-medium uppercase tracking-wider text-accent">
+            {t("plannedRoutesPage.eyebrow")}
           </p>
+          <h1 className="mt-1 font-display text-4xl font-medium">
+            {t("plannedRoutesPage.title")}
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">{t("plannedRoutesPage.subtitle")}</p>
         </div>
         <WaitlistDialog />
       </header>
@@ -56,10 +56,10 @@ function PlannedRoutesPage() {
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <RouteIcon className="mx-auto size-8 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
-            No planned routes are open right now.
+            {t("plannedRoutesPage.emptyText")}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/transport/request">Request transport</Link>
+            <Link to="/transport/request">{t("plannedRoutesPage.requestTransport")}</Link>
           </Button>
         </div>
       ) : (
@@ -84,30 +84,30 @@ function PlannedRoutesPage() {
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>
-                  <dt>Departure</dt>
+                  <dt>{t("plannedRoutesPage.departure")}</dt>
                   <dd className="font-medium text-foreground">
                     {r.departure_date
                       ? new Date(r.departure_date).toLocaleDateString("en-GB")
-                      : "Flexible"}
+                      : t("plannedRoutesPage.flexible")}
                   </dd>
                 </div>
                 <div>
-                  <dt>Places</dt>
+                  <dt>{t("plannedRoutesPage.places")}</dt>
                   <dd className="font-medium text-foreground">
                     {(r.available_capacity ?? 0) > 0
-                      ? `${r.available_capacity} may be available`
-                      : "Likely full"}
+                      ? `${r.available_capacity} ${t("plannedRoutesPage.mayBeAvailableSuffix")}`
+                      : t("plannedRoutesPage.likelyFull")}
                   </dd>
                 </div>
               </dl>
               <div className="mt-4 flex flex-col gap-2">
                 <Button asChild size="sm">
                   <Link to="/transport/request">
-                    <Truck className="mr-1 size-4" /> Request a place
+                    <Truck className="mr-1 size-4" /> {t("plannedRoutesPage.requestPlace")}
                   </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/transport/request">Request individual / express / VIP instead</Link>
+                  <Link to="/transport/request">{t("plannedRoutesPage.requestOther")}</Link>
                 </Button>
               </div>
             </div>
@@ -120,6 +120,7 @@ function PlannedRoutesPage() {
 
 function WaitlistDialog() {
   const { userId } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -135,7 +136,8 @@ function WaitlistDialog() {
         earliestDate: earliestDate || null,
       }),
     onSuccess: () => setSubmitted(true),
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not join waitlist.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("plannedRoutesPage.couldNotJoin"))),
   });
 
   return (
@@ -153,7 +155,7 @@ function WaitlistDialog() {
     >
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Bell className="mr-1 size-4" /> Don't see your route? Join the waitlist
+          <Bell className="mr-1 size-4" /> {t("plannedRoutesPage.waitlistTrigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -161,29 +163,28 @@ function WaitlistDialog() {
           <div className="py-4 text-center">
             <p className="text-sm text-muted-foreground">
               <Link to="/signin" className="text-primary hover:underline">
-                Sign in
+                {t("nav.signIn")}
               </Link>{" "}
-              to join a route waitlist.
+              {t("plannedRoutesPage.signInToJoinPrefix")}
             </p>
           </div>
         ) : submitted ? (
           <div className="py-4 text-center">
             <CheckCircle2 className="mx-auto size-8 text-success" />
-            <p className="mt-3 font-medium">You're on the list</p>
+            <p className="mt-3 font-medium">{t("plannedRoutesPage.onListTitle")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              We'll let you know if a route matching this gets planned. This isn't a confirmed
-              transport — you can still request transport directly any time.
+              {t("plannedRoutesPage.onListBody")}
             </p>
           </div>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Join the route waitlist</DialogTitle>
+              <DialogTitle>{t("plannedRoutesPage.waitlistTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>From</Label>
+                  <Label>{t("plannedRoutesPage.from")}</Label>
                   <Input
                     placeholder="e.g. Poland"
                     value={origin}
@@ -191,7 +192,7 @@ function WaitlistDialog() {
                   />
                 </div>
                 <div>
-                  <Label>To</Label>
+                  <Label>{t("plannedRoutesPage.to")}</Label>
                   <Input
                     placeholder="e.g. Spain"
                     value={destination}
@@ -200,7 +201,7 @@ function WaitlistDialog() {
                 </div>
               </div>
               <div>
-                <Label>Earliest you'd need it (optional)</Label>
+                <Label>{t("plannedRoutesPage.earliestNeeded")}</Label>
                 <Input
                   type="date"
                   value={earliestDate}
@@ -212,7 +213,7 @@ function WaitlistDialog() {
                 disabled={!origin.trim() || !destination.trim() || mutation.isPending}
                 onClick={() => mutation.mutate()}
               >
-                Join waitlist
+                {t("plannedRoutesPage.joinWaitlist")}
               </Button>
             </div>
           </>

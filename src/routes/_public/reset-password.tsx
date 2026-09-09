@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useTranslation } from "@/shared/i18n";
 
 const schema = z
   .object({
@@ -32,6 +33,7 @@ function ResetPassword() {
   // browser client picks it up automatically on load and establishes a temporary session for
   // exactly this purpose. Until that happens we can't safely show the form.
   const [ready, setReady] = useState(false);
+  const { t } = useTranslation();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
@@ -55,7 +57,7 @@ function ResetPassword() {
       toast.error(error.message);
       return;
     }
-    toast.success("Password updated — you're signed in.");
+    toast.success(t("resetPassword.updatedToast"));
     await navigate({ to: "/dashboard/buyer" });
   }
 
@@ -68,13 +70,10 @@ function ResetPassword() {
           </span>
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
-        <h1 className="mt-6 font-display text-3xl font-medium">Choose a new password</h1>
+        <h1 className="mt-6 font-display text-3xl font-medium">{t("resetPassword.title")}</h1>
 
         {!ready ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Open this page from the reset link in your email. If you just clicked it, this should
-            update in a moment.
-          </p>
+          <p className="mt-4 text-sm text-muted-foreground">{t("resetPassword.notReady")}</p>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
@@ -83,7 +82,7 @@ function ResetPassword() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New password</FormLabel>
+                    <FormLabel>{t("resetPassword.newPassword")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -96,7 +95,7 @@ function ResetPassword() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm password</FormLabel>
+                    <FormLabel>{t("resetPassword.confirmPassword")}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -110,7 +109,9 @@ function ResetPassword() {
                 size="lg"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? "Updating…" : "Update password"}
+                {form.formState.isSubmitting
+                  ? t("resetPassword.submitting")
+                  : t("resetPassword.submit")}
               </Button>
             </form>
           </Form>

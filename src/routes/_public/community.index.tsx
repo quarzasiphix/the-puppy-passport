@@ -21,6 +21,7 @@ import {
 } from "@/domains/community";
 import { listFollowedOrgIds } from "@/domains/marketplace";
 import { listFollowedProfileIds } from "@/domains/identity";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 // Plain-language labels for post_type — real content-type separation (docs/PRODUCT_VISION.md
@@ -28,26 +29,30 @@ import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 // — seed data has no posts using those fields, and building an unverified preview against private-
 // adjacent tables (transport_requests) wasn't worth the risk this pass; see
 // docs/IMPLEMENTATION_PLAN.md phase 12.
-const POST_TYPE_LABELS: Record<string, string> = {
-  general: "General",
-  transport_update: "Transport update",
-  route_announcement: "Planned route",
-  litter_announcement: "Litter announcement",
-  adoption_post: "Adoption",
-  achievement: "Achievement",
-};
+function postTypeLabel(t: (key: string) => string, postType: string): string {
+  const map: Record<string, string> = {
+    general: t("communityPage.postTypes.general"),
+    transport_update: t("communityPage.postTypes.transportUpdate"),
+    route_announcement: t("communityPage.postTypes.routeAnnouncement"),
+    litter_announcement: t("communityPage.postTypes.litterAnnouncement"),
+    adoption_post: t("communityPage.postTypes.adoptionPost"),
+    achievement: t("communityPage.postTypes.achievement"),
+  };
+  return map[postType] ?? postType;
+}
 
 export const Route = createFileRoute("/_public/community/")({
   head: () => ({ meta: [{ title: "Community — Anemalo" }] }),
   component: CommunityPage,
 });
 
-function authorName(p: PostRow) {
-  return p.organisations?.name ?? p.profiles?.display_name ?? "Anemalo member";
+function authorName(p: PostRow, t: (key: string) => string) {
+  return p.organisations?.name ?? p.profiles?.display_name ?? t("communityPage.anonymousMember");
 }
 
 function CommunityPage() {
   const { userId } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [newPost, setNewPost] = useState("");
 
@@ -99,31 +104,31 @@ function CommunityPage() {
     onSuccess: () => {
       setNewPost("");
       queryClient.invalidateQueries({ queryKey: ["public-posts"] });
-      toast.success("Posted.");
+      toast.success(t("communityPage.postedToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not post.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("communityPage.couldNotPost"))),
   });
 
   return (
     <div className="container-page max-w-2xl py-10">
       <header className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-accent">Community</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-accent">
+          {t("communityPage.eyebrow")}
+        </p>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-3xl font-medium">Community</h1>
+          <h1 className="font-display text-3xl font-medium">{t("communityPage.title")}</h1>
           <Link to="/community/groups" className="text-sm font-medium text-primary hover:underline">
-            Browse groups →
+            {t("communityPage.browseGroups")} →
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Updates, questions and stories from breeders, foundations and fellow dog people.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("communityPage.subtitle")}</p>
       </header>
 
       {userId ? (
         <div className="mb-6 rounded-2xl border border-border/70 bg-card p-4">
           <Textarea
             rows={3}
-            placeholder="Share something with the community…"
+            placeholder={t("communityPage.sharePlaceholder")}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
           />
@@ -133,24 +138,24 @@ function CommunityPage() {
               disabled={!newPost.trim() || createPostMutation.isPending}
               onClick={() => createPostMutation.mutate()}
             >
-              Post
+              {t("communityPage.post")}
             </Button>
           </div>
         </div>
       ) : (
         <div className="mb-6 rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-4 text-center text-sm text-muted-foreground">
-          Sign in to post, like and comment.
+          {t("communityPage.signInToPost")}
         </div>
       )}
 
       {postsQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("communityPage.loading")}</p>
       ) : posts.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <Users className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No posts yet</p>
+          <p className="mt-3 font-medium">{t("communityPage.noPostsTitle")}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Be the first to share something with the community.
+            {t("communityPage.noPostsDesc")}
           </p>
         </div>
       ) : (
@@ -158,7 +163,7 @@ function CommunityPage() {
           {followedPosts.length > 0 && (
             <div>
               <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-accent">
-                From people and kennels you follow
+                {t("communityPage.fromFollowed")}
               </h2>
               <div className="space-y-4">
                 {followedPosts.map((post) => (
@@ -177,7 +182,7 @@ function CommunityPage() {
           <div>
             {followedPosts.length > 0 && (
               <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                More from the community
+                {t("communityPage.moreFromCommunity")}
               </h2>
             )}
             <div className="space-y-4">
@@ -213,6 +218,7 @@ function PostCard({
   userId: string | null | undefined;
 }) {
   const queryClient = useQueryClient();
+  const { t, locale } = useTranslation();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
 
@@ -228,7 +234,7 @@ function PostCard({
       queryClient.invalidateQueries({ queryKey: ["post-reaction-counts"] });
       queryClient.invalidateQueries({ queryKey: ["my-post-reactions"] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("communityPage.couldNotUpdate"))),
   });
 
   const commentMutation = useMutation({
@@ -238,7 +244,7 @@ function PostCard({
       queryClient.invalidateQueries({ queryKey: ["post-comments", post.id] });
       queryClient.invalidateQueries({ queryKey: ["post-comment-counts"] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not comment.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("communityPage.couldNotComment"))),
   });
 
   return (
@@ -248,7 +254,7 @@ function PostCard({
           <AvatarImage
             src={post.organisations?.logo_url ?? post.profiles?.avatar_url ?? undefined}
           />
-          <AvatarFallback>{authorName(post).charAt(0)}</AvatarFallback>
+          <AvatarFallback>{authorName(post, t).charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
           <div className="flex items-center gap-2 font-medium">
@@ -258,19 +264,19 @@ function PostCard({
                 params={{ profileId: post.author_profile_id }}
                 className="hover:underline"
               >
-                {authorName(post)}
+                {authorName(post, t)}
               </Link>
             ) : (
-              authorName(post)
+              authorName(post, t)
             )}
             {post.post_type !== "general" && (
               <Badge variant="outline" className="text-xs font-normal">
-                {POST_TYPE_LABELS[post.post_type] ?? post.post_type}
+                {postTypeLabel(t, post.post_type)}
               </Badge>
             )}
           </div>
           <div className="text-xs text-muted-foreground">
-            {new Date(post.created_at).toLocaleDateString("en-GB", {
+            {new Date(post.created_at).toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", {
               day: "numeric",
               month: "short",
               year: "numeric",
@@ -313,7 +319,7 @@ function PostCard({
                   params={{ profileId: c.author_profile_id }}
                   className="font-medium hover:underline"
                 >
-                  {c.profiles?.display_name ?? "Member"}
+                  {c.profiles?.display_name ?? t("communityPage.memberFallback")}
                 </Link>{" "}
                 <span className="text-muted-foreground">{c.content}</span>
               </div>
@@ -323,7 +329,7 @@ function PostCard({
             <div className="flex gap-2">
               <Textarea
                 rows={1}
-                placeholder="Write a comment…"
+                placeholder={t("communityPage.commentPlaceholder")}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="min-h-0"

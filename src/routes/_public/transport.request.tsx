@@ -26,22 +26,24 @@ import {
   saveDraft,
 } from "@/domains/transport";
 import { getPuppyById } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/transport/request")({
   head: () => ({ meta: [{ title: "Request transport — Anemalo" }] }),
   component: TransportRequestPage,
 });
 
-const purposeOptions = [
-  ["own_dog", "Transport of my own dog"],
-  ["purchased_puppy", "Transport of a purchased puppy"],
-  ["planned_sale", "Transport related to a planned sale"],
-  ["adoption", "Transport after adoption"],
-  ["foundation_rescue", "Foundation or rescue transport"],
-  ["relocation", "Relocation to a new home"],
-  ["exhibition", "Transport to an exhibition"],
-  ["veterinary", "Veterinary-related transport"],
-  ["other", "Other"],
+// Purpose values only — labels come from t("transportRequest.purpose_<value>") at render time.
+const purposeValues = [
+  "own_dog",
+  "purchased_puppy",
+  "planned_sale",
+  "adoption",
+  "foundation_rescue",
+  "relocation",
+  "exhibition",
+  "veterinary",
+  "other",
 ] as const;
 
 const schema = z.object({
@@ -172,15 +174,8 @@ const stepFields: (keyof FormValues)[][] = [
   ],
 ];
 
-const steps = [
-  "Request type",
-  "Animal information",
-  "Parties involved",
-  "Route",
-  "Legal & document classification",
-  "Service & quotation",
-  "Summary & declarations",
-];
+// Step count is what matters for navigation; step titles come from t("transportRequest.step<n>").
+const STEP_COUNT = 7;
 
 // Shared by both the final submit (status "submitted") and "Save draft" (status "draft") — a
 // draft is deliberately allowed to carry incomplete/invalid data (required-field validation only
@@ -350,6 +345,7 @@ function mapRowToFormValues(row: Record<string, unknown>, current: FormValues): 
 
 function TransportRequestPage() {
   const { userId, isLoading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<{ requestNumber: string; status: string } | null>(null);
@@ -512,7 +508,7 @@ function TransportRequestPage() {
           .catch(() => {});
       }
       form.reset(mapRowToFormValues(data, form.getValues()));
-      toast.info("Resumed your draft.");
+      toast.info(t("transportRequest.toastResumedDraft"));
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -533,9 +529,9 @@ function TransportRequestPage() {
         ),
       );
       setDraftId(saved.id);
-      toast.success("Draft saved — resume it any time from your dashboard.");
+      toast.success(t("transportRequest.toastDraftSaved"));
     } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, "Could not save the draft."));
+      toast.error(getFriendlyErrorMessage(err, t("transportRequest.toastCouldNotSaveDraft")));
     } finally {
       setSavingDraft(false);
     }
@@ -544,7 +540,7 @@ function TransportRequestPage() {
   async function goNext() {
     const valid = await form.trigger(stepFields[step]);
     if (!valid) return;
-    if (step < steps.length - 1) setStep(step + 1);
+    if (step < STEP_COUNT - 1) setStep(step + 1);
   }
 
   async function onSubmit(values: FormValues) {
@@ -565,12 +561,16 @@ function TransportRequestPage() {
       setResult({ requestNumber: created.request_number ?? "", status: created.status });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, "Could not submit the request."));
+      toast.error(getFriendlyErrorMessage(err, t("transportRequest.toastCouldNotSubmit")));
     }
   }
 
   if (authLoading) {
-    return <div className="container-page py-24 text-center text-muted-foreground">Loading…</div>;
+    return (
+      <div className="container-page py-24 text-center text-muted-foreground">
+        {t("transportRequest.loading")}
+      </div>
+    );
   }
 
   if (!userId) {
@@ -578,16 +578,16 @@ function TransportRequestPage() {
       <div className="container-page grid min-h-[60vh] place-items-center py-16 text-center">
         <div className="max-w-md">
           <Truck className="mx-auto size-8 text-primary" />
-          <h1 className="mt-4 font-display text-3xl font-medium">Sign in to request transport</h1>
-          <p className="mt-2 text-muted-foreground">
-            Create a free account to submit and track a transport request.
-          </p>
+          <h1 className="mt-4 font-display text-3xl font-medium">
+            {t("transportRequest.signInTitle")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">{t("transportRequest.signInBody")}</p>
           <div className="mt-6 flex justify-center gap-2">
             <Button asChild size="lg">
-              <Link to="/signup">Create an account</Link>
+              <Link to="/signup">{t("transportRequest.createAccount")}</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/signin">Sign in</Link>
+              <Link to="/signin">{t("transportRequest.signIn")}</Link>
             </Button>
           </div>
         </div>
@@ -603,21 +603,24 @@ function TransportRequestPage() {
     <div className="container-page py-10">
       <header className="mb-8">
         <p className="text-xs font-medium uppercase tracking-wider text-accent">
-          Transport request
+          {t("transportRequest.eyebrow")}
         </p>
-        <h1 className="mt-1 font-display text-4xl font-medium">Plan a safe journey for your dog</h1>
+        <h1 className="mt-1 font-display text-4xl font-medium">{t("transportRequest.title")}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Step {step + 1} of {steps.length}: {steps[step]}
+          {t("transportRequest.stepPrefix")} {step + 1} {t("transportRequest.stepOf")}{" "}
+          {STEP_COUNT}: {t(`transportRequest.step${step}`)}
         </p>
-        <Progress value={((step + 1) / steps.length) * 100} className="mt-4 max-w-2xl" />
+        <Progress value={((step + 1) / STEP_COUNT) * 100} className="mt-4 max-w-2xl" />
 
         {linkedAnimal && (
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
             <Info className="mt-0.5 size-4 shrink-0 text-primary" />
             <span>
-              Requesting transport for <strong>{linkedAnimal.name}</strong> from{" "}
-              <strong>{linkedAnimal.kennel}</strong>. We've pre-filled what we know — please confirm
-              the exact pickup and destination details below.
+              {t("transportRequest.linkedAnimalPrefix")}
+              <strong>{linkedAnimal.name}</strong>
+              {t("transportRequest.linkedAnimalFrom")}
+              <strong>{linkedAnimal.kennel}</strong>
+              {t("transportRequest.linkedAnimalSuffix")}
             </span>
           </div>
         )}
@@ -625,12 +628,13 @@ function TransportRequestPage() {
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
             <Info className="mt-0.5 size-4 shrink-0 text-warning" />
             <span>
-              You already have an open transport request ({duplicateWarning.requestNumber}) for this
-              animal. You can still submit a new one, but check your{" "}
+              {t("transportRequest.duplicatePrefix")}
+              {duplicateWarning.requestNumber}
+              {t("transportRequest.duplicateMid")}
               <Link to="/dashboard/buyer/transport" className="underline">
-                existing requests
-              </Link>{" "}
-              first to avoid duplicates.
+                {t("transportRequest.duplicateLink")}
+              </Link>
+              {t("transportRequest.duplicateSuffix")}
             </span>
           </div>
         )}
@@ -639,7 +643,7 @@ function TransportRequestPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (step === steps.length - 1) form.handleSubmit(onSubmit)();
+          if (step === STEP_COUNT - 1) form.handleSubmit(onSubmit)();
           else goNext();
         }}
         className="grid gap-8 lg:grid-cols-[1fr_320px]"
@@ -660,7 +664,7 @@ function TransportRequestPage() {
               onClick={() => setStep(Math.max(0, step - 1))}
               disabled={step === 0}
             >
-              <ArrowLeft className="mr-1 size-4" /> Back
+              <ArrowLeft className="mr-1 size-4" /> {t("transportRequest.back")}
             </Button>
             <div className="flex items-center gap-2">
               <Button
@@ -669,15 +673,17 @@ function TransportRequestPage() {
                 onClick={handleSaveDraft}
                 disabled={savingDraft}
               >
-                {savingDraft ? "Saving…" : "Save draft"}
+                {savingDraft ? t("transportRequest.saving") : t("transportRequest.saveDraft")}
               </Button>
-              {step < steps.length - 1 ? (
+              {step < STEP_COUNT - 1 ? (
                 <Button type="submit">
-                  Continue <ArrowRight className="ml-1 size-4" />
+                  {t("transportRequest.continue")} <ArrowRight className="ml-1 size-4" />
                 </Button>
               ) : (
                 <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Submitting…" : "Submit request"}
+                  {form.formState.isSubmitting
+                    ? t("transportRequest.submitting")
+                    : t("transportRequest.submitRequest")}
                 </Button>
               )}
             </div>
@@ -686,18 +692,17 @@ function TransportRequestPage() {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-border/70 bg-card p-6">
-            <h3 className="font-display text-lg font-semibold">What happens next</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {t("transportRequest.asideTitle")}
+            </h3>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>· Operations reviews the animal and document information</li>
-              <li>· A quotation is prepared for your chosen service category</li>
-              <li>· Pickup and route are scheduled once accepted</li>
+              <li>· {t("transportRequest.aside1")}</li>
+              <li>· {t("transportRequest.aside2")}</li>
+              <li>· {t("transportRequest.aside3")}</li>
             </ul>
             <div className="mt-4 flex items-start gap-2 rounded-xl border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                Submitting a request does not guarantee transport or a fixed price. Final
-                eligibility and pricing are confirmed after review.
-              </span>
+              <span>{t("transportRequest.asideNote")}</span>
             </div>
           </div>
         </aside>
@@ -715,16 +720,18 @@ function SubmittedSummary({
   requestNumber: string;
   formValues: FormValues;
 }) {
+  const { t } = useTranslation();
   const routeMatchQuery = useQuery({
     queryKey: ["likely-route-match", formValues.destinationCountry],
     queryFn: () => findLikelyRouteMatch(formValues.destinationCountry),
   });
   const [priceLow, priceHigh] = estimatePriceRange(formValues.requestedServiceType);
   const missing: string[] = [];
-  if (!formValues.microchipKnown) missing.push("Microchip number");
-  if (!formValues.passportAvailable) missing.push("Animal passport");
-  if (!formValues.pickupAddressExact) missing.push("Exact pickup address");
-  if (!formValues.destinationAddressExact) missing.push("Exact destination address");
+  if (!formValues.microchipKnown) missing.push(t("transportRequest.missingMicrochip"));
+  if (!formValues.passportAvailable) missing.push(t("transportRequest.missingPassport"));
+  if (!formValues.pickupAddressExact) missing.push(t("transportRequest.missingPickupAddress"));
+  if (!formValues.destinationAddressExact)
+    missing.push(t("transportRequest.missingDestinationAddress"));
 
   return (
     <div className="container-page py-10">
@@ -733,36 +740,38 @@ function SubmittedSummary({
           <Check className="size-7" />
         </div>
         <h2 className="mt-4 text-center font-display text-2xl font-medium">
-          Transport request submitted
+          {t("transportRequest.summarySubmittedTitle")}
         </h2>
         <p className="mx-auto mt-2 max-w-lg text-center text-sm text-muted-foreground">
-          Your reference number is <strong>{requestNumber}</strong>. Submitting a request does not
-          confirm transport — our operations team reviews the details and documents before preparing
-          a quotation.
+          {t("transportRequest.summaryRefPrefix")}
+          <strong>{requestNumber}</strong>
+          {t("transportRequest.summaryRefSuffix")}
         </p>
 
         <div className="mx-auto mt-6 grid max-w-lg gap-3">
           <div className="rounded-xl border border-border/70 bg-background p-4">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Estimated price range
+              {t("transportRequest.summaryPriceRange")}
             </div>
             <div className="mt-1 font-display text-xl font-semibold">
               €{priceLow} – €{priceHigh}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Indicative only, based on your selected service — not a confirmed quotation.
+              {t("transportRequest.summaryPriceNote")}
             </p>
           </div>
 
           {routeMatchQuery.data && (
             <div className="rounded-xl border border-border/70 bg-background p-4">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Possible route match
+                {t("transportRequest.summaryRouteMatch")}
               </div>
               <p className="mt-1 text-sm">
-                A planned route ("{routeMatchQuery.data.route_name}") already heads toward{" "}
-                {formValues.destinationCountry} — operations will confirm whether it can include
-                you.
+                {t("transportRequest.summaryRouteMatchPrefix")}
+                {routeMatchQuery.data.route_name}
+                {t("transportRequest.summaryRouteMatchMid")}
+                {formValues.destinationCountry}
+                {t("transportRequest.summaryRouteMatchSuffix")}
               </p>
             </div>
           )}
@@ -770,7 +779,7 @@ function SubmittedSummary({
           {missing.length > 0 && (
             <div className="rounded-xl border border-border/70 bg-background p-4">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                Still needed
+                {t("transportRequest.summaryStillNeeded")}
               </div>
               <ul className="mt-1 space-y-1 text-sm text-muted-foreground">
                 {missing.map((m) => (
@@ -781,19 +790,19 @@ function SubmittedSummary({
           )}
 
           <div className="rounded-xl border border-border/70 bg-background p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Next action</div>
-            <p className="mt-1 text-sm">
-              Sit tight — operations will review your request and be in touch.
-            </p>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+              {t("transportRequest.summaryNextAction")}
+            </div>
+            <p className="mt-1 text-sm">{t("transportRequest.summaryNextActionBody")}</p>
           </div>
         </div>
 
         <div className="mt-6 flex justify-center gap-2">
           <Button asChild size="lg">
-            <Link to="/dashboard/buyer">View in your dashboard</Link>
+            <Link to="/dashboard/buyer">{t("transportRequest.summaryViewDashboard")}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/">Back to home</Link>
+            <Link to="/">{t("transportRequest.summaryBackHome")}</Link>
           </Button>
         </div>
       </div>
@@ -843,8 +852,9 @@ function YesNo({
 }
 
 function Step1({ form }: { form: UseFormReturn<FormValues> }) {
+  const { t } = useTranslation();
   return (
-    <Section title="What does this request concern?">
+    <Section title={t("transportRequest.step1Section")}>
       <Controller
         control={form.control}
         name="requestPurpose"
@@ -854,12 +864,12 @@ function Step1({ form }: { form: UseFormReturn<FormValues> }) {
             onValueChange={field.onChange}
             className="grid gap-2 md:grid-cols-2"
           >
-            {purposeOptions.map(([v, l]) => (
+            {purposeValues.map((v) => (
               <label
                 key={v}
                 className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm"
               >
-                <RadioGroupItem value={v} /> {l}
+                <RadioGroupItem value={v} /> {t(`transportRequest.purpose_${v}`)}
               </label>
             ))}
           </RadioGroup>
@@ -868,7 +878,7 @@ function Step1({ form }: { form: UseFormReturn<FormValues> }) {
       <YesNo
         control={form.control}
         name="ownershipChanging"
-        label="Ownership of the animal will change during or after this journey"
+        label={t("transportRequest.ownershipChanging")}
       />
     </Section>
   );
@@ -876,19 +886,20 @@ function Step1({ form }: { form: UseFormReturn<FormValues> }) {
 
 function Step2({ form }: { form: UseFormReturn<FormValues> }) {
   const { register, control, formState } = form;
+  const { t } = useTranslation();
   return (
-    <Section title="Animal information">
+    <Section title={t("transportRequest.step2Section")}>
       <div className="grid gap-4 md:grid-cols-2">
-        <F label="Animal name">
+        <F label={t("transportRequest.fAnimalName")}>
           <Input {...register("animalName")} />
           {formState.errors.animalName && (
             <p className="text-xs text-destructive">{formState.errors.animalName.message}</p>
           )}
         </F>
-        <F label="Breed or mixed breed">
+        <F label={t("transportRequest.fBreed")}>
           <Input {...register("breedFreeText")} />
         </F>
-        <F label="Sex">
+        <F label={t("transportRequest.fSex")}>
           <Controller
             control={control}
             name="sex"
@@ -898,20 +909,23 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="male">{t("transportRequest.sexMale")}</SelectItem>
+                  <SelectItem value="female">{t("transportRequest.sexFemale")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
         </F>
-        <F label="Approximate age">
-          <Input placeholder="e.g. 2 years" {...register("approximateAge")} />
+        <F label={t("transportRequest.fApproximateAge")}>
+          <Input
+            placeholder={t("transportRequest.approximateAgePlaceholder")}
+            {...register("approximateAge")}
+          />
         </F>
-        <F label="Weight (kg)">
+        <F label={t("transportRequest.fWeight")}>
           <Input type="number" step="0.1" {...register("weightKg")} />
         </F>
-        <F label="Size">
+        <F label={t("transportRequest.fSize")}>
           <Controller
             control={control}
             name="sizeCategory"
@@ -921,10 +935,10 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="small">Small</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="large">Large</SelectItem>
-                  <SelectItem value="giant">Giant</SelectItem>
+                  <SelectItem value="small">{t("transportRequest.sizeSmall")}</SelectItem>
+                  <SelectItem value="medium">{t("transportRequest.sizeMedium")}</SelectItem>
+                  <SelectItem value="large">{t("transportRequest.sizeLarge")}</SelectItem>
+                  <SelectItem value="giant">{t("transportRequest.sizeGiant")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -933,43 +947,54 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <YesNo control={control} name="microchipKnown" label="Microchip number is known" />
-        <YesNo control={control} name="passportAvailable" label="Animal passport is available" />
+        <YesNo
+          control={control}
+          name="microchipKnown"
+          label={t("transportRequest.microchipKnown")}
+        />
+        <YesNo
+          control={control}
+          name="passportAvailable"
+          label={t("transportRequest.passportAvailable")}
+        />
       </div>
       {form.watch("microchipKnown") && (
-        <F label="Microchip number">
+        <F label={t("transportRequest.fMicrochipNumber")}>
           <Input {...register("microchipNumber")} />
         </F>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <F label="Vaccination status">
-          <Input placeholder="e.g. up to date" {...register("vaccinationStatus")} />
+        <F label={t("transportRequest.fVaccinationStatus")}>
+          <Input
+            placeholder={t("transportRequest.vaccinationStatusPlaceholder")}
+            {...register("vaccinationStatus")}
+          />
         </F>
-        <F label="Rabies vaccination date">
+        <F label={t("transportRequest.fRabiesDate")}>
           <Input type="date" {...register("rabiesVaccinationDate")} />
         </F>
       </div>
-      <F label="Health condition">
+      <F label={t("transportRequest.fHealthCondition")}>
         <Textarea rows={2} {...register("healthCondition")} />
       </F>
-      <F label="Current medication">
+      <F label={t("transportRequest.fMedication")}>
         <Input {...register("medication")} />
       </F>
       <div className="grid gap-4 md:grid-cols-2">
-        <F label="Behavioural information">
+        <F label={t("transportRequest.fBehaviouralNotes")}>
           <Textarea rows={2} {...register("behaviouralNotes")} />
         </F>
-        <F label="Anxiety or aggression information">
+        <F label={t("transportRequest.fAnxietyNotes")}>
           <Textarea rows={2} {...register("anxietyOrAggressionNotes")} />
         </F>
       </div>
       <YesNo
         control={control}
         name="canTravelWithOthers"
-        label="Can travel safely near other animals"
+        label={t("transportRequest.canTravelWithOthers")}
       />
-      <F label="Transport crate requirements">
+      <F label={t("transportRequest.fCrateRequirements")}>
         <Input {...register("crateRequirements")} />
       </F>
     </Section>
@@ -978,23 +1003,20 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
 
 function Step3({ form }: { form: UseFormReturn<FormValues> }) {
   const { control, register } = form;
+  const { t } = useTranslation();
   return (
-    <Section title="Parties involved">
-      <p className="text-sm text-muted-foreground">
-        The platform account owner, the legal owner, the sender and the recipient may be different
-        people. For now we record what we can verify directly from your account plus free-text notes
-        for anyone else involved — a full contact directory is coming in a later update.
-      </p>
+    <Section title={t("transportRequest.step3Section")}>
+      <p className="text-sm text-muted-foreground">{t("transportRequest.step3Intro")}</p>
       <YesNo
         control={control}
         name="isCurrentOwner"
-        label="I am the current legal owner of this animal"
+        label={t("transportRequest.isCurrentOwner")}
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <F label="Person authorised to release the animal">
+        <F label={t("transportRequest.fReleaseAuthorizedBy")}>
           <Input {...register("releaseAuthorizedBy")} />
         </F>
-        <F label="Person authorised to receive the animal">
+        <F label={t("transportRequest.fReceiveAuthorizedBy")}>
           <Input {...register("receiveAuthorizedBy")} />
         </F>
       </div>
@@ -1004,48 +1026,58 @@ function Step3({ form }: { form: UseFormReturn<FormValues> }) {
 
 function Step4({ form }: { form: UseFormReturn<FormValues> }) {
   const { register, control, formState } = form;
+  const { t } = useTranslation();
   return (
-    <Section title="Route">
+    <Section title={t("transportRequest.step4Section")}>
       <div className="grid gap-4 md:grid-cols-2">
-        <F label="Pickup country">
+        <F label={t("transportRequest.fPickupCountry")}>
           <Input {...register("pickupCountry")} />
         </F>
-        <F label="Pickup city">
+        <F label={t("transportRequest.fPickupCity")}>
           <Input {...register("pickupCity")} />
         </F>
-        <F label="Approximate pickup area">
-          <Input placeholder="e.g. Śródmieście district" {...register("pickupAreaApprox")} />
+        <F label={t("transportRequest.fPickupArea")}>
+          <Input
+            placeholder={t("transportRequest.pickupAreaPlaceholder")}
+            {...register("pickupAreaApprox")}
+          />
         </F>
-        <F label="Exact pickup address (private — shown only to authorised staff after acceptance)">
+        <F label={t("transportRequest.fPickupAddressExact")}>
           <Input {...register("pickupAddressExact")} />
         </F>
-        <F label="Destination country">
+        <F label={t("transportRequest.fDestinationCountry")}>
           <Input {...register("destinationCountry")} />
         </F>
-        <F label="Destination city">
+        <F label={t("transportRequest.fDestinationCity")}>
           <Input {...register("destinationCity")} />
         </F>
-        <F label="Approximate destination area">
+        <F label={t("transportRequest.fDestinationArea")}>
           <Input {...register("destinationAreaApprox")} />
         </F>
-        <F label="Exact destination address (private — shown only to authorised staff after acceptance)">
+        <F label={t("transportRequest.fDestinationAddressExact")}>
           <Input {...register("destinationAddressExact")} />
         </F>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <F label="Earliest possible date">
+        <F label={t("transportRequest.fEarliestDate")}>
           <Input type="date" {...register("earliestDate")} />
-          {formState.errors.earliestDate && <p className="text-xs text-destructive">Required</p>}
+          {formState.errors.earliestDate && (
+            <p className="text-xs text-destructive">{t("transportRequest.required")}</p>
+          )}
         </F>
-        <F label="Latest acceptable date">
+        <F label={t("transportRequest.fLatestDate")}>
           <Input type="date" {...register("latestDate")} />
         </F>
-        <F label="Number of animals">
+        <F label={t("transportRequest.fNumberOfAnimals")}>
           <Input type="number" min={1} {...register("numberOfAnimals")} />
         </F>
       </div>
-      <YesNo control={control} name="flexibleDates" label="I'm flexible on the exact date" />
-      <F label="Delivery preference">
+      <YesNo
+        control={control}
+        name="flexibleDates"
+        label={t("transportRequest.flexibleDates")}
+      />
+      <F label={t("transportRequest.fDeliveryPreference")}>
         <Controller
           control={control}
           name="deliveryType"
@@ -1056,10 +1088,10 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
               className="grid gap-2 md:grid-cols-2"
             >
               <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
-                <RadioGroupItem value="home_delivery" /> Home delivery
+                <RadioGroupItem value="home_delivery" /> {t("transportRequest.homeDelivery")}
               </label>
               <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
-                <RadioGroupItem value="meeting_point" /> Meeting point
+                <RadioGroupItem value="meeting_point" /> {t("transportRequest.meetingPoint")}
               </label>
             </RadioGroup>
           )}
@@ -1071,85 +1103,90 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
 
 function Step5({ form }: { form: UseFormReturn<FormValues> }) {
   const { control } = form;
+  const { t } = useTranslation();
   return (
-    <Section title="Legal and document classification">
-      <p className="text-sm text-muted-foreground">
-        This does not make a final legal decision — it helps our operations team route your request
-        to the right review.
-      </p>
+    <Section title={t("transportRequest.step5Section")}>
+      <p className="text-sm text-muted-foreground">{t("transportRequest.step5Intro")}</p>
       <div className="grid gap-3 md:grid-cols-2">
+        <YesNo control={control} name="isDomestic" label={t("transportRequest.legalIsDomestic")} />
+        <YesNo control={control} name="isSale" label={t("transportRequest.legalIsSale")} />
         <YesNo
           control={control}
-          name="isDomestic"
-          label="This is a domestic journey (same country)"
+          name="isOwnershipChange"
+          label={t("transportRequest.legalIsOwnershipChange")}
         />
-        <YesNo control={control} name="isSale" label="The animal is being sold" />
-        <YesNo control={control} name="isOwnershipChange" label="Ownership is changing" />
-        <YesNo control={control} name="isAdoption" label="This is an adoption" />
+        <YesNo control={control} name="isAdoption" label={t("transportRequest.legalIsAdoption")} />
         <YesNo
           control={control}
           name="travellingWithOwner"
-          label="The animal is travelling with its owner"
+          label={t("transportRequest.legalTravellingWithOwner")}
         />
         <YesNo
           control={control}
           name="ownerTravelWithin5Days"
-          label="Owner will travel within 5 days of the animal"
+          label={t("transportRequest.legalOwnerTravelWithin5Days")}
         />
         <YesNo
           control={control}
           name="senderIsRegisteredBreeder"
-          label="Sender is a registered breeder"
+          label={t("transportRequest.legalSenderIsRegisteredBreeder")}
         />
         <YesNo
           control={control}
           name="senderIsVerifiedOrg"
-          label="Sender is a verified foundation, shelter or rescue"
+          label={t("transportRequest.legalSenderIsVerifiedOrg")}
         />
         <YesNo
           control={control}
           name="originRegisteredOrApproved"
-          label="Place of origin is registered/approved where required"
+          label={t("transportRequest.legalOriginRegisteredOrApproved")}
         />
-        <YesNo control={control} name="hasPassport" label="Animal has a passport" />
-        <YesNo control={control} name="hasMicrochip" label="Animal has a microchip" />
-        <YesNo control={control} name="rabiesValid" label="Rabies vaccination is valid" />
+        <YesNo
+          control={control}
+          name="hasPassport"
+          label={t("transportRequest.legalHasPassport")}
+        />
+        <YesNo
+          control={control}
+          name="hasMicrochip"
+          label={t("transportRequest.legalHasMicrochip")}
+        />
+        <YesNo
+          control={control}
+          name="rabiesValid"
+          label={t("transportRequest.legalRabiesValid")}
+        />
         <YesNo
           control={control}
           name="healthCertificateRequired"
-          label="A health certificate is required"
+          label={t("transportRequest.legalHealthCertificateRequired")}
         />
         <YesNo
           control={control}
           name="tracesNotificationRequired"
-          label="A TRACES notification is required"
+          label={t("transportRequest.legalTracesNotificationRequired")}
         />
         <YesNo
           control={control}
           name="destinationTreatmentRequired"
-          label="Destination-specific treatment is required"
+          label={t("transportRequest.legalDestinationTreatmentRequired")}
         />
         <YesNo
           control={control}
           name="medicallyFitForTransport"
-          label="Animal is medically fit for transport"
+          label={t("transportRequest.legalMedicallyFitForTransport")}
         />
       </div>
     </Section>
   );
 }
 
-const serviceOptions = [
-  ["shared", "Shared", "Flexible dates, lower price, planned European routes."],
-  ["individual", "Individual", "Dedicated planning, direct pickup and handover."],
-  ["express", "Express", "Priority quotation, earliest available departure."],
-  ["vip", "VIP", "Dedicated scheduling, premium communication, extra updates."],
-  ["recommend_best", "Recommend the best option", "Let our operations team suggest the best fit."],
-] as const;
+const serviceValues = ["shared", "individual", "express", "vip", "recommend_best"] as const;
 
 function Step6({ form }: { form: UseFormReturn<FormValues> }) {
+  const { t } = useTranslation();
   return (
-    <Section title="Service and quotation">
+    <Section title={t("transportRequest.step6Section")}>
       <Controller
         control={form.control}
         name="requestedServiceType"
@@ -1159,15 +1196,19 @@ function Step6({ form }: { form: UseFormReturn<FormValues> }) {
             onValueChange={field.onChange}
             className="grid gap-2 md:grid-cols-2"
           >
-            {serviceOptions.map(([v, title, desc]) => (
+            {serviceValues.map((v) => (
               <label
                 key={v}
                 className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-4 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
               >
                 <RadioGroupItem value={v} className="mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium">{title}</div>
-                  <div className="text-xs text-muted-foreground">{desc}</div>
+                  <div className="text-sm font-medium">
+                    {t(`transportRequest.service_${v}_title`)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {t(`transportRequest.service_${v}_desc`)}
+                  </div>
                 </div>
               </label>
             ))}
@@ -1176,10 +1217,7 @@ function Step6({ form }: { form: UseFormReturn<FormValues> }) {
       />
       <div className="flex items-start gap-2 rounded-xl border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 size-3.5 shrink-0" />
-        <span>
-          The final service type and price are confirmed after route and document review — not
-          guaranteed here.
-        </span>
+        <span>{t("transportRequest.step6Note")}</span>
       </div>
     </Section>
   );
@@ -1187,60 +1225,61 @@ function Step6({ form }: { form: UseFormReturn<FormValues> }) {
 
 function Step7({ form }: { form: UseFormReturn<FormValues> }) {
   const { control, register } = form;
+  const { t } = useTranslation();
   const v = form.watch();
   return (
     <>
-      <Section title="Message (optional)">
+      <Section title={t("transportRequest.messageSection")}>
         <Textarea
           rows={4}
-          placeholder="Anything else our operations team should know?"
+          placeholder={t("transportRequest.messagePlaceholder")}
           {...register("message")}
         />
       </Section>
-      <Section title="Summary">
+      <Section title={t("transportRequest.summarySection")}>
         <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
-          <SummaryItem label="Animal" value={v.animalName} />
-          <SummaryItem label="Breed" value={v.breedFreeText} />
+          <SummaryItem label={t("transportRequest.summaryAnimal")} value={v.animalName} />
+          <SummaryItem label={t("transportRequest.summaryBreed")} value={v.breedFreeText} />
           <SummaryItem
-            label="Route"
+            label={t("transportRequest.summaryRoute")}
             value={`${v.pickupCity ?? "?"} → ${v.destinationCity ?? "?"}`}
           />
-          <SummaryItem label="Earliest date" value={v.earliestDate} />
+          <SummaryItem label={t("transportRequest.summaryEarliestDate")} value={v.earliestDate} />
           <SummaryItem
-            label="Service"
-            value={serviceOptions.find((s) => s[0] === v.requestedServiceType)?.[1]}
+            label={t("transportRequest.summaryService")}
+            value={t(`transportRequest.service_${v.requestedServiceType}_title`)}
           />
           <SummaryItem
-            label="Purpose"
-            value={purposeOptions.find((p) => p[0] === v.requestPurpose)?.[1]}
+            label={t("transportRequest.summaryPurpose")}
+            value={t(`transportRequest.purpose_${v.requestPurpose}`)}
           />
         </dl>
       </Section>
-      <Section title="Declarations">
+      <Section title={t("transportRequest.declarationsSection")}>
         <Confirm
           control={control}
           name="confirmedAccurate"
-          label="The information I have provided is accurate."
+          label={t("transportRequest.declAccurate")}
         />
         <Confirm
           control={control}
           name="confirmedAuthority"
-          label="I have the authority to request this transport."
+          label={t("transportRequest.declAuthority")}
         />
         <Confirm
           control={control}
           name="confirmedWillProvideDocuments"
-          label="I understand I will need to provide the required documents."
+          label={t("transportRequest.declWillProvideDocuments")}
         />
         <Confirm
           control={control}
           name="confirmedUnderstandsReview"
-          label="I understand acceptance depends on document and animal-fitness review."
+          label={t("transportRequest.declUnderstandsReview")}
         />
         <Confirm
           control={control}
           name="confirmedUnderstandsPublicationNotConfirmation"
-          label="I understand submitting this request is not confirmation of transport."
+          label={t("transportRequest.declUnderstandsPublicationNotConfirmation")}
         />
       </Section>
     </>
@@ -1265,6 +1304,7 @@ function Confirm({
   name: keyof FormValues;
   label: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Controller
       control={control}
@@ -1275,7 +1315,11 @@ function Confirm({
             <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mt-0.5" />
             {label}
           </label>
-          {fieldState.error && <p className="ml-6 text-xs text-destructive">Required to submit</p>}
+          {fieldState.error && (
+            <p className="ml-6 text-xs text-destructive">
+              {t("transportRequest.requiredToSubmit")}
+            </p>
+          )}
         </div>
       )}
     />

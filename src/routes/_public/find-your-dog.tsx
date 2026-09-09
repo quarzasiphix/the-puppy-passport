@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { listPublishedPuppies, type PuppyWithExtras } from "@/domains/marketplace";
 import { PuppyCard } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/find-your-dog")({
   head: () => ({
@@ -21,12 +22,21 @@ export const Route = createFileRoute("/_public/find-your-dog")({
 });
 
 type SizeCategory = "small" | "medium" | "large" | "giant";
-const sizeOptions: { value: SizeCategory; label: string; hint: string }[] = [
-  { value: "small", label: "Small", hint: "Up to ~10 kg" },
-  { value: "medium", label: "Medium", hint: "~10–25 kg" },
-  { value: "large", label: "Large", hint: "~25–40 kg" },
-  { value: "giant", label: "Giant", hint: "40 kg+" },
-];
+
+function getSizeOptions(
+  t: (key: string) => string,
+): { value: SizeCategory; label: string; hint: string }[] {
+  return [
+    { value: "small", label: t("findYourDog.sizeSmallLabel"), hint: t("findYourDog.sizeSmallHint") },
+    {
+      value: "medium",
+      label: t("findYourDog.sizeMediumLabel"),
+      hint: t("findYourDog.sizeMediumHint"),
+    },
+    { value: "large", label: t("findYourDog.sizeLargeLabel"), hint: t("findYourDog.sizeLargeHint") },
+    { value: "giant", label: t("findYourDog.sizeGiantLabel"), hint: t("findYourDog.sizeGiantHint") },
+  ];
+}
 
 type Answers = {
   size: SizeCategory | "any";
@@ -45,6 +55,8 @@ async function listBreedSizes() {
 const steps = ["size", "location", "transport", "budget", "results"] as const;
 
 function FindYourDogPage() {
+  const { t } = useTranslation();
+  const sizeOptions = getSizeOptions(t);
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
     size: "any",
@@ -91,11 +103,8 @@ function FindYourDogPage() {
     <div className="container-page max-w-2xl py-10">
       <header className="mb-8 text-center">
         <Compass className="mx-auto size-8 text-primary" />
-        <h1 className="mt-3 font-display text-3xl font-medium">Find your ideal dog</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A few quick questions to narrow today's available puppies down to what actually fits your
-          home — based on real listings, not a personality quiz.
-        </p>
+        <h1 className="mt-3 font-display text-3xl font-medium">{t("findYourDog.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("findYourDog.subtitle")}</p>
       </header>
 
       {step !== "results" && (
@@ -110,7 +119,7 @@ function FindYourDogPage() {
       )}
 
       {step === "size" && (
-        <StepCard title="What size dog fits your home?">
+        <StepCard title={t("findYourDog.sizeStepTitle")}>
           <div className="grid grid-cols-2 gap-3">
             {sizeOptions.map((o) => (
               <OptionButton
@@ -133,13 +142,13 @@ function FindYourDogPage() {
               next();
             }}
           >
-            No preference
+            {t("findYourDog.noPreference")}
           </button>
         </StepCard>
       )}
 
       {step === "location" && (
-        <StepCard title="Where are you looking?" onBack={back}>
+        <StepCard title={t("findYourDog.locationStepTitle")} onBack={back}>
           <div className="grid grid-cols-2 gap-3">
             {countries.map((c) => (
               <OptionButton
@@ -161,13 +170,13 @@ function FindYourDogPage() {
               next();
             }}
           >
-            Any country — I can arrange transport
+            {t("findYourDog.anyCountry")}
           </button>
         </StepCard>
       )}
 
       {step === "transport" && (
-        <StepCard title="Will you need transport arranged?" onBack={back}>
+        <StepCard title={t("findYourDog.transportStepTitle")} onBack={back}>
           <div className="grid grid-cols-2 gap-3">
             <OptionButton
               selected={answers.transportNeeded === true}
@@ -176,7 +185,7 @@ function FindYourDogPage() {
                 next();
               }}
             >
-              Yes, show only puppies with transport available
+              {t("findYourDog.transportYes")}
             </OptionButton>
             <OptionButton
               selected={answers.transportNeeded === false}
@@ -185,14 +194,14 @@ function FindYourDogPage() {
                 next();
               }}
             >
-              No, I'll collect in person
+              {t("findYourDog.transportNo")}
             </OptionButton>
           </div>
         </StepCard>
       )}
 
       {step === "budget" && (
-        <StepCard title="What's your rough budget?" onBack={back}>
+        <StepCard title={t("findYourDog.budgetStepTitle")} onBack={back}>
           <div className="grid grid-cols-2 gap-3">
             {[1000, 1500, 2000, 3000].map((b) => (
               <OptionButton
@@ -203,7 +212,7 @@ function FindYourDogPage() {
                   next();
                 }}
               >
-                Up to €{b.toLocaleString()}
+                {t("findYourDog.upToPrefix")} €{b.toLocaleString()}
               </OptionButton>
             ))}
           </div>
@@ -214,7 +223,7 @@ function FindYourDogPage() {
               next();
             }}
           >
-            No budget limit
+            {t("findYourDog.noBudgetLimit")}
           </button>
         </StepCard>
       )}
@@ -225,22 +234,22 @@ function FindYourDogPage() {
             <div>
               <h2 className="font-display text-xl font-semibold">
                 {isLoading
-                  ? "Searching…"
-                  : `${matches.length} matching ${matches.length === 1 ? "puppy" : "puppies"}`}
+                  ? t("findYourDog.searching")
+                  : `${t("findYourDog.matchingPuppies")}: ${matches.length}`}
               </h2>
-              <p className="text-sm text-muted-foreground">Based on today's published listings.</p>
+              <p className="text-sm text-muted-foreground">{t("findYourDog.basedOnListings")}</p>
             </div>
             <Button variant="outline" onClick={() => setStepIndex(0)}>
-              Start over
+              {t("findYourDog.startOver")}
             </Button>
           </div>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{t("findYourDog.loading")}</p>
           ) : matches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-              <p className="font-medium">No exact matches right now</p>
+              <p className="font-medium">{t("findYourDog.noMatchesTitle")}</p>
               <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                Try loosening one of your answers, or browse all available puppies instead.
+                {t("findYourDog.noMatchesDesc")}
               </p>
             </div>
           ) : (
@@ -265,6 +274,7 @@ function StepCard({
   onBack?: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-6">
       {onBack && (
@@ -272,7 +282,7 @@ function StepCard({
           onClick={onBack}
           className="mb-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="size-3.5" /> Back
+          <ChevronLeft className="size-3.5" /> {t("findYourDog.back")}
         </button>
       )}
       <h2 className="mb-4 font-display text-lg font-semibold">{title}</h2>

@@ -4,6 +4,7 @@ import { consumeLastCapturedError } from "./app/error-capture";
 import { renderErrorPage } from "./app/error-page";
 import { renderMaintenancePage } from "./app/maintenance-page";
 import { getSupabaseBrowserClient } from "./lib/supabase/browser";
+import { generateSitemapXml, generateRobotsTxt } from "./lib/sitemap";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -138,6 +139,21 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/health" && request.method === "GET") {
       return handleHealthCheck();
+    }
+    // Same raw-fetch-intercept reasoning as /health above: this TanStack Start version has no
+    // file-based server-route API, and a search-engine crawler needs the real
+    // `application/xml`/`text/plain` content type, not an HTML page whose body happens to contain
+    // XML — so these are answered here, before any SSR rendering, not as a page route.
+    if (url.pathname === "/sitemap.xml" && request.method === "GET") {
+      const xml = await generateSitemapXml();
+      return new Response(xml, {
+        headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" },
+      });
+    }
+    if (url.pathname === "/robots.txt" && request.method === "GET") {
+      return new Response(generateRobotsTxt(), {
+        headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+      });
     }
 
     const maintenance = await getMaintenanceState();

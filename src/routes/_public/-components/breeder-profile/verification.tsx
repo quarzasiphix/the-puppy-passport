@@ -1,24 +1,26 @@
 import { ShieldCheck, BadgeCheck } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { TRUST_CLAIM_LABELS, TRUST_CLAIM_EXPLANATIONS } from "@/domains/trust";
+import { trustClaimLabel, trustClaimExplanation } from "@/domains/trust";
+import { useTranslation } from "@/shared/i18n";
 import type { Breeder, Stats, TrustClaims } from "./types";
 
 export function VerificationBadges({ b, trustClaims }: { b: Breeder; trustClaims: TrustClaims }) {
+  const { t } = useTranslation();
   const badges: { key: string; label: string; explanation: string }[] = [];
   if (b.verified) {
     badges.push({
       key: "kennel",
-      label: "Kennel verified",
-      explanation: "Anemalo has reviewed and approved this kennel's identity and details.",
+      label: t("breederProfile.kennelVerified"),
+      explanation: t("breederProfile.kennelVerifiedExplanation"),
     });
   }
   for (const claim of Object.values(trustClaims)) {
     if (claim.status === "verified") {
       badges.push({
         key: claim.claimType,
-        label: TRUST_CLAIM_LABELS[claim.claimType],
-        explanation: TRUST_CLAIM_EXPLANATIONS[claim.claimType],
+        label: trustClaimLabel(t, claim.claimType),
+        explanation: trustClaimExplanation(t, claim.claimType),
       });
     }
   }
@@ -48,16 +50,20 @@ export function VerificationList({
   trustClaims: TrustClaims;
   stats: Stats;
 }) {
+  const { t } = useTranslation();
   const rows = [
-    { label: "Identity verified", verified: stats.identityVerified },
-    { label: "Kennel verified", verified: b.verified },
+    { label: t("breederProfile.identityVerified"), verified: stats.identityVerified },
+    { label: t("breederProfile.kennelVerified"), verified: b.verified },
     {
-      label: TRUST_CLAIM_LABELS.association,
+      label: trustClaimLabel(t, "association"),
       verified: trustClaims.association.status === "verified",
     },
-    { label: TRUST_CLAIM_LABELS.pedigrees, verified: trustClaims.pedigrees.status === "verified" },
     {
-      label: TRUST_CLAIM_LABELS.health_documents,
+      label: trustClaimLabel(t, "pedigrees"),
+      verified: trustClaims.pedigrees.status === "verified",
+    },
+    {
+      label: trustClaimLabel(t, "health_documents"),
       verified: trustClaims.health_documents.status === "verified",
     },
   ];
@@ -74,8 +80,10 @@ export function VerificationList({
         </li>
       ))}
       <li className="mt-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">
-        {stats.completedHandovers} completed{" "}
-        {stats.completedHandovers === 1 ? "handover" : "handovers"} through Anemalo
+        {stats.completedHandovers}{" "}
+        {stats.completedHandovers === 1
+          ? t("breederProfile.handoverSingular")
+          : t("breederProfile.handoverPlural")}
       </li>
     </ul>
   );

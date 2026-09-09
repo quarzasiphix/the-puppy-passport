@@ -11,6 +11,7 @@ import { Separator } from "@/shared/ui/separator";
 import { Badge } from "@/shared/ui/badge";
 import { listPublishedPuppies } from "@/domains/marketplace";
 import { PuppyCard } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/find-a-dog")({
   loader: () => listPublishedPuppies(),
@@ -23,23 +24,29 @@ export const Route = createFileRoute("/_public/find-a-dog")({
   component: FindADog,
 });
 
-const breedOptions = [
-  ["all", "All breeds"],
-  ["Golden Retriever", "Golden Retriever"],
-  ["Border Collie", "Border Collie"],
-  ["Labrador Retriever", "Labrador Retriever"],
-  ["German Shepherd", "German Shepherd"],
-  ["Bernese Mountain Dog", "Bernese Mountain Dog"],
-  ["French Bulldog", "French Bulldog"],
-] as const;
+// Breed/country filter values stay the raw English strings stored on the animal row (the DB isn't
+// localized) — only the displayed label is translated, via getBreedOptions/getCountryOptions below.
+function getBreedOptions(t: (key: string) => string) {
+  return [
+    ["all", t("findADog.breedAll")],
+    ["Golden Retriever", t("findADog.breeds.goldenRetriever")],
+    ["Border Collie", t("findADog.breeds.borderCollie")],
+    ["Labrador Retriever", t("findADog.breeds.labradorRetriever")],
+    ["German Shepherd", t("findADog.breeds.germanShepherd")],
+    ["Bernese Mountain Dog", t("findADog.breeds.bernese")],
+    ["French Bulldog", t("findADog.breeds.frenchBulldog")],
+  ] as const;
+}
 
-const countryOptions = [
-  ["all", "All Europe"],
-  ["Poland", "Poland"],
-  ["Germany", "Germany"],
-  ["Netherlands", "Netherlands"],
-  ["Czech Republic", "Czech Republic"],
-] as const;
+function getCountryOptions(t: (key: string) => string) {
+  return [
+    ["all", t("findADog.countryAll")],
+    ["Poland", t("findADog.countries.poland")],
+    ["Germany", t("findADog.countries.germany")],
+    ["Netherlands", t("findADog.countries.netherlands")],
+    ["Czech Republic", t("findADog.countries.czechRepublic")],
+  ] as const;
+}
 
 const defaultFilters = {
   search: "",
@@ -58,8 +65,11 @@ const defaultFilters = {
 
 function FindADog() {
   const puppies = Route.useLoaderData();
+  const { t, locale } = useTranslation();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [f, setF] = useState(defaultFilters);
+  const breedOptions = getBreedOptions(t);
+  const countryOptions = getCountryOptions(t);
 
   const filtered = useMemo(() => {
     const rows = puppies.filter((p) => {
@@ -105,19 +115,19 @@ function FindADog() {
     <div className="container-page py-10">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-medium">Find a dog</h1>
+          <h1 className="font-display text-3xl font-medium">{t("findADog.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Showing {filtered.length} of {puppies.length} puppies from verified breeders across
-            Europe ·{" "}
+            {t("findADog.showingPrefix")} {filtered.length} {t("findADog.showingMiddle")}{" "}
+            {puppies.length} {t("findADog.showingSuffix")} ·{" "}
             <Link to="/find-your-dog" className="text-primary hover:underline">
-              Not sure where to start? Try our guided search
+              {t("findADog.guidedSearchLink")}
             </Link>
           </p>
         </div>
         <div className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search breed, kennel, city…"
+            placeholder={t("findADog.searchPlaceholder")}
             className="pl-9"
             value={f.search}
             onChange={(e) => update("search", e.target.value)}
@@ -129,18 +139,18 @@ function FindADog() {
         <aside className="rounded-2xl border border-border/70 bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <SlidersHorizontal className="size-4" /> Filters
+              <SlidersHorizontal className="size-4" /> {t("findADog.filters")}
             </h2>
             <button
               type="button"
               onClick={() => setF(defaultFilters)}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              Reset
+              {t("findADog.reset")}
             </button>
           </div>
 
-          <FilterGroup title="Breed">
+          <FilterGroup title={t("findADog.breedLabel")}>
             <Select value={f.breed} onValueChange={(v) => update("breed", v)}>
               <SelectTrigger>
                 <SelectValue />
@@ -155,7 +165,7 @@ function FindADog() {
             </Select>
           </FilterGroup>
 
-          <FilterGroup title="Country">
+          <FilterGroup title={t("findADog.countryLabel")}>
             <Select value={f.country} onValueChange={(v) => update("country", v)}>
               <SelectTrigger>
                 <SelectValue />
@@ -170,39 +180,40 @@ function FindADog() {
             </Select>
           </FilterGroup>
 
-          <FilterGroup title="Availability">
+          <FilterGroup title={t("findADog.availabilityLabel")}>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={f.availableOnly}
                   onCheckedChange={(v) => update("availableOnly", !!v)}
                 />{" "}
-                Available now
+                {t("findADog.availableNow")}
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={f.applicationsOpenOnly}
                   onCheckedChange={(v) => update("applicationsOpenOnly", !!v)}
                 />{" "}
-                Applications open
+                {t("findADog.applicationsOpen")}
               </label>
             </div>
           </FilterGroup>
 
-          <FilterGroup title="Sex">
+          <FilterGroup title={t("findADog.sexLabel")}>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
-                <Checkbox checked={f.male} onCheckedChange={(v) => update("male", !!v)} /> Male
+                <Checkbox checked={f.male} onCheckedChange={(v) => update("male", !!v)} />{" "}
+                {t("findADog.male")}
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox checked={f.female} onCheckedChange={(v) => update("female", !!v)} />{" "}
-                Female
+                {t("findADog.female")}
               </label>
             </div>
           </FilterGroup>
 
           <FilterGroup
-            title={`Price (PLN) — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
+            title={`${t("findADog.priceLabel")} — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
           >
             <Slider
               value={f.price}
@@ -213,7 +224,7 @@ function FindADog() {
             />
           </FilterGroup>
 
-          <FilterGroup title="Collection-ready from">
+          <FilterGroup title={t("findADog.readyFromLabel")}>
             <Input
               type="date"
               value={f.readyFrom}
@@ -221,21 +232,21 @@ function FindADog() {
             />
           </FilterGroup>
 
-          <FilterGroup title="Verification & transport">
+          <FilterGroup title={t("findADog.verificationTransportLabel")}>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={f.verifiedOnly}
                   onCheckedChange={(v) => update("verifiedOnly", !!v)}
                 />{" "}
-                Verified breeders only
+                {t("findADog.verifiedBreedersOnly")}
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={f.transportOnly}
                   onCheckedChange={(v) => update("transportOnly", !!v)}
                 />{" "}
-                Transport available
+                {t("findADog.transportAvailableFilter")}
               </label>
             </div>
           </FilterGroup>
@@ -244,7 +255,7 @@ function FindADog() {
         <div>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-3">
             <div className="text-sm text-muted-foreground">
-              <strong className="text-foreground">{filtered.length}</strong> results
+              <strong className="text-foreground">{filtered.length}</strong> {t("findADog.results")}
             </div>
             <div className="flex items-center gap-2">
               <Select value={f.sort} onValueChange={(v) => update("sort", v)}>
@@ -252,9 +263,9 @@ function FindADog() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Sort: Newest</SelectItem>
-                  <SelectItem value="ready">Sort: Collection date</SelectItem>
-                  <SelectItem value="price">Sort: Price</SelectItem>
+                  <SelectItem value="newest">{t("findADog.sortNewest")}</SelectItem>
+                  <SelectItem value="ready">{t("findADog.sortReady")}</SelectItem>
+                  <SelectItem value="price">{t("findADog.sortPrice")}</SelectItem>
                 </SelectContent>
               </Select>
               <Separator orientation="vertical" className="h-6" />
@@ -274,7 +285,7 @@ function FindADog() {
               </Button>
               <Button size="sm" variant="outline" asChild>
                 <Link to="/breeder-map">
-                  <Map className="mr-1 size-4" /> Map view
+                  <Map className="mr-1 size-4" /> {t("findADog.mapView")}
                 </Link>
               </Button>
             </div>
@@ -282,12 +293,10 @@ function FindADog() {
 
           {filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                No puppies match right now — check back soon, or widen your filters.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("findADog.noResults")}</p>
               {puppies.length > 0 && (
                 <Button variant="outline" className="mt-4" onClick={() => setF(defaultFilters)}>
-                  Clear filters
+                  {t("findADog.clearFilters")}
                 </Button>
               )}
             </div>
@@ -325,8 +334,10 @@ function FindADog() {
                         <MapPin className="size-3" /> {p.city}, {p.country}
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3" /> Ready{" "}
-                        {new Date(p.readyDate).toLocaleDateString("en-GB")}
+                        <Calendar className="size-3" /> {t("cards.readyPrefix")}{" "}
+                        {new Date(p.readyDate).toLocaleDateString(
+                          locale === "pl" ? "pl-PL" : "en-GB",
+                        )}
                       </span>
                       <span>{p.kennel}</span>
                     </div>
@@ -340,7 +351,7 @@ function FindADog() {
                         ≈ €{p.priceEUR.toLocaleString()}
                       </div>
                     </div>
-                    <Button size="sm">View puppy</Button>
+                    <Button size="sm">{t("cards.viewPuppy")}</Button>
                   </div>
                 </Link>
               ))}

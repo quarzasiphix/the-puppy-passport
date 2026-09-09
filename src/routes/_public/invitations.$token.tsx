@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 import {
   acceptOrgInvitation,
   declineOrgInvitation,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_public/invitations/$token")({
 function InvitationPage() {
   const { token } = useParams({ from: "/_public/invitations/$token" });
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
 
   const previewQuery = useQuery({
     queryKey: ["invitation-preview", token],
@@ -27,30 +29,31 @@ function InvitationPage() {
 
   const acceptMutation = useMutation({
     mutationFn: () => acceptOrgInvitation(token),
-    onSuccess: () => toast.success("You've joined the team."),
+    onSuccess: () => toast.success(t("invitationsPage.joinedToast")),
     onError: (err) =>
-      toast.error(getFriendlyErrorMessage(err, "Could not accept this invitation.")),
+      toast.error(getFriendlyErrorMessage(err, t("invitationsPage.couldNotAccept"))),
   });
 
   const declineMutation = useMutation({
     mutationFn: () => declineOrgInvitation(token),
-    onSuccess: () => toast.success("Invitation declined."),
+    onSuccess: () => toast.success(t("invitationsPage.declinedToast")),
     onError: (err) =>
-      toast.error(getFriendlyErrorMessage(err, "Could not decline this invitation.")),
+      toast.error(getFriendlyErrorMessage(err, t("invitationsPage.couldNotDecline"))),
   });
 
   if (previewQuery.isLoading) {
-    return <p className="mx-auto max-w-md p-8 text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <p className="mx-auto max-w-md p-8 text-sm text-muted-foreground">
+        {t("invitationsPage.loading")}
+      </p>
+    );
   }
 
   if (!previewQuery.data) {
     return (
       <div className="mx-auto max-w-md p-8 text-center">
-        <h1 className="font-display text-xl font-medium">This invitation isn't valid</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          It may have already been used, expired, or been revoked. Ask the organisation to send a
-          new one if you still want to join.
-        </p>
+        <h1 className="font-display text-xl font-medium">{t("invitationsPage.invalidTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("invitationsPage.invalidBody")}</p>
       </div>
     );
   }
@@ -58,13 +61,16 @@ function InvitationPage() {
   if (acceptMutation.isSuccess) {
     return (
       <div className="mx-auto max-w-md p-8 text-center">
-        <h1 className="font-display text-xl font-medium">You're in</h1>
+        <h1 className="font-display text-xl font-medium">{t("invitationsPage.joinedTitle")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          You've joined {previewQuery.data.org_name} as{" "}
-          {orgMemberRoleLabels[previewQuery.data.invited_role as OrgMemberRole]}.
+          {t("invitationsPage.joinedBodyPrefix")}
+          {previewQuery.data.org_name}
+          {t("invitationsPage.joinedBodyMid")}
+          {orgMemberRoleLabels[previewQuery.data.invited_role as OrgMemberRole]}
+          {t("invitationsPage.joinedBodySuffix")}
         </p>
         <Button asChild className="mt-4">
-          <Link to="/dashboard/foundation/team">Go to the team page</Link>
+          <Link to="/dashboard/foundation/team">{t("invitationsPage.goToTeam")}</Link>
         </Button>
       </div>
     );
@@ -73,38 +79,38 @@ function InvitationPage() {
   if (declineMutation.isSuccess) {
     return (
       <div className="mx-auto max-w-md p-8 text-center">
-        <h1 className="font-display text-xl font-medium">Invitation declined</h1>
+        <h1 className="font-display text-xl font-medium">{t("invitationsPage.declinedTitle")}</h1>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-md p-8 text-center">
-      <h1 className="font-display text-xl font-medium">You've been invited</h1>
+      <h1 className="font-display text-xl font-medium">{t("invitationsPage.invitedTitle")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {previewQuery.data.org_name} has invited you to join their team as{" "}
-        <strong>{orgMemberRoleLabels[previewQuery.data.invited_role as OrgMemberRole]}</strong>.
+        {previewQuery.data.org_name}
+        {t("invitationsPage.invitedBodyMid")}
+        <strong>{orgMemberRoleLabels[previewQuery.data.invited_role as OrgMemberRole]}</strong>
+        {t("invitationsPage.invitedBodySuffix")}
       </p>
       {!isSignedIn ? (
         <div className="mt-4">
-          <p className="mb-3 text-sm text-muted-foreground">
-            Sign in with the email this invitation was sent to, then come back to this link.
-          </p>
+          <p className="mb-3 text-sm text-muted-foreground">{t("invitationsPage.signInHint")}</p>
           <Button asChild>
-            <Link to="/signin">Sign in</Link>
+            <Link to="/signin">{t("nav.signIn")}</Link>
           </Button>
         </div>
       ) : (
         <div className="mt-4 flex justify-center gap-2">
           <Button disabled={acceptMutation.isPending} onClick={() => acceptMutation.mutate()}>
-            Accept
+            {t("invitationsPage.accept")}
           </Button>
           <Button
             variant="outline"
             disabled={declineMutation.isPending}
             onClick={() => declineMutation.mutate()}
           >
-            Decline
+            {t("invitationsPage.decline")}
           </Button>
         </div>
       )}

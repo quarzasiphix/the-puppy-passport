@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { signIn } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import { useTranslation } from "@/shared/i18n";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -58,6 +59,7 @@ function SignIn() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const hydrated = useHydrated();
+  const { t } = useTranslation();
   const { oauthError } = Route.useSearch();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -101,10 +103,8 @@ function SignIn() {
           </span>
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
-        <h1 className="mt-6 font-display text-3xl font-medium">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to manage transport requests, applications and reservations.
-        </p>
+        <h1 className="mt-6 font-display text-3xl font-medium">{t("signIn.welcomeBack")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("signIn.subtitle")}</p>
 
         {/* Google is the fastest path for most people and is the only social provider actually
             configured (see docs/SOCIAL_AUTH_SETUP.md) — it leads, full width, not a small icon
@@ -116,13 +116,13 @@ function SignIn() {
           className="mt-6 w-full gap-2 bg-background"
           onClick={onGoogleSignIn}
         >
-          <GoogleIcon /> Continue with Google
+          <GoogleIcon /> {t("authCommon.continueWithGoogle")}
         </Button>
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Or with email
+            {t("authCommon.orWithEmail")}
           </span>
           <div className="h-px flex-1 bg-border" />
         </div>
@@ -134,7 +134,7 @@ function SignIn() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("authCommon.email")}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
@@ -148,12 +148,12 @@ function SignIn() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t("authCommon.password")}</FormLabel>
                     <Link
                       to="/forgot-password"
                       className="text-xs text-muted-foreground hover:text-foreground"
                     >
-                      Forgot password?
+                      {t("signIn.forgotPassword")}
                     </Link>
                   </div>
                   <FormControl>
@@ -170,18 +170,18 @@ function SignIn() {
               size="lg"
               disabled={!hydrated || form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
+              {form.formState.isSubmitting ? t("signIn.submitting") : t("signIn.submit")}
             </Button>
           </form>
         </Form>
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          Local demo accounts use the password <code>password123</code> — see docs/LOCAL_SETUP.md.
+          {t("signIn.demoPrefix")} <code>password123</code> {t("signIn.demoSuffix")}
         </p>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          New here?{" "}
+          {t("signIn.newHere")}{" "}
           <Link to="/signup" className="text-primary hover:underline">
-            Create an account
+            {t("signIn.createAccount")}
           </Link>
         </p>
       </div>

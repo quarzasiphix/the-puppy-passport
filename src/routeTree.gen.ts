@@ -27,6 +27,7 @@ import { Route as PublicRehomeRouteImport } from './routes/_public/rehome'
 import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
 import { Route as PublicPlannedRoutesRouteImport } from './routes/_public/planned-routes'
 import { Route as PublicPlannedLittersRouteImport } from './routes/_public/planned-litters'
+import { Route as PublicPedigreesRouteImport } from './routes/_public/pedigrees'
 import { Route as PublicHowItWorksRouteImport } from './routes/_public/how-it-works'
 import { Route as PublicFundraisingRouteImport } from './routes/_public/fundraising'
 import { Route as PublicFoundationsRouteImport } from './routes/_public/foundations'
@@ -93,6 +94,7 @@ import { Route as DashboardBreederSettingsRouteImport } from './routes/dashboard
 import { Route as DashboardBreederReservationsRouteImport } from './routes/dashboard/breeder/reservations'
 import { Route as DashboardBreederPuppiesRouteImport } from './routes/dashboard/breeder/puppies'
 import { Route as DashboardBreederProfileRouteImport } from './routes/dashboard/breeder/profile'
+import { Route as DashboardBreederPedigreesRouteImport } from './routes/dashboard/breeder/pedigrees'
 import { Route as DashboardBreederParentDogsRouteImport } from './routes/dashboard/breeder/parent-dogs'
 import { Route as DashboardBreederMessagesRouteImport } from './routes/dashboard/breeder/messages'
 import { Route as DashboardBreederLittersRouteImport } from './routes/dashboard/breeder/litters'
@@ -114,9 +116,11 @@ import { Route as DashboardAdminAchievementVerificationRouteImport } from './rou
 import { Route as PublicTransportRequestRouteImport } from './routes/_public/transport.request'
 import { Route as PublicPuppiesIdRouteImport } from './routes/_public/puppies.$id'
 import { Route as PublicProfileProfileIdRouteImport } from './routes/_public/profile.$profileId'
+import { Route as PublicPedigreesAddRouteImport } from './routes/_public/pedigrees.add'
 import { Route as PublicModerationCaseIdRouteImport } from './routes/_public/moderation.$caseId'
 import { Route as PublicInvitationsTokenRouteImport } from './routes/_public/invitations.$token'
 import { Route as PublicFundraisingIdRouteImport } from './routes/_public/fundraising.$id'
+import { Route as PublicDogsSlugRouteImport } from './routes/_public/dogs.$slug'
 import { Route as PublicCommunityGroupsRouteImport } from './routes/_public/community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public/breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public/adoptions.$id'
@@ -217,6 +221,11 @@ const PublicPlannedRoutesRoute = PublicPlannedRoutesRouteImport.update({
 const PublicPlannedLittersRoute = PublicPlannedLittersRouteImport.update({
   id: '/planned-litters',
   path: '/planned-litters',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicPedigreesRoute = PublicPedigreesRouteImport.update({
+  id: '/pedigrees',
+  path: '/pedigrees',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicHowItWorksRoute = PublicHowItWorksRouteImport.update({
@@ -582,6 +591,12 @@ const DashboardBreederProfileRoute = DashboardBreederProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => DashboardBreederRoute,
 } as any)
+const DashboardBreederPedigreesRoute =
+  DashboardBreederPedigreesRouteImport.update({
+    id: '/pedigrees',
+    path: '/pedigrees',
+    getParentRoute: () => DashboardBreederRoute,
+  } as any)
 const DashboardBreederParentDogsRoute =
   DashboardBreederParentDogsRouteImport.update({
     id: '/parent-dogs',
@@ -699,6 +714,11 @@ const PublicProfileProfileIdRoute = PublicProfileProfileIdRouteImport.update({
   path: '/profile/$profileId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicPedigreesAddRoute = PublicPedigreesAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => PublicPedigreesRoute,
+} as any)
 const PublicModerationCaseIdRoute = PublicModerationCaseIdRouteImport.update({
   id: '/moderation/$caseId',
   path: '/moderation/$caseId',
@@ -713,6 +733,11 @@ const PublicFundraisingIdRoute = PublicFundraisingIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => PublicFundraisingRoute,
+} as any)
+const PublicDogsSlugRoute = PublicDogsSlugRouteImport.update({
+  id: '/dogs/$slug',
+  path: '/dogs/$slug',
+  getParentRoute: () => PublicRoute,
 } as any)
 const PublicCommunityGroupsRoute = PublicCommunityGroupsRouteImport.update({
   id: '/groups',
@@ -800,6 +825,7 @@ export interface FileRoutesByFullPath {
   '/foundations': typeof PublicFoundationsRoute
   '/fundraising': typeof PublicFundraisingRouteWithChildren
   '/how-it-works': typeof PublicHowItWorksRoute
+  '/pedigrees': typeof PublicPedigreesRouteWithChildren
   '/planned-litters': typeof PublicPlannedLittersRoute
   '/planned-routes': typeof PublicPlannedRoutesRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -819,9 +845,11 @@ export interface FileRoutesByFullPath {
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
   '/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/dogs/$slug': typeof PublicDogsSlugRoute
   '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/moderation/$caseId': typeof PublicModerationCaseIdRoute
+  '/pedigrees/add': typeof PublicPedigreesAddRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -843,6 +871,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -916,6 +945,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/foundations': typeof PublicFoundationsRoute
   '/how-it-works': typeof PublicHowItWorksRoute
+  '/pedigrees': typeof PublicPedigreesRouteWithChildren
   '/planned-litters': typeof PublicPlannedLittersRoute
   '/planned-routes': typeof PublicPlannedRoutesRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -928,9 +958,11 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
+  '/dogs/$slug': typeof PublicDogsSlugRoute
   '/fundraising/$id': typeof PublicFundraisingIdRoute
   '/invitations/$token': typeof PublicInvitationsTokenRoute
   '/moderation/$caseId': typeof PublicModerationCaseIdRoute
+  '/pedigrees/add': typeof PublicPedigreesAddRoute
   '/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/puppies/$id': typeof PublicPuppiesIdRoute
   '/transport/request': typeof PublicTransportRequestRoute
@@ -951,6 +983,7 @@ export interface FileRoutesByTo {
   '/dashboard/breeder/documents': typeof DashboardBreederDocumentsRoute
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -1028,6 +1061,7 @@ export interface FileRoutesById {
   '/_public/foundations': typeof PublicFoundationsRoute
   '/_public/fundraising': typeof PublicFundraisingRouteWithChildren
   '/_public/how-it-works': typeof PublicHowItWorksRoute
+  '/_public/pedigrees': typeof PublicPedigreesRouteWithChildren
   '/_public/planned-litters': typeof PublicPlannedLittersRoute
   '/_public/planned-routes': typeof PublicPlannedRoutesRoute
   '/_public/privacy': typeof PublicPrivacyRoute
@@ -1048,9 +1082,11 @@ export interface FileRoutesById {
   '/_public/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/_public/breeders/$slug': typeof PublicBreedersSlugRoute
   '/_public/community/groups': typeof PublicCommunityGroupsRouteWithChildren
+  '/_public/dogs/$slug': typeof PublicDogsSlugRoute
   '/_public/fundraising/$id': typeof PublicFundraisingIdRoute
   '/_public/invitations/$token': typeof PublicInvitationsTokenRoute
   '/_public/moderation/$caseId': typeof PublicModerationCaseIdRoute
+  '/_public/pedigrees/add': typeof PublicPedigreesAddRoute
   '/_public/profile/$profileId': typeof PublicProfileProfileIdRoute
   '/_public/puppies/$id': typeof PublicPuppiesIdRoute
   '/_public/transport/request': typeof PublicTransportRequestRoute
@@ -1072,6 +1108,7 @@ export interface FileRoutesById {
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
@@ -1152,6 +1189,7 @@ export interface FileRouteTypes {
     | '/foundations'
     | '/fundraising'
     | '/how-it-works'
+    | '/pedigrees'
     | '/planned-litters'
     | '/planned-routes'
     | '/privacy'
@@ -1171,9 +1209,11 @@ export interface FileRouteTypes {
     | '/adoptions/$id'
     | '/breeders/$slug'
     | '/community/groups'
+    | '/dogs/$slug'
     | '/fundraising/$id'
     | '/invitations/$token'
     | '/moderation/$caseId'
+    | '/pedigrees/add'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1195,6 +1235,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -1268,6 +1309,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/foundations'
     | '/how-it-works'
+    | '/pedigrees'
     | '/planned-litters'
     | '/planned-routes'
     | '/privacy'
@@ -1280,9 +1322,11 @@ export interface FileRouteTypes {
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
+    | '/dogs/$slug'
     | '/fundraising/$id'
     | '/invitations/$token'
     | '/moderation/$caseId'
+    | '/pedigrees/add'
     | '/profile/$profileId'
     | '/puppies/$id'
     | '/transport/request'
@@ -1303,6 +1347,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/documents'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -1379,6 +1424,7 @@ export interface FileRouteTypes {
     | '/_public/foundations'
     | '/_public/fundraising'
     | '/_public/how-it-works'
+    | '/_public/pedigrees'
     | '/_public/planned-litters'
     | '/_public/planned-routes'
     | '/_public/privacy'
@@ -1399,9 +1445,11 @@ export interface FileRouteTypes {
     | '/_public/adoptions/$id'
     | '/_public/breeders/$slug'
     | '/_public/community/groups'
+    | '/_public/dogs/$slug'
     | '/_public/fundraising/$id'
     | '/_public/invitations/$token'
     | '/_public/moderation/$caseId'
+    | '/_public/pedigrees/add'
     | '/_public/profile/$profileId'
     | '/_public/puppies/$id'
     | '/_public/transport/request'
@@ -1423,6 +1471,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
@@ -1623,6 +1672,13 @@ declare module '@tanstack/react-router' {
       path: '/planned-litters'
       fullPath: '/planned-litters'
       preLoaderRoute: typeof PublicPlannedLittersRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/pedigrees': {
+      id: '/_public/pedigrees'
+      path: '/pedigrees'
+      fullPath: '/pedigrees'
+      preLoaderRoute: typeof PublicPedigreesRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/how-it-works': {
@@ -2087,6 +2143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBreederProfileRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
+    '/dashboard/breeder/pedigrees': {
+      id: '/dashboard/breeder/pedigrees'
+      path: '/pedigrees'
+      fullPath: '/dashboard/breeder/pedigrees'
+      preLoaderRoute: typeof DashboardBreederPedigreesRouteImport
+      parentRoute: typeof DashboardBreederRoute
+    }
     '/dashboard/breeder/parent-dogs': {
       id: '/dashboard/breeder/parent-dogs'
       path: '/parent-dogs'
@@ -2234,6 +2297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicProfileProfileIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/pedigrees/add': {
+      id: '/_public/pedigrees/add'
+      path: '/add'
+      fullPath: '/pedigrees/add'
+      preLoaderRoute: typeof PublicPedigreesAddRouteImport
+      parentRoute: typeof PublicPedigreesRoute
+    }
     '/_public/moderation/$caseId': {
       id: '/_public/moderation/$caseId'
       path: '/moderation/$caseId'
@@ -2254,6 +2324,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/fundraising/$id'
       preLoaderRoute: typeof PublicFundraisingIdRouteImport
       parentRoute: typeof PublicFundraisingRoute
+    }
+    '/_public/dogs/$slug': {
+      id: '/_public/dogs/$slug'
+      path: '/dogs/$slug'
+      fullPath: '/dogs/$slug'
+      preLoaderRoute: typeof PublicDogsSlugRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_public/community/groups': {
       id: '/_public/community/groups'
@@ -2412,6 +2489,18 @@ const PublicFundraisingRouteChildren: PublicFundraisingRouteChildren = {
 const PublicFundraisingRouteWithChildren =
   PublicFundraisingRoute._addFileChildren(PublicFundraisingRouteChildren)
 
+interface PublicPedigreesRouteChildren {
+  PublicPedigreesAddRoute: typeof PublicPedigreesAddRoute
+}
+
+const PublicPedigreesRouteChildren: PublicPedigreesRouteChildren = {
+  PublicPedigreesAddRoute: PublicPedigreesAddRoute,
+}
+
+const PublicPedigreesRouteWithChildren = PublicPedigreesRoute._addFileChildren(
+  PublicPedigreesRouteChildren,
+)
+
 interface PublicTransportRouteChildren {
   PublicTransportRequestRoute: typeof PublicTransportRequestRoute
   PublicTransportIndexRoute: typeof PublicTransportIndexRoute
@@ -2441,6 +2530,7 @@ interface PublicRouteChildren {
   PublicFoundationsRoute: typeof PublicFoundationsRoute
   PublicFundraisingRoute: typeof PublicFundraisingRouteWithChildren
   PublicHowItWorksRoute: typeof PublicHowItWorksRoute
+  PublicPedigreesRoute: typeof PublicPedigreesRouteWithChildren
   PublicPlannedLittersRoute: typeof PublicPlannedLittersRoute
   PublicPlannedRoutesRoute: typeof PublicPlannedRoutesRoute
   PublicPrivacyRoute: typeof PublicPrivacyRoute
@@ -2451,6 +2541,7 @@ interface PublicRouteChildren {
   PublicTermsRoute: typeof PublicTermsRoute
   PublicTransportRoute: typeof PublicTransportRouteWithChildren
   PublicIndexRoute: typeof PublicIndexRoute
+  PublicDogsSlugRoute: typeof PublicDogsSlugRoute
   PublicInvitationsTokenRoute: typeof PublicInvitationsTokenRoute
   PublicModerationCaseIdRoute: typeof PublicModerationCaseIdRoute
   PublicProfileProfileIdRoute: typeof PublicProfileProfileIdRoute
@@ -2472,6 +2563,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicFoundationsRoute: PublicFoundationsRoute,
   PublicFundraisingRoute: PublicFundraisingRouteWithChildren,
   PublicHowItWorksRoute: PublicHowItWorksRoute,
+  PublicPedigreesRoute: PublicPedigreesRouteWithChildren,
   PublicPlannedLittersRoute: PublicPlannedLittersRoute,
   PublicPlannedRoutesRoute: PublicPlannedRoutesRoute,
   PublicPrivacyRoute: PublicPrivacyRoute,
@@ -2482,6 +2574,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicTermsRoute: PublicTermsRoute,
   PublicTransportRoute: PublicTransportRouteWithChildren,
   PublicIndexRoute: PublicIndexRoute,
+  PublicDogsSlugRoute: PublicDogsSlugRoute,
   PublicInvitationsTokenRoute: PublicInvitationsTokenRoute,
   PublicModerationCaseIdRoute: PublicModerationCaseIdRoute,
   PublicProfileProfileIdRoute: PublicProfileProfileIdRoute,
@@ -2552,6 +2645,7 @@ interface DashboardBreederRouteChildren {
   DashboardBreederLittersRoute: typeof DashboardBreederLittersRouteWithChildren
   DashboardBreederMessagesRoute: typeof DashboardBreederMessagesRoute
   DashboardBreederParentDogsRoute: typeof DashboardBreederParentDogsRoute
+  DashboardBreederPedigreesRoute: typeof DashboardBreederPedigreesRoute
   DashboardBreederProfileRoute: typeof DashboardBreederProfileRoute
   DashboardBreederPuppiesRoute: typeof DashboardBreederPuppiesRoute
   DashboardBreederReservationsRoute: typeof DashboardBreederReservationsRoute
@@ -2568,6 +2662,7 @@ const DashboardBreederRouteChildren: DashboardBreederRouteChildren = {
   DashboardBreederLittersRoute: DashboardBreederLittersRouteWithChildren,
   DashboardBreederMessagesRoute: DashboardBreederMessagesRoute,
   DashboardBreederParentDogsRoute: DashboardBreederParentDogsRoute,
+  DashboardBreederPedigreesRoute: DashboardBreederPedigreesRoute,
   DashboardBreederProfileRoute: DashboardBreederProfileRoute,
   DashboardBreederPuppiesRoute: DashboardBreederPuppiesRoute,
   DashboardBreederReservationsRoute: DashboardBreederReservationsRoute,

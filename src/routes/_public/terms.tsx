@@ -1,5 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalDraftNotice, PendingLegalDrafting } from "@/shared/ui/legal-notice";
+import { useTranslation } from "@/shared/i18n";
+
+// i18n scope: only the page chrome (eyebrow, title, "last updated" line and the section headings)
+// is translated. The dense legal body text is deliberately left English-only — an accurate legal
+// translation is a separate specialist task, not UI-copy extraction, and a rough translation of
+// contractual terms could be materially misleading.
 
 export const Route = createFileRoute("/_public/terms")({
   head: () => ({ meta: [{ title: "Terms of Service — Anemalo" }] }),
@@ -7,11 +13,14 @@ export const Route = createFileRoute("/_public/terms")({
 });
 
 function TermsPage() {
+  const { t } = useTranslation();
   return (
     <div className="container-page max-w-3xl py-16">
-      <p className="text-xs font-medium uppercase tracking-wider text-accent">Legal</p>
-      <h1 className="mt-2 font-display text-4xl font-medium">Terms of Service</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: not yet published.</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-accent">
+        {t("legalPages.eyebrow")}
+      </p>
+      <h1 className="mt-2 font-display text-4xl font-medium">{t("legalPages.termsTitle")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("legalPages.lastUpdated")}</p>
 
       <div className="mt-6">
         <LegalDraftNotice />
@@ -19,7 +28,7 @@ function TermsPage() {
 
       <div className="space-y-8 text-sm leading-relaxed text-foreground">
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">1. What Anemalo is</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH1")}</h2>
           <p>
             Anemalo is a platform that connects verified dog breeders, approved foundations and
             shelters, private owners, and a licensed animal transport service. It is not a general
@@ -29,7 +38,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">2. Accounts and verification</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH2")}</h2>
           <p>
             Anyone can create an account and request transport. Publishing commercial puppy listings
             requires an approved breeder application; publishing adoption listings requires an
@@ -40,7 +49,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">3. Listings and transactions</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH3")}</h2>
           <p>
             Breeders and foundations are responsible for the accuracy and legality of their own
             listings, including compliance with breeding, sales, and animal welfare law in their
@@ -50,7 +59,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">4. Transport requests</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH4")}</h2>
           <ul className="list-disc space-y-2 pl-5">
             <li>
               Submitting a transport request form is never a declaration that the transport is
@@ -71,9 +80,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">
-            5. Liability, disputes, and governing law
-          </h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH5")}</h2>
           <PendingLegalDrafting>
             <p>
               This section will cover limitation of liability, warranty disclaimers, dispute
@@ -85,9 +92,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">
-            6. Account termination and prohibited conduct
-          </h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH6")}</h2>
           <PendingLegalDrafting>
             <p>
               This section will cover grounds for suspension or termination, prohibited use of the
@@ -97,7 +102,7 @@ function TermsPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">7. Contact</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.termsH7")}</h2>
           <PendingLegalDrafting>
             <p>
               Anemalo is operated by Tovernet. The full registered legal form, address, and company

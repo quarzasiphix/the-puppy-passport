@@ -18,6 +18,7 @@ import {
   listGroupPosts,
   listMyGroupIds,
 } from "@/domains/community";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/community/groups/$slug")({
   loader: async ({ params }) => {
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_public/community/groups/$slug")({
 function GroupDetailPage() {
   const { group, memberCount } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
+  const { t, locale } = useTranslation();
   const queryClient = useQueryClient();
   const [newPost, setNewPost] = useState("");
 
@@ -51,7 +53,8 @@ function GroupDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update group.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("communityGroups.couldNotUpdateGroup"))),
   });
 
   // Group-scoped posts are only selectable by members (see 20260101005400_groups.sql) — this is
@@ -68,9 +71,9 @@ function GroupDetailPage() {
     onSuccess: () => {
       setNewPost("");
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
-      toast.success("Posted to the group.");
+      toast.success(t("communityGroupDetail.postedToGroupToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not post.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("communityPage.couldNotPost"))),
   });
 
   const isTransportRouteGroup = group.group_type === "transport_route";
@@ -81,7 +84,7 @@ function GroupDetailPage() {
         to="/community/groups"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> All groups
+        <ArrowLeft className="size-3.5" /> {t("communityGroupDetail.allGroups")}
       </Link>
 
       <header className="rounded-2xl border border-border/70 bg-card p-6">
@@ -89,12 +92,14 @@ function GroupDetailPage() {
         <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="size-3.5" /> {memberCount} member{memberCount === 1 ? "" : "s"}
+            <Users className="size-3.5" /> {t("communityGroupDetail.memberCountLabel")}:{" "}
+            {memberCount}
           </span>
           {isTransportRouteGroup && (
             <Button asChild size="sm" variant="outline">
               <Link to="/transport/request">
-                <Truck className="mr-1 size-3.5" /> Request transport for this route
+                <Truck className="mr-1 size-3.5" />{" "}
+                {t("communityGroupDetail.requestTransportForRoute")}
               </Link>
             </Button>
           )}
@@ -106,18 +111,20 @@ function GroupDetailPage() {
             disabled={membershipMutation.isPending}
             onClick={() => membershipMutation.mutate()}
           >
-            {isMember ? "Leave group" : "Join group"}
+            {isMember
+              ? t("communityGroupDetail.leaveGroup")
+              : t("communityGroupDetail.joinGroup")}
           </Button>
         )}
       </header>
 
       {!isSignedIn ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-          Sign in and join to see and post updates in this group.
+          {t("communityGroupDetail.signInToJoin")}
         </div>
       ) : !isMember ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-          Join this group to see and post updates.
+          {t("communityGroupDetail.joinToSee")}
         </div>
       ) : (
         <div className="mt-6">
@@ -126,8 +133,8 @@ function GroupDetailPage() {
               rows={3}
               placeholder={
                 isTransportRouteGroup
-                  ? "e.g. Need to transport a dog from Łódź to Rotterdam around 18 August…"
-                  : "Share something with this group…"
+                  ? t("communityGroupDetail.transportPlaceholder")
+                  : t("communityGroupDetail.sharePlaceholder")
               }
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
@@ -135,8 +142,7 @@ function GroupDetailPage() {
             <div className="mt-2 flex items-center justify-between gap-2">
               {isTransportRouteGroup && (
                 <p className="text-xs text-muted-foreground">
-                  Describing a transport need here? Use the button above to submit it as a real,
-                  searchable transport request instead of leaving it as text.
+                  {t("communityGroupDetail.transportHint")}
                 </p>
               )}
               <Button
@@ -145,16 +151,18 @@ function GroupDetailPage() {
                 disabled={!newPost.trim() || createPostMutation.isPending}
                 onClick={() => createPostMutation.mutate()}
               >
-                Post
+                {t("communityPage.post")}
               </Button>
             </div>
           </div>
 
           <div className="mt-4 space-y-3">
             {postsQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <p className="text-sm text-muted-foreground">{t("communityGroups.loading")}</p>
             ) : !postsQuery.data?.length ? (
-              <p className="text-sm text-muted-foreground">No posts yet in this group.</p>
+              <p className="text-sm text-muted-foreground">
+                {t("communityGroupDetail.noPosts")}
+              </p>
             ) : (
               postsQuery.data.map((post) => (
                 <article key={post.id} className="rounded-2xl border border-border/70 bg-card p-4">
@@ -172,23 +180,28 @@ function GroupDetailPage() {
                           params={{ profileId: post.author_profile_id }}
                           className="text-sm font-medium hover:underline"
                         >
-                          {post.profiles?.display_name ?? "Member"}
+                          {post.profiles?.display_name ?? t("communityGroupDetail.member")}
                         </Link>
                       ) : (
-                        <span className="text-sm font-medium">Member</span>
+                        <span className="text-sm font-medium">
+                          {t("communityGroupDetail.member")}
+                        </span>
                       )}
                       <div className="text-xs text-muted-foreground">
-                        {new Date(post.created_at).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {new Date(post.created_at).toLocaleDateString(
+                          locale === "pl" ? "pl-PL" : "en-GB",
+                          { day: "numeric", month: "short", year: "numeric" },
+                        )}
                       </div>
                     </div>
                   </div>
                   <p className="mt-3 text-sm">{post.content}</p>
                   <div className="mt-3 flex justify-end">
-                    <ReportDialog targetType="post" targetId={post.id} triggerLabel="Report" />
+                    <ReportDialog
+                      targetType="post"
+                      targetId={post.id}
+                      triggerLabel={t("communityGroupDetail.report")}
+                    />
                   </div>
                 </article>
               ))

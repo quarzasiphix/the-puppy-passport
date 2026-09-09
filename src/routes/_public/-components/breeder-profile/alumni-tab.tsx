@@ -1,4 +1,5 @@
 import { Home } from "lucide-react";
+import { useTranslation } from "@/shared/i18n";
 import { EmptyState } from "./empty-state";
 import type { Puppies } from "./types";
 
@@ -16,11 +17,13 @@ import type { Puppies } from "./types";
 // No new data is used — only fields already on the mapped Puppy (name/breed/sex/image), so nothing
 // here fabricates a placement date or similar that isn't actually loaded.
 export function AlumniTab({ alumni, kennelName }: { alumni: Puppies; kennelName: string }) {
+  const { t } = useTranslation();
   if (alumni.length === 0) {
     return (
-      <EmptyState icon={Home} title="No placed puppies yet">
-        Every puppy {kennelName} places through Anemalo will stay listed here permanently as part of
-        their history.
+      <EmptyState icon={Home} title={t("breederProfile.noAlumniTitle")}>
+        {t("breederProfile.alumniEmptyPrefix")}
+        {kennelName}
+        {t("breederProfile.alumniEmptySuffix")}
       </EmptyState>
     );
   }
@@ -29,9 +32,13 @@ export function AlumniTab({ alumni, kennelName }: { alumni: Puppies; kennelName:
       <div className="mb-5 flex items-start gap-3 rounded-2xl border border-border/70 bg-secondary/30 p-4 text-sm text-muted-foreground">
         <Home className="mt-0.5 size-4 shrink-0 text-primary" />
         <p>
-          {alumni.length} {alumni.length === 1 ? "puppy" : "puppies"} from {kennelName} found their
-          forever home through Anemalo. This is a permanent record, not a rotating gallery — nothing
-          here is ever removed once a puppy is placed.
+          {alumni.length}{" "}
+          {alumni.length === 1
+            ? t("breederProfile.alumniCountSingular")
+            : t("breederProfile.alumniCountPlural")}
+          {t("breederProfile.alumniIntroMid")}
+          {kennelName}
+          {t("breederProfile.alumniIntroSuffix")}
         </p>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -44,6 +51,7 @@ export function AlumniTab({ alumni, kennelName }: { alumni: Puppies; kennelName:
 }
 
 function AlumniCard({ p }: { p: Puppies[number] }) {
+  const { t } = useTranslation();
   return (
     <article className="group overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
@@ -55,7 +63,7 @@ function AlumniCard({ p }: { p: Puppies[number] }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur">
-          <Home className="size-3 text-primary" /> Found a home
+          <Home className="size-3 text-primary" /> {t("breederProfile.foundHome")}
         </span>
       </div>
       <div className="p-4">

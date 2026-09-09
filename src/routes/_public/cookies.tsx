@@ -1,5 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalDraftNotice } from "@/shared/ui/legal-notice";
+import { useTranslation } from "@/shared/i18n";
+
+// i18n scope: only the page chrome (eyebrow, title, "last updated" line and the cookie-table
+// column headers) is translated here. The dense legal body text is deliberately left English-only
+// — an accurate legal translation is a separate specialist task, not UI-copy extraction, and a
+// rough machine translation of a policy document would be worse than none.
 
 export const Route = createFileRoute("/_public/cookies")({
   head: () => ({ meta: [{ title: "Cookie Policy — Anemalo" }] }),
@@ -17,11 +23,14 @@ function CookieRow({ name, purpose, type }: { name: string; purpose: string; typ
 }
 
 function CookiesPage() {
+  const { t } = useTranslation();
   return (
     <div className="container-page max-w-3xl py-16">
-      <p className="text-xs font-medium uppercase tracking-wider text-accent">Legal</p>
-      <h1 className="mt-2 font-display text-4xl font-medium">Cookie Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: not yet published.</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-accent">
+        {t("legalPages.eyebrow")}
+      </p>
+      <h1 className="mt-2 font-display text-4xl font-medium">{t("legalPages.cookiesTitle")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("legalPages.lastUpdated")}</p>
 
       <div className="mt-6">
         <LegalDraftNotice />
@@ -38,9 +47,9 @@ function CookiesPage() {
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-secondary/60 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="p-3">Cookie</th>
-                <th className="p-3">Purpose</th>
-                <th className="p-3">Type</th>
+                <th className="p-3">{t("legalPages.cookiesTableCookie")}</th>
+                <th className="p-3">{t("legalPages.cookiesTablePurpose")}</th>
+                <th className="p-3">{t("legalPages.cookiesTableType")}</th>
               </tr>
             </thead>
             <tbody>

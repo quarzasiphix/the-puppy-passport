@@ -1,5 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LegalDraftNotice, PendingLegalDrafting } from "@/shared/ui/legal-notice";
+import { useTranslation } from "@/shared/i18n";
+
+// i18n scope: only the page chrome (eyebrow, title, "last updated" line, section headings and the
+// data-table column headers) is translated. The dense legal body text is deliberately left
+// English-only — an accurate privacy-policy translation is a separate specialist task, not
+// UI-copy extraction, and a rough translation of a data-protection notice could be misleading.
 
 export const Route = createFileRoute("/_public/privacy")({
   head: () => ({ meta: [{ title: "Privacy Policy — Anemalo" }] }),
@@ -17,11 +23,14 @@ function DataRow({ category, examples, why }: { category: string; examples: stri
 }
 
 function PrivacyPage() {
+  const { t } = useTranslation();
   return (
     <div className="container-page max-w-3xl py-16">
-      <p className="text-xs font-medium uppercase tracking-wider text-accent">Legal</p>
-      <h1 className="mt-2 font-display text-4xl font-medium">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: not yet published.</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-accent">
+        {t("legalPages.eyebrow")}
+      </p>
+      <h1 className="mt-2 font-display text-4xl font-medium">{t("legalPages.privacyTitle")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("legalPages.lastUpdated")}</p>
 
       <div className="mt-6">
         <LegalDraftNotice />
@@ -29,7 +38,7 @@ function PrivacyPage() {
 
       <div className="space-y-8 text-sm leading-relaxed text-foreground">
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">1. Data controller</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH1")}</h2>
           <PendingLegalDrafting>
             <p>
               Anemalo is operated by Tovernet. The full registered legal form, address, and a
@@ -39,7 +48,7 @@ function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">2. What we collect and why</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH2")}</h2>
           <p className="mb-3">
             This reflects what the platform actually stores today, not a general statement:
           </p>
@@ -47,9 +56,9 @@ function PrivacyPage() {
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-secondary/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Examples</th>
-                  <th className="p-3">Why we process it</th>
+                  <th className="p-3">{t("legalPages.privacyTableCategory")}</th>
+                  <th className="p-3">{t("legalPages.privacyTableExamples")}</th>
+                  <th className="p-3">{t("legalPages.privacyTableWhy")}</th>
                 </tr>
               </thead>
               <tbody className="px-3">
@@ -84,7 +93,7 @@ function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">3. Who can see your data</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH3")}</h2>
           <p>
             Access is restricted by both application logic and database-level security rules, not
             just by hiding buttons in the interface. As a rule: your exact address and uploaded
@@ -98,7 +107,7 @@ function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">4. Cookies</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH4")}</h2>
           <p>
             See the{" "}
             <Link to="/cookies" className="text-primary hover:underline">
@@ -110,7 +119,7 @@ function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">5. Legal basis for processing</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH5")}</h2>
           <PendingLegalDrafting>
             <p>
               Which legal basis under applicable data protection law (e.g. performance of a
@@ -121,14 +130,14 @@ function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">6. How long we keep your data</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH6")}</h2>
           <PendingLegalDrafting>
             <p>Retention periods per data category are not yet defined.</p>
           </PendingLegalDrafting>
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-xl font-semibold">7. Your rights</h2>
+          <h2 className="mb-2 font-display text-xl font-semibold">{t("legalPages.privacyH7")}</h2>
           <p className="mb-2">
             Depending on where you live, you generally have the right to access, correct, delete,
             restrict, or export a copy of your personal data, to object to certain processing, and

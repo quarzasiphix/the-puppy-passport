@@ -18,6 +18,7 @@ import { useAuth } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ReportDialog } from "@/domains/trust";
 import { startApplicationConversation } from "@/domains/messaging";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
 function AdoptionDetail() {
   const a = Route.useLoaderData();
   const { userId } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
@@ -64,7 +66,8 @@ function AdoptionDetail() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/buyer/messages", search: { conversation: conversationId } });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("adoptionDetail.couldNotOpenConversation"))),
   });
 
   const mutation = useMutation({
@@ -81,15 +84,15 @@ function AdoptionDetail() {
     },
     onSuccess: () => {
       setSubmitted(true);
-      toast.success("Interest sent.");
+      toast.success(t("adoptionDetail.interestSentToast"));
       queryClient.invalidateQueries({ queryKey: ["my-adoption-application", a.id, userId] });
     },
     onError: (err) => {
       if (err instanceof Error && err.message.includes("duplicate")) {
-        toast.error("You've already expressed interest in this dog.");
+        toast.error(t("adoptionDetail.alreadyExpressedInterest"));
         return;
       }
-      toast.error(getFriendlyErrorMessage(err, "Could not send — please try again."));
+      toast.error(getFriendlyErrorMessage(err, t("adoptionDetail.couldNotSend")));
     },
   });
 
@@ -99,7 +102,7 @@ function AdoptionDetail() {
         to="/adoptions"
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ChevronLeft className="size-4" /> All dogs for adoption
+        <ChevronLeft className="size-4" /> {t("adoptionDetail.backToAll")}
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
@@ -111,17 +114,17 @@ function AdoptionDetail() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-3xl font-medium">{a.name}</h1>
               {a.category === "private_rehoming" ? (
-                <Badge variant="secondary">Private rehoming</Badge>
+                <Badge variant="secondary">{t("cards.privateRehoming")}</Badge>
               ) : (
                 a.verified && (
                   <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-                    <ShieldCheck className="mr-1 size-3" /> Verified foundation
+                    <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedFoundation")}
                   </Badge>
                 )
               )}
               {a.transportAvailable && (
                 <Badge variant="secondary">
-                  <Truck className="mr-1 size-3" /> Transport available
+                  <Truck className="mr-1 size-3" /> {t("adoptionDetail.transportAvailable")}
                 </Badge>
               )}
             </div>
@@ -134,19 +137,25 @@ function AdoptionDetail() {
 
             {a.description && (
               <div className="mt-6">
-                <h2 className="font-display text-lg font-semibold">Their story</h2>
+                <h2 className="font-display text-lg font-semibold">
+                  {t("adoptionDetail.theirStory")}
+                </h2>
                 <p className="mt-2 text-sm text-muted-foreground">{a.description}</p>
               </div>
             )}
             {a.temperament && (
               <div className="mt-4">
-                <h2 className="font-display text-lg font-semibold">Temperament</h2>
+                <h2 className="font-display text-lg font-semibold">
+                  {t("puppyDetail.temperament")}
+                </h2>
                 <p className="mt-2 text-sm text-muted-foreground">{a.temperament}</p>
               </div>
             )}
             {a.idealHome && (
               <div className="mt-4">
-                <h2 className="font-display text-lg font-semibold">Ideal home</h2>
+                <h2 className="font-display text-lg font-semibold">
+                  {t("puppyDetail.idealHome")}
+                </h2>
                 <p className="mt-2 text-sm text-muted-foreground">{a.idealHome}</p>
               </div>
             )}
@@ -154,7 +163,7 @@ function AdoptionDetail() {
               <ReportDialog
                 targetType="animal_listing"
                 targetId={a.id}
-                triggerLabel="Report this listing"
+                triggerLabel={t("puppyDetail.reportListing")}
               />
             </div>
           </div>
@@ -165,7 +174,7 @@ function AdoptionDetail() {
             <h2 className="font-display text-lg font-semibold">{a.orgName}</h2>
             {a.adoptionFee != null && (
               <p className="mt-2 text-sm">
-                Adoption fee:{" "}
+                {t("adoptionDetail.adoptionFeeLabel")}{" "}
                 <span className="font-medium">
                   {a.adoptionFee.toLocaleString()} {a.currency}
                 </span>
@@ -175,19 +184,19 @@ function AdoptionDetail() {
             {!userId ? (
               <div className="mt-4 rounded-xl bg-secondary/60 p-3 text-sm text-muted-foreground">
                 <Link to="/signin" className="text-primary hover:underline">
-                  Sign in
+                  {t("nav.signIn")}
                 </Link>{" "}
-                to express interest in adopting {a.name}.
+                {t("adoptionDetail.toExpressInterest")}: {a.name}.
               </div>
             ) : existingApplicationQuery.isLoading ? (
-              <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="mt-4 text-sm text-muted-foreground">{t("adoptionDetail.loading")}</p>
             ) : alreadyApplied ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-start gap-2 rounded-xl bg-success/10 p-3 text-sm text-success">
                   <HeartHandshake className="mt-0.5 size-4 shrink-0" />
                   <p>
-                    Your interest has been sent to {a.orgName}. They'll follow up directly — this
-                    isn't a confirmed adoption yet.
+                    {t("adoptionDetail.interestSentPrefix")} {a.orgName}.{" "}
+                    {t("adoptionDetail.interestSentSuffix")}
                   </p>
                 </div>
                 <Button
@@ -196,30 +205,31 @@ function AdoptionDetail() {
                   disabled={messageMutation.isPending}
                   onClick={() => messageMutation.mutate()}
                 >
-                  <MessageCircle className="mr-1 size-4" /> Message {a.orgName}
+                  <MessageCircle className="mr-1 size-4" /> {t("adoptionDetail.message")}:{" "}
+                  {a.orgName}
                 </Button>
               </div>
             ) : (
               <div className="mt-4 space-y-2">
                 <label className="text-sm font-medium">
-                  Tell them a little about yourself (optional)
+                  {t("adoptionDetail.aboutYourselfLabel")}
                 </label>
                 <Textarea
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Your home situation, experience with dogs…"
+                  placeholder={t("adoptionDetail.messagePlaceholder")}
                 />
                 <Button
                   className="w-full"
                   disabled={mutation.isPending}
                   onClick={() => mutation.mutate()}
                 >
-                  I'm interested in adopting {a.name}
+                  {t("adoptionDetail.interested")}: {a.name}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  This sends a first message to {a.orgName} — they'll ask any further questions
-                  directly before confirming an adoption.
+                  {t("adoptionDetail.firstMessageNotePrefix")} {a.orgName} —{" "}
+                  {t("adoptionDetail.firstMessageNoteSuffix")}
                 </p>
               </div>
             )}

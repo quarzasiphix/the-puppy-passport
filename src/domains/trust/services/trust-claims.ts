@@ -18,20 +18,31 @@ export type OrganisationTrustClaim = {
 
 const ALL_CLAIM_TYPES: OrganisationTrustClaimType[] = ["association", "pedigrees", "health_documents"];
 
-export const TRUST_CLAIM_LABELS: Record<OrganisationTrustClaimType, string> = {
-  association: "Association / registry verified",
-  pedigrees: "Pedigrees verified",
-  health_documents: "Health documents verified",
-};
+// Translated via the i18n `t()` function rather than a static Record, since the label is shown on
+// a public breeder profile page — see src/shared/i18n/index.tsx. Pass `useTranslation().t`.
+export function trustClaimLabel(
+  t: (key: string) => string,
+  type: OrganisationTrustClaimType,
+): string {
+  const map: Record<OrganisationTrustClaimType, string> = {
+    association: t("trustClaims.association"),
+    pedigrees: t("trustClaims.pedigrees"),
+    health_documents: t("trustClaims.healthDocuments"),
+  };
+  return map[type];
+}
 
-export const TRUST_CLAIM_EXPLANATIONS: Record<OrganisationTrustClaimType, string> = {
-  association:
-    "Anemalo has confirmed this kennel's membership with a named dog breeding association or registry.",
-  pedigrees:
-    "Anemalo has reviewed pedigree documents for this kennel's dogs against the claims made here.",
-  health_documents:
-    "Anemalo has reviewed health testing / veterinary documents this kennel has provided.",
-};
+export function trustClaimExplanation(
+  t: (key: string) => string,
+  type: OrganisationTrustClaimType,
+): string {
+  const map: Record<OrganisationTrustClaimType, string> = {
+    association: t("trustClaims.associationExplanation"),
+    pedigrees: t("trustClaims.pedigreesExplanation"),
+    health_documents: t("trustClaims.healthDocumentsExplanation"),
+  };
+  return map[type];
+}
 
 /** Public read — only ever 'verified' or 'pending' rows come back (see the view's own definition);
  * a claim type with no row is simply unverified/not yet submitted, not an error. */

@@ -6,6 +6,7 @@ import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
@@ -23,6 +24,7 @@ const ALL = "__all__";
 // count grows past what's comfortable to ship in one payload.
 function BreedersList() {
   const breeders = Route.useLoaderData();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [breed, setBreed] = useState(ALL);
   const [country, setCountry] = useState(ALL);
@@ -57,20 +59,16 @@ function BreedersList() {
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
-            Verified breeders
+            {t("breedersPage.eyebrow")}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-medium">
-            Kennels we've vetted personally
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Browse and follow kennels whether or not they currently have puppies available.
-          </p>
+          <h1 className="mt-1 font-display text-4xl font-medium">{t("breedersPage.title")}</h1>
+          <p className="mt-1 text-muted-foreground">{t("breedersPage.subtitle")}</p>
         </div>
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search kennel, city or breed"
+            placeholder={t("breedersPage.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -79,14 +77,14 @@ function BreedersList() {
 
       <div className="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card/60 p-3">
         <span className="inline-flex items-center gap-1.5 pl-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <SlidersHorizontal className="size-3.5" /> Filter
+          <SlidersHorizontal className="size-3.5" /> {t("breedersPage.filter")}
         </span>
         <Select value={breed} onValueChange={setBreed}>
           <SelectTrigger className="w-44 bg-background">
-            <SelectValue placeholder="Breed" />
+            <SelectValue placeholder={t("breedersPage.breedPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All breeds</SelectItem>
+            <SelectItem value={ALL}>{t("breedersPage.allBreeds")}</SelectItem>
             {breeds.map((br) => (
               <SelectItem key={br} value={br}>
                 {br}
@@ -96,10 +94,10 @@ function BreedersList() {
         </Select>
         <Select value={country} onValueChange={setCountry}>
           <SelectTrigger className="w-44 bg-background">
-            <SelectValue placeholder="Country" />
+            <SelectValue placeholder={t("breedersPage.countryPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All countries</SelectItem>
+            <SelectItem value={ALL}>{t("breedersPage.allCountries")}</SelectItem>
             {countries.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
@@ -112,7 +110,7 @@ function BreedersList() {
           className={puppiesOnly ? "" : "bg-background"}
           onClick={() => setPuppiesOnly((v) => !v)}
         >
-          Puppies available now
+          {t("breedersPage.puppiesAvailableNow")}
         </Button>
         {(search || breed !== ALL || country !== ALL || puppiesOnly) && (
           <Button
@@ -125,7 +123,7 @@ function BreedersList() {
               setPuppiesOnly(false);
             }}
           >
-            Clear filters
+            {t("breedersPage.clearFilters")}
           </Button>
         )}
       </div>
@@ -133,9 +131,7 @@ function BreedersList() {
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <p className="text-sm text-muted-foreground">
-            {breeders.length === 0
-              ? "No verified kennels yet — check back soon."
-              : "No kennels match these filters — try clearing one."}
+            {breeders.length === 0 ? t("breedersPage.noneYet") : t("breedersPage.noMatch")}
           </p>
         </div>
       ) : (

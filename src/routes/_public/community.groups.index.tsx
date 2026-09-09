@@ -6,17 +6,21 @@ import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { joinGroup, leaveGroup, listGroups, listMyGroupIds } from "@/domains/community";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
-const GROUP_TYPE_LABELS: Record<string, string> = {
-  breed: "Breed community",
-  breeders: "Breeders",
-  foundation_rescue: "Foundation & rescue",
-  adoption: "Adoption",
-  transport_route: "Transport route",
-  exhibitions: "Exhibitions & events",
-  species: "Species community",
-};
+function groupTypeLabel(t: (key: string) => string, groupType: string): string {
+  const map: Record<string, string> = {
+    breed: t("communityGroups.groupTypes.breed"),
+    breeders: t("communityGroups.groupTypes.breeders"),
+    foundation_rescue: t("communityGroups.groupTypes.foundationRescue"),
+    adoption: t("communityGroups.groupTypes.adoption"),
+    transport_route: t("communityGroups.groupTypes.transportRoute"),
+    exhibitions: t("communityGroups.groupTypes.exhibitions"),
+    species: t("communityGroups.groupTypes.species"),
+  };
+  return map[groupType] ?? groupType;
+}
 
 export const Route = createFileRoute("/_public/community/groups/")({
   head: () => ({ meta: [{ title: "Groups — Anemalo" }] }),
@@ -25,6 +29,7 @@ export const Route = createFileRoute("/_public/community/groups/")({
 
 function GroupsPage() {
   const { userId, isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const groupsQuery = useQuery({ queryKey: ["groups"], queryFn: listGroups });
@@ -41,22 +46,22 @@ function GroupsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update group.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("communityGroups.couldNotUpdateGroup"))),
   });
 
   return (
     <div className="container-page max-w-3xl py-10">
       <header className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-accent">Community</p>
-        <h1 className="mt-2 font-display text-3xl font-medium">Groups</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Practical, focused groups — breed communities, transport routes, foundations, exhibitions
-          and more.
+        <p className="text-xs font-medium uppercase tracking-wider text-accent">
+          {t("communityGroups.eyebrow")}
         </p>
+        <h1 className="mt-2 font-display text-3xl font-medium">{t("communityGroups.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("communityGroups.subtitle")}</p>
       </header>
 
       {groupsQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("communityGroups.loading")}</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {groupsQuery.data?.map((group) => (
@@ -72,7 +77,7 @@ function GroupsPage() {
                   </Link>
                   {group.group_type && (
                     <Badge variant="outline" className="ml-2 text-xs font-normal">
-                      {GROUP_TYPE_LABELS[group.group_type] ?? group.group_type}
+                      {groupTypeLabel(t, group.group_type)}
                     </Badge>
                   )}
                   <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
@@ -84,7 +89,7 @@ function GroupsPage() {
                   params={{ slug: group.slug }}
                   className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                 >
-                  View group <ArrowRight className="size-3" />
+                  {t("communityGroups.viewGroup")} <ArrowRight className="size-3" />
                 </Link>
                 {isSignedIn && (
                   <Button
@@ -94,7 +99,9 @@ function GroupsPage() {
                     onClick={() => joinMutation.mutate(group.id)}
                   >
                     <Users className="mr-1 size-3.5" />
-                    {myGroupIds.has(group.id) ? "Joined" : "Join"}
+                    {myGroupIds.has(group.id)
+                      ? t("communityGroups.joined")
+                      : t("communityGroups.join")}
                   </Button>
                 )}
               </div>

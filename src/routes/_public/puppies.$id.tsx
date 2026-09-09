@@ -34,12 +34,20 @@ import { ApplyDialog } from "@/domains/marketplace";
 import placeholderImg from "@/assets/puppy-1.jpg";
 import { calculateEstimate, type PricingBreakdown } from "@/domains/transport";
 import { findLikelyRouteMatch } from "@/domains/transport";
-import { statusStyles, statusLabel, useIsSaved } from "@/domains/marketplace";
+import {
+  statusStyles,
+  statusLabelFor,
+  useIsSaved,
+  formatExperience,
+  formatPuppiesAvailable,
+  formatDate,
+} from "@/domains/marketplace";
 import { ReportDialog } from "@/domains/trust";
 import { useAuth } from "@/domains/identity";
 import { startApplicationConversation } from "@/domains/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/puppies/$id")({
@@ -73,6 +81,9 @@ export const Route = createFileRoute("/_public/puppies/$id")({
   component: PuppyDetail,
 });
 
+// English placeholder for a parent dog with no data on file — kept static since it's used as a
+// loader-independent default, and the visible label is re-derived below in ParentCard for the
+// current locale via t("puppyDetail.notOnFile") when this default is in play.
 const emptyParent: ParentDogInfo = {
   name: "Not on file",
   pedigree: "",
@@ -86,6 +97,7 @@ function PuppyDetail() {
   const { puppy, litter, parents, breeder } = Route.useLoaderData();
   const { isSaved, toggle: toggleSaved, pending: savePending } = useIsSaved(puppy.id);
   const { isSignedIn, userId } = useAuth();
+  const { t, locale } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [active, setActive] = useState(0);
@@ -118,10 +130,10 @@ function PuppyDetail() {
     },
     onError: (err) => {
       if (err instanceof Error && err.message.includes("application")) {
-        toast.error("Apply for this puppy first so the breeder knows who's asking.");
+        toast.error(t("puppyDetail.applyFirstToAsk"));
         return;
       }
-      toast.error(getFriendlyErrorMessage(err, "Could not start conversation."));
+      toast.error(getFriendlyErrorMessage(err, t("puppyDetail.couldNotStartConversation")));
     },
   });
 
@@ -148,11 +160,9 @@ function PuppyDetail() {
   if (!litter || !breeder) {
     return (
       <div className="container-page py-24 text-center">
-        <p className="text-muted-foreground">
-          This puppy's listing is missing required information.
-        </p>
+        <p className="text-muted-foreground">{t("puppyDetail.missingInfo")}</p>
         <Button asChild className="mt-4">
-          <Link to="/find-a-dog">Back to search</Link>
+          <Link to="/find-a-dog">{t("puppyDetail.backToSearch")}</Link>
         </Button>
       </div>
     );
@@ -165,7 +175,7 @@ function PuppyDetail() {
           to="/find-a-dog"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="size-4" /> Back to results
+          <ChevronLeft className="size-4" /> {t("puppyDetail.backToResults")}
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
@@ -193,25 +203,25 @@ function PuppyDetail() {
 
             <Tabs defaultValue="about" className="mt-8">
               <TabsList className="w-full justify-start overflow-x-auto">
-                <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="litter">Litter</TabsTrigger>
-                <TabsTrigger value="parents">Parents</TabsTrigger>
-                <TabsTrigger value="health">Health & documents</TabsTrigger>
-                <TabsTrigger value="breeder">Breeder</TabsTrigger>
-                <TabsTrigger value="transport">Transport</TabsTrigger>
+                <TabsTrigger value="about">{t("puppyDetail.tabAbout")}</TabsTrigger>
+                <TabsTrigger value="litter">{t("puppyDetail.tabLitter")}</TabsTrigger>
+                <TabsTrigger value="parents">{t("puppyDetail.tabParents")}</TabsTrigger>
+                <TabsTrigger value="health">{t("puppyDetail.tabHealth")}</TabsTrigger>
+                <TabsTrigger value="breeder">{t("puppyDetail.tabBreeder")}</TabsTrigger>
+                <TabsTrigger value="transport">{t("puppyDetail.tabTransport")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="about" className="mt-6 space-y-4">
-                <SectionCard title="About the puppy">
+                <SectionCard title={t("puppyDetail.aboutTitle")}>
                   <p className="text-muted-foreground">
-                    {puppy.about || "The breeder hasn't added a description yet."}
+                    {puppy.about || t("puppyDetail.noDescription")}
                   </p>
                   {(puppy.temperament || puppy.idealHome) && (
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       {puppy.temperament && (
                         <div className="rounded-xl border border-border/70 bg-background p-4">
                           <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Temperament
+                            {t("puppyDetail.temperament")}
                           </div>
                           <div className="mt-1 font-medium">{puppy.temperament}</div>
                         </div>
@@ -219,7 +229,7 @@ function PuppyDetail() {
                       {puppy.idealHome && (
                         <div className="rounded-xl border border-border/70 bg-background p-4">
                           <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Ideal home
+                            {t("puppyDetail.idealHome")}
                           </div>
                           <div className="mt-1 font-medium">{puppy.idealHome}</div>
                         </div>
@@ -230,19 +240,19 @@ function PuppyDetail() {
               </TabsContent>
 
               <TabsContent value="litter" className="mt-6">
-                <SectionCard title="Litter information">
+                <SectionCard title={t("puppyDetail.litterInfoTitle")}>
                   <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
                     {[
-                      ["Litter", litter.code],
-                      ["Born", new Date(litter.birthDate).toLocaleDateString("en-GB")],
-                      ["Total puppies", `${litter.puppyCount}`],
-                      ["Available now", `${litter.available}`],
-                      ["Reserved", `${litter.reserved}`],
-                      ["Registration", litter.registration],
-                    ].map(([t, d]) => (
-                      <div key={t as string}>
+                      [t("puppyDetail.litterCode"), litter.code],
+                      [t("puppyDetail.born"), formatDate(locale, litter.birthDate, {})],
+                      [t("puppyDetail.totalPuppies"), `${litter.puppyCount}`],
+                      [t("puppyDetail.availableNow"), `${litter.available}`],
+                      [t("puppyDetail.reserved"), `${litter.reserved}`],
+                      [t("puppyDetail.registration"), litter.registration],
+                    ].map(([label, d]) => (
+                      <div key={label as string}>
                         <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          {t}
+                          {label}
                         </dt>
                         <dd className="mt-0.5 font-medium">{d}</dd>
                       </div>
@@ -252,26 +262,22 @@ function PuppyDetail() {
               </TabsContent>
 
               <TabsContent value="parents" className="mt-6 grid gap-4 md:grid-cols-2">
-                <ParentCard p={parents.mother ?? emptyParent} label="Mother" />
-                <ParentCard p={parents.father ?? emptyParent} label="Father" />
+                <ParentCard p={parents.mother ?? emptyParent} label={t("cards.mother")} />
+                <ParentCard p={parents.father ?? emptyParent} label={t("cards.father")} />
               </TabsContent>
 
               <TabsContent value="health" className="mt-6">
-                <SectionCard title="Health & documents">
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    Anemalo breeders are expected to provide the following before handover. Ask the
-                    breeder to confirm exactly what's ready for this puppy — final documents are
-                    verified during the transport request review, not shown here as a claim.
-                  </p>
+                <SectionCard title={t("puppyDetail.healthTitle")}>
+                  <p className="mb-4 text-sm text-muted-foreground">{t("puppyDetail.healthIntro")}</p>
                   <ul className="grid gap-3 md:grid-cols-2">
                     {[
-                      { icon: BadgeCheck, label: "Microchip" },
-                      { icon: Syringe, label: "Vaccinations (age-appropriate)" },
-                      { icon: Stethoscope, label: "Deworming schedule" },
-                      { icon: FileText, label: "Health book / passport" },
-                      { icon: Award, label: "Pedigree / birth certificate" },
-                      { icon: FileText, label: "Sales agreement (template)" },
-                      { icon: Stethoscope, label: "Parent health tests (HD, ED, eyes)" },
+                      { icon: BadgeCheck, label: t("puppyDetail.docMicrochip") },
+                      { icon: Syringe, label: t("puppyDetail.docVaccinations") },
+                      { icon: Stethoscope, label: t("puppyDetail.docDeworming") },
+                      { icon: FileText, label: t("puppyDetail.docHealthBook") },
+                      { icon: Award, label: t("puppyDetail.docPedigree") },
+                      { icon: FileText, label: t("puppyDetail.docSalesAgreement") },
+                      { icon: Stethoscope, label: t("puppyDetail.docParentHealthTests") },
                     ].map((i) => (
                       <li
                         key={i.label}
@@ -288,7 +294,7 @@ function PuppyDetail() {
               </TabsContent>
 
               <TabsContent value="breeder" className="mt-6">
-                <SectionCard title="About the breeder">
+                <SectionCard title={t("puppyDetail.breederTitle")}>
                   <div className="flex items-start gap-4">
                     <img src={breeder.cover} alt="" className="size-24 rounded-xl object-cover" />
                     <div className="flex-1">
@@ -296,7 +302,7 @@ function PuppyDetail() {
                         <h4 className="font-display text-lg font-semibold">{breeder.kennel}</h4>
                         {breeder.verified && (
                           <Badge className="bg-primary/90 text-primary-foreground">
-                            <ShieldCheck className="mr-1 size-3" /> Verified
+                            <ShieldCheck className="mr-1 size-3" /> {t("cards.verified")}
                           </Badge>
                         )}
                       </div>
@@ -305,13 +311,17 @@ function PuppyDetail() {
                       </p>
                       <p className="mt-2 text-sm">{breeder.description}</p>
                       <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        {breeder.responseTime && <span>Response: {breeder.responseTime}</span>}
-                        {breeder.years > 0 && <span>{breeder.years} yrs experience</span>}
-                        <span>{breeder.availablePuppies} puppies available</span>
+                        {breeder.responseTime && (
+                          <span>
+                            {t("puppyDetail.responsePrefix")}: {breeder.responseTime}
+                          </span>
+                        )}
+                        {breeder.years > 0 && <span>{formatExperience(locale, breeder.years)}</span>}
+                        <span>{formatPuppiesAvailable(locale, breeder.availablePuppies)}</span>
                       </div>
                       <Button asChild variant="outline" size="sm" className="mt-4">
                         <Link to="/@$handle" params={{ handle: breeder.slug }}>
-                          View kennel profile
+                          {t("puppyDetail.viewKennelProfile")}
                         </Link>
                       </Button>
                     </div>
@@ -320,48 +330,51 @@ function PuppyDetail() {
               </TabsContent>
 
               <TabsContent value="transport" className="mt-6">
-                <SectionCard title="Transport estimate">
+                <SectionCard title={t("puppyDetail.transportEstimateTitle")}>
                   <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
                     <div>
                       <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Destination country
+                        {t("puppyDetail.destinationCountry")}
                       </label>
                       <Input
-                        placeholder="e.g. Germany"
+                        placeholder={t("puppyDetail.destinationPlaceholder")}
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
                       />
                     </div>
                     <Button onClick={handleEstimate} disabled={estimating || !destination.trim()}>
-                      {estimating ? "Calculating…" : "Estimate"}
+                      {estimating ? t("puppyDetail.calculating") : t("puppyDetail.estimate")}
                     </Button>
                   </div>
                   {estimate && (
                     <div className="mt-5 rounded-xl border border-border/70 bg-background p-4">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                          <div className="text-xs text-muted-foreground">Estimated price</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t("puppyDetail.estimatedPrice")}
+                          </div>
                           <div className="font-display text-xl font-semibold">
                             {estimate.currency} {estimate.low} – {estimate.high}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-muted-foreground">From</div>
-                          <div className="font-medium">{puppy.country || "Not set"}</div>
+                          <div className="text-xs text-muted-foreground">{t("puppyDetail.from")}</div>
+                          <div className="font-medium">
+                            {puppy.country || t("puppyDetail.notSet")}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-xs text-muted-foreground">To</div>
+                          <div className="text-xs text-muted-foreground">{t("puppyDetail.to")}</div>
                           <div className="font-medium">{destination}</div>
                         </div>
                       </div>
                       {routeMatch && (
                         <p className="mt-3 text-sm text-success">
-                          A planned shared route already heads that way — this may reduce the price.
+                          {t("puppyDetail.routeMatchHint")}
                         </p>
                       )}
                       <p className="mt-3 text-xs text-muted-foreground">
-                        Approximate range based on animal size "medium" — the exact size and a full
-                        quote are confirmed after you submit a transport request.
+                        {t("puppyDetail.estimateDisclaimer")}
                       </p>
                     </div>
                   )}
@@ -373,10 +386,10 @@ function PuppyDetail() {
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
               <div className="flex flex-wrap gap-1.5">
-                <Badge className={statusStyles[puppy.status]}>{statusLabel[puppy.status]}</Badge>
+                <Badge className={statusStyles[puppy.status]}>{statusLabelFor(t, puppy.status)}</Badge>
                 {puppy.verified && (
                   <Badge className="bg-primary/90 text-primary-foreground">
-                    <ShieldCheck className="mr-1 size-3" /> Verified breeder
+                    <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedBreeder")}
                   </Badge>
                 )}
               </div>
@@ -388,23 +401,27 @@ function PuppyDetail() {
               <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
                 <Field
                   icon={<Calendar className="size-4" />}
-                  label="Date of birth"
-                  value={new Date(puppy.dob).toLocaleDateString("en-GB")}
+                  label={t("puppyDetail.dateOfBirth")}
+                  value={formatDate(locale, puppy.dob, {})}
                 />
                 <Field
                   icon={<Calendar className="size-4" />}
-                  label="Ready"
-                  value={new Date(puppy.readyDate).toLocaleDateString("en-GB")}
+                  label={t("puppyDetail.ready")}
+                  value={formatDate(locale, puppy.readyDate, {})}
                 />
                 <Field
                   icon={<MapPin className="size-4" />}
-                  label="Location"
+                  label={t("puppyDetail.location")}
                   value={`${puppy.city}, ${puppy.country}`}
                 />
                 <Field
                   icon={<Truck className="size-4" />}
-                  label="Transport"
-                  value={puppy.transportAvailable ? "Available" : "Not offered"}
+                  label={t("cards.transport")}
+                  value={
+                    puppy.transportAvailable
+                      ? t("puppyDetail.transportAvailable")
+                      : t("puppyDetail.transportNotOffered")
+                  }
                 />
               </dl>
 
@@ -423,15 +440,15 @@ function PuppyDetail() {
                 {existingApplicationQuery.data ? (
                   <Button className="w-full" size="lg" variant="outline" asChild>
                     <Link to="/dashboard/buyer/applications">
-                      Application sent —{" "}
+                      {t("puppyDetail.applicationSentPrefix")}{" "}
                       {applicationStatusLabels[
                         existingApplicationQuery.data.status as ApplicationStatus
-                      ] ?? "view status"}
+                      ] ?? t("puppyDetail.viewStatus")}
                     </Link>
                   </Button>
                 ) : (
                   <Button className="w-full" size="lg" onClick={() => setOpenApply(true)}>
-                    Apply for this puppy
+                    {t("puppyDetail.applyForPuppy")}
                   </Button>
                 )}
                 <div className="grid grid-cols-2 gap-2">
@@ -442,14 +459,14 @@ function PuppyDetail() {
                     onClick={() =>
                       isSignedIn
                         ? askBreederMutation.mutate()
-                        : toast.info("Sign in and apply first so the breeder knows who's asking.")
+                        : toast.info(t("puppyDetail.signInToAsk"))
                     }
                   >
-                    <MessageCircle className="mr-1 size-4" /> Ask breeder
+                    <MessageCircle className="mr-1 size-4" /> {t("puppyDetail.askBreeder")}
                   </Button>
                   <Button variant="outline" size="lg" asChild>
                     <Link to="/transport/request" search={{ animalId: puppy.id }}>
-                      <Truck className="mr-1 size-4" /> Transport
+                      <Truck className="mr-1 size-4" /> {t("cards.transport")}
                     </Link>
                   </Button>
                 </div>
@@ -460,13 +477,13 @@ function PuppyDetail() {
                   onClick={toggleSaved}
                 >
                   <Heart className={`mr-1 size-4 ${isSaved ? "fill-current text-accent" : ""}`} />
-                  {isSaved ? "Saved" : "Save listing"}
+                  {isSaved ? t("puppyDetail.saved") : t("puppyDetail.saveListing")}
                 </Button>
                 <div className="text-center">
                   <ReportDialog
                     targetType="animal_listing"
                     targetId={puppy.id}
-                    triggerLabel="Report this listing"
+                    triggerLabel={t("puppyDetail.reportListing")}
                   />
                 </div>
               </div>
@@ -474,10 +491,7 @@ function PuppyDetail() {
               <div className="mt-5 rounded-xl border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
                 <div className="flex items-start gap-2">
                   <Info className="mt-0.5 size-3.5 shrink-0" />
-                  <span>
-                    Anemalo does not sell puppies directly. Applying opens a conversation with the
-                    breeder, who decides who they place their puppies with.
-                  </span>
+                  <span>{t("puppyDetail.noDirectSaleNotice")}</span>
                 </div>
               </div>
 
@@ -486,13 +500,17 @@ function PuppyDetail() {
                 litter.registration !== "Not registered yet") && (
                 <div className="mt-5 border-t border-border/60 pt-4">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Verification levels
+                    {t("puppyDetail.verificationLevels")}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      breeder.verified ? "Kennel verified" : null,
-                      breeder.association ? `Association: ${breeder.association}` : null,
-                      litter.registration !== "Not registered yet" ? "Litter registered" : null,
+                      breeder.verified ? t("puppyDetail.kennelVerified") : null,
+                      breeder.association
+                        ? `${t("puppyDetail.associationPrefix")}: ${breeder.association}`
+                        : null,
+                      litter.registration !== "Not registered yet"
+                        ? t("puppyDetail.litterRegistered")
+                        : null,
                     ]
                       .filter((v): v is string => !!v)
                       .map((v) => (
@@ -504,8 +522,7 @@ function PuppyDetail() {
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[220px]">
-                            We independently confirmed this level. Hover any badge on our site for
-                            details.
+                            {t("puppyDetail.verificationTooltip")}
                           </TooltipContent>
                         </Tooltip>
                       ))}
@@ -552,6 +569,7 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
 }
 
 function ParentCard({ p, label }: { p: ParentDogInfo; label: string }) {
+  const { t } = useTranslation();
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
       <img
@@ -561,7 +579,9 @@ function ParentCard({ p, label }: { p: ParentDogInfo; label: string }) {
       />
       <div className="p-5">
         <div className="text-xs uppercase tracking-wide text-accent">{label}</div>
-        <h4 className="mt-1 font-display text-lg font-semibold">{p.name}</h4>
+        <h4 className="mt-1 font-display text-lg font-semibold">
+          {p.name === "Not on file" ? t("puppyDetail.notOnFile") : p.name}
+        </h4>
         <p className="text-xs text-muted-foreground">{p.pedigree}</p>
         {p.description && <p className="mt-2 text-sm text-muted-foreground">{p.description}</p>}
         {p.tests.length > 0 && (
@@ -575,7 +595,7 @@ function ParentCard({ p, label }: { p: ParentDogInfo; label: string }) {
         )}
         {p.titles && (
           <p className="mt-3 text-sm">
-            <strong>Titles: </strong>
+            <strong>{t("puppyDetail.titlesPrefix")}: </strong>
             {p.titles}
           </p>
         )}

@@ -16,6 +16,7 @@ import {
 } from "@/domains/fundraising";
 import { FUNDRAISING_ENABLED } from "@/domains/fundraising";
 import { FundraisingDisabledNotice } from "@/domains/fundraising";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/fundraising/$id")({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_public/fundraising/$id")({
 function CampaignPage() {
   const campaign = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState("20");
   const [message, setMessage] = useState("");
@@ -60,7 +62,8 @@ function CampaignPage() {
       setSubmitted(true);
       queryClient.invalidateQueries({ queryKey: ["campaign-public-contributions", campaign?.id] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not contribute.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("fundraisingDetail.couldNotContribute"))),
   });
 
   if (!FUNDRAISING_ENABLED || !campaign) {
@@ -79,7 +82,7 @@ function CampaignPage() {
         to="/fundraising"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> All campaigns
+        <ArrowLeft className="size-3.5" /> {t("fundraisingDetail.allCampaigns")}
       </Link>
 
       <div className="rounded-2xl border border-border/70 bg-card p-6">
@@ -90,8 +93,8 @@ function CampaignPage() {
         {(campaign.pickupCountry || campaign.destinationCountry) && (
           <div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="size-3.5" />
-            {campaign.pickupCountry ?? "?"} → {campaign.destinationCountry ?? "?"} (approximate
-            route only)
+            {campaign.pickupCountry ?? "?"} → {campaign.destinationCountry ?? "?"}{" "}
+            {t("fundraisingDetail.approximateRouteOnly")}
           </div>
         )}
         {campaign.description && <p className="mt-3 text-sm">{campaign.description}</p>}
@@ -109,43 +112,40 @@ function CampaignPage() {
             {campaign.amountCollected} {campaign.currency}
           </span>{" "}
           <span className="text-muted-foreground">
-            collected of {campaign.targetAmount} {campaign.currency} — {remaining} remaining
+            {t("fundraisingDetail.collectedOf")} {campaign.targetAmount} {campaign.currency} —{" "}
+            {remaining} {t("fundraisingDetail.remaining")}
           </span>
         </div>
 
-        <p className="mt-3 text-xs text-muted-foreground">
-          When the target is reached, funds are applied directly to this animal's Anemalo transport
-          — never paid out to an individual. This is not a donation toward the cost of the animal
-          itself.
-        </p>
+        <p className="mt-3 text-xs text-muted-foreground">{t("fundraisingDetail.targetNote")}</p>
       </div>
 
       <div className="mt-6 rounded-2xl border border-border/70 bg-card p-6">
         {!isSignedIn ? (
           <p className="text-sm text-muted-foreground">
             <Link to="/signin" className="text-primary hover:underline">
-              Sign in
+              {t("nav.signIn")}
             </Link>{" "}
-            to support this campaign.
+            {t("fundraisingDetail.signInSuffix")}
           </p>
         ) : submitted ? (
           <div className="text-center">
             <CheckCircle2 className="mx-auto size-8 text-success" />
-            <p className="mt-2 font-medium">Thank you for your support</p>
+            <p className="mt-2 font-medium">{t("fundraisingDetail.thankYouTitle")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              This was a simulated, development-only contribution — no real payment provider is
-              connected yet.
+              {t("fundraisingDetail.thankYouBody")}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
               <FlaskConical className="size-3.5 shrink-0" />
-              Development payment simulation only — no real payment provider is connected, and this
-              is never available in production.
+              {t("fundraisingDetail.devSimNotice")}
             </div>
             <div>
-              <Label>Amount ({campaign.currency})</Label>
+              <Label>
+                {t("fundraisingDetail.amountLabel")} ({campaign.currency})
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -154,7 +154,7 @@ function CampaignPage() {
               />
             </div>
             <div>
-              <Label>Public message (optional)</Label>
+              <Label>{t("fundraisingDetail.publicMessage")}</Label>
               <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} />
             </div>
             <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ function CampaignPage() {
                 onCheckedChange={(v) => setAnonymous(v === true)}
               />
               <Label htmlFor="anon" className="text-sm font-normal">
-                Keep my name private on the public campaign page
+                {t("fundraisingDetail.keepNamePrivate")}
               </Label>
             </div>
             <Button
@@ -172,16 +172,18 @@ function CampaignPage() {
               disabled={!amount || Number(amount) <= 0 || contributeMutation.isPending}
               onClick={() => contributeMutation.mutate()}
             >
-              Simulate contribution
+              {t("fundraisingDetail.simulateContribution")}
             </Button>
           </div>
         )}
       </div>
 
       <div className="mt-6">
-        <h2 className="mb-3 font-display text-lg font-semibold">Supporters</h2>
+        <h2 className="mb-3 font-display text-lg font-semibold">
+          {t("fundraisingDetail.supporters")}
+        </h2>
         {!contributionsQuery.data?.length ? (
-          <p className="text-sm text-muted-foreground">Be the first to support this campaign.</p>
+          <p className="text-sm text-muted-foreground">{t("fundraisingDetail.beFirst")}</p>
         ) : (
           <div className="space-y-2">
             {contributionsQuery.data.map((c) => (

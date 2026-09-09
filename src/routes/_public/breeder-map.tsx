@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { listApprovedKennels } from "@/domains/marketplace";
 import { BreederCard } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/breeder-map")({
   loader: () => listApprovedKennels(),
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_public/breeder-map")({
 
 function BreederMapPage() {
   const breeders = Route.useLoaderData();
+  const { t } = useTranslation();
   const [country, setCountry] = useState<string | null>(null);
 
   const countries = useMemo(() => {
@@ -37,22 +39,20 @@ function BreederMapPage() {
   const byCity = useMemo(() => {
     const groups = new Map<string, typeof breeders>();
     for (const b of filtered) {
-      const key = b.city || "Unknown city";
+      const key = b.city || t("breederMap.unknownCity");
       groups.set(key, [...(groups.get(key) ?? []), b]);
     }
     return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [filtered]);
+  }, [filtered, t]);
 
   return (
     <div className="container-page py-10">
       <header className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-accent">Discover</p>
-        <h1 className="mt-2 font-display text-3xl font-medium">Breeder map</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Verified breeders grouped by country and city. Only approximate locations are ever shown —
-          exact addresses stay private, even from Anemalo's own team until a transport is being
-          arranged.
+        <p className="text-xs font-medium uppercase tracking-wider text-accent">
+          {t("breederMap.eyebrow")}
         </p>
+        <h1 className="mt-2 font-display text-3xl font-medium">{t("breederMap.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("breederMap.desc")}</p>
       </header>
 
       {countries.length > 0 && (
@@ -65,7 +65,7 @@ function BreederMapPage() {
                 : "border-border/70 text-muted-foreground hover:text-foreground"
             }`}
           >
-            All countries ({breeders.length})
+            {t("breederMap.allCountries")} ({breeders.length})
           </button>
           {countries.map(([c, count]) => (
             <button
@@ -86,9 +86,9 @@ function BreederMapPage() {
       {breeders.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <MapPin className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No verified breeders published yet</p>
+          <p className="mt-3 font-medium">{t("breederMap.noneTitle")}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Check back soon as more kennels complete verification.
+            {t("breederMap.noneDesc")}
           </p>
         </div>
       ) : (

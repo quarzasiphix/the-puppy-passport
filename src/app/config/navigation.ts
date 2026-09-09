@@ -32,6 +32,7 @@ import {
   Flag,
   Coins,
   ScrollText,
+  Network,
 } from "lucide-react";
 import type { DashboardNavItem } from "@/app/layouts/dashboard-shell";
 
@@ -56,6 +57,7 @@ export const breederNav: DashboardNavItem[] = [
   { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/breeder/profile", label: "Public profile", icon: User },
   { to: "/dashboard/breeder/parent-dogs", label: "Parent dogs", icon: Dog },
+  { to: "/dashboard/breeder/pedigrees", label: "Pedigrees", icon: Network },
   { to: "/dashboard/breeder/litters", label: "Litters", icon: Baby },
   { to: "/dashboard/breeder/puppies", label: "Puppies", icon: PawPrint },
   { to: "/dashboard/breeder/applications", label: "Buyer applications", icon: Inbox },

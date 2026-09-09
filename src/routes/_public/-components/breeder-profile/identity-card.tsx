@@ -2,6 +2,7 @@ import { MessageCircle, MapPin, Heart, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
+import { useTranslation } from "@/shared/i18n";
 import { VerificationBadges } from "./verification";
 import type { Breeder, Stats, TrustClaims } from "./types";
 
@@ -31,12 +32,13 @@ export function IdentityCard({
   onFollow: () => void;
   onContact: () => void;
 }) {
+  const { t } = useTranslation();
   const statItems = [
-    { label: "Puppies available", value: stats.availablePuppies },
-    { label: "Planned litters", value: stats.plannedLitters },
-    { label: "Previous litters", value: stats.previousLitters },
-    { label: "Puppies placed", value: stats.puppiesPlaced },
-    { label: "Breeding dogs", value: stats.breedingDogs },
+    { label: t("breederProfile.statAvailablePuppies"), value: stats.availablePuppies },
+    { label: t("breederProfile.statPlannedLitters"), value: stats.plannedLitters },
+    { label: t("breederProfile.statPreviousLitters"), value: stats.previousLitters },
+    { label: t("breederProfile.statPuppiesPlaced"), value: stats.puppiesPlaced },
+    { label: t("breederProfile.statBreedingDogs"), value: stats.breedingDogs },
   ];
 
   return (
@@ -71,23 +73,27 @@ export function IdentityCard({
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="flex gap-2">
               <Button size="lg" className="flex-1 sm:flex-none" onClick={onContact}>
-                <MessageCircle className="size-4" /> Contact breeder
+                <MessageCircle className="size-4" /> {t("breederProfile.contactBreeder")}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="flex-1 sm:flex-none"
                 disabled={followPending}
-                onClick={() => (isSignedIn ? onFollow() : toast.info("Sign in to follow kennels."))}
+                onClick={() =>
+                  isSignedIn ? onFollow() : toast.info(t("breederProfile.signInToFollow"))
+                }
               >
                 <Heart className={`size-4 ${isFollowing ? "fill-current text-accent" : ""}`} />
-                {isFollowing ? "Following" : "Follow"}
+                {isFollowing ? t("breederProfile.following") : t("breederProfile.follow")}
               </Button>
             </div>
             <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground sm:justify-end">
               <Users className="size-3" />
               {stats.followerCount.toLocaleString()}{" "}
-              {stats.followerCount === 1 ? "follower" : "followers"}
+              {stats.followerCount === 1
+                ? t("breederProfile.followerSingular")
+                : t("breederProfile.followerPlural")}
             </p>
           </div>
         </div>

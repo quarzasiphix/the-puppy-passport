@@ -1,5 +1,6 @@
 import { Sparkles, PawPrint } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { useTranslation } from "@/shared/i18n";
 import { LitterCard, PuppyCard } from "@/domains/marketplace";
 import { PostsList } from "./posts-list";
 import { ParentDogCard } from "./parent-dog-card";
@@ -27,14 +28,17 @@ export function HomeTab({
   onSeeAllPuppies: () => void;
   onSeeAllPosts: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <>
       {puppies.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">Available now</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {t("breederProfile.availableNow")}
+            </h3>
             <Button variant="link" size="sm" onClick={onSeeAllPuppies}>
-              See all
+              {t("breederProfile.seeAll")}
             </Button>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -48,7 +52,7 @@ export function HomeTab({
       {plannedLitters.length > 0 && (
         <section>
           <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
-            <Sparkles className="size-4 text-accent" /> Planned
+            <Sparkles className="size-4 text-accent" /> {t("breederProfile.planned")}
           </h3>
           <div className="grid gap-6 lg:grid-cols-2">
             {plannedLitters.slice(0, 2).map((l) => (
@@ -61,7 +65,7 @@ export function HomeTab({
       {parents.length > 0 && (
         <section>
           <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
-            <PawPrint className="size-4" /> Breeding dogs
+            <PawPrint className="size-4" /> {t("breederProfile.statBreedingDogs")}
           </h3>
           <div className="grid gap-6 md:grid-cols-2">
             {parents.slice(0, 2).map((p, i) => (
@@ -74,9 +78,11 @@ export function HomeTab({
       {posts.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">Recent updates</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {t("breederProfile.recentUpdates")}
+            </h3>
             <Button variant="link" size="sm" onClick={onSeeAllPosts}>
-              See all
+              {t("breederProfile.seeAll")}
             </Button>
           </div>
           <PostsList posts={posts.slice(0, 3)} />
@@ -84,7 +90,7 @@ export function HomeTab({
       )}
 
       <section className="rounded-2xl border border-border/70 bg-card p-6">
-        <h3 className="mb-3 font-display text-lg font-semibold">Trust</h3>
+        <h3 className="mb-3 font-display text-lg font-semibold">{t("breederProfile.trust")}</h3>
         <VerificationList b={b} trustClaims={trustClaims} stats={stats} />
       </section>
     </>

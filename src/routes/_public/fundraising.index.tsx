@@ -3,6 +3,7 @@ import { HeartHandshake } from "lucide-react";
 import { listPublicCampaigns } from "@/domains/fundraising";
 import { FUNDRAISING_ENABLED } from "@/domains/fundraising";
 import { FundraisingDisabledNotice } from "@/domains/fundraising";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/fundraising/")({
   head: () => ({ meta: [{ title: "Support animal transport — Anemalo" }] }),
@@ -12,20 +13,17 @@ export const Route = createFileRoute("/_public/fundraising/")({
 
 function FundraisingListPage() {
   const campaigns = Route.useLoaderData();
+  const { t } = useTranslation();
 
   return (
     <div className="container-page py-10">
       <header className="mb-8">
         <p className="text-xs font-medium uppercase tracking-wider text-accent">
-          Verified-organisation fundraising
+          {t("fundraisingList.eyebrow")}
         </p>
-        <h1 className="mt-1 font-display text-3xl font-medium">
-          Help an animal reach its new home
-        </h1>
+        <h1 className="mt-1 font-display text-3xl font-medium">{t("fundraisingList.title")}</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Campaigns are run only by verified foundations, shelters and rescue organisations, always
-          tied to a real animal, a real transport request and an accepted quotation — never to fund
-          buying an animal.
+          {t("fundraisingList.subtitle")}
         </p>
       </header>
 
@@ -34,7 +32,7 @@ function FundraisingListPage() {
       ) : campaigns.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <HeartHandshake className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">No active campaigns right now</p>
+          <p className="mt-3 font-medium">{t("fundraisingList.noCampaigns")}</p>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -58,7 +56,8 @@ function FundraisingListPage() {
                 />
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {c.amountCollected} / {c.targetAmount} {c.currency} collected
+                {c.amountCollected} / {c.targetAmount} {c.currency}{" "}
+                {t("fundraisingList.collectedSuffix")}
               </div>
             </Link>
           ))}

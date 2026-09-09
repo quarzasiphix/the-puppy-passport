@@ -6,7 +6,8 @@ import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { createPost, POST_TYPE_LABELS, type PostType, type PostVisibility } from "@/domains/social";
+import { createPost, postTypeLabel, type PostType, type PostVisibility } from "@/domains/social";
+import { useTranslation } from "@/shared/i18n";
 
 // A breeder's own timeline currently had no write path at all — the "Posts" tab on a kennel
 // profile only ever rendered existing rows (domains/social/services/posts.ts was read-only from
@@ -41,6 +42,7 @@ export function KennelPostComposer({
   puppies: { id: string; label: string }[];
   onPosted?: () => void;
 }) {
+  const { t } = useTranslation();
   const [postType, setPostType] = useState<PostType>("general");
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<PostVisibility>("public");
@@ -91,9 +93,9 @@ export function KennelPostComposer({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {KENNEL_POST_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {POST_TYPE_LABELS[t]}
+              {KENNEL_POST_TYPES.map((pt) => (
+                <SelectItem key={pt} value={pt}>
+                  {postTypeLabel(t, pt)}
                 </SelectItem>
               ))}
             </SelectContent>

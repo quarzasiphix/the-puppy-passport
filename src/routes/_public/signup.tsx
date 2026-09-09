@@ -20,6 +20,7 @@ import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { signUp } from "@/domains/identity";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import { useTranslation } from "@/shared/i18n";
 
 const schema = z.object({
   intent: z.enum(["customer", "buyer", "breeder", "foundation", "operations"]),
@@ -45,33 +46,33 @@ export const Route = createFileRoute("/_public/signup")({
 const intents = [
   {
     value: "customer" as const,
-    label: "Request animal transport",
+    labelKey: "signUp.intentCustomerLabel",
     icon: Truck,
-    desc: "Submit and track transport requests.",
+    descKey: "signUp.intentCustomerDesc",
   },
   {
     value: "buyer" as const,
-    label: "Find a dog",
+    labelKey: "signUp.intentBuyerLabel",
     icon: Search,
-    desc: "Browse breeders and foundations, save and apply for animals.",
+    descKey: "signUp.intentBuyerDesc",
   },
   {
     value: "breeder" as const,
-    label: "Publish as a breeder",
+    labelKey: "signUp.intentBreederLabel",
     icon: Dog,
-    desc: "Requires verification before you can publish.",
+    descKey: "signUp.intentBreederDesc",
   },
   {
     value: "foundation" as const,
-    label: "Represent a foundation or rescue",
+    labelKey: "signUp.intentFoundationLabel",
     icon: HeartHandshake,
-    desc: "Requires verification before you can publish.",
+    descKey: "signUp.intentFoundationDesc",
   },
   {
     value: "operations" as const,
-    label: "Manage transport operations",
+    labelKey: "signUp.intentOperationsLabel",
     icon: Headset,
-    desc: "Requires approval from a Anemalo administrator.",
+    descKey: "signUp.intentOperationsDesc",
   },
 ];
 
@@ -80,6 +81,7 @@ function SignUp() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<0 | 1>(0);
   const hydrated = useHydrated();
+  const { t } = useTranslation();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -106,11 +108,11 @@ function SignUp() {
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
-    toast.success("Account created — welcome to Anemalo.");
+    toast.success(t("signUp.accountCreatedToast"));
     if (values.intent === "breeder" || values.intent === "foundation") {
       await navigate({ to: "/create-breeder" });
     } else if (values.intent === "operations") {
-      toast.info("Your operations access request is pending administrator approval.");
+      toast.info(t("signUp.operationsPendingToast"));
       await navigate({ to: "/dashboard/buyer" });
     } else {
       await navigate({ to: "/dashboard/buyer" });
@@ -126,11 +128,9 @@ function SignUp() {
           </span>
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
-        <h1 className="mt-6 font-display text-3xl font-medium">Create an account</h1>
+        <h1 className="mt-6 font-display text-3xl font-medium">{t("signUp.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {step === 0
-            ? "Start with what you're here to do — you can request transport, browse breeders, or apply for verification at any time afterwards."
-            : "Almost done — just a name so breeders and our team know who they're talking to."}
+          {step === 0 ? t("signUp.subtitleStep0") : t("signUp.subtitleStep1")}
         </p>
 
         <Form {...form}>
@@ -151,7 +151,7 @@ function SignUp() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        I am here to…
+                        {t("signUp.iAmHereTo")}
                       </FormLabel>
                       <div className="grid gap-2">
                         {intents.map((opt) => (
@@ -167,9 +167,11 @@ function SignUp() {
                           >
                             <opt.icon className="mt-0.5 size-4 shrink-0 text-primary" />
                             <span>
-                              <span className="block text-sm font-medium">{opt.label}</span>
+                              <span className="block text-sm font-medium">
+                                {t(opt.labelKey)}
+                              </span>
                               <span className="block text-xs text-muted-foreground">
-                                {opt.desc}
+                                {t(opt.descKey)}
                               </span>
                             </span>
                           </button>
@@ -185,7 +187,7 @@ function SignUp() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("authCommon.email")}</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="you@example.com" {...field} />
                       </FormControl>
@@ -199,7 +201,7 @@ function SignUp() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("authCommon.password")}</FormLabel>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
@@ -209,7 +211,7 @@ function SignUp() {
                 />
 
                 <Button type="submit" className="w-full" size="lg" disabled={!hydrated}>
-                  Continue <ArrowRight className="ml-1 size-4" />
+                  {t("signUp.continue")} <ArrowRight className="ml-1 size-4" />
                 </Button>
               </>
             ) : (
@@ -220,7 +222,7 @@ function SignUp() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First name</FormLabel>
+                        <FormLabel>{t("signUp.firstName")}</FormLabel>
                         <FormControl>
                           <Input {...field} autoFocus />
                         </FormControl>
@@ -233,7 +235,7 @@ function SignUp() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last name</FormLabel>
+                        <FormLabel>{t("signUp.lastName")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -249,7 +251,7 @@ function SignUp() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City (optional)</FormLabel>
+                        <FormLabel>{t("signUp.cityOptional")}</FormLabel>
                         <FormControl>
                           <Input placeholder="Warsaw" {...field} />
                         </FormControl>
@@ -262,7 +264,7 @@ function SignUp() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country (optional)</FormLabel>
+                        <FormLabel>{t("signUp.countryOptional")}</FormLabel>
                         <FormControl>
                           <Input placeholder="Poland" {...field} />
                         </FormControl>
@@ -277,7 +279,7 @@ function SignUp() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone (optional)</FormLabel>
+                      <FormLabel>{t("signUp.phoneOptional")}</FormLabel>
                       <FormControl>
                         <Input placeholder="+48 555 123 456" {...field} />
                       </FormControl>
@@ -286,33 +288,30 @@ function SignUp() {
                   )}
                 />
 
-                <p className="text-xs text-muted-foreground">
-                  Preferred language and currency, and anything breed/kennel-specific, can be set
-                  afterwards from your account page — no need to fill everything in now.
-                </p>
+                <p className="text-xs text-muted-foreground">{t("signUp.prefsNote")}</p>
 
                 <p className="text-xs text-muted-foreground">
-                  By creating an account, you agree to Anemalo's{" "}
+                  {t("signUp.termsPrefix")}{" "}
                   <Link to="/terms" className="text-primary hover:underline">
-                    Terms of Service
+                    {t("signUp.termsOfService")}
                   </Link>{" "}
-                  and{" "}
+                  {t("signUp.and")}{" "}
                   <Link to="/privacy" className="text-primary hover:underline">
-                    Privacy Policy
+                    {t("signUp.privacyPolicy")}
                   </Link>
                   .
                 </p>
 
                 <div className="flex items-center justify-between">
                   <Button type="button" variant="ghost" onClick={() => setStep(0)}>
-                    <ArrowLeft className="mr-1 size-4" /> Back
+                    <ArrowLeft className="mr-1 size-4" /> {t("signUp.back")}
                   </Button>
                   <Button
                     type="submit"
                     size="lg"
                     disabled={!hydrated || form.formState.isSubmitting}
                   >
-                    {form.formState.isSubmitting ? "Creating account…" : "Create account"}
+                    {form.formState.isSubmitting ? t("signUp.submitting") : t("signUp.submit")}
                   </Button>
                 </div>
               </>
@@ -321,9 +320,9 @@ function SignUp() {
         </Form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("signUp.alreadyHaveAccount")}{" "}
           <Link to="/signin" className="text-primary hover:underline">
-            Sign in
+            {t("signUp.signInLink")}
           </Link>
         </p>
       </div>

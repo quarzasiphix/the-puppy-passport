@@ -9,6 +9,7 @@ import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import { useTranslation } from "@/shared/i18n";
 
 const schema = z.object({ email: z.string().email("Enter a valid email") });
 type FormValues = z.infer<typeof schema>;
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_public/forgot-password")({
 function ForgotPassword() {
   const [sent, setSent] = useState(false);
   const hydrated = useHydrated();
+  const { t } = useTranslation();
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: "" } });
 
   async function onSubmit(values: FormValues) {
@@ -48,20 +50,20 @@ function ForgotPassword() {
             <div className="mx-auto grid size-12 place-items-center rounded-full bg-success/15 text-success">
               <Check className="size-6" />
             </div>
-            <h1 className="mt-4 font-display text-2xl font-medium">Check your email</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              If an account exists for that address, we've sent a link to reset your password.
-            </p>
+            <h1 className="mt-4 font-display text-2xl font-medium">
+              {t("forgotPassword.sentTitle")}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t("forgotPassword.sentBody")}</p>
             <Button asChild className="mt-6" variant="outline">
-              <Link to="/signin">Back to sign in</Link>
+              <Link to="/signin">{t("authCommon.backToSignIn")}</Link>
             </Button>
           </div>
         ) : (
           <>
-            <h1 className="mt-6 font-display text-3xl font-medium">Reset your password</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Enter your email and we'll send you a link to choose a new password.
-            </p>
+            <h1 className="mt-6 font-display text-3xl font-medium">
+              {t("forgotPassword.title")}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("forgotPassword.subtitle")}</p>
             <Form {...form}>
               <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
                 <FormField
@@ -69,7 +71,7 @@ function ForgotPassword() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("authCommon.email")}</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="you@example.com" {...field} />
                       </FormControl>
@@ -83,13 +85,15 @@ function ForgotPassword() {
                   size="lg"
                   disabled={!hydrated || form.formState.isSubmitting}
                 >
-                  {form.formState.isSubmitting ? "Sending…" : "Send reset link"}
+                  {form.formState.isSubmitting
+                    ? t("forgotPassword.submitting")
+                    : t("forgotPassword.submit")}
                 </Button>
               </form>
             </Form>
             <p className="mt-6 text-center text-sm text-muted-foreground">
               <Link to="/signin" className="text-primary hover:underline">
-                Back to sign in
+                {t("authCommon.backToSignIn")}
               </Link>
             </p>
           </>

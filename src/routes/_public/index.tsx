@@ -137,9 +137,9 @@ function Hero() {
           </div>
 
           <dl className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t border-border/60 pt-6 text-sm">
-            <Stat label="Verified breeders & foundations" value={String(verifiedOrgs)} />
-            <Stat label="Available puppies" value={String(availableAnimals)} />
-            <Stat label="Planned litters" value={String(plannedCount)} />
+            <Stat label={t("home.statVerifiedBreeders")} value={String(verifiedOrgs)} />
+            <Stat label={t("home.statAvailablePuppies")} value={String(availableAnimals)} />
+            <Stat label={t("home.statPlannedLitters")} value={String(plannedCount)} />
           </dl>
         </div>
 
@@ -160,13 +160,11 @@ function Hero() {
                 <Truck className="size-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Warsaw → Amsterdam</p>
-                <p className="text-xs text-muted-foreground">Shared route · ready for scheduling</p>
+                <p className="text-sm font-semibold">{t("home.heroCardCities")}</p>
+                <p className="text-xs text-muted-foreground">{t("home.heroCardRouteStatus")}</p>
               </div>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Documents reviewed · vehicle and driver assigned
-            </p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("home.heroCardDocsStatus")}</p>
           </div>
         </div>
       </div>
@@ -206,31 +204,36 @@ function ForBreedersBanner() {
 }
 
 function ServiceCategories() {
+  const { t } = useTranslation();
   const categories = [
     {
       icon: Package,
-      title: "Shared",
-      desc: "Flexible dates, lower price, planned European routes.",
+      title: t("home.serviceCategories.sharedTitle"),
+      desc: t("home.serviceCategories.sharedDesc"),
     },
-    { icon: Truck, title: "Individual", desc: "Dedicated planning, direct pickup and handover." },
+    {
+      icon: Truck,
+      title: t("home.serviceCategories.individualTitle"),
+      desc: t("home.serviceCategories.individualDesc"),
+    },
     {
       icon: Zap,
-      title: "Express",
-      desc: "Priority quotation and the earliest available departure.",
+      title: t("home.serviceCategories.expressTitle"),
+      desc: t("home.serviceCategories.expressDesc"),
     },
     {
       icon: Crown,
-      title: "VIP",
-      desc: "Dedicated scheduling, premium communication, extra updates.",
+      title: t("home.serviceCategories.vipTitle"),
+      desc: t("home.serviceCategories.vipDesc"),
     },
   ];
   return (
     <section className="container-page py-16">
       <SectionHeader
-        eyebrow="Transport services"
-        title="Four transport categories, one professional standard"
-        desc="Every category meets the same legal and animal-welfare requirements — the difference is scheduling, privacy and communication, not the minimum standard of care."
-        cta={{ label: "Compare transport options", to: "/transport" }}
+        eyebrow={t("home.serviceCategories.eyebrow")}
+        title={t("home.serviceCategories.title")}
+        desc={t("home.serviceCategories.desc")}
+        cta={{ label: t("home.serviceCategories.cta"), to: "/transport" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {categories.map((c) => (
@@ -248,31 +251,32 @@ function ServiceCategories() {
 }
 
 function Trust() {
+  const { t } = useTranslation();
   const items = [
     {
       icon: ShieldCheck,
-      label: "Verified breeders & foundations",
-      desc: "Identity, association & registration checked.",
+      label: t("home.trust.verifiedLabel"),
+      desc: t("home.trust.verifiedDesc"),
     },
     {
       icon: FileCheck2,
-      label: "Document review",
-      desc: "Passport, microchip and health documents checked before scheduling.",
+      label: t("home.trust.documentsLabel"),
+      desc: t("home.trust.documentsDesc"),
     },
     {
       icon: Stethoscope,
-      label: "Health information visible",
-      desc: "Health tests and veterinary status on file.",
+      label: t("home.trust.healthLabel"),
+      desc: t("home.trust.healthDesc"),
     },
     {
       icon: HeartHandshake,
-      label: "Structured applications",
-      desc: "Fair, transparent buyer and adoption flow.",
+      label: t("home.trust.applicationsLabel"),
+      desc: t("home.trust.applicationsDesc"),
     },
     {
       icon: Truck,
-      label: "Operational transport",
-      desc: "Planned routes, assigned vehicles and drivers, tracked status.",
+      label: t("home.trust.transportLabel"),
+      desc: t("home.trust.transportDesc"),
     },
   ];
   return (
@@ -327,14 +331,15 @@ function SectionHeader({
 
 function FeaturedPuppies() {
   const { featuredPuppies } = Route.useLoaderData();
+  const { t } = useTranslation();
   if (featuredPuppies.length === 0) return null;
   return (
     <section className="container-page py-16">
       <SectionHeader
-        eyebrow="Marketplace"
-        title="Puppies ready to meet their family"
-        desc="Currently available or open for applications from verified breeders."
-        cta={{ label: "See all puppies", to: "/find-a-dog" }}
+        eyebrow={t("home.featuredPuppies.eyebrow")}
+        title={t("home.featuredPuppies.title")}
+        desc={t("home.featuredPuppies.desc")}
+        cta={{ label: t("home.featuredPuppies.cta"), to: "/find-a-dog" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {featuredPuppies.map((p) => (
@@ -347,15 +352,16 @@ function FeaturedPuppies() {
 
 function UpcomingLitters() {
   const { upcomingLitters } = Route.useLoaderData();
+  const { t } = useTranslation();
   if (upcomingLitters.length === 0) return null;
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">
       <div className="container-page">
         <SectionHeader
-          eyebrow="Upcoming litters"
-          title="Planned litters"
-          desc="Reserve your place on the waiting list — breeders confirm homes before puppies are born."
-          cta={{ label: "All planned litters", to: "/planned-litters" }}
+          eyebrow={t("home.upcomingLitters.eyebrow")}
+          title={t("home.upcomingLitters.title")}
+          desc={t("home.upcomingLitters.desc")}
+          cta={{ label: t("home.upcomingLitters.cta"), to: "/planned-litters" }}
         />
         <div className="grid gap-6 lg:grid-cols-3">
           {upcomingLitters.map((l) => (
@@ -369,14 +375,15 @@ function UpcomingLitters() {
 
 function VerifiedBreeders() {
   const { verifiedBreeders } = Route.useLoaderData();
+  const { t } = useTranslation();
   if (verifiedBreeders.length === 0) return null;
   return (
     <section className="container-page py-16">
       <SectionHeader
-        eyebrow="Discover breeders"
-        title="Kennels we've vetted personally"
-        desc="Follow a kennel's profile — litters, dogs and history — whether or not they have puppies available right now."
-        cta={{ label: "Browse all breeders", to: "/breeders" }}
+        eyebrow={t("home.verifiedBreedersSection.eyebrow")}
+        title={t("home.verifiedBreedersSection.title")}
+        desc={t("home.verifiedBreedersSection.desc")}
+        cta={{ label: t("home.verifiedBreedersSection.cta"), to: "/breeders" }}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {verifiedBreeders.map((b) => (
@@ -405,7 +412,7 @@ function FollowTheJourney() {
           <p className="mt-3 max-w-lg text-muted-foreground">{t("home.followJourneyDesc")}</p>
           <Button asChild className="mt-6">
             <Link to="/breeders">
-              Discover breeders <ChevronRight className="ml-1 size-4" />
+              {t("home.followJourney.cta")} <ChevronRight className="ml-1 size-4" />
             </Link>
           </Button>
         </div>
@@ -415,18 +422,18 @@ function FollowTheJourney() {
               <Heart className="size-5" />
             </div>
             <div>
-              <div className="font-medium">Follow a kennel</div>
+              <div className="font-medium">{t("home.followJourney.cardTitle")}</div>
               <div className="text-xs text-muted-foreground">
-                Hear about their next litter before it's born
+                {t("home.followJourney.cardSubtitle")}
               </div>
             </div>
           </div>
           <div className="my-3 h-px bg-border/60" />
           <ul className="space-y-3 text-sm">
             {[
-              ["Planned litter announced", "3 places already on the waiting list"],
-              ["Puppies available", "4 puppies ready in 2 weeks"],
-              ["Bella placed with her new family", "Now part of the kennel's Alumni history"],
+              [t("home.followJourney.timeline1Title"), t("home.followJourney.timeline1Desc")],
+              [t("home.followJourney.timeline2Title"), t("home.followJourney.timeline2Desc")],
+              [t("home.followJourney.timeline3Title"), t("home.followJourney.timeline3Desc")],
             ].map(([title, desc]) => (
               <li key={title} className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 size-3.5 shrink-0 text-accent" />
@@ -451,9 +458,12 @@ function Pedigrees() {
         <div className="order-2 flex justify-center lg:order-1">
           <div className="grid w-full max-w-sm gap-2 rounded-2xl border border-border/70 bg-card p-6">
             {[
-              ["Sire & dam", "Breeder-confirmed"],
-              ["Grandparents", "Document-supported"],
-              ["Registry record", "Coming as breeders connect their kennel club"],
+              [t("home.pedigreeCards.sireDamLabel"), t("home.pedigreeCards.sireDamLevel")],
+              [
+                t("home.pedigreeCards.grandparentsLabel"),
+                t("home.pedigreeCards.grandparentsLevel"),
+              ],
+              [t("home.pedigreeCards.registryLabel"), t("home.pedigreeCards.registryLevel")],
             ].map(([label, level]) => (
               <div key={label} className="rounded-xl border border-border/60 bg-secondary/40 p-3">
                 <div className="text-sm font-medium">{label}</div>
@@ -471,8 +481,7 @@ function Pedigrees() {
           </h2>
           <p className="mt-3 max-w-lg text-muted-foreground">{t("home.pedigreesDesc")}</p>
           <div className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <GitBranch className="size-3.5" /> Full pedigree graphs are coming as breeders add
-            their dogs' family history.
+            <GitBranch className="size-3.5" /> {t("home.pedigreeCards.footerNote")}
           </div>
         </div>
       </div>
@@ -481,6 +490,14 @@ function Pedigrees() {
 }
 
 function TransportSection() {
+  const { t } = useTranslation();
+  const features = [
+    t("home.transportSection.feature1"),
+    t("home.transportSection.feature2"),
+    t("home.transportSection.feature3"),
+    t("home.transportSection.feature4"),
+    t("home.transportSection.feature5"),
+  ];
   return (
     <section className="container-page py-16">
       <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
@@ -495,22 +512,20 @@ function TransportSection() {
           </div>
           <div className="flex flex-col justify-center p-8 md:p-12">
             <p className="text-xs font-medium uppercase tracking-wider text-accent">
-              How transport works
+              {t("home.transportSection.eyebrow")}
             </p>
             <h2 className="mt-2 font-display text-3xl font-medium">
-              From request to handover, fully tracked
+              {t("home.transportSection.title")}
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              Submit a transport request, we review the animal and document information, prepare a
-              quotation, and — once accepted — plan pickup, route and handover. Final eligibility
-              and pricing are confirmed after review, not guaranteed up front.
-            </p>
+            <p className="mt-3 text-muted-foreground">{t("home.transportSection.desc")}</p>
 
             <div className="mt-6 rounded-xl border border-border bg-background p-4">
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <div className="font-medium">Warsaw, Poland</div>
-                  <div className="text-xs text-muted-foreground">Pickup</div>
+                  <div className="font-medium">{t("home.transportSection.pickupCity")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t("home.transportSection.pickupLabel")}
+                  </div>
                 </div>
                 <div className="flex flex-1 items-center px-4">
                   <div className="h-px flex-1 border-t border-dashed border-border" />
@@ -518,25 +533,21 @@ function TransportSection() {
                   <div className="h-px flex-1 border-t border-dashed border-border" />
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">Amsterdam, Netherlands</div>
-                  <div className="text-xs text-muted-foreground">Handover</div>
+                  <div className="font-medium">{t("home.transportSection.handoverCity")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t("home.transportSection.handoverLabel")}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <Badge variant="secondary">Shared route</Badge>
-                <Badge variant="secondary">Documents reviewed</Badge>
-                <Badge variant="secondary">Ready for scheduling</Badge>
+                <Badge variant="secondary">{t("home.transportSection.badgeShared")}</Badge>
+                <Badge variant="secondary">{t("home.transportSection.badgeDocuments")}</Badge>
+                <Badge variant="secondary">{t("home.transportSection.badgeReady")}</Badge>
               </div>
             </div>
 
             <ul className="mt-6 grid grid-cols-2 gap-3 text-sm">
-              {[
-                "Document review",
-                "Compliance check",
-                "Route & vehicle assignment",
-                "Status updates",
-                "Shared or individual",
-              ].map((f) => (
+              {features.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-muted-foreground">
                   <span className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
                   {f}
@@ -546,10 +557,10 @@ function TransportSection() {
 
             <div className="mt-8 flex gap-2">
               <Button asChild size="lg">
-                <Link to="/transport/request">Request transport</Link>
+                <Link to="/transport/request">{t("home.requestTransport")}</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/transport">Compare service categories</Link>
+                <Link to="/transport">{t("home.transportSection.ctaCompare")}</Link>
               </Button>
             </div>
           </div>
@@ -560,20 +571,21 @@ function TransportSection() {
 }
 
 function HowItWorksStrip() {
+  const { t } = useTranslation();
   const steps = [
-    ["Discover & follow", "Find a breeder, browse their litters, and follow their profile."],
-    ["Apply", "Apply for a specific puppy — the breeder reviews and responds."],
-    ["Reserve with a deposit", "Once approved, pay a deposit through Anemalo to reserve."],
-    ["Arrange transport", "Optional — request pickup, and we plan the route and handover."],
-    ["Stay connected", "Follow-up photos, and your puppy's permanent Alumni history."],
+    [t("home.howItWorksStrip.step1Title"), t("home.howItWorksStrip.step1Desc")],
+    [t("home.howItWorksStrip.step2Title"), t("home.howItWorksStrip.step2Desc")],
+    [t("home.howItWorksStrip.step3Title"), t("home.howItWorksStrip.step3Desc")],
+    [t("home.howItWorksStrip.step4Title"), t("home.howItWorksStrip.step4Desc")],
+    [t("home.howItWorksStrip.step5Title"), t("home.howItWorksStrip.step5Desc")],
   ];
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">
       <div className="container-page">
         <SectionHeader
-          eyebrow="How it works"
-          title="A calm, professional process"
-          cta={{ label: "Learn more", to: "/how-it-works" }}
+          eyebrow={t("home.howItWorksStrip.eyebrow")}
+          title={t("home.howItWorksStrip.title")}
+          cta={{ label: t("home.howItWorksStrip.cta"), to: "/how-it-works" }}
         />
         <ol className="grid gap-4 md:grid-cols-5">
           {steps.map(([t, d], i) => (
@@ -592,6 +604,7 @@ function HowItWorksStrip() {
 }
 
 function FinalCTA() {
+  const { t } = useTranslation();
   return (
     <section className="container-page py-20">
       <div className="grid gap-6 md:grid-cols-2">
@@ -600,14 +613,13 @@ function FinalCTA() {
             <div className="grid size-12 place-items-center rounded-2xl bg-primary-foreground/15">
               <Truck className="size-6" />
             </div>
-            <h3 className="mt-5 font-display text-3xl font-medium">Need to transport a dog?</h3>
-            <p className="mt-2 text-primary-foreground/80">
-              Submit a transport request — we review the details and confirm the best shared,
-              individual, express or VIP option.
-            </p>
+            <h3 className="mt-5 font-display text-3xl font-medium">
+              {t("home.finalCTA.transportTitle")}
+            </h3>
+            <p className="mt-2 text-primary-foreground/80">{t("home.finalCTA.transportDesc")}</p>
           </div>
           <Button asChild size="lg" variant="secondary" className="mt-8 w-fit">
-            <Link to="/transport/request">Request transport</Link>
+            <Link to="/transport/request">{t("home.requestTransport")}</Link>
           </Button>
         </div>
         <div className="flex flex-col justify-between rounded-3xl border border-border/70 bg-card p-10">
@@ -615,14 +627,13 @@ function FinalCTA() {
             <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
               <Users className="size-6" />
             </div>
-            <h3 className="mt-5 font-display text-3xl font-medium">Breeder or foundation?</h3>
-            <p className="mt-2 text-muted-foreground">
-              Publish your litters or adoption listings once verified, and connect directly with our
-              transport network.
-            </p>
+            <h3 className="mt-5 font-display text-3xl font-medium">
+              {t("home.finalCTA.breederTitle")}
+            </h3>
+            <p className="mt-2 text-muted-foreground">{t("home.finalCTA.breederDesc")}</p>
           </div>
           <Button asChild size="lg" variant="outline" className="mt-8 w-fit">
-            <Link to="/create-breeder">Apply for verification</Link>
+            <Link to="/create-breeder">{t("home.finalCTA.breederCta")}</Link>
           </Button>
         </div>
       </div>
