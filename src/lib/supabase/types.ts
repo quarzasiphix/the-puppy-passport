@@ -238,6 +238,7 @@ export type Database = {
           currency: string | null
           date_of_birth: string | null
           description: string | null
+          dog_id: string | null
           health_tests: Json
           id: string
           ideal_home: string | null
@@ -286,6 +287,7 @@ export type Database = {
           currency?: string | null
           date_of_birth?: string | null
           description?: string | null
+          dog_id?: string | null
           health_tests?: Json
           id?: string
           ideal_home?: string | null
@@ -334,6 +336,7 @@ export type Database = {
           currency?: string | null
           date_of_birth?: string | null
           description?: string | null
+          dog_id?: string | null
           health_tests?: Json
           id?: string
           ideal_home?: string | null
@@ -374,6 +377,20 @@ export type Database = {
             columns: ["breed_id"]
             isOneToOne: false
             referencedRelation: "breeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animals_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animals_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
             referencedColumns: ["id"]
           },
           {
@@ -901,6 +918,341 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "transport_requests"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      dog_claims: {
+        Row: {
+          claim_type: Database["public"]["Enums"]["dog_claim_type"]
+          claimant_profile_id: string
+          created_at: string
+          dog_id: string
+          id: string
+          message: string | null
+          organisation_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["dog_claim_status"]
+        }
+        Insert: {
+          claim_type: Database["public"]["Enums"]["dog_claim_type"]
+          claimant_profile_id: string
+          created_at?: string
+          dog_id: string
+          id?: string
+          message?: string | null
+          organisation_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["dog_claim_status"]
+        }
+        Update: {
+          claim_type?: Database["public"]["Enums"]["dog_claim_type"]
+          claimant_profile_id?: string
+          created_at?: string
+          dog_id?: string
+          id?: string
+          message?: string | null
+          organisation_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["dog_claim_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_claims_claimant_profile_id_fkey"
+            columns: ["claimant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_claims_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_claims_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_claims_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
+            foreignKeyName: "dog_claims_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dog_match_candidates: {
+        Row: {
+          candidate_dog_id: string
+          confidence: number
+          created_at: string
+          id: string
+          matched_on: string[]
+          slot_key: string
+          status: string
+          submission_id: string
+        }
+        Insert: {
+          candidate_dog_id: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          matched_on?: string[]
+          slot_key: string
+          status?: string
+          submission_id: string
+        }
+        Update: {
+          candidate_dog_id?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          matched_on?: string[]
+          slot_key?: string
+          status?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_match_candidates_candidate_dog_id_fkey"
+            columns: ["candidate_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_match_candidates_candidate_dog_id_fkey"
+            columns: ["candidate_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_match_candidates_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dog_parent_relationships: {
+        Row: {
+          child_dog_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          parent_dog_id: string
+          role: Database["public"]["Enums"]["pedigree_parent_role"]
+          status: string
+          updated_at: string
+          verification_level: Database["public"]["Enums"]["pedigree_verification_level"]
+        }
+        Insert: {
+          child_dog_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parent_dog_id: string
+          role: Database["public"]["Enums"]["pedigree_parent_role"]
+          status?: string
+          updated_at?: string
+          verification_level?: Database["public"]["Enums"]["pedigree_verification_level"]
+        }
+        Update: {
+          child_dog_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parent_dog_id?: string
+          role?: Database["public"]["Enums"]["pedigree_parent_role"]
+          status?: string
+          updated_at?: string
+          verification_level?: Database["public"]["Enums"]["pedigree_verification_level"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_parent_relationships_child_dog_id_fkey"
+            columns: ["child_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_child_dog_id_fkey"
+            columns: ["child_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_parent_dog_id_fkey"
+            columns: ["parent_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_parent_dog_id_fkey"
+            columns: ["parent_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dogs: {
+        Row: {
+          breed_id: string | null
+          call_name: string | null
+          color: string | null
+          country_of_origin: string | null
+          created_at: string
+          created_by: string | null
+          created_via:
+            | Database["public"]["Enums"]["pedigree_source_type"]
+            | null
+          current_owner_profile_id: string | null
+          date_of_birth: string | null
+          date_of_death: string | null
+          description: string | null
+          health_tests: Json
+          id: string
+          is_public: boolean
+          kennel_id: string | null
+          kennel_name: string | null
+          life_status: Database["public"]["Enums"]["dog_life_status"]
+          microchip_number: string | null
+          pedigree_number: string | null
+          profile_image_url: string | null
+          registered_name: string
+          sex: Database["public"]["Enums"]["dog_sex"] | null
+          slug: string | null
+          titles: string | null
+          updated_at: string
+        }
+        Insert: {
+          breed_id?: string | null
+          call_name?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_via?:
+            | Database["public"]["Enums"]["pedigree_source_type"]
+            | null
+          current_owner_profile_id?: string | null
+          date_of_birth?: string | null
+          date_of_death?: string | null
+          description?: string | null
+          health_tests?: Json
+          id?: string
+          is_public?: boolean
+          kennel_id?: string | null
+          kennel_name?: string | null
+          life_status?: Database["public"]["Enums"]["dog_life_status"]
+          microchip_number?: string | null
+          pedigree_number?: string | null
+          profile_image_url?: string | null
+          registered_name: string
+          sex?: Database["public"]["Enums"]["dog_sex"] | null
+          slug?: string | null
+          titles?: string | null
+          updated_at?: string
+        }
+        Update: {
+          breed_id?: string | null
+          call_name?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_via?:
+            | Database["public"]["Enums"]["pedigree_source_type"]
+            | null
+          current_owner_profile_id?: string | null
+          date_of_birth?: string | null
+          date_of_death?: string | null
+          description?: string | null
+          health_tests?: Json
+          id?: string
+          is_public?: boolean
+          kennel_id?: string | null
+          kennel_name?: string | null
+          life_status?: Database["public"]["Enums"]["dog_life_status"]
+          microchip_number?: string | null
+          pedigree_number?: string | null
+          profile_image_url?: string | null
+          registered_name?: string
+          sex?: Database["public"]["Enums"]["dog_sex"] | null
+          slug?: string | null
+          titles?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dogs_breed_id_fkey"
+            columns: ["breed_id"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_current_owner_profile_id_fkey"
+            columns: ["current_owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
         ]
       }
@@ -1533,6 +1885,7 @@ export type Database = {
       litters: {
         Row: {
           association: string | null
+          auto_pedigree_source_id: string | null
           birth_date: string | null
           breed_id: string | null
           code: string
@@ -1555,6 +1908,7 @@ export type Database = {
         }
         Insert: {
           association?: string | null
+          auto_pedigree_source_id?: string | null
           birth_date?: string | null
           breed_id?: string | null
           code: string
@@ -1577,6 +1931,7 @@ export type Database = {
         }
         Update: {
           association?: string | null
+          auto_pedigree_source_id?: string | null
           birth_date?: string | null
           breed_id?: string | null
           code?: string
@@ -1598,6 +1953,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "litters_auto_pedigree_source_id_fkey"
+            columns: ["auto_pedigree_source_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_sources"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "litters_breed_id_fkey"
             columns: ["breed_id"]
@@ -2378,6 +2740,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           description: string | null
+          dog_id: string | null
           health_tests: Json
           id: string
           is_active: boolean
@@ -2397,6 +2760,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           description?: string | null
+          dog_id?: string | null
           health_tests?: Json
           id?: string
           is_active?: boolean
@@ -2416,6 +2780,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           description?: string | null
+          dog_id?: string | null
           health_tests?: Json
           id?: string
           is_active?: boolean
@@ -2437,6 +2802,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "parent_dogs_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_dogs_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "parent_dogs_kennel_id_fkey"
             columns: ["kennel_id"]
             isOneToOne: false
@@ -2446,6 +2825,298 @@ export type Database = {
           {
             foreignKeyName: "parent_dogs_kennel_id_fkey"
             columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
+      }
+      pedigree_relationship_sources: {
+        Row: {
+          created_at: string
+          id: string
+          relationship_id: string
+          source_id: string
+          submission_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          relationship_id: string
+          source_id: string
+          submission_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          relationship_id?: string
+          source_id?: string
+          submission_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedigree_relationship_sources_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "dog_parent_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_relationship_sources_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "public_dog_parent_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_relationship_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_relationship_sources_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedigree_sources: {
+        Row: {
+          contact_email: string | null
+          created_at: string
+          document_bucket: string | null
+          document_metadata: Json
+          document_mime_type: string | null
+          document_path: string | null
+          id: string
+          notes: string | null
+          organisation_id: string | null
+          public_redacted_path: string | null
+          review_state: Database["public"]["Enums"]["pedigree_source_review_state"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_type: Database["public"]["Enums"]["pedigree_source_type"]
+          submission_id: string | null
+          submitted_at: string
+          submitted_by: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string
+          document_bucket?: string | null
+          document_metadata?: Json
+          document_mime_type?: string | null
+          document_path?: string | null
+          id?: string
+          notes?: string | null
+          organisation_id?: string | null
+          public_redacted_path?: string | null
+          review_state?: Database["public"]["Enums"]["pedigree_source_review_state"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_type: Database["public"]["Enums"]["pedigree_source_type"]
+          submission_id?: string | null
+          submitted_at?: string
+          submitted_by?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string
+          document_bucket?: string | null
+          document_metadata?: Json
+          document_mime_type?: string | null
+          document_path?: string | null
+          id?: string
+          notes?: string | null
+          organisation_id?: string | null
+          public_redacted_path?: string | null
+          review_state?: Database["public"]["Enums"]["pedigree_source_review_state"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_type?: Database["public"]["Enums"]["pedigree_source_type"]
+          submission_id?: string | null
+          submitted_at?: string
+          submitted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedigree_sources_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_sources_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
+            foreignKeyName: "pedigree_sources_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_sources_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_sources_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedigree_submission_resolutions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          resolved_dog_id: string | null
+          role: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          slot_key: string
+          submission_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          resolved_dog_id?: string | null
+          role?: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          slot_key: string
+          submission_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          resolved_dog_id?: string | null
+          role?: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          slot_key?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedigree_submission_resolutions_resolved_dog_id_fkey"
+            columns: ["resolved_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submission_resolutions_resolved_dog_id_fkey"
+            columns: ["resolved_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submission_resolutions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "pedigree_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedigree_submissions: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          contact_email: string | null
+          created_at: string
+          extraction_state: string
+          id: string
+          method: Database["public"]["Enums"]["pedigree_submission_method"]
+          rejected_reason: string | null
+          status: Database["public"]["Enums"]["pedigree_submission_status"]
+          subject_dog_id: string | null
+          submitted_by: string | null
+          submitted_org_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          contact_email?: string | null
+          created_at?: string
+          extraction_state?: string
+          id?: string
+          method: Database["public"]["Enums"]["pedigree_submission_method"]
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["pedigree_submission_status"]
+          subject_dog_id?: string | null
+          submitted_by?: string | null
+          submitted_org_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          contact_email?: string | null
+          created_at?: string
+          extraction_state?: string
+          id?: string
+          method?: Database["public"]["Enums"]["pedigree_submission_method"]
+          rejected_reason?: string | null
+          status?: Database["public"]["Enums"]["pedigree_submission_status"]
+          subject_dog_id?: string | null
+          submitted_by?: string | null
+          submitted_org_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedigree_submissions_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submissions_subject_dog_id_fkey"
+            columns: ["subject_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submissions_subject_dog_id_fkey"
+            columns: ["subject_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submissions_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submissions_submitted_org_id_fkey"
+            columns: ["submitted_org_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedigree_submissions_submitted_org_id_fkey"
+            columns: ["submitted_org_id"]
             isOneToOne: false
             referencedRelation: "public_kennel_owner_identity_verification"
             referencedColumns: ["organisation_id"]
@@ -5257,6 +5928,168 @@ export type Database = {
         }
         Relationships: []
       }
+      public_dog_parent_relationships: {
+        Row: {
+          child_dog_id: string | null
+          created_at: string | null
+          id: string | null
+          parent_dog_id: string | null
+          role: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          status: string | null
+          updated_at: string | null
+          verification_level:
+            | Database["public"]["Enums"]["pedigree_verification_level"]
+            | null
+        }
+        Insert: {
+          child_dog_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          parent_dog_id?: string | null
+          role?: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          status?: string | null
+          updated_at?: string | null
+          verification_level?:
+            | Database["public"]["Enums"]["pedigree_verification_level"]
+            | null
+        }
+        Update: {
+          child_dog_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          parent_dog_id?: string | null
+          role?: Database["public"]["Enums"]["pedigree_parent_role"] | null
+          status?: string | null
+          updated_at?: string | null
+          verification_level?:
+            | Database["public"]["Enums"]["pedigree_verification_level"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_parent_relationships_child_dog_id_fkey"
+            columns: ["child_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_child_dog_id_fkey"
+            columns: ["child_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_parent_dog_id_fkey"
+            columns: ["parent_dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dog_parent_relationships_parent_dog_id_fkey"
+            columns: ["parent_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_dogs: {
+        Row: {
+          breed_id: string | null
+          call_name: string | null
+          color: string | null
+          country_of_origin: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          date_of_death: string | null
+          description: string | null
+          health_tests: Json | null
+          id: string | null
+          kennel_id: string | null
+          kennel_name: string | null
+          life_status: Database["public"]["Enums"]["dog_life_status"] | null
+          microchip_number: string | null
+          pedigree_number: string | null
+          profile_image_url: string | null
+          registered_name: string | null
+          sex: Database["public"]["Enums"]["dog_sex"] | null
+          slug: string | null
+          titles: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          breed_id?: string | null
+          call_name?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          date_of_death?: string | null
+          description?: string | null
+          health_tests?: Json | null
+          id?: string | null
+          kennel_id?: string | null
+          kennel_name?: string | null
+          life_status?: Database["public"]["Enums"]["dog_life_status"] | null
+          microchip_number?: string | null
+          pedigree_number?: string | null
+          profile_image_url?: string | null
+          registered_name?: string | null
+          sex?: Database["public"]["Enums"]["dog_sex"] | null
+          slug?: string | null
+          titles?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          breed_id?: string | null
+          call_name?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          date_of_death?: string | null
+          description?: string | null
+          health_tests?: Json | null
+          id?: string | null
+          kennel_id?: string | null
+          kennel_name?: string | null
+          life_status?: Database["public"]["Enums"]["dog_life_status"] | null
+          microchip_number?: string | null
+          pedigree_number?: string | null
+          profile_image_url?: string | null
+          registered_name?: string | null
+          sex?: Database["public"]["Enums"]["dog_sex"] | null
+          slug?: string | null
+          titles?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dogs_breed_id_fkey"
+            columns: ["breed_id"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
+      }
       public_fundraising_contributions: {
         Row: {
           amount: number | null
@@ -5455,6 +6288,28 @@ export type Database = {
         }
         Returns: string
       }
+      attach_breeder_pedigree_source: {
+        Args: {
+          p_dam_dog_id?: string
+          p_document_bucket?: string
+          p_document_mime?: string
+          p_document_path?: string
+          p_dog_id: string
+          p_notes?: string
+          p_org_id: string
+          p_sire_dog_id?: string
+        }
+        Returns: string
+      }
+      attach_pedigree_submission_document: {
+        Args: {
+          p_bucket: string
+          p_mime?: string
+          p_path: string
+          p_submission_id: string
+        }
+        Returns: undefined
+      }
       can_manage_org_members: { Args: { p_org_id: string }; Returns: boolean }
       can_reference_animal_for_transport: {
         Args: { p_animal_id: string }
@@ -5507,6 +6362,17 @@ export type Database = {
         }
         Returns: string
       }
+      create_pedigree_submission: {
+        Args: {
+          p_contact_email?: string
+          p_manual_payload?: Json
+          p_method: Database["public"]["Enums"]["pedigree_submission_method"]
+          p_source_type: Database["public"]["Enums"]["pedigree_source_type"]
+          p_subject_dog_id?: string
+          p_submitted_org_id?: string
+        }
+        Returns: Json
+      }
       create_transport_draft: {
         Args: { p_animals?: Json; p_parties?: Json; p_request: Json }
         Returns: string
@@ -5522,6 +6388,10 @@ export type Database = {
       }
       execute_account_deletion: {
         Args: { p_request_id: string }
+        Returns: undefined
+      }
+      finalize_pedigree_submission: {
+        Args: { p_submission_id: string }
         Returns: undefined
       }
       fundraising_campaign_links_are_valid: {
@@ -5648,6 +6518,10 @@ export type Database = {
         Args: { p_reason: string; p_subject_profile_id: string }
         Returns: string
       }
+      recompute_dog_parent_relationship_verification: {
+        Args: { p_relationship_id: string }
+        Returns: undefined
+      }
       record_risk_signal: {
         Args: {
           p_explanation: string
@@ -5682,6 +6556,17 @@ export type Database = {
       require_recent_auth: {
         Args: { p_max_age?: string; p_operation: string }
         Returns: undefined
+      }
+      resolve_pedigree_slot: {
+        Args: {
+          p_action: string
+          p_new_dog?: Json
+          p_resolved_dog_id?: string
+          p_role?: Database["public"]["Enums"]["pedigree_parent_role"]
+          p_slot_key: string
+          p_submission_id: string
+        }
+        Returns: string
       }
       respond_to_quotation: {
         Args: {
@@ -5719,6 +6604,25 @@ export type Database = {
         Args: { p_invitation_id: string }
         Returns: undefined
       }
+      search_dogs_ranked: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          breed_id: string
+          call_name: string
+          date_of_birth: string
+          id: string
+          kennel_id: string
+          kennel_name: string
+          match_rank: number
+          matched_on: string[]
+          microchip_number: string
+          pedigree_number: string
+          profile_image_url: string
+          registered_name: string
+          sex: Database["public"]["Enums"]["dog_sex"]
+          slug: string
+        }[]
+      }
       send_quotation: { Args: { p_quotation_id: string }; Returns: undefined }
       set_org_member_status: {
         Args: {
@@ -5750,6 +6654,24 @@ export type Database = {
           request_number: string
           status: Database["public"]["Enums"]["transport_status"]
         }[]
+      }
+      sync_animal_parent_relationships: {
+        Args: { p_animal_id: string }
+        Returns: undefined
+      }
+      sync_litter_pedigree_source: {
+        Args: { p_litter_id: string }
+        Returns: string
+      }
+      upsert_parent_relationship: {
+        Args: {
+          p_child_dog_id: string
+          p_parent_dog_id: string
+          p_role: Database["public"]["Enums"]["pedigree_parent_role"]
+          p_source_id: string
+          p_submission_id?: string
+        }
+        Returns: string
       }
     }
     Enums: {
@@ -5807,6 +6729,9 @@ export type Database = {
         | "community"
         | "support"
       deposit_status: "not_required" | "pending" | "paid"
+      dog_claim_status: "pending" | "approved" | "rejected"
+      dog_claim_type: "owner" | "breeder"
+      dog_life_status: "unknown" | "alive" | "deceased"
       dog_sex: "male" | "female"
       driver_verification_status:
         | "unverified"
@@ -5950,6 +6875,31 @@ export type Database = {
         | "association"
         | "pedigrees"
         | "health_documents"
+      pedigree_parent_role: "sire" | "dam"
+      pedigree_source_review_state: "pending" | "accepted" | "rejected"
+      pedigree_source_type:
+        | "uploaded_scan"
+        | "uploaded_pdf"
+        | "uploaded_photo"
+        | "registry_record"
+        | "breeder_declaration"
+        | "owner_declaration"
+        | "community_contribution"
+        | "dna_evidence"
+        | "association_import"
+        | "system_import"
+      pedigree_submission_method:
+        | "upload"
+        | "manual_entry"
+        | "build_from_existing"
+      pedigree_submission_status: "pending_review" | "accepted" | "rejected"
+      pedigree_verification_level:
+        | "unverified"
+        | "community_supported"
+        | "document_supported"
+        | "breeder_confirmed"
+        | "registry_verified"
+        | "disputed"
       platform_role:
         | "customer"
         | "buyer"
@@ -6381,6 +7331,9 @@ export const Constants = {
         "support",
       ],
       deposit_status: ["not_required", "pending", "paid"],
+      dog_claim_status: ["pending", "approved", "rejected"],
+      dog_claim_type: ["owner", "breeder"],
+      dog_life_status: ["unknown", "alive", "deceased"],
       dog_sex: ["male", "female"],
       driver_verification_status: [
         "unverified",
@@ -6541,6 +7494,34 @@ export const Constants = {
         "association",
         "pedigrees",
         "health_documents",
+      ],
+      pedigree_parent_role: ["sire", "dam"],
+      pedigree_source_review_state: ["pending", "accepted", "rejected"],
+      pedigree_source_type: [
+        "uploaded_scan",
+        "uploaded_pdf",
+        "uploaded_photo",
+        "registry_record",
+        "breeder_declaration",
+        "owner_declaration",
+        "community_contribution",
+        "dna_evidence",
+        "association_import",
+        "system_import",
+      ],
+      pedigree_submission_method: [
+        "upload",
+        "manual_entry",
+        "build_from_existing",
+      ],
+      pedigree_submission_status: ["pending_review", "accepted", "rejected"],
+      pedigree_verification_level: [
+        "unverified",
+        "community_supported",
+        "document_supported",
+        "breeder_confirmed",
+        "registry_verified",
+        "disputed",
       ],
       platform_role: [
         "customer",

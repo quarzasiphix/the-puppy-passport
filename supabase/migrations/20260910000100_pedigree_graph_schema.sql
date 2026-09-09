@@ -477,7 +477,9 @@ begin
     new.registered_name, new.call_name, new.sex, new.breed_id, new.date_of_birth, new.color,
     new.pedigree_number, new.microchip_number, new.kennel_id, new.profile_image_url,
     coalesce(new.health_tests, '[]'::jsonb), new.titles,
-    case when new.is_active then 'alive' else 'unknown' end,
+    -- CASE resolves to `text`, which is not implicitly castable to the enum here (bare string
+    -- literals coerce, a CASE result does not) — cast explicitly.
+    (case when new.is_active then 'alive' else 'unknown' end)::public.dog_life_status,
     auth.uid(), 'breeder_declaration'
   )
   returning id into v_dog_id;
@@ -658,7 +660,9 @@ begin
     ) values (
       r.registered_name, r.call_name, r.sex, r.breed_id, r.date_of_birth, r.color, r.pedigree_number,
       r.microchip_number, r.kennel_id, r.profile_image_url, coalesce(r.health_tests, '[]'::jsonb),
-      r.titles, case when r.is_active then 'alive' else 'unknown' end, 'system_import'
+      r.titles,
+      (case when r.is_active then 'alive' else 'unknown' end)::public.dog_life_status,
+      'system_import'
     )
     returning id into v_dog_id;
     update public.parent_dogs set dog_id = v_dog_id where id = r.id;
