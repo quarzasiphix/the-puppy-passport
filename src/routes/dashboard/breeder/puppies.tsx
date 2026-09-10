@@ -16,6 +16,7 @@ import {
   type AnimalRow,
 } from "@/domains/breeders";
 import { PuppyFormDialog } from "@/domains/animals";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 
@@ -24,59 +25,71 @@ export const Route = createFileRoute("/dashboard/breeder/puppies")({
 });
 
 type PuppyStatus = AnimalRow["availability_status"];
+type SettableStatus = Extract<
+  PuppyStatus,
+  "available" | "applications_open" | "reserved" | "sold" | "withdrawn"
+>;
 
 // The subset of the full availability_status enum a breeder sets themselves day to day (draft is
 // controlled by the separate publish toggle; adopted/unavailable belong to foundation listings).
-const STATUS_META: Record<
-  Extract<PuppyStatus, "available" | "applications_open" | "reserved" | "sold" | "withdrawn">,
-  { label: string; hint: string; icon: LucideIcon; badgeClass: string }
-> = {
-  available: {
-    label: "Available",
-    hint: "Looking for a home",
-    icon: Heart,
-    badgeClass: "bg-success/15 text-success border-success/30",
-  },
-  applications_open: {
-    label: "Applications open",
-    hint: "Buyers can apply",
-    icon: Clock,
-    badgeClass: "bg-accent/15 text-accent border-accent/30",
-  },
-  reserved: {
-    label: "Reserved",
-    hint: "Has a buyer lined up",
-    icon: Bookmark,
-    badgeClass: "bg-warning/20 text-foreground border-warning/40",
-  },
-  sold: {
-    label: "Sold / gone home",
-    hint: "Already with its new family",
-    icon: Home,
-    badgeClass: "bg-muted text-muted-foreground border-border",
-  },
-  withdrawn: {
-    label: "Withdrawn",
-    hint: "Not for sale right now",
-    icon: XCircle,
-    badgeClass: "bg-muted text-muted-foreground border-border",
-  },
+const STATUS_ICON: Record<SettableStatus, LucideIcon> = {
+  available: Heart,
+  applications_open: Clock,
+  reserved: Bookmark,
+  sold: Home,
+  withdrawn: XCircle,
 };
-const STATUS_ORDER = Object.keys(STATUS_META) as (keyof typeof STATUS_META)[];
+const STATUS_BADGE_CLASS: Record<SettableStatus, string> = {
+  available: "bg-success/15 text-success border-success/30",
+  applications_open: "bg-accent/15 text-accent border-accent/30",
+  reserved: "bg-warning/20 text-foreground border-warning/40",
+  sold: "bg-muted text-muted-foreground border-border",
+  withdrawn: "bg-muted text-muted-foreground border-border",
+};
+const STATUS_ORDER = Object.keys(STATUS_ICON) as SettableStatus[];
 
-const FILTERS: { key: "all" | keyof typeof STATUS_META; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "available", label: "Available" },
-  { key: "applications_open", label: "Applications open" },
-  { key: "reserved", label: "Reserved" },
-  { key: "sold", label: "Sold" },
-];
+function useStatusMeta() {
+  const { t } = useTranslation();
+  const meta: Record<SettableStatus, { label: string; hint: string }> = {
+    available: {
+      label: t("breederPanel.status.puppy.available"),
+      hint: t("breederPanel.status.puppy.availableHint"),
+    },
+    applications_open: {
+      label: t("breederPanel.status.puppy.applicationsOpen"),
+      hint: t("breederPanel.status.puppy.applicationsOpenHint"),
+    },
+    reserved: {
+      label: t("breederPanel.status.puppy.reserved"),
+      hint: t("breederPanel.status.puppy.reservedHint"),
+    },
+    sold: {
+      label: t("breederPanel.status.puppy.sold"),
+      hint: t("breederPanel.status.puppy.soldHint"),
+    },
+    withdrawn: {
+      label: t("breederPanel.status.puppy.withdrawn"),
+      hint: t("breederPanel.status.puppy.withdrawnHint"),
+    },
+  };
+  return meta;
+}
 
 function PuppiesPage() {
   const { userId } = useAuth();
+  const { t } = useTranslation();
+  const statusMeta = useStatusMeta();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | keyof typeof STATUS_META>("all");
+  const [filter, setFilter] = useState<"all" | SettableStatus>("all");
   const [statusEdit, setStatusEdit] = useState<{ id: string; status: PuppyStatus } | null>(null);
+
+  const FILTERS: { key: "all" | SettableStatus; label: string }[] = [
+    { key: "all", label: t("breederPanel.puppies.filterAll") },
+    { key: "available", label: t("breederPanel.puppies.filterAvailable") },
+    { key: "applications_open", label: t("breederPanel.puppies.filterApplicationsOpen") },
+    { key: "reserved", label: t("breederPanel.puppies.filterReserved") },
+    { key: "sold", label: t("breederPanel.puppies.filterSold") },
+  ];
 
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
@@ -99,10 +112,11 @@ function PuppiesPage() {
       updatePuppy(id, { availability_status: status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
-      toast.success("Status updated.");
+      toast.success(t("breederPanel.puppies.statusUpdated"));
       setStatusEdit(null);
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update puppy.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("breederPanel.puppyForm.saveFailed"))),
   });
 
   const publishMutation = useMutation({
@@ -113,9 +127,10 @@ function PuppiesPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
-      toast.success("Updated.");
+      toast.success(t("breederPanel.puppyForm.savedUpdated"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update puppy.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("breederPanel.puppyForm.saveFailed"))),
   });
 
   const litterOptions = (litters ?? []).map((l) => ({ id: l.id, code: l.code }));
@@ -127,8 +142,10 @@ function PuppiesPage() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-display text-2xl font-bold sm:text-3xl">Puppies</h1>
-        <p className="text-sm text-muted-foreground">Manage individual puppy listings.</p>
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">
+          {t("breederPanel.puppies.title")}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.puppies.subtitle")}</p>
       </header>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -154,33 +171,35 @@ function PuppiesPage() {
             litterOptions={litterOptions}
             trigger={
               <Button className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm">
-                <Plus className="size-5" /> Add a puppy
+                <Plus className="size-5" /> {t("breederPanel.puppies.addPuppy")}
               </Button>
             }
           />
         ) : (
           <Button asChild variant="outline" className="h-14 w-full rounded-2xl text-base font-bold">
-            <Link to="/dashboard/breeder/litters">Add a litter first</Link>
+            <Link to="/dashboard/breeder/litters">{t("breederPanel.puppies.addLitterFirst")}</Link>
           </Button>
         ))}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.puppies.loading")}</p>
       ) : !filtered.length ? (
         <div className="rounded-3xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
           <p className="text-base font-semibold">
             {!puppies?.length
               ? litterOptions.length
-                ? "No puppies yet. Add your first one above."
-                : "No puppies yet — a litter comes first, then puppies."
-              : "No puppies match this filter."}
+                ? t("breederPanel.puppies.emptyHasLitter")
+                : t("breederPanel.puppies.emptyNoLitterYet")
+              : t("breederPanel.puppies.emptyFilterNoMatch")}
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => {
             const photo = animalCoverPhotoUrl(p);
-            const meta = STATUS_META[p.availability_status as keyof typeof STATUS_META] ?? null;
+            const settable = p.availability_status as SettableStatus;
+            const meta = statusMeta[settable];
+            const Icon = STATUS_ICON[settable];
             return (
               <article key={p.id} className="overflow-hidden rounded-3xl bg-card shadow-sm">
                 <div className="relative aspect-[5/3] bg-secondary">
@@ -191,24 +210,25 @@ function PuppiesPage() {
                       <Dog className="size-10" />
                     </div>
                   )}
-                  {meta && (
+                  {meta && Icon && (
                     <span
-                      className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${meta.badgeClass}`}
+                      className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${STATUS_BADGE_CLASS[settable]}`}
                     >
-                      <meta.icon className="size-3.5" />
+                      <Icon className="size-3.5" />
                       {meta.label}
                     </span>
                   )}
                   {!p.is_published && (
                     <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-bold text-muted-foreground">
-                      <EyeOff className="size-3.5" /> Draft
+                      <EyeOff className="size-3.5" /> {t("breederPanel.puppies.draftBadge")}
                     </span>
                   )}
                 </div>
                 <div className="p-4">
                   <p className="font-display text-xl font-bold">{p.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {p.breeds?.name ?? "Breed not set"} · {p.sex ?? "sex not set"}
+                    {p.breeds?.name ?? t("breederPanel.home.breedNotSet")} ·{" "}
+                    {p.sex ?? t("breederPanel.puppies.sexNotSet")}
                     {p.litters?.code && ` · ${p.litters.code}`}
                   </p>
                   <div className="mt-4 flex gap-2">
@@ -216,7 +236,7 @@ function PuppiesPage() {
                       onClick={() => setStatusEdit({ id: p.id, status: p.availability_status })}
                       className="h-12 flex-1 rounded-2xl text-base font-bold"
                     >
-                      Change status
+                      {t("breederPanel.puppies.changeStatus")}
                     </Button>
                     <PuppyFormDialog
                       kennelId={kennel!.id}
@@ -226,7 +246,7 @@ function PuppiesPage() {
                           variant="outline"
                           className="h-12 rounded-2xl border-2 text-base font-bold"
                         >
-                          Edit
+                          {t("breederPanel.puppies.edit")}
                         </Button>
                       }
                     />
@@ -240,11 +260,11 @@ function PuppiesPage() {
                   >
                     {p.is_published ? (
                       <>
-                        <EyeOff className="size-4" /> Unpublish from site
+                        <EyeOff className="size-4" /> {t("breederPanel.puppies.unpublishFromSite")}
                       </>
                     ) : (
                       <>
-                        <Eye className="size-4" /> Publish to site
+                        <Eye className="size-4" /> {t("breederPanel.puppies.publishToSite")}
                       </>
                     )}
                   </button>
@@ -278,25 +298,30 @@ function StatusPickerDialog({
   onClose: () => void;
   onSave: (status: PuppyStatus) => void;
 }) {
-  const [selected, setSelected] = useState<keyof typeof STATUS_META>("available");
+  const { t } = useTranslation();
+  const statusMeta = useStatusMeta();
+  const [selected, setSelected] = useState<SettableStatus>("available");
 
   return (
     <Dialog
       open={!!current}
       onOpenChange={(open) => {
         if (!open) onClose();
-        else if (current && current.status in STATUS_META) {
-          setSelected(current.status as keyof typeof STATUS_META);
+        else if (current && current.status in statusMeta) {
+          setSelected(current.status as SettableStatus);
         }
       }}
     >
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Change puppy status</DialogTitle>
+          <DialogTitle className="font-display text-2xl">
+            {t("breederPanel.puppies.statusDialogTitle")}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           {STATUS_ORDER.map((key) => {
-            const meta = STATUS_META[key];
+            const meta = statusMeta[key];
+            const Icon = STATUS_ICON[key];
             const active = selected === key;
             return (
               <button
@@ -308,9 +333,9 @@ function StatusPickerDialog({
                 }`}
               >
                 <div
-                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border ${meta.badgeClass}`}
+                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border ${STATUS_BADGE_CLASS[key]}`}
                 >
-                  <meta.icon className="size-6" />
+                  <Icon className="size-6" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{meta.label}</p>
@@ -326,7 +351,7 @@ function StatusPickerDialog({
           disabled={pending}
           className="h-14 w-full rounded-2xl text-base font-bold"
         >
-          {pending ? "Saving…" : "Save new status"}
+          {pending ? t("breederPanel.puppies.saving") : t("breederPanel.puppies.saveStatus")}
         </Button>
       </DialogContent>
     </Dialog>

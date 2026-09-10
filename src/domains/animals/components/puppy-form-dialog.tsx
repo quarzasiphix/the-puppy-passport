@@ -23,6 +23,7 @@ import {
   type AnimalRow,
 } from "../services/breeder";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 
 type FormValues = {
   name: string;
@@ -48,8 +49,6 @@ const emptyValues = (litterId: string, breedId: string, dateOfBirth: string): Fo
   description: "",
 });
 
-const STEPS = ["Basics", "Photo", "Details", "Price & description"] as const;
-
 export function PuppyFormDialog({
   kennelId,
   trigger,
@@ -67,6 +66,13 @@ export function PuppyFormDialog({
   defaultDateOfBirth?: string;
   puppy?: AnimalRow & { animal_images?: { image_url: string; is_cover: boolean }[] };
 }) {
+  const { t } = useTranslation();
+  const STEPS = [
+    t("breederPanel.puppyForm.stepBasics"),
+    t("breederPanel.puppyForm.stepPhoto"),
+    t("breederPanel.puppyForm.stepDetails"),
+    t("breederPanel.puppyForm.stepPrice"),
+  ];
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const queryClient = useQueryClient();
@@ -136,20 +142,23 @@ export function PuppyFormDialog({
         } catch (err) {
           // The puppy record itself already saved successfully above — a photo-upload failure
           // shouldn't look like the whole save failed, just flag it separately.
-          toast.error(getFriendlyErrorMessage(err, "Puppy saved, but the photo didn't upload."));
+          toast.error(getFriendlyErrorMessage(err, t("breederPanel.puppyForm.photoUploadFailed")));
         }
       }
     },
     onSuccess: () => {
       toast.success(
-        isEdit ? "Puppy updated." : "Puppy added — it's still a draft until you publish it.",
+        isEdit
+          ? t("breederPanel.puppyForm.savedUpdated")
+          : t("breederPanel.puppyForm.savedAddedDraft"),
       );
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
       queryClient.invalidateQueries({ queryKey: ["litter-puppies"] });
       queryClient.invalidateQueries({ queryKey: ["kennel-litters"] });
       setOpen(false);
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save puppy.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("breederPanel.puppyForm.saveFailed"))),
   });
 
   const canContinue =
@@ -161,19 +170,19 @@ export function PuppyFormDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
-            {isEdit ? "Edit puppy" : "Add a puppy"}
+            {isEdit ? t("breederPanel.puppyForm.editTitle") : t("breederPanel.puppyForm.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
-        <WizardProgress steps={[...STEPS]} current={step} />
+        <WizardProgress steps={STEPS} current={step} />
 
         <div className="space-y-4">
           {step === 0 && (
             <>
-              <BigField label="Name">
+              <BigField label={t("breederPanel.puppyForm.nameLabel")}>
                 <Input
                   autoFocus
-                  placeholder="e.g. Maja"
+                  placeholder={t("breederPanel.puppyForm.namePlaceholder")}
                   value={values.name}
                   onChange={(e) => set("name", e.target.value)}
                   className="h-14 rounded-2xl text-base"
@@ -181,7 +190,7 @@ export function PuppyFormDialog({
               </BigField>
 
               {showLitterPicker && (
-                <BigField label="Litter">
+                <BigField label={t("breederPanel.puppyForm.litterLabel")}>
                   <div className="space-y-2">
                     {litterOptions!.map((l) => (
                       <PickerCard
@@ -195,11 +204,11 @@ export function PuppyFormDialog({
                 </BigField>
               )}
 
-              <BigField label="Sex">
+              <BigField label={t("breederPanel.puppyForm.sexLabel")}>
                 <ToggleButtonGroup
                   options={[
-                    { value: "female", label: "Female" },
-                    { value: "male", label: "Male" },
+                    { value: "female", label: t("breederPanel.puppyForm.female") },
+                    { value: "male", label: t("breederPanel.puppyForm.male") },
                   ]}
                   value={values.sex || "female"}
                   onChange={(v) => set("sex", v)}
@@ -210,8 +219,8 @@ export function PuppyFormDialog({
 
           {step === 1 && (
             <BigField
-              label="Cover photo"
-              hint="One clear photo is enough — you can always change it later."
+              label={t("breederPanel.puppyForm.photoLabel")}
+              hint={t("breederPanel.puppyForm.photoHint")}
             >
               <input
                 ref={fileInputRef}
@@ -240,7 +249,7 @@ export function PuppyFormDialog({
                       setPhotoPreview(null);
                     }}
                     className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-white/95 text-destructive shadow"
-                    aria-label="Remove photo"
+                    aria-label={t("breederPanel.puppyForm.removePhoto")}
                   >
                     <X className="size-4" />
                   </button>
@@ -253,7 +262,9 @@ export function PuppyFormDialog({
               >
                 <Camera className="size-8" />
                 <span className="font-bold">
-                  {photoPreview || existingPhotoUrl ? "Change photo" : "Add a photo"}
+                  {photoPreview || existingPhotoUrl
+                    ? t("breederPanel.puppyForm.changePhoto")
+                    : t("breederPanel.puppyForm.addPhoto")}
                 </span>
               </button>
             </BigField>
@@ -261,10 +272,10 @@ export function PuppyFormDialog({
 
           {step === 2 && (
             <>
-              <BigField label="Breed">
+              <BigField label={t("breederPanel.puppyForm.breedLabel")}>
                 <Select value={values.breedId} onValueChange={(v) => set("breedId", v)}>
                   <SelectTrigger className="h-14 rounded-2xl text-base">
-                    <SelectValue placeholder="Select breed" />
+                    <SelectValue placeholder={t("breederPanel.puppyForm.breedPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(breedsQuery.data ?? []).map((b) => (
@@ -275,15 +286,15 @@ export function PuppyFormDialog({
                   </SelectContent>
                 </Select>
               </BigField>
-              <BigField label="Color">
+              <BigField label={t("breederPanel.puppyForm.colorLabel")}>
                 <Input
                   value={values.color}
                   onChange={(e) => set("color", e.target.value)}
-                  placeholder="e.g. Black & tan"
+                  placeholder={t("breederPanel.puppyForm.colorPlaceholder")}
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Date of birth">
+              <BigField label={t("breederPanel.puppyForm.dobLabel")}>
                 <Input
                   type="date"
                   value={values.dateOfBirth}
@@ -297,7 +308,7 @@ export function PuppyFormDialog({
           {step === 3 && (
             <>
               <div className="grid grid-cols-[1fr_auto] gap-3">
-                <BigField label="Price">
+                <BigField label={t("breederPanel.puppyForm.priceLabel")}>
                   <Input
                     type="number"
                     min="0"
@@ -306,7 +317,7 @@ export function PuppyFormDialog({
                     className="h-14 rounded-2xl text-base"
                   />
                 </BigField>
-                <BigField label="Currency">
+                <BigField label={t("breederPanel.puppyForm.currencyLabel")}>
                   <ToggleButtonGroup
                     options={[
                       { value: "PLN", label: "PLN" },
@@ -318,7 +329,10 @@ export function PuppyFormDialog({
                   />
                 </BigField>
               </div>
-              <BigField label="Description (optional)" hint="Temperament, notable traits…">
+              <BigField
+                label={t("breederPanel.puppyForm.descriptionLabel")}
+                hint={t("breederPanel.puppyForm.descriptionHint")}
+              >
                 <Textarea
                   rows={4}
                   value={values.description}
@@ -328,8 +342,7 @@ export function PuppyFormDialog({
               </BigField>
               {!isEdit && (
                 <p className="text-xs text-muted-foreground">
-                  New puppies are saved as an unpublished draft. Publish from the puppies list once
-                  you're ready for buyers to see them.
+                  {t("breederPanel.puppyForm.draftNote")}
                 </p>
               )}
             </>
@@ -344,7 +357,7 @@ export function PuppyFormDialog({
               onClick={() => setStep((s) => s - 1)}
               className="h-14 rounded-2xl border-2 text-base font-bold"
             >
-              <ArrowLeft className="mr-1 size-4" /> Back
+              <ArrowLeft className="mr-1 size-4" /> {t("breederPanel.puppyForm.back")}
             </Button>
           )}
           {step < STEPS.length - 1 ? (
@@ -354,7 +367,7 @@ export function PuppyFormDialog({
               disabled={!canContinue}
               className="h-14 flex-1 rounded-2xl text-base font-bold"
             >
-              Next <ArrowRight className="ml-1 size-4" />
+              {t("breederPanel.puppyForm.next")} <ArrowRight className="ml-1 size-4" />
             </Button>
           ) : (
             <Button
@@ -364,10 +377,13 @@ export function PuppyFormDialog({
               className="h-14 flex-1 rounded-2xl text-base font-bold"
             >
               {mutation.isPending ? (
-                "Saving…"
+                t("breederPanel.puppyForm.saving")
               ) : (
                 <>
-                  <Check className="mr-1 size-4" /> {isEdit ? "Save changes" : "Add puppy"}
+                  <Check className="mr-1 size-4" />{" "}
+                  {isEdit
+                    ? t("breederPanel.puppyForm.saveChanges")
+                    : t("breederPanel.puppyForm.addPuppy")}
                 </>
               )}
             </Button>

@@ -9,9 +9,12 @@ import {
   getMyKennel,
   listLitterPuppies,
   animalCoverPhotoUrl,
+  litterStatusLabel,
+  puppyStatusLabel,
 } from "@/domains/breeders";
 import { LitterFormDialog } from "@/domains/animals";
 import { PuppyFormDialog } from "@/domains/animals";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/litters/$id")({
   component: LitterDetail,
@@ -20,6 +23,8 @@ export const Route = createFileRoute("/dashboard/breeder/litters/$id")({
 function LitterDetail() {
   const { id } = useParams({ from: "/dashboard/breeder/litters/$id" });
   const { userId } = useAuth();
+  const { t, locale } = useTranslation();
+  const dateLocale = locale === "pl" ? "pl-PL" : "en-GB";
 
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
@@ -36,10 +41,14 @@ function LitterDetail() {
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <p className="text-sm text-muted-foreground">{t("breederPanel.litterDetail.loading")}</p>
+    );
   }
   if (!litter) {
-    return <p className="text-sm text-muted-foreground">Litter not found.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">{t("breederPanel.litterDetail.notFound")}</p>
+    );
   }
 
   return (
@@ -48,7 +57,7 @@ function LitterDetail() {
         to="/dashboard/breeder/litters"
         className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground"
       >
-        <ChevronLeft className="size-4" /> All litters
+        <ChevronLeft className="size-4" /> {t("breederPanel.litterDetail.backToAll")}
       </Link>
 
       <header className="rounded-3xl bg-card p-5 shadow-sm sm:p-6">
@@ -56,18 +65,16 @@ function LitterDetail() {
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-bold sm:text-3xl">{litter.code}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {litter.breeds?.name ?? "Breed not set"}
+              {litter.breeds?.name ?? t("breederPanel.home.breedNotSet")}
               {litter.birth_date &&
-                ` · Born ${new Date(litter.birth_date).toLocaleDateString("en-GB")}`}
+                ` · ${t("breederPanel.litterDetail.bornPrefix")} ${new Date(litter.birth_date).toLocaleDateString(dateLocale)}`}
               {litter.ready_date &&
-                ` · Ready ${new Date(litter.ready_date).toLocaleDateString("en-GB")}`}
+                ` · ${t("breederPanel.litterDetail.readyPrefix")} ${new Date(litter.ready_date).toLocaleDateString(dateLocale)}`}
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <Badge variant="secondary" className="capitalize">
-                {litter.status.replace(/_/g, " ")}
-              </Badge>
+              <Badge variant="secondary">{litterStatusLabel(t, litter.status)}</Badge>
               {!litter.is_published && (
-                <Badge variant="outline">Draft — not visible publicly</Badge>
+                <Badge variant="outline">{t("breederPanel.litterDetail.draftNotice")}</Badge>
               )}
             </div>
           </div>
@@ -77,7 +84,7 @@ function LitterDetail() {
               litter={litter}
               trigger={
                 <Button variant="outline" className="h-12 rounded-2xl border-2 text-base font-bold">
-                  Edit litter
+                  {t("breederPanel.litterDetail.editLitter")}
                 </Button>
               }
             />
@@ -86,24 +93,32 @@ function LitterDetail() {
 
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-5 sm:grid-cols-4">
           <ParentTile
-            label="Mother"
+            label={t("breederPanel.litterDetail.motherLabel")}
             name={litter.mother?.registered_name}
             photo={litter.mother?.profile_image_url}
+            notSet={t("breederPanel.litterDetail.notSet")}
           />
           <ParentTile
-            label="Father"
+            label={t("breederPanel.litterDetail.fatherLabel")}
             name={litter.father?.registered_name}
             photo={litter.father?.profile_image_url}
+            notSet={t("breederPanel.litterDetail.notSet")}
           />
-          <FactTile label="Registration" value={litter.registration_number || "Not set"} />
-          <FactTile label="Association" value={litter.association || "Not set"} />
+          <FactTile
+            label={t("breederPanel.litterDetail.registrationLabel")}
+            value={litter.registration_number || t("breederPanel.litterDetail.notSet")}
+          />
+          <FactTile
+            label={t("breederPanel.litterDetail.associationLabel")}
+            value={litter.association || t("breederPanel.litterDetail.notSet")}
+          />
         </div>
       </header>
 
       <section>
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="font-display text-xl font-bold">
-            Puppies in this litter
+            {t("breederPanel.litterDetail.puppiesInLitter")}
             {!!kPuppies?.length && (
               <span className="ml-2 text-base font-normal text-muted-foreground">
                 ({kPuppies.length})
@@ -120,7 +135,7 @@ function LitterDetail() {
             defaultDateOfBirth={litter.birth_date ?? undefined}
             trigger={
               <Button className="mb-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm">
-                <Plus className="size-5" /> Add a puppy to this litter
+                <Plus className="size-5" /> {t("breederPanel.litterDetail.addPuppyToLitter")}
               </Button>
             }
           />
@@ -128,10 +143,7 @@ function LitterDetail() {
 
         {!kPuppies?.length ? (
           <div className="rounded-3xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
-            <p className="text-base font-semibold">
-              No puppies added yet. Add them once born, or now if you already know how many there'll
-              be.
-            </p>
+            <p className="text-base font-semibold">{t("breederPanel.litterDetail.emptyPuppies")}</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -152,10 +164,11 @@ function LitterDetail() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{p.name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {p.sex ?? "sex not set"} · {p.color ?? "color not set"}
+                      {p.sex ?? t("breederPanel.litterDetail.sexNotSet")} ·{" "}
+                      {p.color ?? t("breederPanel.litterDetail.colorNotSet")}
                     </p>
-                    <Badge variant="secondary" className="mt-1 capitalize">
-                      {p.availability_status.replace(/_/g, " ")}
+                    <Badge variant="secondary" className="mt-1">
+                      {puppyStatusLabel(t, p.availability_status)}
                     </Badge>
                   </div>
                   {kennel?.id && (
@@ -164,7 +177,7 @@ function LitterDetail() {
                       puppy={p}
                       trigger={
                         <Button size="sm" variant="outline" className="shrink-0 rounded-xl">
-                          Edit
+                          {t("breederPanel.litterDetail.edit")}
                         </Button>
                       }
                     />
@@ -177,8 +190,7 @@ function LitterDetail() {
       </section>
 
       <p className="rounded-2xl border-2 border-dashed border-border bg-card/50 p-4 text-sm text-muted-foreground">
-        All puppies in this litter share the same parents and litter registration — you only need to
-        fill in what's specific to each puppy.
+        {t("breederPanel.litterDetail.footerNote")}
       </p>
     </div>
   );
@@ -188,10 +200,12 @@ function ParentTile({
   label,
   name,
   photo,
+  notSet,
 }: {
   label: string;
   name: string | null | undefined;
   photo?: string | null;
+  notSet: string;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -204,7 +218,7 @@ function ParentTile({
       )}
       <div className="min-w-0">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-bold">{name || "Not set"}</p>
+        <p className="truncate text-sm font-bold">{name || notSet}</p>
       </div>
     </div>
   );

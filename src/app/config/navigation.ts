@@ -58,51 +58,95 @@ export const buyerNav: DashboardNavItem[] = [
 // mirror how a kennel owner actually thinks about their work: dogs & litters first, then sales,
 // then the public-facing kennel identity, then account admin. Modeled on the section split in the
 // Gryfin York kennel's own panel (/p/grif/c/src/routes/panel.tsx — 5 primary + a "more" group).
+// `label`/`section` here are i18n keys (breederPanel.nav.*), not literal text — DashboardShell
+// runs every nav item through t(), so this is the one nav array in navigation.ts that actually
+// renders translated (the others still pass literal English strings, which t() safely returns
+// unchanged when no matching key exists — see the comment on DashboardNavItem).
 export const breederNav: DashboardNavItem[] = [
-  { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/breeder/litters", label: "Litters", icon: Baby, section: "Dogs & litters" },
-  { to: "/dashboard/breeder/puppies", label: "Puppies", icon: PawPrint, section: "Dogs & litters" },
+  {
+    to: "/dashboard/breeder",
+    label: "breederPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    to: "/dashboard/breeder/litters",
+    label: "breederPanel.nav.litters",
+    icon: Baby,
+    section: "breederPanel.nav.sectionDogsLitters",
+  },
+  {
+    to: "/dashboard/breeder/puppies",
+    label: "breederPanel.nav.puppies",
+    icon: PawPrint,
+    section: "breederPanel.nav.sectionDogsLitters",
+  },
   {
     to: "/dashboard/breeder/parent-dogs",
-    label: "Parent dogs",
+    label: "breederPanel.nav.parentDogs",
     icon: Dog,
-    section: "Dogs & litters",
+    section: "breederPanel.nav.sectionDogsLitters",
   },
   {
     to: "/dashboard/breeder/pedigrees",
-    label: "Pedigrees",
+    label: "breederPanel.nav.pedigrees",
     icon: Network,
-    section: "Dogs & litters",
+    section: "breederPanel.nav.sectionDogsLitters",
   },
   {
     to: "/dashboard/breeder/applications",
-    label: "Buyer applications",
+    label: "breederPanel.nav.buyerApplications",
     icon: Inbox,
-    section: "Sales",
+    section: "breederPanel.nav.sectionSales",
   },
   {
     to: "/dashboard/breeder/reservations",
-    label: "Reservations",
+    label: "breederPanel.nav.reservations",
     icon: CalendarCheck,
-    section: "Sales",
+    section: "breederPanel.nav.sectionSales",
   },
-  { to: "/dashboard/breeder/transport", label: "Transport", icon: Truck, section: "Sales" },
+  {
+    to: "/dashboard/breeder/transport",
+    label: "breederPanel.nav.transport",
+    icon: Truck,
+    section: "breederPanel.nav.sectionSales",
+  },
   {
     to: "/dashboard/breeder/profile",
-    label: "Public profile",
+    label: "breederPanel.nav.publicProfile",
     icon: User,
-    section: "My kennel",
+    section: "breederPanel.nav.sectionMyKennel",
   },
   {
     to: "/dashboard/breeder/achievements",
-    label: "Achievements",
+    label: "breederPanel.nav.achievements",
     icon: Award,
-    section: "My kennel",
+    section: "breederPanel.nav.sectionMyKennel",
   },
-  { to: "/dashboard/breeder/champions", label: "Champion dogs", icon: Crown, section: "My kennel" },
-  { to: "/dashboard/breeder/documents", label: "Documents", icon: FileText, section: "Account" },
-  { to: "/dashboard/breeder/messages", label: "Messages", icon: MessageSquare, section: "Account" },
-  { to: "/dashboard/breeder/settings", label: "Settings", icon: Settings, section: "Account" },
+  {
+    to: "/dashboard/breeder/champions",
+    label: "breederPanel.nav.championDogs",
+    icon: Crown,
+    section: "breederPanel.nav.sectionMyKennel",
+  },
+  {
+    to: "/dashboard/breeder/documents",
+    label: "breederPanel.nav.documents",
+    icon: FileText,
+    section: "breederPanel.nav.sectionAccount",
+  },
+  {
+    to: "/dashboard/breeder/messages",
+    label: "breederPanel.nav.messages",
+    icon: MessageSquare,
+    section: "breederPanel.nav.sectionAccount",
+  },
+  {
+    to: "/dashboard/breeder/settings",
+    label: "breederPanel.nav.settings",
+    icon: Settings,
+    section: "breederPanel.nav.sectionAccount",
+  },
 ];
 
 export const foundationNav: DashboardNavItem[] = [

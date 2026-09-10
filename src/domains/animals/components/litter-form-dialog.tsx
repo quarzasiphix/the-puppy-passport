@@ -23,6 +23,7 @@ import {
   type LitterRow,
 } from "../services/breeder";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 
 type FormValues = {
   code: string;
@@ -39,17 +40,6 @@ type FormValues = {
   description: string;
   isPublished: boolean;
 };
-
-const STATUS_OPTIONS: { value: LitterRow["status"]; label: string }[] = [
-  { value: "planned", label: "Planned" },
-  { value: "born", label: "Born" },
-  { value: "applications_open", label: "Applications open" },
-  { value: "fully_reserved", label: "Fully reserved" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-];
-
-const STEPS = ["Basics", "Parents", "Dates & size", "Registration"] as const;
 
 const emptyValues = (defaultStatus: LitterRow["status"]): FormValues => ({
   code: "",
@@ -78,6 +68,22 @@ export function LitterFormDialog({
   defaultStatus?: LitterRow["status"];
   litter?: LitterRow;
 }) {
+  const { t } = useTranslation();
+  const STEPS = [
+    t("breederPanel.litterForm.stepBasics"),
+    t("breederPanel.litterForm.stepParents"),
+    t("breederPanel.litterForm.stepDates"),
+    t("breederPanel.litterForm.stepRegistration"),
+  ];
+  const STATUS_OPTIONS: { value: LitterRow["status"]; label: string }[] = [
+    { value: "planned", label: t("breederPanel.status.litter.planned") },
+    { value: "born", label: t("breederPanel.status.litter.born") },
+    { value: "applications_open", label: t("breederPanel.status.litter.applicationsOpen") },
+    { value: "fully_reserved", label: t("breederPanel.status.litter.fullyReserved") },
+    { value: "completed", label: t("breederPanel.status.litter.completed") },
+    { value: "cancelled", label: t("breederPanel.status.litter.cancelled") },
+  ];
+
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const queryClient = useQueryClient();
@@ -143,12 +149,17 @@ export function LitterFormDialog({
       return createLitter(payload);
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Litter updated." : "Litter added.");
+      toast.success(
+        isEdit
+          ? t("breederPanel.litterForm.savedUpdated")
+          : t("breederPanel.litterForm.savedAdded"),
+      );
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["kennel-litters"] });
       queryClient.invalidateQueries({ queryKey: ["kennel-litter", litter?.id] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save litter.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("breederPanel.litterForm.saveFailed"))),
   });
 
   const mothers = (parentsQuery.data ?? []).filter((p) => p.sex === "female");
@@ -161,28 +172,33 @@ export function LitterFormDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
-            {isEdit ? "Edit litter" : "Add a litter"}
+            {isEdit
+              ? t("breederPanel.litterForm.editTitle")
+              : t("breederPanel.litterForm.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
-        <WizardProgress steps={[...STEPS]} current={step} />
+        <WizardProgress steps={STEPS} current={step} />
 
         <div className="space-y-4">
           {step === 0 && (
             <>
-              <BigField label="Litter name" hint="How you'll recognize it, e.g. a season + letter.">
+              <BigField
+                label={t("breederPanel.litterForm.nameLabel")}
+                hint={t("breederPanel.litterForm.nameHint")}
+              >
                 <Input
                   autoFocus
-                  placeholder="e.g. Litter M — spring 2026"
+                  placeholder={t("breederPanel.litterForm.namePlaceholder")}
                   value={values.code}
                   onChange={(e) => set("code", e.target.value)}
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Breed">
+              <BigField label={t("breederPanel.litterForm.breedLabel")}>
                 <Select value={values.breedId} onValueChange={(v) => set("breedId", v)}>
                   <SelectTrigger className="h-14 rounded-2xl text-base">
-                    <SelectValue placeholder="Select breed" />
+                    <SelectValue placeholder={t("breederPanel.litterForm.breedPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(breedsQuery.data ?? []).map((b) => (
@@ -193,7 +209,7 @@ export function LitterFormDialog({
                   </SelectContent>
                 </Select>
               </BigField>
-              <BigField label="Status">
+              <BigField label={t("breederPanel.litterForm.statusLabel")}>
                 <ToggleButtonGroup
                   options={STATUS_OPTIONS}
                   value={values.status}
@@ -208,10 +224,8 @@ export function LitterFormDialog({
           {step === 1 && (
             <>
               <BigField
-                label="Mother"
-                hint={
-                  !mothers.length ? "Add a female parent dog first, under Parent dogs." : undefined
-                }
+                label={t("breederPanel.litterForm.motherLabel")}
+                hint={!mothers.length ? t("breederPanel.litterForm.motherHint") : undefined}
               >
                 <div className="space-y-2">
                   {mothers.map((p) => (
@@ -227,10 +241,8 @@ export function LitterFormDialog({
                 </div>
               </BigField>
               <BigField
-                label="Father"
-                hint={
-                  !fathers.length ? "Add a male parent dog first, under Parent dogs." : undefined
-                }
+                label={t("breederPanel.litterForm.fatherLabel")}
+                hint={!fathers.length ? t("breederPanel.litterForm.fatherHint") : undefined}
               >
                 <div className="space-y-2">
                   {fathers.map((p) => (
@@ -250,7 +262,7 @@ export function LitterFormDialog({
 
           {step === 2 && (
             <>
-              <BigField label="Expected birth date">
+              <BigField label={t("breederPanel.litterForm.expectedBirthLabel")}>
                 <Input
                   type="date"
                   value={values.expectedBirthDate}
@@ -258,7 +270,7 @@ export function LitterFormDialog({
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Actual birth date">
+              <BigField label={t("breederPanel.litterForm.actualBirthLabel")}>
                 <Input
                   type="date"
                   value={values.birthDate}
@@ -266,7 +278,7 @@ export function LitterFormDialog({
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Ready to go home">
+              <BigField label={t("breederPanel.litterForm.readyLabel")}>
                 <Input
                   type="date"
                   value={values.readyDate}
@@ -274,7 +286,7 @@ export function LitterFormDialog({
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Expected number of puppies">
+              <BigField label={t("breederPanel.litterForm.puppyCountLabel")}>
                 <Input
                   type="number"
                   min="0"
@@ -288,21 +300,24 @@ export function LitterFormDialog({
 
           {step === 3 && (
             <>
-              <BigField label="Association" hint="e.g. ZKwP / FCI">
+              <BigField
+                label={t("breederPanel.litterForm.associationLabel")}
+                hint={t("breederPanel.litterForm.associationHint")}
+              >
                 <Input
                   value={values.association}
                   onChange={(e) => set("association", e.target.value)}
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Registration number">
+              <BigField label={t("breederPanel.litterForm.registrationLabel")}>
                 <Input
                   value={values.registrationNumber}
                   onChange={(e) => set("registrationNumber", e.target.value)}
                   className="h-14 rounded-2xl text-base"
                 />
               </BigField>
-              <BigField label="Notes (visible to you only for now)">
+              <BigField label={t("breederPanel.litterForm.notesLabel")}>
                 <Textarea
                   rows={3}
                   value={values.description}
@@ -312,9 +327,11 @@ export function LitterFormDialog({
               </BigField>
               <label className="flex items-center gap-3 rounded-2xl bg-secondary/60 p-4">
                 <span className="flex-1">
-                  <span className="block font-bold">Publish this litter publicly</span>
+                  <span className="block font-bold">
+                    {t("breederPanel.litterForm.publishLabel")}
+                  </span>
                   <span className="block text-xs text-muted-foreground">
-                    Off = only visible to you. On = visible on your public kennel page.
+                    {t("breederPanel.litterForm.publishHint")}
                   </span>
                 </span>
                 <Switch
@@ -334,7 +351,7 @@ export function LitterFormDialog({
               onClick={() => setStep((s) => s - 1)}
               className="h-14 rounded-2xl border-2 text-base font-bold"
             >
-              <ArrowLeft className="mr-1 size-4" /> Back
+              <ArrowLeft className="mr-1 size-4" /> {t("breederPanel.litterForm.back")}
             </Button>
           )}
           {step < STEPS.length - 1 ? (
@@ -344,7 +361,7 @@ export function LitterFormDialog({
               disabled={!canContinue}
               className="h-14 flex-1 rounded-2xl text-base font-bold"
             >
-              Next <ArrowRight className="ml-1 size-4" />
+              {t("breederPanel.litterForm.next")} <ArrowRight className="ml-1 size-4" />
             </Button>
           ) : (
             <Button
@@ -354,10 +371,13 @@ export function LitterFormDialog({
               className="h-14 flex-1 rounded-2xl text-base font-bold"
             >
               {mutation.isPending ? (
-                "Saving…"
+                t("breederPanel.litterForm.saving")
               ) : (
                 <>
-                  <Check className="mr-1 size-4" /> {isEdit ? "Save changes" : "Add litter"}
+                  <Check className="mr-1 size-4" />{" "}
+                  {isEdit
+                    ? t("breederPanel.litterForm.saveChanges")
+                    : t("breederPanel.litterForm.addLitter")}
                 </>
               )}
             </Button>

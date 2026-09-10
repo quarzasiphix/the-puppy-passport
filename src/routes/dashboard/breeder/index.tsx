@@ -7,6 +7,8 @@ import {
   listKennelLitters,
   listKennelPuppies,
   animalCoverPhotoUrl,
+  litterStatusLabel,
+  puppyStatusLabel,
   QuickActionTile,
   BigStat,
   ParentAvatarPair,
@@ -17,6 +19,7 @@ import {
   isReservationAwaitingBreederAction,
 } from "@/domains/reservations";
 import { Badge } from "@/shared/ui/badge";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/")({
   component: BreederOverview,
@@ -24,6 +27,7 @@ export const Route = createFileRoute("/dashboard/breeder/")({
 
 function BreederOverview() {
   const { userId } = useAuth();
+  const { t } = useTranslation();
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
     enabled: !!userId,
@@ -65,36 +69,36 @@ function BreederOverview() {
     <div className="space-y-8">
       <header>
         <h1 className="font-display text-2xl font-bold sm:text-3xl">
-          {kennel?.name ? `Welcome back, ${kennel.name}` : "Welcome back"}
+          {kennel?.name
+            ? `${t("breederPanel.home.welcomeBackPrefix")} ${kennel.name}`
+            : t("breederPanel.home.welcomeBack")}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Here's what's happening in your kennel today.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.home.subtitle")}</p>
       </header>
 
       {/* Big action tiles — the 4 things a breeder does most often, one tap away */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <QuickActionTile
           to="/dashboard/breeder/puppies"
-          label="Add a puppy"
+          label={t("breederPanel.home.actionAddPuppy")}
           icon={PawPrint}
           tone="primary"
         />
         <QuickActionTile
           to="/dashboard/breeder/litters"
-          label="Add a litter"
+          label={t("breederPanel.home.actionAddLitter")}
           icon={Baby}
           tone="accent"
         />
         <QuickActionTile
           to="/dashboard/breeder/applications"
-          label="Buyer applications"
+          label={t("breederPanel.home.actionApplications")}
           icon={Inbox}
           tone="success"
         />
         <QuickActionTile
           to="/dashboard/breeder/profile"
-          label="My kennel profile"
+          label={t("breederPanel.home.actionMyProfile")}
           icon={User}
           tone="warning"
         />
@@ -102,17 +106,27 @@ function BreederOverview() {
 
       {/* Summary numbers */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <BigStat icon={Baby} label="Litters" value={litters?.length ?? 0} tone="accent" />
-        <BigStat icon={Dog} label="Active puppies" value={activePuppies} tone="primary" />
+        <BigStat
+          icon={Baby}
+          label={t("breederPanel.home.statLitters")}
+          value={litters?.length ?? 0}
+          tone="accent"
+        />
+        <BigStat
+          icon={Dog}
+          label={t("breederPanel.home.statActivePuppies")}
+          value={activePuppies}
+          tone="primary"
+        />
         <BigStat
           icon={CalendarCheck}
-          label="Reservations to review"
+          label={t("breederPanel.home.statReservations")}
           value={pendingReservations}
           tone="success"
         />
         <BigStat
           icon={Truck}
-          label="Transport requests"
+          label={t("breederPanel.home.statTransport")}
           value={transportRequests?.length ?? 0}
           tone="warning"
         />
@@ -121,16 +135,16 @@ function BreederOverview() {
       {/* Recent litters */}
       <section>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-display text-xl font-bold">Recent litters</h2>
+          <h2 className="font-display text-xl font-bold">{t("breederPanel.home.recentLitters")}</h2>
           <Link
             to="/dashboard/breeder/litters"
             className="text-sm font-semibold text-primary hover:underline"
           >
-            See all
+            {t("breederPanel.home.seeAll")}
           </Link>
         </div>
         {!recentLitters.length ? (
-          <EmptyRow text="No litters yet. Add your first one to get started." />
+          <EmptyRow text={t("breederPanel.home.emptyLitters")} />
         ) : (
           <div className="space-y-3">
             {recentLitters.map((l) => (
@@ -144,10 +158,11 @@ function BreederOverview() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-display text-lg font-bold">{l.code}</p>
                   <p className="truncate text-sm text-muted-foreground">
-                    {l.breeds?.name ?? "Breed not set"} · {l.totalPuppies} puppies
+                    {l.breeds?.name ?? t("breederPanel.home.breedNotSet")} · {l.totalPuppies}{" "}
+                    {t("breederPanel.home.puppiesCountSuffix")}
                   </p>
-                  <Badge variant="secondary" className="mt-1 capitalize">
-                    {l.status.replace(/_/g, " ")}
+                  <Badge variant="secondary" className="mt-1">
+                    {litterStatusLabel(t, l.status)}
                   </Badge>
                 </div>
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -162,16 +177,16 @@ function BreederOverview() {
       {/* Recent puppies */}
       <section>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-display text-xl font-bold">Recently added puppies</h2>
+          <h2 className="font-display text-xl font-bold">{t("breederPanel.home.recentPuppies")}</h2>
           <Link
             to="/dashboard/breeder/puppies"
             className="text-sm font-semibold text-primary hover:underline"
           >
-            See all
+            {t("breederPanel.home.seeAll")}
           </Link>
         </div>
         {!recentPuppies.length ? (
-          <EmptyRow text="No puppies yet — add a litter first, then puppies." />
+          <EmptyRow text={t("breederPanel.home.emptyPuppies")} />
         ) : (
           <div className="space-y-3">
             {recentPuppies.map((p) => {
@@ -191,17 +206,17 @@ function BreederOverview() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display text-lg font-bold">{p.name}</p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {p.breeds?.name ?? "Breed not set"}
+                      {p.breeds?.name ?? t("breederPanel.home.breedNotSet")}
                       {p.litters?.code && ` · ${p.litters.code}`}
                     </p>
-                    <Badge variant="secondary" className="mt-1 capitalize">
-                      {p.availability_status.replace(/_/g, " ")}
+                    <Badge variant="secondary" className="mt-1">
+                      {puppyStatusLabel(t, p.availability_status)}
                     </Badge>
                   </div>
                   <Link
                     to="/dashboard/breeder/puppies"
                     className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                    aria-label="Open puppies"
+                    aria-label={t("breederPanel.home.openPuppies")}
                   >
                     <ArrowRight className="size-5" />
                   </Link>

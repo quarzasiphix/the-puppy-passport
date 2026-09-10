@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Check, Dog } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { useTranslation } from "@/shared/i18n";
 
 // Shared "big, friendly" building blocks for the breeder dashboard (kennel owner panel), modeled
 // on the Gryfin York kennel's own real admin panel style (/p/grif/c — panel.*.tsx: big colorful
@@ -193,8 +194,11 @@ export function PickerCard({
   );
 }
 
-/** Step progress bar + "Step N of M · Title" caption for a wizard-style dialog form. */
+/** Step progress bar + "Step N of M · Title" caption for a wizard-style dialog form. `steps` are
+ * already-translated titles (the caller owns those, via its own breederPanel.*.step* keys) —
+ * only the "Step … of …" wrapper text is translated here. */
 export function WizardProgress({ steps, current }: { steps: string[]; current: number }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-1.5">
       <div className="flex gap-1.5">
@@ -209,7 +213,8 @@ export function WizardProgress({ steps, current }: { steps: string[]; current: n
         ))}
       </div>
       <p className="text-xs font-bold text-primary">
-        Step {current + 1} of {steps.length} · {steps[current]}
+        {t("breederPanel.wizard.stepPrefix")} {current + 1} {t("breederPanel.wizard.ofLabel")}{" "}
+        {steps.length} · {steps[current]}
       </p>
     </div>
   );
@@ -251,6 +256,36 @@ export function ParentAvatarPair({
       )}
     </div>
   );
+}
+
+// DB enum value → breederPanel.status.* locale key suffix. Explicit maps (not a mechanical
+// snake_case→camelCase transform) so an enum value with no translated label yet (draft/adopted/
+// unavailable — not breeder-settable from this panel, see puppies.tsx) falls back to readable raw
+// text instead of a broken lookup.
+const PUPPY_STATUS_KEY: Record<string, string> = {
+  available: "available",
+  applications_open: "applicationsOpen",
+  reserved: "reserved",
+  sold: "sold",
+  withdrawn: "withdrawn",
+};
+const LITTER_STATUS_KEY: Record<string, string> = {
+  planned: "planned",
+  born: "born",
+  applications_open: "applicationsOpen",
+  fully_reserved: "fullyReserved",
+  completed: "completed",
+  cancelled: "cancelled",
+};
+
+export function puppyStatusLabel(t: (key: string) => string, status: string): string {
+  const key = PUPPY_STATUS_KEY[status];
+  return key ? t(`breederPanel.status.puppy.${key}`) : status.replace(/_/g, " ");
+}
+
+export function litterStatusLabel(t: (key: string) => string, status: string): string {
+  const key = LITTER_STATUS_KEY[status];
+  return key ? t(`breederPanel.status.litter.${key}`) : status.replace(/_/g, " ");
 }
 
 /** Labeled field wrapper with a bigger, bolder label than the default shadcn <FormLabel>. */

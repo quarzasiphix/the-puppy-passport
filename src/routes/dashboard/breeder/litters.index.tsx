@@ -8,10 +8,12 @@ import { useAuth } from "@/domains/identity";
 import {
   getMyKennel,
   listKennelLitters,
+  litterStatusLabel,
   ParentAvatarPair,
   type LitterRow,
 } from "@/domains/breeders";
 import { LitterFormDialog } from "@/domains/animals";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/litters/")({
   component: LittersPage,
@@ -19,24 +21,31 @@ export const Route = createFileRoute("/dashboard/breeder/litters/")({
 
 type LitterStatus = LitterRow["status"];
 
-const TABS: {
-  key: "active" | "planned" | "completed";
-  label: string;
-  match: (s: LitterStatus) => boolean;
-}[] = [
-  {
-    key: "active",
-    label: "Active",
-    match: (s) => s === "born" || s === "applications_open" || s === "fully_reserved",
-  },
-  { key: "planned", label: "Planned", match: (s) => s === "planned" },
-  { key: "completed", label: "Completed", match: (s) => s === "completed" || s === "cancelled" },
-];
-
 function LittersPage() {
   const { userId } = useAuth();
+  const { t, locale } = useTranslation();
+  const dateLocale = locale === "pl" ? "pl-PL" : "en-GB";
+
+  const TABS: {
+    key: "active" | "planned" | "completed";
+    label: string;
+    match: (s: LitterStatus) => boolean;
+  }[] = [
+    {
+      key: "active",
+      label: t("breederPanel.litters.tabActive"),
+      match: (s) => s === "born" || s === "applications_open" || s === "fully_reserved",
+    },
+    { key: "planned", label: t("breederPanel.litters.tabPlanned"), match: (s) => s === "planned" },
+    {
+      key: "completed",
+      label: t("breederPanel.litters.tabCompleted"),
+      match: (s) => s === "completed" || s === "cancelled",
+    },
+  ];
+
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("active");
-  const active = TABS.find((t) => t.key === tab)!;
+  const activeTab = TABS.find((tb) => tb.key === tab)!;
 
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
@@ -49,25 +58,27 @@ function LittersPage() {
     queryFn: () => listKennelLitters(kennel!.id),
   });
 
-  const filtered = (litters ?? []).filter((l) => active.match(l.status));
+  const filtered = (litters ?? []).filter((l) => activeTab.match(l.status));
 
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-display text-2xl font-bold sm:text-3xl">Litters</h1>
-        <p className="text-sm text-muted-foreground">Manage current and planned litters.</p>
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">
+          {t("breederPanel.litters.title")}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.litters.subtitle")}</p>
       </header>
 
       <div className="grid grid-cols-3 gap-2 rounded-2xl bg-secondary p-1">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tb.key}
+            onClick={() => setTab(tb.key)}
             className={`h-12 rounded-xl text-sm font-bold transition ${
-              tab === t.key ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+              tab === tb.key ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
             }`}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>
@@ -82,7 +93,7 @@ function LittersPage() {
                 variant="outline"
                 className="h-14 w-full rounded-2xl border-2 text-base font-bold"
               >
-                Add a planned litter
+                {t("breederPanel.litters.addPlanned")}
               </Button>
             }
           />
@@ -91,7 +102,7 @@ function LittersPage() {
             defaultStatus="born"
             trigger={
               <Button className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm">
-                <Plus className="size-5" /> Add a litter
+                <Plus className="size-5" /> {t("breederPanel.litters.addLitter")}
               </Button>
             }
           />
@@ -99,13 +110,13 @@ function LittersPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.litters.loading")}</p>
       ) : !filtered.length ? (
         <div className="rounded-3xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
           <p className="text-base font-semibold">
             {!litters?.length
-              ? "No litters yet. Add a planned litter to start tracking it."
-              : "No litters in this group yet."}
+              ? t("breederPanel.litters.emptyNoLitters")
+              : t("breederPanel.litters.emptyFilterNoMatch")}
           </p>
         </div>
       ) : (
@@ -124,41 +135,45 @@ function LittersPage() {
                     {l.code}
                   </h3>
                   <p className="truncate text-xs text-muted-foreground">
-                    {l.mother?.registered_name ?? "Mother not set"} ×{" "}
-                    {l.father?.registered_name ?? "Father not set"}
+                    {l.mother?.registered_name ?? t("breederPanel.litters.motherNotSet")} ×{" "}
+                    {l.father?.registered_name ?? t("breederPanel.litters.fatherNotSet")}
                   </p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Badge variant="secondary" className="capitalize">
-                      {l.status.replace(/_/g, " ")}
-                    </Badge>
-                    {!l.is_published && <Badge variant="outline">Draft</Badge>}
+                    <Badge variant="secondary">{litterStatusLabel(t, l.status)}</Badge>
+                    {!l.is_published && (
+                      <Badge variant="outline">{t("breederPanel.litters.draftBadge")}</Badge>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 border-t border-border/60 bg-secondary/40 px-4 py-3 text-xs">
                 <div>
-                  <p className="text-muted-foreground">{l.birth_date ? "Born" : "Expected"}</p>
+                  <p className="text-muted-foreground">
+                    {l.birth_date
+                      ? t("breederPanel.litters.born")
+                      : t("breederPanel.litters.expected")}
+                  </p>
                   <p className="font-bold">
                     {(l.birth_date ?? l.expected_birth_date)
                       ? new Date((l.birth_date ?? l.expected_birth_date)!).toLocaleDateString(
-                          "en-GB",
+                          dateLocale,
                         )
                       : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Puppies</p>
+                  <p className="text-muted-foreground">{t("breederPanel.litters.puppiesLabel")}</p>
                   <p className="font-bold">
                     {l.totalPuppies || l.puppy_count || "—"}{" "}
                     {l.totalPuppies > 0 && (
                       <span className="font-normal text-muted-foreground">
-                        ({l.availablePuppies} avail)
+                        ({l.availablePuppies} {t("breederPanel.litters.availSuffix")})
                       </span>
                     )}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Breed</p>
+                  <p className="text-muted-foreground">{t("breederPanel.litters.breedLabel")}</p>
                   <p className="truncate font-bold">{l.breeds?.name ?? "—"}</p>
                 </div>
               </div>
