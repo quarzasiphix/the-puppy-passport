@@ -66,10 +66,13 @@ on Supabase Storage, if that's ever the right order.
 
 Settled alongside the breeder-site SDK. Short version:
 
-- **Own bucket: `anemalo-media`** (a fresh R2 bucket), custom domain `media.anemalo.com` attached
-  **directly** (R2 public custom domain, no Worker). *Reverses* the 2026-09-10 "reuse Gryfin's
-  bucket" line below — a breeder's bucket name as the platform store is confusing forever and
-  can't be lifecycled independently, and the only saving (no object copy) is ~85 tiny objects.
+- **Own bucket: `anemalo-media`** (a fresh R2 bucket in the **`quarza` Cloudflare account** —
+  same account as the `anemalo.com` zone + the `anemalo-gateway` worker; R2 custom domains must
+  be co-account with the zone and `anemalo.com` can't be moved). Tovernet operates it via account
+  membership; billing stays `quarza`. Custom domain `media.anemalo.com` attached **directly** (R2
+  public custom domain, no Worker). *Reverses* the 2026-09-10 "reuse Gryfin's bucket" line below —
+  a breeder's bucket name as the platform store is confusing forever and can't be lifecycled
+  independently, and the only saving (no object copy) is ~85 tiny objects.
 - **A media ref is a relative key OR a full URL.** Image columns (`animal_images.image_url`,
   `parent_dogs`/`dogs.profile_image_url`, `organisations.logo_url`/`cover_image_url`) hold either
   `org/<org_id>/<kind>/<uuid>.<ext>` (→ resolved `https://media.anemalo.com/<key>`) or an absolute

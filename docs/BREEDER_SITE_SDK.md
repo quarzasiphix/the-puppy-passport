@@ -107,6 +107,13 @@ Nothing in the DB schema. The pieces:
    Gryfin's existing worker token would span all Anemalo media. The thing that made "reuse"
    attractive — no object copy — is ~85 Gryfin objects, a 2-minute `rclone` job that isn't even
    required up front (step 4 in A.3).
+   **Account:** `anemalo-media` lives in the **`quarza` Cloudflare account** — same account as the
+   `anemalo.com` DNS zone and the `anemalo-gateway` worker (all confirmed there 2026-09-11). R2
+   custom domains require the bucket and the zone to be co-account, and `anemalo.com` can't be
+   moved off `quarza`. Tovernet has member access to that account and operates the infra; billing
+   stays with `quarza`. The `upload-media` function (S6) authenticates to it with an R2 S3 token
+   **scoped to `anemalo-media` only**. Gryfin's `gryfinyork-media` + `media-worker` stay where
+   they are (likely `quarza` too) — untouched regardless.
 2. **No Cloudflare Worker in the media *read* path.** `media.anemalo.com` attaches **directly to
    `anemalo-media`** as a public custom domain (R2 → bucket → Settings → Public access → Connect
    Domain). Reads served by R2's edge + Cloudflare cache; nothing to deploy or keep alive.
@@ -263,7 +270,7 @@ integration until the SDK exists, then rebased onto it.
 
 | Phase | Work | Unblocks |
 |---|---|---|
-| **S0** | Create bucket **`anemalo-media`**. (a) Remove `media.anemalo.com` from the **`anemalo-gateway`** Worker's Domains & Routes (mis-attached today — every image 404s). (b) Connect `media.anemalo.com` to `anemalo-media` as an **R2 public custom domain**. Gryfin's `gryfinyork-media` + `media-worker` + `media.hodowlagryfinyork.pl` are left untouched. No app code. | A.4a, step 6–7, S6 |
+| **S0** | In the **`quarza`** CF account: create EU bucket **`anemalo-media`**. (a) Confirm `media.anemalo.com` is off the **`anemalo-gateway`** Worker's Domains & Routes (already done — it currently resolves to nothing). (b) R2 → `anemalo-media` → Public access → Connect Domain → `media.anemalo.com` (native R2 custom domain, cert auto). (c) CORS policy: `GET, HEAD` from `*`. (d) Test an uploaded object → `curl` 200. Gryfin's bucket/worker/`media.hodowlagryfinyork.pl` untouched. No app code. | A.4a, step 6–7, S6 |
 | **S1** | Gateway + `/p/grif/p` branch mapper: the one-line `ref` resolver + a resolved `url` beside the raw ref in `/v1/site-content` (A.2/A.4). No DB migration. Gryfin's absolute rows pass through unchanged. | SDK media resolver; consistent `url` for consumers |
 | **S2** | `@anemalo/api-contract` + `@anemalo/site-sdk` (+ `/react`). Port `/p/grif/p` to consume it. | every future site |
 | **S3** | `anemalo-site-template` with 3 themes + one-command deploy. | step 4–5 |
