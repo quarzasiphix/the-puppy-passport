@@ -61,6 +61,30 @@ Customers can search for puppies, view planned litters, search breeders on a map
 country/distance/availability, view breeder achievements and champion dogs, apply for a puppy, and
 — once a purchase is agreed — connect the animal with a transport request.
 
+**Two distinct marketplaces sharing one breeder dataset** (a deliberate goal of the network,
+recorded 2026-09-10):
+
+- **Litters / puppies market** — the main public marketplace. Audience is mostly ordinary people
+  looking for a companion animal. Listings are individual puppies within a litter (`animals` with
+  `listing_category='breeder_puppy'`, tied to a `litters` row). Copy, pricing and the application/
+  reservation flow are written for a first-time buyer.
+- **Breeding-stock market (breeder-to-breeder)** — a separate market where a breeder can offer an
+  **adult reproducing dog** (a proven or prospective sire/dam) for sale to *another breeder*.
+  Audience is other approved kennels, not the general public. Different intent (a kennel acquiring
+  or placing breeding stock), different information emphasis (pedigree depth, health-test panel,
+  DNA colour genetics, titles, prior litters, coefficient of inbreeding), and it should read as a
+  professional transaction, not a pet-shop listing.
+
+The same breeder never re-enters anything: a dog she already manages as `parent_dogs` /
+pedigree-graph `dogs` becomes a breeding-stock listing by flagging it available-to-breeders, with
+its existing pedigree, photos and health data carried straight through. Breeding-stock listings
+stay visually and structurally distinct from the puppy marketplace (as adoption listings already
+are from breeder listings) and are surfaced primarily inside breeder-facing surfaces — the breeder
+panel, `@handle` profiles, breeder discovery — not the consumer "find a puppy" funnel. Not yet
+built; `animals.listing_category` is the existing seam (a new category value + an audience filter),
+and stud-service listings (offering a male at stud without selling him) are a related later idea in
+the same market.
+
 ### 2. Professional breeder profiles
 
 Breeders present kennel history, breeds, parent dogs, litters, puppies, champion dogs, titles,

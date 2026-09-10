@@ -138,6 +138,12 @@ just a working feature.
 1. Transport is a central workflow, not a small add-on.
 2. Any registered user may submit a transport request.
 3. Not every user may publish commercial puppy listings — only approved breeders.
+3a. Two distinct marketplaces share one breeder dataset (see `docs/PRODUCT_VISION.md` pillar 1):
+    the **litters/puppies market** (mostly ordinary buyers) and a separate **breeder-to-breeder
+    market for adult reproducing dogs** (sires/dams sold between approved kennels — professional
+    framing, pedigree/health/genetics emphasis, kept out of the consumer "find a puppy" funnel).
+    Not built yet; `animals.listing_category` is the seam. A breeder never re-enters a dog she
+    already manages — an existing `parent_dogs` / pedigree `dogs` record becomes the listing.
 4. Only approved organisations may publish foundation/shelter (adoption) listings.
 5. Private rehoming requires a separate moderated workflow.
 6. Public maps must never expose exact private residential addresses.
