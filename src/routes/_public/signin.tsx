@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { PawPrint } from "lucide-react";
+import { PawPrint, Mail } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
@@ -16,7 +16,7 @@ import { useTranslation } from "@/shared/i18n";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(1, "Required"),
+  password: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -61,6 +61,13 @@ function SignIn() {
   const hydrated = useHydrated();
   const { t } = useTranslation();
   const { oauthError } = Route.useSearch();
+
+  // Passwordless (Google + magic link) is the primary path; the password field is opt-in so the
+  // common case stays a single tap. `sentTo` flips the card to the "check your inbox" state.
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
@@ -72,8 +79,43 @@ function SignIn() {
     if (oauthError) toast.error(oauthError);
   }, [oauthError]);
 
-  async function onSubmit(values: FormValues) {
-    const result = await signIn({ data: values });
+  async function sendMagicLink(email: string) {
+    setSendingLink(true);
+    const supabase = getSupabaseBrowserClient();
+    // exchangeCodeForSession (the part that actually creates the session) happens server-side in
+    // auth.callback.tsx — this only ever sends the email. shouldCreateUser:false so a typo can't
+    // silently create an account; a missing account still shows the same confirmation below
+    // (anti-enumeration, mirrors forgot-password.tsx).
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,
+      },
+    });
+    setSendingLink(false);
+    if (
+      error &&
+      !/signups?\s+not\s+allowed|otp_disabled|user\s+not\s+found/i.test(error.message)
+    ) {
+      toast.error(error.message);
+      return false;
+    }
+    setSentTo(email);
+    return true;
+  }
+
+  async function onMagicLink() {
+    const ok = await form.trigger("email");
+    if (ok) await sendMagicLink(form.getValues("email"));
+  }
+
+  async function onPasswordSubmit(values: FormValues) {
+    if (!values.password) {
+      form.setError("password", { message: t("authCommon.passwordRequired") });
+      return;
+    }
+    const result = await signIn({ data: { email: values.email, password: values.password } });
     if (result.error) {
       toast.error(result.error);
       return;
@@ -85,8 +127,7 @@ function SignIn() {
 
   async function onGoogleSignIn() {
     const supabase = getSupabaseBrowserClient();
-    // exchangeCodeForSession (the part that actually creates the session) happens server-side in
-    // auth.callback.tsx, not here — this call only ever starts the redirect to Google.
+    // This call only ever starts the redirect to Google; the code exchange is server-side.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -103,87 +144,153 @@ function SignIn() {
           </span>
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
-        <h1 className="mt-6 font-display text-3xl font-medium">{t("signIn.welcomeBack")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("signIn.subtitle")}</p>
 
-        {/* Google is the fastest path for most people and is the only social provider actually
-            configured (see docs/SOCIAL_AUTH_SETUP.md) — it leads, full width, not a small icon
-            button competing with a since-removed Facebook option. */}
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="mt-6 w-full gap-2 bg-background"
-          onClick={onGoogleSignIn}
-        >
-          <GoogleIcon /> {t("authCommon.continueWithGoogle")}
-        </Button>
+        {sentTo ? (
+          <div className="mt-6 text-center">
+            <div className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
+              <Mail className="size-6" />
+            </div>
+            <h1 className="mt-4 font-display text-2xl font-medium">{t("magicLink.sentTitle")}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("magicLink.sentBodyPrefix")} <span className="font-medium text-foreground">{sentTo}</span>.{" "}
+              {t("magicLink.sentBodySuffix")}
+            </p>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={sendingLink}
+                onClick={async () => {
+                  const ok = await sendMagicLink(sentTo);
+                  if (ok) toast.success(t("magicLink.resent"));
+                }}
+              >
+                {sendingLink ? t("magicLink.sending") : t("magicLink.resend")}
+              </Button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setSentTo(null)}
+              >
+                {t("magicLink.differentEmail")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h1 className="mt-6 font-display text-3xl font-medium">{t("signIn.welcomeBack")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("signIn.subtitle")}</p>
 
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            {t("authCommon.orWithEmail")}
-          </span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-
-        <Form {...form}>
-          <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("authCommon.email")}</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>{t("authCommon.password")}</FormLabel>
-                    <Link
-                      to="/forgot-password"
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      {t("signIn.forgotPassword")}
-                    </Link>
-                  </div>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <Button
-              type="submit"
-              variant="secondary"
-              className="w-full"
+              type="button"
+              variant="outline"
               size="lg"
-              disabled={!hydrated || form.formState.isSubmitting}
+              className="mt-6 w-full gap-2 bg-background"
+              onClick={onGoogleSignIn}
             >
-              {form.formState.isSubmitting ? t("signIn.submitting") : t("signIn.submit")}
+              <GoogleIcon /> {t("authCommon.continueWithGoogle")}
             </Button>
-          </form>
-        </Form>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {t("signIn.demoPrefix")} <code>password123</code> {t("signIn.demoSuffix")}
-        </p>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {t("signIn.newHere")}{" "}
-          <Link to="/signup" className="text-primary hover:underline">
-            {t("signIn.createAccount")}
-          </Link>
-        </p>
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                {t("authCommon.or")}
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <Form {...form}>
+              <form
+                method="post"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (showPassword) form.handleSubmit(onPasswordSubmit)();
+                  else onMagicLink();
+                }}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("authCommon.email")}</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="you@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {showPassword && (
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>{t("authCommon.password")}</FormLabel>
+                          <Link
+                            to="/forgot-password"
+                            className="text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            {t("signIn.forgotPassword")}
+                          </Link>
+                        </div>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {showPassword ? (
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    className="w-full"
+                    size="lg"
+                    disabled={!hydrated || form.formState.isSubmitting}
+                  >
+                    {form.formState.isSubmitting ? t("signIn.submitting") : t("signIn.submit")}
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="w-full gap-2"
+                    size="lg"
+                    disabled={!hydrated || sendingLink}
+                  >
+                    <Mail className="size-4" />
+                    {sendingLink ? t("magicLink.sending") : t("magicLink.signInButton")}
+                  </Button>
+                )}
+              </form>
+            </Form>
+
+            <button
+              type="button"
+              className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setShowPassword((v) => !v)}
+            >
+              {showPassword ? t("magicLink.useMagicLink") : t("magicLink.usePassword")}
+            </button>
+
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              {t("signIn.demoPrefix")} <code>password123</code> {t("signIn.demoSuffix")}
+            </p>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {t("signIn.newHere")}{" "}
+              <Link to="/signup" className="text-primary hover:underline">
+                {t("signIn.createAccount")}
+              </Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

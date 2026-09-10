@@ -1,0 +1,19 @@
+{
+  // Typecheck-only config for standalone Node scripts (run with `node --experimental-strip-types`
+  // or `tsx`, never bundled by Vite). The root tsconfig's `include` is scoped to `src/**`, so
+  // scripts need their own. Run: `npx tsc -p scripts/tsconfig.json --noEmit`.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["*.ts"]
+}

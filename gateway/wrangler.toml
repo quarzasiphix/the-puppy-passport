@@ -1,0 +1,33 @@
+# anemalo-gateway — the public API Worker that will serve api.anemalo.com.
+#
+# NOT DEPLOYED YET. Before the first `wrangler deploy`:
+#   1. Add the custom domain api.anemalo.com (Workers & Pages -> this worker -> Settings -> Domains).
+#   2. Review CORS. `access-control-allow-origin: *` is intentional for the public read API
+#      (GET /v1/site-content, GET /v1/resolve-domain, GET /health) — these expose only
+#      already-public, RLS-gated, anon-safe data. Tighten to a per-origin allowlist sourced from
+#      organisation_domains once custom-domain resolution ships (roadmap P6) if desired.
+#   3. Decide on a rate-limiting strategy (see README + the plan doc, section 2). enforce_rate_limit()
+#      in Postgres is a no-op for anonymous callers, so throttling must live here (Cloudflare
+#      Rate Limiting binding / KV counter / Durable Object).
+#
+# The anon key below is browser-safe by this project's established stance (see
+# ../CLAUDE.md "Production" + ../docs/DEPLOYMENT_CHECKLIST.md section 4): RLS is the real access
+# boundary, not secrecy of this key. It is the SAME anon key the main app ships in its own bundle.
+# NEVER put SUPABASE_SERVICE_ROLE_KEY in this file — if a future endpoint genuinely needs elevated
+# reads, use `wrangler secret put` and justify it in the plan doc.
+
+name = "anemalo-gateway"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SUPABASE_URL = "https://pgzvkkybqrhxedjoyjzy.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnenZra3licXJoeGVkam95anp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxODI4NTIsImV4cCI6MjEwMjc1ODg1Mn0.Jbqq1AlQK545wup_dq2dyLLbPzrclrZip9RUuGov7qk"
+
+# Placeholder for roadmap P6 (per-origin CORS from organisation_domains). Unset today => CORS "*".
+# ALLOWED_ORIGINS = ""
+
+# [[routes]]
+# pattern = "api.anemalo.com/*"
+# custom_domain = true

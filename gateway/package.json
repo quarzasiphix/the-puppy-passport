@@ -1,0 +1,21 @@
+{
+  "name": "anemalo-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "api.anemalo.com — public, org-scoped read gateway in front of the shared Anemalo Supabase project. NOT deployed yet.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260908.1",
+    "typescript": "^5.5.4",
+    "wrangler": "^4.130.0"
+  }
+}

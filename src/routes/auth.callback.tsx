@@ -1,18 +1,21 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { exchangeOAuthCode } from "@/domains/identity";
+import { completePasswordlessSignIn, signupIntentSchema } from "@/domains/identity";
 
-// Where every OAuth provider (currently just Google — see docs/SOCIAL_AUTH_SETUP.md) is configured
-// to redirect back to (src/routes/_public/signin.tsx passes this as `redirectTo`). No chrome —
-// intentionally NOT under the `_public` layout — this route exists to redirect immediately, a
-// flash of the full site header/footer before that happens would be pure noise.
+// Where every passwordless flow redirects back to — Google OAuth and email magic links alike
+// (src/routes/_public/signin.tsx and signup.tsx both pass this as `redirectTo`/`emailRedirectTo`).
+// No chrome — intentionally NOT under the `_public` layout — this route exists to redirect
+// immediately; a flash of the full site header/footer first would be pure noise.
 //
-// This must also be added to the Supabase project's Auth → URL Configuration → Redirect URLs
-// allow-list (Dashboard, production project) as `<site origin>/auth/callback`, or the provider
-// redirect itself will be rejected before ever reaching this route.
+// This exact URL (`<site origin>/auth/callback`) must also be on the Supabase project's Auth →
+// URL Configuration → Redirect URLs allow-list (Dashboard, production project), or the provider /
+// magic-link redirect is rejected before it ever reaches this route.
 const searchSchema = z.object({
   code: z.string().optional(),
   next: z.string().optional(),
+  // Present only on the OAuth signup path (signup.tsx appends it to redirectTo). Magic links
+  // carry the same hint in user_metadata instead, read server-side in completePasswordlessSignIn.
+  intent: signupIntentSchema.optional(),
   error: z.string().optional(),
   error_description: z.string().optional(),
 });
@@ -32,12 +35,19 @@ export const Route = createFileRoute("/auth/callback")({
       throw redirect({ to: "/signin", search: { oauthError: "Sign-in was cancelled." } });
     }
 
-    const result = await exchangeOAuthCode({ data: { code: search.code } });
+    const result = await completePasswordlessSignIn({
+      data: { code: search.code, intent: search.intent },
+    });
     if (result.error) {
       throw redirect({ to: "/signin", search: { oauthError: result.error } });
     }
 
-    throw redirect({ to: search.next && search.next.startsWith("/") ? search.next : "/dashboard/buyer" });
+    throw redirect({
+      to:
+        search.next && search.next.startsWith("/")
+          ? search.next
+          : (result.redirectTo ?? "/dashboard/buyer"),
+    });
   },
   component: () => (
     <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
