@@ -192,9 +192,12 @@ function BreederProfile() {
       <div style={getAccentCssVars(b.accentColor)}>
         {/* A plain color band, not the kennel's cover photo — a wide crop of a close-up pet photo
             reads badly as a banner (see the redesign note this replaced). Uses the kennel's own
-            brand color when set, the same site-wide primary/accent gradient otherwise. */}
+            brand color when set, the same site-wide primary/accent gradient otherwise. No fade
+            scrim on top — that was there to keep text legible over a *photo*; text now lives
+            entirely in the opaque card below, so a scrim here was just a veil with nothing under
+            it to fade, washing out the card wherever the two overlap via -mt-20. */}
         <div
-          className={`relative h-40 md:h-52 ${
+          className={`h-40 md:h-52 ${
             b.accentColor ? "" : "bg-gradient-to-br from-primary/25 via-accent/15 to-secondary"
           }`}
           style={
@@ -204,9 +207,7 @@ function BreederProfile() {
                 }
               : undefined
           }
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-transparent" />
-        </div>
+        />
 
         <div className="container-page -mt-20 pb-16">
           <IdentityCard
