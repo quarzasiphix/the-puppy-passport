@@ -88,8 +88,35 @@ travel together, and the dog page renders per-edge level, not one blanket claim.
 
 ## Multi-registry federation — WDF and beyond (direction, not yet built)
 
-The user is pursuing a mutual data-access arrangement with a second kennel club ("WDF"). The
-schema already supports N registries: each is an `organisations` row with `org_type =
+The user is pursuing a mutual data-access arrangement with a second kennel club ("WDF") — a
+potential collaboration, not yet agreed. Identified 2026-09-11 via web search (WDF's own site was
+unreachable to fetch directly — connection reset on every attempt — so the facts below come from
+search-result snippets, not a full page read; verify directly with WDF before relying on any of
+this for a real agreement):
+
+- **World Dog Federation (WDF)** — "International Federation for the Genetic Protection of Canine
+  Breeds." Founded **2017**, president **Ciro Boiano**, registered with the Italian Ministry
+  (statutes on file), address given as *Via Difesa 1/A, Roccarainola NA 80030, Italy*. Recognised/
+  registered as an association in 2021. Site: `wdf-international.org`.
+- **Structurally separate from FCI** — WDF is its own international umbrella body, not a branch or
+  project of the Fédération Cynologique Internationale. Italy's FCI-affiliated national club is
+  **ENCI** (Ente Nazionale della Cinofilia Italiana, est. 1882) — a *different* organisation from
+  WDF's own Italian member, **ICBD (Club Italiano Cani di Razza)**. A WDF pedigree is therefore
+  **not** an FCI-recognised document; when this becomes a real `kinological_organisations` seed
+  row (`docs/KINOLOGICAL_ORGANISATION_REGISTRY.md`), it must sit outside the FCI relationship
+  tree, not under it — factual labelling only, per that doc's "never judgemental" trust posture.
+  WDF membership is one national member/contractual partner per country; each issues its own
+  pedigrees and trains its own judges, mutually recognised across WDF members.
+- **Poland**: a search hit references *"Narodowy Związek Kynologiczny Polski — Project of WDF"* as
+  a WDF-affiliated Polish body, distinct from ZKwP (Poland's FCI-affiliated national club since
+  1938). **Unconfirmed**: whether this is the same organisation POK (`/p/pok`) serves — worth
+  asking the user directly rather than assuming, since it would materially change how a POK↔WDF
+  connector should be scoped (one registry vs. two).
+- No sign of an existing digital pedigree database, API, or tech platform on WDF's side in what
+  the search surfaced — the "access each other's databases" idea is very likely starting from
+  scratch on their end too, not integrating with something already built.
+
+The schema already supports N registries: each is an `organisations` row with `org_type =
 'kennel_club'`, each contributes its own `pedigree_sources` rows, and a single edge can carry
 sources from **both** POK and WDF (that's the M:N `pedigree_relationship_sources` — corroboration
 across registries is a *strength* signal, not a conflict). `recompute_..._verification()` would
