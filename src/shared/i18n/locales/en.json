@@ -379,6 +379,22 @@
     "desc": "Waiting-list applications close before mating. Breeders confirm homes carefully, so early applications have the best chance.",
     "none": "No planned litters right now — check back soon."
   },
+  "litterDetail": {
+    "backToResults": "Back",
+    "missingInfo": "This litter's listing is missing required information.",
+    "born": "Born",
+    "expectedBirth": "Expected birth",
+    "readyDate": "Ready for collection",
+    "statusReady": "Ready for homes",
+    "notSetYet": "Not set yet",
+    "puppiesTitle": "Puppies in this litter",
+    "noPuppiesYet": "No puppies have been published for this litter yet.",
+    "parentsTitle": "Parents",
+    "notOnFile": "Not on file",
+    "breederTitle": "Breeder",
+    "viewKennelProfile": "View kennel profile",
+    "registration": "Registration"
+  },
   "adoptionsPage": {
     "title": "Dogs for adoption",
     "headingLabel": "Dogs looking for a new home",

@@ -285,7 +285,9 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
         )}
         <div className="mt-auto flex gap-2 pt-2">
           <Button asChild variant="outline" className="flex-1">
-            <Link to="/planned-litters">{t("cards.viewLitter")}</Link>
+            <Link to="/litters/$id" params={{ id: l.id }}>
+              {t("cards.viewLitter")}
+            </Link>
           </Button>
           {planned && (
             <Button className="flex-1" disabled title={t("cards.joinWaitingListTooltip")}>

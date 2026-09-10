@@ -223,7 +223,7 @@ type LitterRow = {
   breeds: { name: string } | null;
   mother: { registered_name: string; profile_image_url: string | null } | null;
   father: { registered_name: string } | null;
-  organisations: { id: string; name: string } | null;
+  organisations: { id: string; slug: string; name: string } | null;
 };
 
 function toLitterStatus(status: string): Litter["status"] {
@@ -252,6 +252,7 @@ function buildLitter(l: LitterRow, available: number, reserved: number): Litter 
     mother: l.mother?.registered_name ?? "Not on file",
     father: l.father?.registered_name ?? "Not on file",
     breederId: l.organisations?.id ?? "",
+    breederSlug: l.organisations?.slug ?? "",
     breederName: l.organisations?.name ?? "",
     kennel: l.organisations?.name ?? "",
     puppyCount: l.puppy_count ?? 0,
@@ -310,7 +311,7 @@ async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
 }
 
 const litterSelect =
-  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, name)";
+  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, slug, name)";
 
 export async function listPublishedLitters(status?: LitterStatus) {
   const supabase = getSupabaseBrowserClient();
@@ -503,6 +504,19 @@ export async function listAlumniForKennel(kennelId: string) {
     .eq("is_published", true)
     .in("availability_status", ["sold", "adopted"])
     .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
+}
+
+// Every puppy from one litter, any status (available/reserved/sold) — the litter detail page
+// (/litters/$id) shows the whole litter as a unit, not just what's currently for sale.
+export async function listPuppiesForLitter(litterId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("animals")
+    .select(animalSelect)
+    .eq("litter_id", litterId)
+    .eq("is_published", true);
   if (error) throw error;
   return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
 }

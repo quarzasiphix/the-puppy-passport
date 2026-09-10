@@ -379,6 +379,22 @@
     "desc": "Zgłoszenia na listę oczekujących zamykają się przed kryciem. Hodowcy starannie potwierdzają domy, więc wczesne zgłoszenia mają największe szanse.",
     "none": "Brak planowanych miotów w tej chwili — sprawdź ponownie wkrótce."
   },
+  "litterDetail": {
+    "backToResults": "Wstecz",
+    "missingInfo": "W ogłoszeniu tego miotu brakuje wymaganych informacji.",
+    "born": "Urodzony",
+    "expectedBirth": "Spodziewany termin",
+    "readyDate": "Gotowe do odbioru",
+    "statusReady": "Gotowe do nowych domów",
+    "notSetYet": "Jeszcze nieustalone",
+    "puppiesTitle": "Szczenięta z tego miotu",
+    "noPuppiesYet": "Żadne szczenię z tego miotu nie zostało jeszcze opublikowane.",
+    "parentsTitle": "Rodzice",
+    "notOnFile": "Brak danych",
+    "breederTitle": "Hodowca",
+    "viewKennelProfile": "Zobacz profil hodowli",
+    "registration": "Rejestracja"
+  },
   "adoptionsPage": {
     "title": "Psy do adopcji",
     "headingLabel": "Psy szukające nowego domu",

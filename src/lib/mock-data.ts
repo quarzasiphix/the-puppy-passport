@@ -46,6 +46,7 @@ export type Litter = {
   mother: string;
   father: string;
   breederId: string;
+  breederSlug: string;
   breederName: string;
   kennel: string;
   puppyCount: number;
@@ -333,6 +334,7 @@ export const litters: Litter[] = [
     mother: "Cichy Las Amber",
     father: "Sunfield Orion",
     breederId: "b1",
+    breederSlug: "b1",
     breederName: "Anna Kowalska",
     kennel: "Cichy Las Kennel",
     puppyCount: 8,
@@ -352,6 +354,7 @@ export const litters: Litter[] = [
     mother: "Wolna Dolina Iskra",
     father: "Northwind Storm",
     breederId: "b2",
+    breederSlug: "b2",
     breederName: "Tomasz Nowak",
     kennel: "Wolna Dolina",
     puppyCount: 6,
@@ -371,6 +374,7 @@ export const litters: Litter[] = [
     mother: "Srebrna Rzeka Halia",
     father: "Alpen Bard",
     breederId: "b3",
+    breederSlug: "b3",
     breederName: "Katarzyna Wiśniewska",
     kennel: "Srebrna Rzeka",
     puppyCount: 7,
@@ -390,6 +394,7 @@ export const litters: Litter[] = [
     mother: "Dolne Pola Vela",
     father: "Erlenhof Kado",
     breederId: "b4",
+    breederSlug: "b4",
     breederName: "Marek Zieliński",
     kennel: "Dolne Pola",
     puppyCount: 9,
@@ -412,6 +417,7 @@ export const plannedLitters: Litter[] = [
     mother: "Cichy Las Nutmeg",
     father: "Copperfield Vega",
     breederId: "b1",
+    breederSlug: "b1",
     breederName: "Anna Kowalska",
     kennel: "Cichy Las Kennel",
     puppyCount: 7,
@@ -431,6 +437,7 @@ export const plannedLitters: Litter[] = [
     mother: "Wolna Dolina Sara",
     father: "Highfield Rune",
     breederId: "b2",
+    breederSlug: "b2",
     breederName: "Tomasz Nowak",
     kennel: "Wolna Dolina",
     puppyCount: 6,
@@ -450,6 +457,7 @@ export const plannedLitters: Litter[] = [
     mother: "Srebrna Rzeka Duna",
     father: "Alpen Rex",
     breederId: "b3",
+    breederSlug: "b3",
     breederName: "Katarzyna Wiśniewska",
     kennel: "Srebrna Rzeka",
     puppyCount: 7,
