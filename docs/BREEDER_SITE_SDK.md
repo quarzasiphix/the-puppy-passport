@@ -286,7 +286,7 @@ integration until the SDK exists, then rebased onto it.
 | **S3** | `anemalo-site-template` with 3 themes + one-command deploy. | step 4–5 |
 | **S4** | `admin_create_kennel()` RPC + admin onboarding screen; breeder `team.tsx`; the `owns_org()`→`is_org_member()` widenings. | step 1–3 (from `BREEDER_PANEL_GAP_ANALYSIS.md`) |
 | **S5** | `resolve_org_by_hostname()` RPC + gateway `/v1/resolve-domain` real + CORS allowlist from `organisation_domains`. | step 6, host-based multitenant deploys |
-| **S6** | ~~`upload-media` Edge Function~~ **done** — deployed as `media` on the Anemalo project (`supabase/functions/media/`, action-dispatched upload+delete, `verify_jwt`, 503 until R2 secrets set). **Remaining:** set the 4 R2 secrets; add `uploadOrgMedia()`/`removeOrgMedia()` to `src/lib/storage/media.ts`; wire breeder-panel gallery/logo/cover/dog/puppy photo pickers to it. | breeders adding *new* media |
+| **S6** | ~~`upload-media` Edge Function~~ **done** — `media` domain of the **`anemalo-workspace`** function (`media.upload` / `media.delete`, `verify_jwt` + `requireAuth`/`requireOrgMember`, audit_logs event, 503 until R2 secrets set). See `docs/EDGE_FUNCTION_ARCHITECTURE.md`. **Remaining:** set the 4 R2 secrets; add `uploadOrgMedia()`/`removeOrgMedia()` to `src/lib/storage/media.ts` (invoke `anemalo-workspace`); wire breeder-panel gallery/logo/cover/dog/puppy photo pickers. | breeders adding *new* media |
 | **S7** | `organisation_enquiries` + `submit_org_enquiry()` + gateway `/v1/enquiry` real. | drop the legacy Supabase enquiry hop |
 
 "Import GRYFIN's media into the GRYFIN profile properly" = **nothing to import**. Her rows already

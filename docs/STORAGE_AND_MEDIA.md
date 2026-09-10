@@ -103,9 +103,10 @@ object. — Reversed because the copy is trivial at this scale and the shared-bu
 
 - `anemalo-media` bucket + `media.anemalo.com` custom domain: **done** (2026-09-11, quarza CF
   account; verified `media.anemalo.com` now serves R2's own 404, not the gateway).
-- `media` Edge Function (public breeder-media write path): **deployed** to the Anemalo project
-  (`supabase/functions/media/`) — returns 503 until the `R2_*` secrets are set. Not yet wired to
-  `src/lib/storage/media.ts` or the breeder panel.
+- Breeder-media write path: **deployed** as the `media` domain of the **`anemalo-workspace`**
+  edge function (`media.upload` / `media.delete`; see `docs/EDGE_FUNCTION_ARCHITECTURE.md`) —
+  returns 503 until the `R2_*` secrets are set. Not yet wired to `src/lib/storage/media.ts` or the
+  breeder panel.
 - `src/lib/storage/media.ts` still points every function at Supabase Storage.
 - No decision on which buckets move first, or whether all of them eventually do (the public
   `kennel-media` / `post-media` are the obvious first candidates — they have no real upload flow
