@@ -47,6 +47,18 @@ and `--name anemalo` in its example deploy commands — these have never been re
 what's actually bound to the domain. Confirm the real worker name/custom-domain binding in the
 Cloudflare dashboard before trusting either doc's deploy command verbatim.
 
+**Hard rule for any manual `insert into auth.users`** (e.g. importing a breeder's pre-existing
+account, as in `docs/GRYFIN_IMPORT.md`): always explicitly set
+`confirmation_token = ''`, `recovery_token = ''`, `email_change_token_new = ''` on the insert.
+Those three columns default to **NULL** (confirmed via `information_schema.columns`, 2026-09-11),
+and a NULL there breaks GoTrue for *any* `/otp` (magic-link/signup) request that has to scan that
+row — `error finding user: sql: Scan error on column index 3, name "confirmation_token":
+converting NULL to string is unsupported`, a 500 for every user, not just the broken one, until
+the row is fixed or removed. Diagnosed 2026-09-11 from a real production incident (resolved by
+deleting the affected row — the account that triggered it). The other token columns
+(`phone_change_token`, `email_change_token_current`, `reauthentication_token`) already default to
+`''` and don't need special handling, but setting all of them explicitly is cheap insurance.
+
 ## Repo orientation
 
 - **Framework**: TanStack Start (React 19, SSR, file-based router via `@tanstack/react-router`),
