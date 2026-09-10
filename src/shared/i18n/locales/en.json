@@ -656,8 +656,6 @@
     "forgotPassword": "Forgot password?",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "demoPrefix": "Local demo accounts use the password",
-    "demoSuffix": "— see docs/LOCAL_SETUP.md.",
     "newHere": "New here?",
     "createAccount": "Create an account"
   },
@@ -1531,6 +1529,34 @@
     "wizard": {
       "stepPrefix": "Step",
       "ofLabel": "of"
+    },
+    "onboarding": {
+      "skip": "Skip",
+      "next": "Next",
+      "done": "Got it, let's go",
+      "welcomeTitle": "Welcome to your kennel panel",
+      "welcomeBody": "A quick look at where everything lives before you dive in — takes 30 seconds.",
+      "profileTitle": "Your public profile",
+      "profileBody": "Set your kennel's logo and brand color in Settings — anemalo.com/@yourhandle is the page buyers see, and your color follows your puppies wherever they're listed.",
+      "dogsLittersTitle": "Dogs, litters, puppies",
+      "dogsLittersBody": "Add your breeding dogs first, then a litter (pick the parents), then puppies — each puppy stays linked to its litter and both parents automatically.",
+      "pedigreesTitle": "Pedigrees & applications",
+      "pedigreesBody": "Link a dog's ancestry under Pedigrees so buyers can see it on the listing. Buyer applications and reservations show up under Sales as they come in."
+    },
+    "checklist": {
+      "title": "Getting started",
+      "subtitle": "A few things to set up — check them off as you go.",
+      "profile": "Set up your public profile",
+      "profileDesc": "Add a logo and pick your brand color",
+      "parentDog": "Add your first parent dog",
+      "parentDogDesc": "Your breeding dogs live under Parent dogs",
+      "litter": "Create your first litter",
+      "litterDesc": "Pick the mother and father from your parent dogs",
+      "puppy": "Publish your first puppy",
+      "puppyDesc": "Add a puppy to a litter, then publish it",
+      "pedigree": "Link a pedigree",
+      "pedigreeDesc": "Show a dog's ancestry on its listing",
+      "dismiss": "Hide this"
     },
     "brandColor": {
       "ocean": "Ocean Blue",

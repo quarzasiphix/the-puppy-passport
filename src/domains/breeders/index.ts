@@ -14,3 +14,4 @@ export * from "./services/kennel-site";
 export * from "./services/breeder-stats";
 export * from "./services/brand-color";
 export * from "./components/panel-ui";
+export * from "./components/welcome-modal";

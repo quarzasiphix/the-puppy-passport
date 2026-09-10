@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { requireRole } from "@/domains/identity";
-import { getMyKennelProfile, getKennelSiteConfiguration } from "@/domains/breeders";
+import { getMyKennelProfile, getKennelSiteConfiguration, WelcomeModal } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { breederNav } from "@/app/config/navigation";
 import { NotificationBell } from "@/domains/messaging";
@@ -53,6 +53,12 @@ function BreederDashboardLayout() {
       }
     >
       <Outlet />
+      {kennelQuery.isSuccess && kennelQuery.data && (
+        <WelcomeModal
+          kennelId={kennelQuery.data.id}
+          open={kennelQuery.data.onboarding_completed_at == null}
+        />
+      )}
     </DashboardShell>
   );
 }

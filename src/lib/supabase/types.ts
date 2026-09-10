@@ -2648,6 +2648,7 @@ export type Database = {
           logo_url: string | null
           membership_number: string | null
           name: string
+          onboarding_completed_at: string | null
           org_type: Database["public"]["Enums"]["org_type"]
           owner_user_id: string
           plan: string
@@ -2675,6 +2676,7 @@ export type Database = {
           logo_url?: string | null
           membership_number?: string | null
           name: string
+          onboarding_completed_at?: string | null
           org_type: Database["public"]["Enums"]["org_type"]
           owner_user_id: string
           plan?: string
@@ -2702,6 +2704,7 @@ export type Database = {
           logo_url?: string | null
           membership_number?: string | null
           name?: string
+          onboarding_completed_at?: string | null
           org_type?: Database["public"]["Enums"]["org_type"]
           owner_user_id?: string
           plan?: string

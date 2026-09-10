@@ -656,8 +656,6 @@
     "forgotPassword": "Nie pamiętasz hasła?",
     "submit": "Zaloguj się",
     "submitting": "Logowanie…",
-    "demoPrefix": "Lokalne konta demonstracyjne używają hasła",
-    "demoSuffix": "— zobacz docs/LOCAL_SETUP.md.",
     "newHere": "Jesteś tu pierwszy raz?",
     "createAccount": "Załóż konto"
   },
@@ -1531,6 +1529,34 @@
     "wizard": {
       "stepPrefix": "Krok",
       "ofLabel": "z"
+    },
+    "onboarding": {
+      "skip": "Pomiń",
+      "next": "Dalej",
+      "done": "Rozumiem, zaczynajmy",
+      "welcomeTitle": "Witaj w panelu swojej hodowli",
+      "welcomeBody": "Krótkie wprowadzenie, zanim zaczniesz — zajmie 30 sekund.",
+      "profileTitle": "Twój profil publiczny",
+      "profileBody": "Ustaw logo i kolor marki swojej hodowli w Ustawieniach — anemalo.com/@twójhandle to strona, którą widzą kupujący, a Twój kolor towarzyszy Twoim szczeniakom wszędzie, gdzie są wystawione.",
+      "dogsLittersTitle": "Psy, mioty, szczenięta",
+      "dogsLittersBody": "Najpierw dodaj swoje psy hodowlane, potem miot (wybierz rodziców), a na końcu szczenięta — każde szczenię pozostaje automatycznie powiązane ze swoim miotem i obojgiem rodziców.",
+      "pedigreesTitle": "Rodowody i zgłoszenia",
+      "pedigreesBody": "Powiąż pochodzenie psa w zakładce Rodowody, aby kupujący mogli je zobaczyć w ogłoszeniu. Zgłoszenia kupujących i rezerwacje pojawiają się w zakładce Sprzedaż w miarę ich napływania."
+    },
+    "checklist": {
+      "title": "Pierwsze kroki",
+      "subtitle": "Kilka rzeczy do ustawienia — odhaczaj je w miarę postępu.",
+      "profile": "Ustaw swój profil publiczny",
+      "profileDesc": "Dodaj logo i wybierz kolor marki",
+      "parentDog": "Dodaj pierwszego psa hodowlanego",
+      "parentDogDesc": "Twoje psy hodowlane znajdziesz w zakładce Psy hodowlane",
+      "litter": "Utwórz pierwszy miot",
+      "litterDesc": "Wybierz matkę i ojca spośród swoich psów hodowlanych",
+      "puppy": "Opublikuj pierwsze szczenię",
+      "puppyDesc": "Dodaj szczenię do miotu, a następnie je opublikuj",
+      "pedigree": "Powiąż rodowód",
+      "pedigreeDesc": "Pokaż pochodzenie psa w jego ogłoszeniu",
+      "dismiss": "Ukryj to"
     },
     "brandColor": {
       "ocean": "Błękit oceanu",

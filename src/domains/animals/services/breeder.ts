@@ -25,13 +25,25 @@ export async function getMyKennelProfile(userId: string) {
   const { data, error } = await supabase
     .from("organisations")
     .select(
-      "id, name, slug, description, cover_image_url, logo_url, city, country, association_name, membership_number, years_experience, response_time, transport_available, international_transport_available, verification_status, is_public",
+      "id, name, slug, description, cover_image_url, logo_url, city, country, association_name, membership_number, years_experience, response_time, transport_available, international_transport_available, verification_status, is_public, onboarding_completed_at",
     )
     .eq("owner_user_id", userId)
     .eq("org_type", "kennel")
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+/** Marks the first-visit breeder-panel welcome modal as dismissed — see
+ * supabase/migrations/20260911000200_organisation_onboarding.sql. Never shown again for this
+ * kennel once set. */
+export async function markOnboardingComplete(kennelId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("organisations")
+    .update({ onboarding_completed_at: new Date().toISOString() })
+    .eq("id", kennelId);
+  if (error) throw error;
 }
 
 export async function updateKennel(

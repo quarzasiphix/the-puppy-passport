@@ -132,12 +132,17 @@ export function SiteHeader() {
               </div>
             </>
           ) : (
-            <Link
-              to="/signin"
-              className="hidden rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
-            >
-              {t("nav.signIn")}
-            </Link>
+            <>
+              <Link
+                to="/signin"
+                className="hidden rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
+              >
+                {t("nav.signIn")}
+              </Link>
+              <Button asChild variant="outline" size="sm" className="hidden lg:inline-flex">
+                <Link to="/signup">{t("signIn.createAccount")}</Link>
+              </Button>
+            </>
           )}
           <LanguageSwitcher />
           <Button asChild className="hidden md:inline-flex">
@@ -208,6 +213,11 @@ export function SiteHeader() {
             ) : (
               <div className="flex flex-col gap-2">
                 <Button asChild>
+                  <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                    {t("signIn.createAccount")}
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
                   <Link to="/find-a-dog" onClick={() => setMobileOpen(false)}>
                     <Search className="mr-1 size-4" /> {t("nav.findADog")}
                   </Link>

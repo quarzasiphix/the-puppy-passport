@@ -288,16 +288,12 @@ function SignIn() {
               {showPassword ? t("magicLink.useMagicLink") : t("magicLink.usePassword")}
             </button>
 
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              {t("signIn.demoPrefix")} <code>password123</code> {t("signIn.demoSuffix")}
-            </p>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              {t("signIn.newHere")}{" "}
-              <Link to="/signup" className="text-primary hover:underline">
-                {t("signIn.createAccount")}
-              </Link>
-            </p>
+            <div className="mt-6 border-t border-border/60 pt-5 text-center">
+              <p className="text-sm text-muted-foreground">{t("signIn.newHere")}</p>
+              <Button asChild variant="outline" size="lg" className="mt-3 w-full">
+                <Link to="/signup">{t("signIn.createAccount")}</Link>
+              </Button>
+            </div>
           </>
         )}
       </div>
