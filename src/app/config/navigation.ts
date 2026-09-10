@@ -53,21 +53,56 @@ export const buyerNav: DashboardNavItem[] = [
   { to: "/dashboard/buyer/profile", label: "Account", icon: User },
 ];
 
+// Grouped into named sections (breeder-panel redesign, 2026-09-10) — the old flat 14-item list
+// gave every destination equal weight, which is exactly what made it hard to scan. Grouped to
+// mirror how a kennel owner actually thinks about their work: dogs & litters first, then sales,
+// then the public-facing kennel identity, then account admin. Modeled on the section split in the
+// Gryfin York kennel's own panel (/p/grif/c/src/routes/panel.tsx — 5 primary + a "more" group).
 export const breederNav: DashboardNavItem[] = [
   { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/breeder/profile", label: "Public profile", icon: User },
-  { to: "/dashboard/breeder/parent-dogs", label: "Parent dogs", icon: Dog },
-  { to: "/dashboard/breeder/pedigrees", label: "Pedigrees", icon: Network },
-  { to: "/dashboard/breeder/litters", label: "Litters", icon: Baby },
-  { to: "/dashboard/breeder/puppies", label: "Puppies", icon: PawPrint },
-  { to: "/dashboard/breeder/applications", label: "Buyer applications", icon: Inbox },
-  { to: "/dashboard/breeder/reservations", label: "Reservations", icon: CalendarCheck },
-  { to: "/dashboard/breeder/transport", label: "Transport", icon: Truck },
-  { to: "/dashboard/breeder/achievements", label: "Achievements", icon: Award },
-  { to: "/dashboard/breeder/champions", label: "Champion dogs", icon: Crown },
-  { to: "/dashboard/breeder/documents", label: "Documents", icon: FileText },
-  { to: "/dashboard/breeder/messages", label: "Messages", icon: MessageSquare },
-  { to: "/dashboard/breeder/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard/breeder/litters", label: "Litters", icon: Baby, section: "Dogs & litters" },
+  { to: "/dashboard/breeder/puppies", label: "Puppies", icon: PawPrint, section: "Dogs & litters" },
+  {
+    to: "/dashboard/breeder/parent-dogs",
+    label: "Parent dogs",
+    icon: Dog,
+    section: "Dogs & litters",
+  },
+  {
+    to: "/dashboard/breeder/pedigrees",
+    label: "Pedigrees",
+    icon: Network,
+    section: "Dogs & litters",
+  },
+  {
+    to: "/dashboard/breeder/applications",
+    label: "Buyer applications",
+    icon: Inbox,
+    section: "Sales",
+  },
+  {
+    to: "/dashboard/breeder/reservations",
+    label: "Reservations",
+    icon: CalendarCheck,
+    section: "Sales",
+  },
+  { to: "/dashboard/breeder/transport", label: "Transport", icon: Truck, section: "Sales" },
+  {
+    to: "/dashboard/breeder/profile",
+    label: "Public profile",
+    icon: User,
+    section: "My kennel",
+  },
+  {
+    to: "/dashboard/breeder/achievements",
+    label: "Achievements",
+    icon: Award,
+    section: "My kennel",
+  },
+  { to: "/dashboard/breeder/champions", label: "Champion dogs", icon: Crown, section: "My kennel" },
+  { to: "/dashboard/breeder/documents", label: "Documents", icon: FileText, section: "Account" },
+  { to: "/dashboard/breeder/messages", label: "Messages", icon: MessageSquare, section: "Account" },
+  { to: "/dashboard/breeder/settings", label: "Settings", icon: Settings, section: "Account" },
 ];
 
 export const foundationNav: DashboardNavItem[] = [

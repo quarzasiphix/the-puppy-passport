@@ -12,7 +12,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet"
 import { Logo } from "@/app/components/logo";
 import { useAuth } from "@/domains/identity";
 
-export type DashboardNavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
+export type DashboardNavItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  /** Optional section header rendered above this item whenever it differs from the previous
+   * item's section (see breederNav in navigation.ts for the first real use). Omit entirely for a
+   * flat, ungrouped list — every other dashboard's nav still renders exactly as before. */
+  section?: string;
+};
 
 // Every role that has a dashboard, in switcher order. Kept in one place so a new workspace only
 // needs an entry here (not one in every layout file) to show up in the switcher.
@@ -85,21 +94,30 @@ export function DashboardShell({
 
   const navLinks = (
     <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-      {navItems.map((it) => {
+      {navItems.map((it, i) => {
         const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
+        const showSectionHeader = it.section && it.section !== navItems[i - 1]?.section;
         return (
-          <Link
-            key={it.to}
-            to={it.to}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
-            }`}
-          >
-            <it.icon className="size-4" />
-            {it.label}
-          </Link>
+          <div key={it.to}>
+            {showSectionHeader && (
+              <div
+                className={`px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 ${i === 0 ? "pb-1.5" : "pb-1.5 pt-4"}`}
+              >
+                {it.section}
+              </div>
+            )}
+            <Link
+              to={it.to}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] ${
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
+              }`}
+            >
+              <it.icon className="size-4" />
+              {it.label}
+            </Link>
+          </div>
         );
       })}
     </nav>

@@ -1,18 +1,43 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
-import { getMyKennel, listKennelLitters } from "@/domains/breeders";
+import {
+  getMyKennel,
+  listKennelLitters,
+  ParentAvatarPair,
+  type LitterRow,
+} from "@/domains/breeders";
 import { LitterFormDialog } from "@/domains/animals";
 
 export const Route = createFileRoute("/dashboard/breeder/litters/")({
   component: LittersPage,
 });
 
+type LitterStatus = LitterRow["status"];
+
+const TABS: {
+  key: "active" | "planned" | "completed";
+  label: string;
+  match: (s: LitterStatus) => boolean;
+}[] = [
+  {
+    key: "active",
+    label: "Active",
+    match: (s) => s === "born" || s === "applications_open" || s === "fully_reserved",
+  },
+  { key: "planned", label: "Planned", match: (s) => s === "planned" },
+  { key: "completed", label: "Completed", match: (s) => s === "completed" || s === "cancelled" },
+];
+
 function LittersPage() {
   const { userId } = useAuth();
+  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("active");
+  const active = TABS.find((t) => t.key === tab)!;
+
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
     enabled: !!userId,
@@ -24,102 +49,121 @@ function LittersPage() {
     queryFn: () => listKennelLitters(kennel!.id),
   });
 
+  const filtered = (litters ?? []).filter((l) => active.match(l.status));
+
   return (
-    <div>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-medium">Litters</h1>
-          <p className="text-sm text-muted-foreground">Manage current and planned litters.</p>
-        </div>
-        {kennel?.id && (
-          <div className="flex gap-2">
-            <LitterFormDialog
-              kennelId={kennel.id}
-              defaultStatus="planned"
-              trigger={<Button variant="outline">Add planned litter</Button>}
-            />
-            <LitterFormDialog
-              kennelId={kennel.id}
-              defaultStatus="born"
-              trigger={
-                <Button>
-                  <Plus className="mr-1 size-4" /> Add litter
-                </Button>
-              }
-            />
-          </div>
-        )}
+    <div className="space-y-5">
+      <header>
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">Litters</h1>
+        <p className="text-sm text-muted-foreground">Manage current and planned litters.</p>
       </header>
+
+      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-secondary p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`h-12 rounded-xl text-sm font-bold transition ${
+              tab === t.key ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {kennel?.id && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <LitterFormDialog
+            kennelId={kennel.id}
+            defaultStatus="planned"
+            trigger={
+              <Button
+                variant="outline"
+                className="h-14 w-full rounded-2xl border-2 text-base font-bold"
+              >
+                Add a planned litter
+              </Button>
+            }
+          />
+          <LitterFormDialog
+            kennelId={kennel.id}
+            defaultStatus="born"
+            trigger={
+              <Button className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm">
+                <Plus className="size-5" /> Add a litter
+              </Button>
+            }
+          />
+        </div>
+      )}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
-      ) : !litters?.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No litters yet. Add a planned litter to start tracking it, or add a litter once puppies
-            are born.
+      ) : !filtered.length ? (
+        <div className="rounded-3xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
+          <p className="text-base font-semibold">
+            {!litters?.length
+              ? "No litters yet. Add a planned litter to start tracking it."
+              : "No litters in this group yet."}
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="p-4">Litter</th>
-                  <th className="p-4">Breed</th>
-                  <th className="p-4">Parents</th>
-                  <th className="p-4">Born</th>
-                  <th className="p-4">Ready</th>
-                  <th className="p-4">Puppies</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {litters.map((l) => (
-                  <tr key={l.id} className="hover:bg-secondary/40">
-                    <td className="p-4 font-medium">{l.code}</td>
-                    <td className="p-4">{l.breeds?.name ?? "—"}</td>
-                    <td className="p-4 text-muted-foreground">
-                      {l.mother?.registered_name ?? "?"} × {l.father?.registered_name ?? "?"}
-                    </td>
-                    <td className="p-4">
-                      {l.birth_date ? new Date(l.birth_date).toLocaleDateString("en-GB") : "—"}
-                    </td>
-                    <td className="p-4">
-                      {l.ready_date ? new Date(l.ready_date).toLocaleDateString("en-GB") : "—"}
-                    </td>
-                    <td className="p-4">
-                      {l.totalPuppies}{" "}
-                      <span className="text-xs text-muted-foreground">
-                        ({l.availablePuppies} avail · {l.reservedPuppies} res)
+        <div className="space-y-4">
+          {filtered.map((l) => (
+            <Link
+              key={l.id}
+              to="/dashboard/breeder/litters/$id"
+              params={{ id: l.id }}
+              className="block overflow-hidden rounded-3xl bg-card shadow-sm transition hover:shadow-md"
+            >
+              <div className="flex gap-3 p-4">
+                <ParentAvatarPair mother={l.mother} father={l.father} />
+                <div className="min-w-0 flex-1 pl-1">
+                  <h3 className="truncate font-display text-lg font-bold leading-tight">
+                    {l.code}
+                  </h3>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {l.mother?.registered_name ?? "Mother not set"} ×{" "}
+                    {l.father?.registered_name ?? "Father not set"}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Badge variant="secondary" className="capitalize">
+                      {l.status.replace(/_/g, " ")}
+                    </Badge>
+                    {!l.is_published && <Badge variant="outline">Draft</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 border-t border-border/60 bg-secondary/40 px-4 py-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground">{l.birth_date ? "Born" : "Expected"}</p>
+                  <p className="font-bold">
+                    {(l.birth_date ?? l.expected_birth_date)
+                      ? new Date((l.birth_date ?? l.expected_birth_date)!).toLocaleDateString(
+                          "en-GB",
+                        )
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Puppies</p>
+                  <p className="font-bold">
+                    {l.totalPuppies || l.puppy_count || "—"}{" "}
+                    {l.totalPuppies > 0 && (
+                      <span className="font-normal text-muted-foreground">
+                        ({l.availablePuppies} avail)
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="secondary" className="capitalize">
-                        {l.status.replace(/_/g, " ")}
-                      </Badge>
-                      {!l.is_published && (
-                        <Badge variant="outline" className="ml-1">
-                          Draft
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <Link
-                        to="/dashboard/breeder/litters/$id"
-                        params={{ id: l.id }}
-                        className="text-primary hover:underline"
-                      >
-                        Open
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Breed</p>
+                  <p className="truncate font-bold">{l.breeds?.name ?? "—"}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>

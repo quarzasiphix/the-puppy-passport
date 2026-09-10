@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Dog, Plus } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
-import { getKennelLitter, getMyKennel, listLitterPuppies } from "@/domains/breeders";
+import {
+  getKennelLitter,
+  getMyKennel,
+  listLitterPuppies,
+  animalCoverPhotoUrl,
+} from "@/domains/breeders";
 import { LitterFormDialog } from "@/domains/animals";
 import { PuppyFormDialog } from "@/domains/animals";
-import { Card } from "@/shared/ui/panel";
 
 export const Route = createFileRoute("/dashboard/breeder/litters/$id")({
   component: LitterDetail,
@@ -39,126 +43,178 @@ function LitterDetail() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <Link
         to="/dashboard/breeder/litters"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="size-4" /> All litters
       </Link>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-medium">{litter.code}</h1>
-          <p className="text-sm text-muted-foreground">
-            {litter.breeds?.name ?? "Breed not set"}
-            {litter.birth_date &&
-              ` · Born ${new Date(litter.birth_date).toLocaleDateString("en-GB")}`}
-            {litter.ready_date &&
-              ` · Ready ${new Date(litter.ready_date).toLocaleDateString("en-GB")}`}
-          </p>
-          <div className="mt-2 flex gap-1.5">
-            <Badge variant="secondary" className="capitalize">
-              {litter.status.replace(/_/g, " ")}
-            </Badge>
-            {!litter.is_published && <Badge variant="outline">Draft — not visible publicly</Badge>}
+
+      <header className="rounded-3xl bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-bold sm:text-3xl">{litter.code}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {litter.breeds?.name ?? "Breed not set"}
+              {litter.birth_date &&
+                ` · Born ${new Date(litter.birth_date).toLocaleDateString("en-GB")}`}
+              {litter.ready_date &&
+                ` · Ready ${new Date(litter.ready_date).toLocaleDateString("en-GB")}`}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge variant="secondary" className="capitalize">
+                {litter.status.replace(/_/g, " ")}
+              </Badge>
+              {!litter.is_published && (
+                <Badge variant="outline">Draft — not visible publicly</Badge>
+              )}
+            </div>
           </div>
-        </div>
-        {kennel?.id && (
-          <div className="flex gap-2">
+          {kennel?.id && (
             <LitterFormDialog
               kennelId={kennel.id}
               litter={litter}
-              trigger={<Button variant="outline">Edit litter</Button>}
+              trigger={
+                <Button variant="outline" className="h-12 rounded-2xl border-2 text-base font-bold">
+                  Edit litter
+                </Button>
+              }
             />
-            <PuppyFormDialog
-              kennelId={kennel.id}
-              litterId={litter.id}
-              defaultBreedId={litter.breed_id ?? undefined}
-              defaultDateOfBirth={litter.birth_date ?? undefined}
-              trigger={<Button>Add puppy</Button>}
-            />
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border/60 pt-5 sm:grid-cols-4">
+          <ParentTile
+            label="Mother"
+            name={litter.mother?.registered_name}
+            photo={litter.mother?.profile_image_url}
+          />
+          <ParentTile
+            label="Father"
+            name={litter.father?.registered_name}
+            photo={litter.father?.profile_image_url}
+          />
+          <FactTile label="Registration" value={litter.registration_number || "Not set"} />
+          <FactTile label="Association" value={litter.association || "Not set"} />
+        </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <Card title="Puppies in this litter">
-          {!kPuppies?.length ? (
-            <p className="text-sm text-muted-foreground">
-              No puppies added yet. Use "Add puppy" once they're born, or now if you already know
-              how many there'll be.
+      <section>
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-xl font-bold">
+            Puppies in this litter
+            {!!kPuppies?.length && (
+              <span className="ml-2 text-base font-normal text-muted-foreground">
+                ({kPuppies.length})
+              </span>
+            )}
+          </h2>
+        </div>
+
+        {kennel?.id && (
+          <PuppyFormDialog
+            kennelId={kennel.id}
+            litterId={litter.id}
+            defaultBreedId={litter.breed_id ?? undefined}
+            defaultDateOfBirth={litter.birth_date ?? undefined}
+            trigger={
+              <Button className="mb-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm">
+                <Plus className="size-5" /> Add a puppy to this litter
+              </Button>
+            }
+          />
+        )}
+
+        {!kPuppies?.length ? (
+          <div className="rounded-3xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
+            <p className="text-base font-semibold">
+              No puppies added yet. Add them once born, or now if you already know how many there'll
+              be.
             </p>
-          ) : (
-            <ul className="grid gap-3 md:grid-cols-2">
-              {kPuppies.map((p) => (
-                <li
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {kPuppies.map((p) => {
+              const photo = animalCoverPhotoUrl(p);
+              return (
+                <div
                   key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-3"
+                  className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm"
                 >
-                  <div className="flex-1">
-                    <div className="font-medium">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {p.sex ?? "sex not set"} · {p.color ?? "color not set"}
+                  {photo ? (
+                    <img src={photo} alt="" className="size-14 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <div className="grid size-14 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground">
+                      <Dog className="size-5" />
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant="secondary" className="capitalize">
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{p.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {p.sex ?? "sex not set"} · {p.color ?? "color not set"}
+                    </p>
+                    <Badge variant="secondary" className="mt-1 capitalize">
                       {p.availability_status.replace(/_/g, " ")}
                     </Badge>
-                    {kennel?.id && (
-                      <PuppyFormDialog
-                        kennelId={kennel.id}
-                        puppy={p}
-                        trigger={
-                          <button className="text-xs text-primary hover:underline">Edit</button>
-                        }
-                      />
-                    )}
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+                  {kennel?.id && (
+                    <PuppyFormDialog
+                      kennelId={kennel.id}
+                      puppy={p}
+                      trigger={
+                        <Button size="sm" variant="outline" className="shrink-0 rounded-xl">
+                          Edit
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-        <div className="space-y-4">
-          <Card title="Shared parent info">
-            <ul className="space-y-2 text-sm">
-              <li>
-                <strong>Mother:</strong> {litter.mother?.registered_name ?? "Not set"}
-                {litter.mother?.pedigree_number && (
-                  <span className="text-xs text-muted-foreground">
-                    {" "}
-                    ({litter.mother.pedigree_number})
-                  </span>
-                )}
-              </li>
-              <li>
-                <strong>Father:</strong> {litter.father?.registered_name ?? "Not set"}
-                {litter.father?.pedigree_number && (
-                  <span className="text-xs text-muted-foreground">
-                    {" "}
-                    ({litter.father.pedigree_number})
-                  </span>
-                )}
-              </li>
-              <li>
-                <strong>Registration:</strong> {litter.registration_number || "Not set"}
-              </li>
-              <li>
-                <strong>Association:</strong> {litter.association || "Not set"}
-              </li>
-              <li>
-                <strong>Expected litter size:</strong> {litter.puppy_count ?? "Not set"}
-              </li>
-            </ul>
-          </Card>
-          <p className="rounded-xl border border-dashed border-border/70 p-3 text-xs text-muted-foreground">
-            All puppies in this litter share the same parents and litter registration — you only
-            need to fill in what's specific to each puppy.
-          </p>
+      <p className="rounded-2xl border-2 border-dashed border-border bg-card/50 p-4 text-sm text-muted-foreground">
+        All puppies in this litter share the same parents and litter registration — you only need to
+        fill in what's specific to each puppy.
+      </p>
+    </div>
+  );
+}
+
+function ParentTile({
+  label,
+  name,
+  photo,
+}: {
+  label: string;
+  name: string | null | undefined;
+  photo?: string | null;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {photo ? (
+        <img src={photo} alt="" className="size-10 shrink-0 rounded-xl object-cover" />
+      ) : (
+        <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground">
+          <Dog className="size-4" />
         </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="truncate text-sm font-bold">{name || "Not set"}</p>
       </div>
+    </div>
+  );
+}
+
+function FactTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1.5 truncate text-sm font-bold">{value}</p>
     </div>
   );
 }

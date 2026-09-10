@@ -1,5 +1,8 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { uploadPublicFile, sanitizeFilenameForStoragePath } from "@/lib/storage/media";
 import type { Database } from "@/lib/supabase/types";
+
+const KENNEL_MEDIA_BUCKET = "kennel-media";
 
 export type LitterRow = Database["public"]["Tables"]["litters"]["Row"];
 export type AnimalRow = Database["public"]["Tables"]["animals"]["Row"];
@@ -82,12 +85,12 @@ export async function listKennelParentDogs(kennelId: string) {
 }
 
 const litterListSelect =
-  "id, code, breed_id, mother_id, father_id, birth_date, expected_birth_date, ready_date, puppy_count, status, is_published, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name), father:parent_dogs!litters_father_id_fkey(registered_name)";
+  "id, code, breed_id, mother_id, father_id, birth_date, expected_birth_date, ready_date, puppy_count, status, is_published, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name, profile_image_url)";
 
 type KennelLitterRow = LitterRow & {
   breeds: { name: string } | null;
-  mother: { registered_name: string } | null;
-  father: { registered_name: string } | null;
+  mother: { registered_name: string; profile_image_url: string | null } | null;
+  father: { registered_name: string; profile_image_url: string | null } | null;
 };
 
 export type KennelLitterSummary = KennelLitterRow & {
@@ -145,15 +148,23 @@ export async function getKennelLitter(id: string) {
   const { data, error } = await supabase
     .from("litters")
     .select(
-      "id, code, breed_id, mother_id, father_id, birth_date, expected_birth_date, ready_date, puppy_count, status, is_published, registration_number, association, description, kennel_id, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, pedigree_number), father:parent_dogs!litters_father_id_fkey(registered_name, pedigree_number)",
+      "id, code, breed_id, mother_id, father_id, birth_date, expected_birth_date, ready_date, puppy_count, status, is_published, registration_number, association, description, kennel_id, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, pedigree_number, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name, pedigree_number, profile_image_url)",
     )
     .eq("id", id)
     .single();
   if (error) throw error;
   return data as unknown as LitterRow & {
     breeds: { name: string } | null;
-    mother: { registered_name: string; pedigree_number: string | null } | null;
-    father: { registered_name: string; pedigree_number: string | null } | null;
+    mother: {
+      registered_name: string;
+      pedigree_number: string | null;
+      profile_image_url: string | null;
+    } | null;
+    father: {
+      registered_name: string;
+      pedigree_number: string | null;
+      profile_image_url: string | null;
+    } | null;
   };
 }
 
@@ -174,12 +185,23 @@ export async function updateLitter(
 }
 
 const kennelAnimalSelect =
-  "id, listing_category, litter_id, organization_id, name, breed_id, sex, color, date_of_birth, price, currency, description, availability_status, is_published, transport_available, breeds(name), litters(code)";
+  "id, listing_category, litter_id, organization_id, name, breed_id, sex, color, date_of_birth, price, currency, description, availability_status, is_published, transport_available, breeds(name), litters(code), animal_images(image_url, is_cover)";
 
 type KennelAnimalRow = AnimalRow & {
   breeds: { name: string } | null;
   litters: { code: string } | null;
+  animal_images: { image_url: string; is_cover: boolean }[];
 };
+
+/** The one photo a puppy card/editor shows — the row flagged `is_cover`, falling back to
+ * whichever image happens to be first (there's currently no multi-photo gallery UI, just one
+ * cover shot per puppy — see uploadAnimalCoverPhoto below). */
+export function animalCoverPhotoUrl(animal: {
+  animal_images: { image_url: string; is_cover: boolean }[];
+}): string | null {
+  const images = animal.animal_images ?? [];
+  return images.find((i) => i.is_cover)?.image_url ?? images[0]?.image_url ?? null;
+}
 
 export async function listKennelPuppies(kennelId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -217,6 +239,38 @@ export async function updatePuppy(
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("animals").update(payload).eq("id", id);
   if (error) throw error;
+}
+
+/** Uploads a puppy's cover photo to the (already public, already RLS-scoped-to-the-owning-kennel)
+ * `kennel-media` bucket and records it in `animal_images`. First real caller of
+ * `uploadPublicFile` for animal photos — previously every animal image was seeded as a plain URL,
+ * never actually uploaded through the app (see src/lib/storage/media.ts's own header comment).
+ * Single cover photo only, matching the "one big photo tile" scope of the puppy editor redesign —
+ * not a multi-image gallery manager. */
+export async function uploadAnimalCoverPhoto(
+  kennelId: string,
+  animalId: string,
+  file: File,
+): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const path = `${kennelId}/puppies/${animalId}/${Date.now()}-${sanitizeFilenameForStoragePath(file.name)}`;
+  const url = await uploadPublicFile(KENNEL_MEDIA_BUCKET, path, file);
+
+  // Only ever one cover image per animal in this simple flow — clear any previous one first so a
+  // re-upload replaces rather than accumulates rows.
+  const { error: deleteError } = await supabase
+    .from("animal_images")
+    .delete()
+    .eq("animal_id", animalId)
+    .eq("is_cover", true);
+  if (deleteError) throw deleteError;
+
+  const { error: insertError } = await supabase
+    .from("animal_images")
+    .insert({ animal_id: animalId, image_url: url, is_cover: true, display_order: 0 });
+  if (insertError) throw insertError;
+
+  return url;
 }
 
 export async function listBreeds() {

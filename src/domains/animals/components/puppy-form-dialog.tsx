@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ArrowLeft, ArrowRight, Camera, Check, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
@@ -12,9 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { createPuppy, listBreeds, updatePuppy, type AnimalRow } from "../services/breeder";
+import { BigField, PickerCard, ToggleButtonGroup, WizardProgress } from "@/domains/breeders";
+import {
+  createPuppy,
+  listBreeds,
+  updatePuppy,
+  uploadAnimalCoverPhoto,
+  animalCoverPhotoUrl,
+  type AnimalRow,
+} from "../services/breeder";
+import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 
 type FormValues = {
   name: string;
@@ -40,6 +48,8 @@ const emptyValues = (litterId: string, breedId: string, dateOfBirth: string): Fo
   description: "",
 });
 
+const STEPS = ["Basics", "Photo", "Details", "Price & description"] as const;
+
 export function PuppyFormDialog({
   kennelId,
   trigger,
@@ -55,22 +65,33 @@ export function PuppyFormDialog({
   litterOptions?: { id: string; code: string }[];
   defaultBreedId?: string;
   defaultDateOfBirth?: string;
-  puppy?: AnimalRow;
+  puppy?: AnimalRow & { animal_images?: { image_url: string; is_cover: boolean }[] };
 }) {
   const [open, setOpen] = useState(false);
-  const [addAnother, setAddAnother] = useState(false);
+  const [step, setStep] = useState(0);
   const queryClient = useQueryClient();
   const isEdit = !!puppy;
+  const showLitterPicker = !isEdit && !!litterOptions?.length;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const existingPhotoUrl = puppy
+    ? animalCoverPhotoUrl({ animal_images: puppy.animal_images ?? [] })
+    : null;
 
   const breedsQuery = useQuery({ queryKey: ["breeds"], queryFn: listBreeds, enabled: open });
-  const form = useForm<FormValues>({
-    defaultValues: emptyValues(litterId ?? "", defaultBreedId ?? "", defaultDateOfBirth ?? ""),
-  });
+  const [values, setValues] = useState<FormValues>(
+    emptyValues(litterId ?? "", defaultBreedId ?? "", defaultDateOfBirth ?? ""),
+  );
 
   useEffect(() => {
     if (!open) return;
+    setStep(0);
+    setPhotoFile(null);
+    setPhotoPreview(null);
     if (puppy) {
-      form.reset({
+      setValues({
         name: puppy.name,
         litterId: puppy.litter_id ?? "",
         breedId: puppy.breed_id ?? "",
@@ -82,13 +103,17 @@ export function PuppyFormDialog({
         description: puppy.description ?? "",
       });
     } else {
-      form.reset(emptyValues(litterId ?? "", defaultBreedId ?? "", defaultDateOfBirth ?? ""));
+      setValues(emptyValues(litterId ?? "", defaultBreedId ?? "", defaultDateOfBirth ?? ""));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, puppy?.id, litterId, defaultBreedId, defaultDateOfBirth]);
 
+  function set<K extends keyof FormValues>(key: K, v: FormValues[K]) {
+    setValues((prev) => ({ ...prev, [key]: v }));
+  }
+
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async () => {
       const payload = {
         organization_id: kennelId,
         listing_category: "breeder_puppy" as const,
@@ -102,8 +127,18 @@ export function PuppyFormDialog({
         currency: values.currency || "PLN",
         description: values.description || null,
       };
-      if (isEdit) return updatePuppy(puppy.id, payload);
-      return createPuppy(payload);
+      const animalId = isEdit ? puppy.id : (await createPuppy(payload)).id;
+      if (isEdit) await updatePuppy(puppy.id, payload);
+
+      if (photoFile) {
+        try {
+          await uploadAnimalCoverPhoto(kennelId, animalId, photoFile);
+        } catch (err) {
+          // The puppy record itself already saved successfully above — a photo-upload failure
+          // shouldn't look like the whole save failed, just flag it separately.
+          toast.error(getFriendlyErrorMessage(err, "Puppy saved, but the photo didn't upload."));
+        }
+      }
     },
     onSuccess: () => {
       toast.success(
@@ -112,213 +147,232 @@ export function PuppyFormDialog({
       queryClient.invalidateQueries({ queryKey: ["kennel-puppies"] });
       queryClient.invalidateQueries({ queryKey: ["litter-puppies"] });
       queryClient.invalidateQueries({ queryKey: ["kennel-litters"] });
-      if (isEdit || !addAnother) {
-        setOpen(false);
-      } else {
-        form.reset(emptyValues(litterId ?? "", defaultBreedId ?? "", defaultDateOfBirth ?? ""));
-      }
+      setOpen(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save puppy."),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save puppy.")),
   });
+
+  const canContinue =
+    step !== 0 || (values.name.trim().length > 0 && (!showLitterPicker || !!values.litterId));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit puppy" : "Add puppy"}</DialogTitle>
+          <DialogTitle className="font-display text-2xl">
+            {isEdit ? "Edit puppy" : "Add a puppy"}
+          </DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-3">
-            <FormField
-              control={form.control}
-              name="name"
-              rules={{ required: true }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input autoFocus placeholder="e.g. Maja" {...field} />
-                  </FormControl>
-                </FormItem>
+
+        <WizardProgress steps={[...STEPS]} current={step} />
+
+        <div className="space-y-4">
+          {step === 0 && (
+            <>
+              <BigField label="Name">
+                <Input
+                  autoFocus
+                  placeholder="e.g. Maja"
+                  value={values.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  className="h-14 rounded-2xl text-base"
+                />
+              </BigField>
+
+              {showLitterPicker && (
+                <BigField label="Litter">
+                  <div className="space-y-2">
+                    {litterOptions!.map((l) => (
+                      <PickerCard
+                        key={l.id}
+                        selected={values.litterId === l.id}
+                        onClick={() => set("litterId", l.id)}
+                        title={l.code}
+                      />
+                    ))}
+                  </div>
+                </BigField>
               )}
-            />
 
-            {!!litterOptions?.length && (
-              <FormField
-                control={form.control}
-                name="litterId"
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Litter</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select litter" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {litterOptions.map((l) => (
-                          <SelectItem key={l.id} value={l.id}>
-                            {l.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-            )}
+              <BigField label="Sex">
+                <ToggleButtonGroup
+                  options={[
+                    { value: "female", label: "Female" },
+                    { value: "male", label: "Male" },
+                  ]}
+                  value={values.sex || "female"}
+                  onChange={(v) => set("sex", v)}
+                />
+              </BigField>
+            </>
+          )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="sex"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sex</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="male">Male</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
+          {step === 1 && (
+            <BigField
+              label="Cover photo"
+              hint="One clear photo is enough — you can always change it later."
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  setPhotoFile(file);
+                  setPhotoPreview(URL.createObjectURL(file));
+                }}
               />
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Color</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="breedId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Breed</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select breed" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(breedsQuery.data ?? []).map((b) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of birth</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="PLN">PLN</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea rows={3} placeholder="Temperament, notable traits…" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <p className="text-xs text-muted-foreground">
-              New puppies are saved as an unpublished draft. Publish from the puppies list once
-              you're ready for buyers to see them.
-            </p>
-
-            <div className="flex items-center gap-2">
-              <Button
-                type="submit"
-                disabled={mutation.isPending}
-                className="flex-1"
-                onClick={() => setAddAnother(false)}
+              {photoPreview || existingPhotoUrl ? (
+                <div className="relative aspect-square w-40 overflow-hidden rounded-2xl">
+                  <img
+                    src={photoPreview ?? existingPhotoUrl!}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                    className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-white/95 text-destructive shadow"
+                    aria-label="Remove photo"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-3 flex h-32 w-full flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-accent/40 bg-accent/10 text-accent"
               >
-                {isEdit ? "Save changes" : "Add puppy"}
-              </Button>
+                <Camera className="size-8" />
+                <span className="font-bold">
+                  {photoPreview || existingPhotoUrl ? "Change photo" : "Add a photo"}
+                </span>
+              </button>
+            </BigField>
+          )}
+
+          {step === 2 && (
+            <>
+              <BigField label="Breed">
+                <Select value={values.breedId} onValueChange={(v) => set("breedId", v)}>
+                  <SelectTrigger className="h-14 rounded-2xl text-base">
+                    <SelectValue placeholder="Select breed" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(breedsQuery.data ?? []).map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </BigField>
+              <BigField label="Color">
+                <Input
+                  value={values.color}
+                  onChange={(e) => set("color", e.target.value)}
+                  placeholder="e.g. Black & tan"
+                  className="h-14 rounded-2xl text-base"
+                />
+              </BigField>
+              <BigField label="Date of birth">
+                <Input
+                  type="date"
+                  value={values.dateOfBirth}
+                  onChange={(e) => set("dateOfBirth", e.target.value)}
+                  className="h-14 rounded-2xl text-base"
+                />
+              </BigField>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <div className="grid grid-cols-[1fr_auto] gap-3">
+                <BigField label="Price">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={values.price}
+                    onChange={(e) => set("price", e.target.value)}
+                    className="h-14 rounded-2xl text-base"
+                  />
+                </BigField>
+                <BigField label="Currency">
+                  <ToggleButtonGroup
+                    options={[
+                      { value: "PLN", label: "PLN" },
+                      { value: "EUR", label: "EUR" },
+                    ]}
+                    value={values.currency}
+                    onChange={(v) => set("currency", v)}
+                    columns={2}
+                  />
+                </BigField>
+              </div>
+              <BigField label="Description (optional)" hint="Temperament, notable traits…">
+                <Textarea
+                  rows={4}
+                  value={values.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  className="rounded-2xl text-base"
+                />
+              </BigField>
               {!isEdit && (
-                <Button
-                  type="submit"
-                  variant="outline"
-                  disabled={mutation.isPending}
-                  onClick={() => setAddAnother(true)}
-                >
-                  Add + another
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  New puppies are saved as an unpublished draft. Publish from the puppies list once
+                  you're ready for buyers to see them.
+                </p>
               )}
-            </div>
-          </form>
-        </Form>
+            </>
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          {step > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((s) => s - 1)}
+              className="h-14 rounded-2xl border-2 text-base font-bold"
+            >
+              <ArrowLeft className="mr-1 size-4" /> Back
+            </Button>
+          )}
+          {step < STEPS.length - 1 ? (
+            <Button
+              type="button"
+              onClick={() => setStep((s) => s + 1)}
+              disabled={!canContinue}
+              className="h-14 flex-1 rounded-2xl text-base font-bold"
+            >
+              Next <ArrowRight className="ml-1 size-4" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => mutation.mutate()}
+              disabled={mutation.isPending}
+              className="h-14 flex-1 rounded-2xl text-base font-bold"
+            >
+              {mutation.isPending ? (
+                "Saving…"
+              ) : (
+                <>
+                  <Check className="mr-1 size-4" /> {isEdit ? "Save changes" : "Add puppy"}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

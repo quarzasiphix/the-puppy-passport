@@ -53,11 +53,11 @@ export async function getSignedFileUrl(
   return data.signedUrl;
 }
 
-// --- Public buckets (kennel-media, post-media, ...) — no real upload call site exists yet as of
-// 2026-09-09 (animal/post images are still seeded as plain URLs, not real uploads — see the note
-// in src/domains/transport/services/transport.ts's TRANSPORT_DOCUMENTS_BUCKET comment for the
-// same gap on the private side, fixed there already). Any future gallery/photo-upload feature
-// should go through these two rather than inventing another ad hoc `supabase.storage` call site.
+// --- Public buckets (kennel-media, post-media, ...). First real call site as of 2026-09-10:
+// src/domains/animals/services/breeder.ts's uploadAnimalCoverPhoto() (puppy cover photo, from the
+// breeder dashboard). Other public-bucket images (kennel logo/cover, post media) are still seeded
+// as plain URLs, not real uploads yet. Any future upload feature should go through these two
+// rather than inventing another ad hoc `supabase.storage` call site.
 
 export async function uploadPublicFile(
   bucket: string,
