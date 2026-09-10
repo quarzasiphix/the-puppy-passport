@@ -127,13 +127,13 @@ Done, on branches (both repos need a deploy):
   `public_parent_dogs` anon view = a kennel's breeding stock (`parent_dogs`, approved+public
   kennels only, no `microchip_number`), carrying the linked pedigree `dogs.slug`.
 - **`anemalo-gateway`** commit *"site-content: split breeding stock from the pedigree graph"* —
-  committed, **not deployed** (needs `wrangler deploy`; no CF creds in the coding session).
-  `/v1/site-content` `dogs` now comes from `public_parent_dogs` (11 rows for GRYFIN, not the
-  19-row pedigree graph); the graph is still there as `pedigreeDogs` + `pedigreeRelationships`.
+  pushed to `main` and **live** (the gateway auto-deploys from GitHub — no `wrangler deploy`).
+  Verified against `api.anemalo.com`: `dogs` = 11 (from `public_parent_dogs`), `pedigreeDogs` =
+  19, `pedigreeRelationships` = 12.
 - **`/p/grif/p`** branch `anemalo-gateway` — commit *"read site content from the Anemalo
   platform"*. `src/lib/{api,mappers,anemalo-types,site-fallback}.ts` only; domain types and every
   component/route unchanged. `main` still serves the live site. See `/p/grif/p/NOTES-ANEMALO.md`
-  for the deploy order and the remaining gaps (testimonials + standalone gallery have no Anemalo
-  home yet; phone/email/socials come from a per-site fallback file).
+  for the remaining gaps (testimonials + standalone gallery have no Anemalo home yet;
+  phone/email/socials come from a per-site fallback file).
 
-Deploy order: gateway `wrangler deploy` **first**, then build/preview the `/p/grif/p` branch.
+The gateway side is done and live; what's left is to build/preview the `/p/grif/p` branch.

@@ -18,9 +18,13 @@ hierarchy in `docs/PRODUCT_VISION.md`, which you must read before touching produ
 - **`/p/anemalo/app/`** — THIS repo (`the-puppy-passport` on GitHub, Lovable-connected). The main
   TanStack Start SSR app. `git`, `package.json`, `npm run build` etc. all root here. Nothing about
   the GitHub repo changed — this was a local disk relocation only.
-- **`/p/anemalo/gateway/`** — a **separate repo** (`anemalo-gateway`, not yet pushed): the bare
-  Cloudflare Worker for `api.anemalo.com`, the public read gateway in front of the shared Supabase
-  project. Its own `wrangler.toml` / deploy cadence. See
+- **`/p/anemalo/gateway/`** — a **separate repo** (`anemalo-gateway`,
+  `github.com/quarzasiphix/anemalo-gateway`): the bare Cloudflare Worker for `api.anemalo.com`,
+  the public read gateway in front of the shared Supabase project. **Live** at `api.anemalo.com`.
+  **Deploys automatically from GitHub on push to `main` — do NOT run `wrangler deploy` by hand**
+  (the coding session has no Cloudflare credentials anyway). The flow is: commit locally → user
+  pushes → GitHub CI deploys the Worker. `wrangler deploy --dry-run` / `tsc --noEmit` are the
+  local pre-push checks. Its own `wrangler.toml`. See
   `app/docs/API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md`. Not a monorepo — no shared lockfile; the
   Worker imports nothing from `app/`.
 
