@@ -141,7 +141,9 @@ The gateway side is done and live; what's left is to build/preview the `/p/grif/
 ### Media
 
 GRYFIN's images were imported as absolute `https://media.hodowlagryfinyork.pl/...` URLs and serve
-fine as-is (verified `200 image/webp`). The go-forward plan — reuse the `gryfinyork-media` R2
-bucket as Anemalo's, front it with `media.anemalo.com`, store portable **paths** + resolve against
-a per-org base URL (so her own site keeps her CDN hostname) — is `docs/BREEDER_SITE_SDK.md` Part A,
-phases S0/S1. No object move; `media.anemalo.com` isn't configured yet, so nothing to apply.
+fine as-is (verified `200 image/webp`). **Nothing to migrate** — those rows are the "absolute URL,
+use verbatim" case of the media-ref convention (`docs/BREEDER_SITE_SDK.md` Part A). Her bucket,
+`media-worker`, and domain stay untouched. Anemalo gets its own `anemalo-media` bucket +
+`media.anemalo.com` for *new* uploads (phases S0/S6). Optionally, later, her ~85 legacy objects
+get `rclone`d into `anemalo-media/org/<id>/legacy/…` and those rows rewritten — invisible to
+consumers, low priority.

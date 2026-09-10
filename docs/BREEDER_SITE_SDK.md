@@ -32,105 +32,101 @@ Three deliverables, in dependency order:
 `media.hodowlagryfinyork.pl` is a Cloudflare custom domain in front of the R2 bucket
 `gryfinyork-media`. The bucket objects live at keys `dogs/<uuid>.<ext>` and `puppies/<uuid>.<ext>`.
 Verified 2026-09-11: `GET` on those URLs returns `200 image/webp` (the worker in front rejects
-`HEAD` — GET only). `media.anemalo.com` does **not** resolve yet.
+`HEAD` — GET only). `media.anemalo.com` resolves but is mis-routed to the `anemalo-gateway` Worker
+(A.4a).
 
-Decided in `STORAGE_AND_MEDIA.md` (2026-09-10): **reuse `gryfinyork-media` as Anemalo's media
-bucket**, front it with `media.anemalo.com`, no object copy, namespace *future* uploads under
-`org/<organisation_id>/…`.
+`STORAGE_AND_MEDIA.md` (2026-09-10) first said "reuse `gryfinyork-media` as Anemalo's bucket";
+**reversed 2026-09-11** — Anemalo gets its own `anemalo-media` bucket (A.4a decision 1). Gryfin's
+bucket, worker and domain are untouched; her imported absolute URLs keep working.
 
-### A.2 The rule: store a **path**, resolve with a **base**
+### A.2 The rule: one platform media base; a media ref is a key **or** a URL
 
-Rows store a portable **media path** relative to a bucket root — never an absolute URL, never a
-CDN host. A URL is produced at read time as `<media base> + "/" + <path>`.
+**There is one media base for the whole platform: `https://media.anemalo.com`** (→ the
+`anemalo-media` R2 bucket, A.4a). Not one-per-org. An earlier draft had a per-org
+`media_base_url` override so GRYFIN's site could keep loading images from
+`media.hodowlagryfinyork.pl` — that only ever bought "no `anemalo.com` string in her page source",
+which is a **white-label nicety, not a requirement**, and it isn't worth a config column + per-org
+branch in every resolver. Deferred to "if a breeder actually asks" (Open decision 5).
 
-- **Canonical media base** (platform default): `https://media.anemalo.com`.
-- **Per-org override**: `organisation_site_configurations.media_base_url` (nullable text). When
-  set, the gateway resolves that org's media against it instead of the platform default. This is
-  how GRYFIN's *own* site keeps serving `https://media.hodowlagryfinyork.pl/...` (her branding, her
-  domain) while `anemalo.com` and her `@handle` profile serve the identical bytes from
-  `https://media.anemalo.com/...` — same bucket, two CNAMEs.
-- Paths for existing GRYFIN objects stay `dogs/<uuid>.<ext>` / `puppies/<uuid>.<ext>` (no object
-  move). New uploads get `org/<organisation_id>/<kind>/<uuid>.<ext>`.
+The existing image columns (`animal_images.image_url`, `parent_dogs.profile_image_url`,
+`dogs.profile_image_url`, `organisations.logo_url` / `cover_image_url`) hold a **media ref**:
+
+- **A relative key** (`org/<org_id>/animals/<uuid>.webp`) → resolved as `https://media.anemalo.com/<key>`.
+- **A full `https://…` URL** → used verbatim. This covers GRYFIN's imported
+  `https://media.hodowlagryfinyork.pl/...` rows (they keep working, no rewrite needed) and any
+  future breeder who joins with a big existing library on their own CDN.
+
+Resolver, everywhere (gateway, SDK, any consumer): `ref.startsWith("http") ? ref : MEDIA_BASE + "/" + ref`.
+**No schema migration for this** — same columns, a value convention + ~1 line of resolver logic.
 
 **Why not a `media_assets` table.** A first-class `media_assets(id, org_id, storage_key, kind,
-content_type, width, height, blurhash, created_by, created_at)` with FK references is the "right"
-long-term model (dedupe, dimensions for `<img width height>`, one delete path, EXIF stripping
-audit). It's also a much bigger migration touching every image-bearing table + every write path +
-RLS. **Defer it.** The path+base rule below is forward-compatible: a `media_assets` row's public
-projection is just `{ path: storage_key, ... }`, so the gateway/SDK contract doesn't change when
-it lands.
+content_type, width, height, blurhash, created_by, created_at)` is the "right" long-term model
+(dedupe, `<img width height>` for CLS, one delete path, EXIF-strip audit) but a big migration
+across every image-bearing table + write path + RLS. **Defer it.** The ref convention above is
+forward-compatible: a `media_assets` row's public projection is just its `storage_key`.
 
-### A.3 Schema change (additive, one migration — *not yet applied*)
+### A.3 What actually has to change
 
-```
--- per-org CDN base (null ⇒ platform default https://media.anemalo.com)
-alter table public.organisation_site_configurations
-  add column media_base_url text;
+Nothing in the DB schema. The pieces:
 
--- portable paths alongside the existing absolute columns; keep both during transition
-alter table public.animal_images add column image_path text;
-alter table public.parent_dogs   add column profile_image_path text;
-alter table public.dogs          add column profile_image_path text;
-alter table public.organisations  add column logo_path text, add column cover_image_path text;
-```
-
-Backfill (GRYFIN only; every other org has no real media yet):
-
-```
-update public.animal_images
-   set image_path = regexp_replace(image_url, '^https?://media\.hodowlagryfinyork\.pl/', '')
- where image_url like 'https://media.hodowlagryfinyork.pl/%';
-
-update public.parent_dogs
-   set profile_image_path = regexp_replace(profile_image_url, '^https?://media\.hodowlagryfinyork\.pl/', '')
- where profile_image_url like 'https://media.hodowlagryfinyork.pl/%';
--- dogs.profile_image_path: same, or re-derive from parent_dogs via dog_id.
-
-update public.organisation_site_configurations
-   set media_base_url = 'https://media.hodowlagryfinyork.pl'
- where organisation_id = '2dce98c9-f5b9-4df9-9243-9239adc290dd';  -- GRYFIN YORK
-```
-
-`image_url` stays populated and correct throughout — nothing breaks if this migration lands before
-the gateway/SDK learn about `*_path`. The absolute columns become derived (or dropped) only once
-every reader goes through the SDK.
+1. Create bucket `anemalo-media`; connect `media.anemalo.com` to it (A.4a).
+2. Gateway + SDK gain the one-line resolver and return a resolved `url` next to the raw `ref`
+   (A.4). `public_*` view selects are unchanged — the raw column is already there.
+3. New uploads write relative keys (`org/<org_id>/<kind>/<uuid>.<ext>`) into those same columns
+   (A.5). GRYFIN's ~85 legacy rows stay as absolute `media.hodowlagryfinyork.pl` URLs.
+4. *Optional, later:* copy the ~85 GRYFIN objects into `anemalo-media/org/<gryfin_id>/legacy/…`
+   and `regexp_replace` those rows to relative keys, so everything lives in one bucket. Low
+   priority; the mixed state is invisible to consumers because the resolver handles both.
 
 ### A.4 Gateway changes
 
-`/v1/site-content` gains, for every media-bearing row, **both** a `path` and a resolved `url`:
+`/v1/site-content` returns, for every media-bearing row, the raw `ref` **and** a resolved `url`:
 
 ```jsonc
-// animal_images entry
-{ "path": "puppies/0ed3ae25-….webp",
-  "url":  "https://media.hodowlagryfinyork.pl/puppies/0ed3ae25-….webp" }  // base from site config
+// animal_images entry — new-style (relative key)
+{ "ref": "org/2dce…/animals/9f1b….webp", "url": "https://media.anemalo.com/org/2dce…/animals/9f1b….webp" }
+// animal_images entry — GRYFIN legacy (absolute, passed through)
+{ "ref": "https://media.hodowlagryfinyork.pl/puppies/0ed3….webp",
+  "url": "https://media.hodowlagryfinyork.pl/puppies/0ed3….webp" }
 ```
 
-- Resolution order: `site config media_base_url` → env `MEDIA_BASE_URL` → `https://media.anemalo.com`.
-- `url` is a convenience for dumb clients; `path` is the contract. Old clients that only read
-  `image_url`-style absolute URLs keep working because `url` is exactly that.
-- No new endpoint. `public_parent_dogs` / `public_dogs` / `animal_images` selects add the
-  `*_path` columns; the Worker does the string join.
+- `url` = `ref.startsWith("http") ? ref : MEDIA_BASE + "/" + ref`, `MEDIA_BASE` from the Worker's
+  `MEDIA_BASE_URL` var (default `https://media.anemalo.com`).
+- `url` is the convenience field; `ref` is the contract. A dumb client that only reads `url` still
+  works for both legacy and new media.
+- No new endpoint, no view change — the Worker does the string check + join on the column it
+  already selects.
 
 ### A.4a Serving `media.anemalo.com` — R2 public custom domain, NOT a Worker
 
-**Decision: no Cloudflare Worker in the media *read* path.** `media.anemalo.com` is attached
-**directly to the `gryfinyork-media` R2 bucket** as a public custom domain (R2 → bucket → Settings
-→ Public access → Connect Domain). Reads are served by R2's edge + Cloudflare cache; there is no
-code to deploy or keep alive.
+**Decisions:**
 
-- **Do NOT fold media into `anemalo-gateway`.** The gateway is the anon read-*data* API and
-  auto-deploys on every push — coupling latency-sensitive static media to that cadence, and
-  putting an R2 binding next to the public API, is exactly what the "separate `api.anemalo.com`
-  Worker" decision argued against (`API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md` §1, §3).
-- **As of 2026-09-11 `media.anemalo.com` is mis-routed to the `anemalo-gateway` Worker**
-  (`GET https://media.anemalo.com/` returns the gateway's `{"service":"anemalo-gateway",…}` JSON,
-  and every image path 404s). Fix: remove `media.anemalo.com` from the gateway Worker's
-  Domains & Routes, then connect it to the bucket as above.
-- GRYFIN's existing `media-worker` (behind `media.hodowlagryfinyork.pl`, R2 binding `MEDIA` →
-  `gryfinyork-media`, plus `/media-usage` accounting and the write proxy) is **left completely
-  untouched** — different hostname, same bucket. The Gryfin site cannot break from any of this.
-- A dedicated `anemalo-media` Worker is only worth it later if Anemalo needs edge image resizing,
-  signed URLs for *private* media, hotlink protection, or per-org usage metering. Not now.
+1. **Own bucket: `anemalo-media`.** Not reusing `gryfinyork-media` (an earlier call, now reversed
+   — Open decision below). A breeder's bucket name as the platform-wide store is confusing
+   forever (dashboards, wrangler, S3 keys, billing), can't be lifecycled independently, and
+   Gryfin's existing worker token would span all Anemalo media. The thing that made "reuse"
+   attractive — no object copy — is ~85 Gryfin objects, a 2-minute `rclone` job that isn't even
+   required up front (step 4 in A.3).
+2. **No Cloudflare Worker in the media *read* path.** `media.anemalo.com` attaches **directly to
+   `anemalo-media`** as a public custom domain (R2 → bucket → Settings → Public access → Connect
+   Domain). Reads served by R2's edge + Cloudflare cache; nothing to deploy or keep alive.
+3. **Do NOT fold media into `anemalo-gateway`.** The gateway is the anon read-*data* API and
+   auto-deploys on every push — coupling latency-sensitive static media to that cadence, and an
+   R2 binding next to the public API, is exactly what the "separate `api.anemalo.com` Worker"
+   decision argued against (`API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md` §1, §3).
+
+**Current mis-config (2026-09-11):** `media.anemalo.com` is routed to the **`anemalo-gateway`
+Worker** — `GET https://media.anemalo.com/` returns the gateway's `{"service":"anemalo-gateway",…}`
+and every image path 404s. Fix: remove `media.anemalo.com` from the gateway Worker's
+Domains & Routes, then connect it to `anemalo-media` per decision 2.
+
+**Gryfin is untouched.** Her `media-worker` (behind `media.hodowlagryfinyork.pl`, R2 binding
+`MEDIA` → `gryfinyork-media`, `/media-usage` accounting, write proxy) and her bucket stay exactly
+as they are. Her imported image URLs keep resolving against it. Nothing here can break her site.
+
+A dedicated `anemalo-media` **Worker** (as opposed to the bucket) is only worth it later for edge
+image resizing, signed URLs for *private* media, hotlink protection, or per-org usage metering.
+Not now.
 
 ### A.5 Go-forward upload path (breeder panel → R2)
 
@@ -142,15 +138,15 @@ Stated here as the protocol the SDK assumes:
 2. Client compresses / HEIC-converts, then `POST`s to an **`upload-media` Supabase Edge Function
    on the Anemalo project** (`pgzvkkybqrhxedjoyjzy`) — a *new* function, not Gryfin's (that one is
    single-tenant: any logged-in user = the one office account). Authenticated with the caller's
-   Anemalo `access_token`. It verifies `is_org_member(org)`, then writes to `gryfinyork-media` via
+   Anemalo `access_token`. It verifies `is_org_member(org)`, then writes to **`anemalo-media`** via
    the **R2 S3 API** (access key id + secret as Edge Function secrets — same mechanism as
-   `STRIPE_SECRET_KEY`), at key `org/<org_id>/<kind>/<uuid>.<ext>`, and returns `{ path }`.
+   `STRIPE_SECRET_KEY`), at key `org/<org_id>/<kind>/<uuid>.<ext>`, and returns `{ ref }` (the key).
    Mirrors `create-deposit-checkout-session`'s "verify caller, do the privileged thing" shape.
-3. The panel stores `path` in `*_path`. The public URL is only ever computed on read (A.4).
-4. Delete = the function removes the object + the row nulls `*_path`.
+3. The panel stores `ref` in the existing image column. The URL is only ever computed on read (A.4).
+4. Delete = the function removes the object + the row nulls the column.
 
-R2 credentials live only in that function / its worker binding — never in a browser bundle, never
-in the gateway (`gateway/wrangler.toml` stays anon-key-only).
+R2 credentials live only in that Edge Function — never in a browser bundle, never in the gateway
+(`gateway/wrangler.toml` stays anon-key-only).
 
 ---
 
@@ -229,7 +225,7 @@ Target: **< 30 min of operator time**, most of it DNS wait.
 | 4 | Scaffold the site | `degit anemalo-site-template my-kennel` → set `VITE_ANEMALO_ORG=<slug>`, pick a theme | **gap** — template repo (Part D) |
 | 5 | Deploy the site | Cloudflare Worker (Nitro `cloudflare-module`) / Lovable / static export — the template ships a one-command deploy | rides on Part D |
 | 6 | Attach the custom domain | `organisation_domains` row (`type=custom_domain`) + breeder adds a CNAME + `resolve_org_by_hostname(hostname)` SECURITY DEFINER RPC (gateway P6) + add the origin to the gateway CORS allowlist | **gap** — `resolve_org_by_hostname` not written; gateway `/v1/resolve-domain` is a 501 stub |
-| 7 | (media) point `media.anemalo.com` at the bucket; set `media_base_url` if they want their own CDN host | Part A | **gap** — no `media.anemalo.com` yet |
+| 7 | (media) nothing per-breeder — `media.anemalo.com` → `anemalo-media` is a one-time platform setup (S0); new uploads land under `org/<id>/…` automatically | Part A | **gap** — `anemalo-media` + domain not set up |
 
 Everything in steps 3–7 that a breeder never sees is an admin screen: mirror the invite/onboarding
 UIs from ksef-ai / KRS-radar admin (`docs/BREEDER_PANEL_GAP_ANALYSIS.md` already scopes the
@@ -267,8 +263,8 @@ integration until the SDK exists, then rebased onto it.
 
 | Phase | Work | Unblocks |
 |---|---|---|
-| **S0** | `gryfinyork-media` *becomes* the Anemalo media bucket in place — no rename (R2 has none), no object move, no Worker. (a) Remove `media.anemalo.com` from the **`anemalo-gateway`** Worker's Domains & Routes (it's mis-attached there today — every image 404s). (b) Connect `media.anemalo.com` to the `gryfinyork-media` bucket as an **R2 public custom domain** (keep `media.hodowlagryfinyork.pl` on Gryfin's untouched `media-worker`). (c) Note which CF account owns the bucket — the Anemalo `upload-media` Edge Function (S6) writes via R2 S3-API keys regardless, so cross-account is fine. No app code. | A.4, A.4a, step 6–7, S6 |
-| **S1** | Media migration A.3 + gateway A.4 (`*_path` + resolved `url` in `/v1/site-content`). Update `/p/grif/p` branch mapper to read `path`+base. | one canonical media domain; SDK media resolver |
+| **S0** | Create bucket **`anemalo-media`**. (a) Remove `media.anemalo.com` from the **`anemalo-gateway`** Worker's Domains & Routes (mis-attached today — every image 404s). (b) Connect `media.anemalo.com` to `anemalo-media` as an **R2 public custom domain**. Gryfin's `gryfinyork-media` + `media-worker` + `media.hodowlagryfinyork.pl` are left untouched. No app code. | A.4a, step 6–7, S6 |
+| **S1** | Gateway + `/p/grif/p` branch mapper: the one-line `ref` resolver + a resolved `url` beside the raw ref in `/v1/site-content` (A.2/A.4). No DB migration. Gryfin's absolute rows pass through unchanged. | SDK media resolver; consistent `url` for consumers |
 | **S2** | `@anemalo/api-contract` + `@anemalo/site-sdk` (+ `/react`). Port `/p/grif/p` to consume it. | every future site |
 | **S3** | `anemalo-site-template` with 3 themes + one-command deploy. | step 4–5 |
 | **S4** | `admin_create_kennel()` RPC + admin onboarding screen; breeder `team.tsx`; the `owns_org()`→`is_org_member()` widenings. | step 1–3 (from `BREEDER_PANEL_GAP_ANALYSIS.md`) |
@@ -276,19 +272,23 @@ integration until the SDK exists, then rebased onto it.
 | **S6** | `upload-media` Edge Function + R2 write path (A.5); wire breeder-panel gallery/logo/cover uploads to it. | breeders adding *new* media |
 | **S7** | `organisation_enquiries` + `submit_org_enquiry()` + gateway `/v1/enquiry` real. | drop the legacy Supabase enquiry hop |
 
-S0+S1 are the answer to "import GRYFIN's media into the GRYFIN profile properly": the objects never
-move, but every Anemalo surface addresses them by an org-scoped path resolved against a base the
-platform controls, and GRYFIN's own site keeps her CDN hostname via the per-org override.
+"Import GRYFIN's media into the GRYFIN profile properly" = **nothing to import**. Her rows already
+hold working absolute URLs; they're the pass-through case of the ref convention. S0 stands up
+`anemalo-media` + `media.anemalo.com` for *new* uploads (hers and every future breeder's); the
+optional legacy copy (A.3 step 4) folds her old objects into `anemalo-media` whenever, invisibly.
 
 ## Open decisions
 
-1. **`media_assets` table now or later.** This doc says later (path+base is forward-compatible).
-   Revisit if `<img>` dimension/CLS work or dedupe becomes urgent before S6.
-2. **Drop the absolute `*_url` columns** after S2, or keep them as generated columns for
-   belt-and-braces / non-SDK consumers (e.g. raw SQL exports, the marketplace SSR app if it
-   doesn't adopt the SDK). Leaning: keep as a `GENERATED ALWAYS AS (media_base || '/' || path)`
-   once every writer sets `path`.
-3. **Template hosting.** Cloudflare Worker per site (isolation, custom domain native) vs. one
+1. **`media_assets` table now or later.** This doc says later (the ref convention is
+   forward-compatible). Revisit if `<img>` dimension/CLS work or dedupe becomes urgent before S6.
+2. **Per-org `media_base_url` (white-label).** Dropped from the core design — one platform base
+   (`media.anemalo.com`) for everyone. Add it back only if a breeder explicitly wants zero
+   `anemalo.com` strings in their site source; then it's one nullable column + one branch in the
+   resolver, and their old `media.<their-domain>` keeps working via the absolute-URL path anyway.
+3. **Reused vs. own bucket** — RESOLVED 2026-09-11: own bucket `anemalo-media`. The earlier
+   `STORAGE_AND_MEDIA.md` "reuse `gryfinyork-media`" line is superseded; the ~85-object legacy
+   copy is optional and deferred (A.3 step 4).
+4. **Template hosting.** Cloudflare Worker per site (isolation, custom domain native) vs. one
    shared multi-tenant Worker doing host-based resolution (cheaper, needs S5). Probably: Worker
    per site for paying `website`-plan breeders, shared for a future `pro`-plan "anemalo subdomain"
    tier.
