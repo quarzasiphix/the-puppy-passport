@@ -12,6 +12,7 @@ import {
   MapPin,
   Route,
   HelpCircle,
+  Network,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
@@ -50,6 +51,7 @@ const nav = [
 const moreNav = [
   { to: "/breeder-map", labelKey: "nav.breederMap", icon: MapPin },
   { to: "/planned-routes", labelKey: "nav.plannedRoutes", icon: Route },
+  { to: "/pedigrees", labelKey: "nav.pedigrees", icon: Network },
   { to: "/how-it-works", labelKey: "nav.howItWorks", icon: HelpCircle },
 ] as const;
 
