@@ -5,6 +5,7 @@ import {
   ChevronsUpDown,
   Menu,
   Check,
+  ArrowRight,
   User,
   Dog,
   HeartHandshake,
@@ -52,9 +53,12 @@ const workspaces: { to: string; label: string; roles: string[]; icon: LucideIcon
 // Lets a user with several roles switch workspace without a separate account per role — driven by
 // their real (server-verified) roles, not a value the frontend could fabricate; the underlying
 // pages are still independently guarded by RLS and each layout's own beforeLoad role check.
-// A clear icon+label pill instead of a plain text link — the thing it does (jump between, say,
-// your Customer and Breeder panel) should be obvious at a glance, not just discoverable by
-// noticing a tiny chevron next to some text.
+//
+// The overwhelmingly common case is exactly two workspaces (a breeder is also a customer). For
+// that case this isn't a menu you open to see your options — it's one direct, always-visible
+// statement: "{current} panel · Switch to {other}", and tapping it just goes there. No dropdown,
+// no extra step. A dropdown only appears for the rare 3+-workspace user (e.g. an admin who's also
+// ops/breeder/buyer), where there's no single "other" to jump straight to.
 function WorkspaceSwitcher({ current }: { current: string }) {
   const { roles } = useAuth();
   const activeRoleNames = new Set(roles.filter((r) => r.status === "active").map((r) => r.role));
@@ -73,6 +77,28 @@ function WorkspaceSwitcher({ current }: { current: string }) {
         </span>
         {currentLabel}
       </span>
+    );
+  }
+
+  if (available.length === 2) {
+    const other = available.find((w) => w.to !== current)!;
+    return (
+      <Link
+        to={other.to}
+        className="flex w-full items-center gap-2.5 rounded-xl bg-secondary/70 py-2 pl-2 pr-2.5 outline-none hover:bg-secondary"
+      >
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+          <CurrentIcon className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1 text-left leading-tight">
+          <span className="block truncate text-[11px] text-muted-foreground">
+            {currentLabel} panel
+          </span>
+          <span className="flex items-center gap-1 truncate text-xs font-bold text-primary">
+            Switch to {other.label} <ArrowRight className="size-3 shrink-0" />
+          </span>
+        </span>
+      </Link>
     );
   }
 
