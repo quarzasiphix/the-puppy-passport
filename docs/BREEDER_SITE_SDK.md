@@ -132,13 +132,23 @@ Domains & Routes, then connect it to `anemalo-media` per decision 2.
 as they are. Her imported image URLs keep resolving against it. Nothing here can break her site.
 
 A dedicated `anemalo-media` **Worker** (as opposed to the bucket) is only worth it later for edge
-image resizing, signed URLs for *private* media, hotlink protection, or per-org usage metering.
-Not now.
+image resizing, hotlink protection, or per-org usage metering — none of which apply now.
+(Signed-URL / private-media serving is *not* a reason: `anemalo-media` is public-only by design,
+A.5.)
 
 ### A.5 Go-forward upload path (breeder panel → R2)
 
-The upload/write path is a **Supabase Edge Function**, not a Cloudflare Worker and not the gateway.
-Stated here as the protocol the SDK assumes:
+**`anemalo-media` holds only public breeder marketing media** — dog / puppy / gallery photos,
+logo, cover. All world-readable via `media.anemalo.com`: no signed read URLs, no per-object ACL,
+no read auth. Genuinely private media — transport documents, pedigree / passport scans, message
+attachments — is a **separate concern** and stays on **Supabase Storage private buckets** with
+real RLS + signed URLs (see the bucket table at the top of `STORAGE_AND_MEDIA.md`); it never goes
+in `anemalo-media`.
+
+So the only thing that needs auth here is the **write**, and it's not "RLS" — just "authorize the
+upload" so randoms can't fill the bucket and a member of kennel A can't write into kennel B's
+prefix. That gate is a **Supabase Edge Function** (`upload-media`), not a Cloudflare Worker and
+not the gateway:
 
 1. Breeder uploads in the **Anemalo breeder panel** (single source of truth — `/p/grif/c` is
    retired for GRYFIN, see `GRYFIN_IMPORT.md`).
