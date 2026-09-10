@@ -116,7 +116,7 @@ function SignUp() {
 
   async function sendMagicLink() {
     const valid = await form.trigger(["intent", "email", "firstName", "lastName"]);
-    if (!valid) return;
+    if (!valid) return false;
     const values = form.getValues();
     setSendingLink(true);
     const supabase = getSupabaseBrowserClient();
@@ -137,9 +137,10 @@ function SignUp() {
     setSendingLink(false);
     if (error) {
       toast.error(error.message);
-      return;
+      return false;
     }
     setSentTo(values.email);
+    return true;
   }
 
   async function onSubmit(values: FormValues) {
@@ -219,8 +220,7 @@ function SignUp() {
                 variant="outline"
                 disabled={sendingLink}
                 onClick={async () => {
-                  await sendMagicLink();
-                  if (!sendingLink) toast.success(t("magicLink.resent"));
+                  if (await sendMagicLink()) toast.success(t("magicLink.resent"));
                 }}
               >
                 {sendingLink ? t("magicLink.sending") : t("magicLink.resend")}

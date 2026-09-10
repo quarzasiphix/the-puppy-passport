@@ -94,10 +94,7 @@ function SignIn() {
       },
     });
     setSendingLink(false);
-    if (
-      error &&
-      !/signups?\s+not\s+allowed|otp_disabled|user\s+not\s+found/i.test(error.message)
-    ) {
+    if (error && !/signups?\s+not\s+allowed|otp_disabled|user\s+not\s+found/i.test(error.message)) {
       toast.error(error.message);
       return false;
     }
@@ -152,7 +149,8 @@ function SignIn() {
             </div>
             <h1 className="mt-4 font-display text-2xl font-medium">{t("magicLink.sentTitle")}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {t("magicLink.sentBodyPrefix")} <span className="font-medium text-foreground">{sentTo}</span>.{" "}
+              {t("magicLink.sentBodyPrefix")}{" "}
+              <span className="font-medium text-foreground">{sentTo}</span>.{" "}
               {t("magicLink.sentBodySuffix")}
             </p>
             <div className="mt-6 flex flex-col items-center gap-2">

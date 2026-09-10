@@ -81,19 +81,22 @@ re-litigated here:
 The one honest cost of "separate" is a second deploy target and a second `wrangler.toml`. Given
 the CORS and rate-limit isolation arguments, that is worth paying.
 
-### Repo location: `gateway/` inside this repo (pragmatic), aim for a sibling repo later.
+### Repo location: its own repo, `anemalo-gateway` (done 2026-09-10).
 
-The brief's first choice was a sibling dir `/p/anemalo-gateway/`. **That path is not writable in
-this workspace**, so the skeleton lives at [`../gateway/`](../gateway/) with its own
-`package.json` / `tsconfig.json` / `wrangler.toml`. This is fine and arguably better short-term:
+The workspace is now a container dir holding two independent repos (mirrors `/p/grif/{c,p}`):
 
-- The main `tsconfig.json` `include` is scoped to `src/**`, so `gateway/` is invisible to the
-  app's `tsc`/`eslint`/Vite/Nitro build — no coupling, no accidental bundling.
-- The gateway's contract, this doc, and the follow-up migrations all live together.
-- `node_modules` / `.wrangler` under `gateway/` are already covered by the repo `.gitignore`.
+```
+/p/anemalo/
+  app/       ← this repo (the-puppy-passport) — Vite/Nitro SSR Worker, Lovable-connected
+  gateway/   ← anemalo-gateway — the bare Cloudflare Worker for api.anemalo.com
+```
 
-If/when the API grows its own CI and release cadence, lift `gateway/` into a standalone repo
-(`anemalo-gateway`) — nothing in the skeleton assumes its parent directory.
+Not a monorepo — no shared lockfile or workspace config. The two have different runtimes and
+deploy cadences; a `pnpm`/turborepo workspace only earns its keep once there is shared *code*
+(the future `@anemalo/api-contract` types package an SDK would consume). `gateway/` has its own
+`package.json` / `tsconfig.json` / `wrangler.toml` / `.gitignore` and a fresh git history; the
+`../app/` reference in this doc is a workspace-relative path, nothing in the Worker imports from
+the app. Deploy it with `wrangler deploy` from `/p/anemalo/gateway/`, independently of the app.
 
 ---
 

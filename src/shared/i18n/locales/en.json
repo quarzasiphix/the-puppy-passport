@@ -613,9 +613,24 @@
   "authCommon": {
     "email": "Email",
     "password": "Password",
+    "passwordRequired": "Enter your password, or use a magic link instead.",
+    "or": "or",
     "orWithEmail": "Or with email",
     "continueWithGoogle": "Continue with Google",
     "backToSignIn": "Back to sign in"
+  },
+  "magicLink": {
+    "signInButton": "Email me a sign-in link",
+    "signUpButton": "Email me a sign-up link",
+    "sending": "Sending…",
+    "sentTitle": "Check your email",
+    "sentBodyPrefix": "We sent a sign-in link to",
+    "sentBodySuffix": "Open it on this device to continue. The link works once and expires in an hour.",
+    "resend": "Resend link",
+    "resent": "Link sent again.",
+    "differentEmail": "Use a different email",
+    "usePassword": "Use a password instead",
+    "useMagicLink": "Use a magic link instead"
   },
   "signIn": {
     "welcomeBack": "Welcome back",
@@ -631,7 +646,8 @@
   "signUp": {
     "title": "Create an account",
     "subtitleStep0": "Start with what you're here to do — you can request transport, browse breeders, or apply for verification at any time afterwards.",
-    "subtitleStep1": "Almost done — just a name so breeders and our team know who they're talking to.",
+    "subtitleStep1": "Almost done — a few optional details you can also add later from your account.",
+    "passwordTooShort": "At least 6 characters, or use a magic link instead.",
     "iAmHereTo": "I am here to…",
     "intentCustomerLabel": "Request animal transport",
     "intentCustomerDesc": "Submit and track transport requests.",

@@ -11,6 +11,19 @@ Facebook group, an open marketplace where random transporters can accept jobs, o
 Transport is a major advantage of the platform, not its primary identity — see the corrected
 hierarchy in `docs/PRODUCT_VISION.md`, which you must read before touching product scope.
 
+## Workspace layout (as of 2026-09-10)
+
+`/p/anemalo/` is a **container directory**, not a repo (mirrors `/p/grif/{c,p}`):
+
+- **`/p/anemalo/app/`** — THIS repo (`the-puppy-passport` on GitHub, Lovable-connected). The main
+  TanStack Start SSR app. `git`, `package.json`, `npm run build` etc. all root here. Nothing about
+  the GitHub repo changed — this was a local disk relocation only.
+- **`/p/anemalo/gateway/`** — a **separate repo** (`anemalo-gateway`, not yet pushed): the bare
+  Cloudflare Worker for `api.anemalo.com`, the public read gateway in front of the shared Supabase
+  project. Its own `wrangler.toml` / deploy cadence. See
+  `app/docs/API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md`. Not a monorepo — no shared lockfile; the
+  Worker imports nothing from `app/`.
+
 ## Production
 
 Live at **https://anemalo.com** (added to this file 2026-09-09 at the user's explicit instruction

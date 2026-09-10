@@ -26,9 +26,7 @@ const roleForIntent: Record<SignupIntent, { role: PlatformRole; status: "active"
 // intent: breeders and foundations go straight into kennel/organisation setup, everyone else to
 // the buyer dashboard (the app's shared signed-in home). Returning users always go to the shared
 // home regardless of intent.
-export function landingPathForIntent(
-  intent: SignupIntent,
-): "/create-breeder" | "/dashboard/buyer" {
+export function landingPathForIntent(intent: SignupIntent): "/create-breeder" | "/dashboard/buyer" {
   return intent === "breeder" || intent === "foundation" ? "/create-breeder" : "/dashboard/buyer";
 }
 
@@ -156,8 +154,7 @@ export const completePasswordlessSignIn = createServerFn({ method: "GET" })
     if (!user) return { error: "Sign-in could not be completed.", redirectTo: null };
 
     const metaIntent = signupIntentSchema.safeParse(user.user_metadata?.intent);
-    const intent: SignupIntent =
-      data.intent ?? (metaIntent.success ? metaIntent.data : "customer");
+    const intent: SignupIntent = data.intent ?? (metaIntent.success ? metaIntent.data : "customer");
 
     const { data: existingRoles } = await supabase
       .from("user_roles")

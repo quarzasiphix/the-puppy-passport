@@ -613,9 +613,24 @@
   "authCommon": {
     "email": "E-mail",
     "password": "Hasło",
+    "passwordRequired": "Wpisz hasło lub użyj linku logowania.",
+    "or": "lub",
     "orWithEmail": "Lub e-mailem",
     "continueWithGoogle": "Kontynuuj z Google",
     "backToSignIn": "Wróć do logowania"
+  },
+  "magicLink": {
+    "signInButton": "Wyślij mi link do logowania",
+    "signUpButton": "Wyślij mi link do rejestracji",
+    "sending": "Wysyłanie…",
+    "sentTitle": "Sprawdź swoją skrzynkę",
+    "sentBodyPrefix": "Wysłaliśmy link do logowania na adres",
+    "sentBodySuffix": "Otwórz go na tym urządzeniu, aby kontynuować. Link działa raz i wygasa po godzinie.",
+    "resend": "Wyślij link ponownie",
+    "resent": "Link wysłany ponownie.",
+    "differentEmail": "Użyj innego adresu e-mail",
+    "usePassword": "Użyj hasła",
+    "useMagicLink": "Użyj linku logowania"
   },
   "signIn": {
     "welcomeBack": "Witaj ponownie",
@@ -631,7 +646,8 @@
   "signUp": {
     "title": "Załóż konto",
     "subtitleStep0": "Zacznij od tego, po co tu jesteś — w każdej chwili później możesz zlecić transport, przeglądać hodowców lub złożyć wniosek o weryfikację.",
-    "subtitleStep1": "Już prawie gotowe — potrzebujemy tylko imienia, aby hodowcy i nasz zespół wiedzieli, z kim rozmawiają.",
+    "subtitleStep1": "Już prawie gotowe — kilka opcjonalnych danych, które możesz też dodać później na stronie konta.",
+    "passwordTooShort": "Co najmniej 6 znaków lub użyj linku logowania.",
     "iAmHereTo": "Jestem tu, aby…",
     "intentCustomerLabel": "Zlecić transport zwierzęcia",
     "intentCustomerDesc": "Składaj i śledź zlecenia transportu.",

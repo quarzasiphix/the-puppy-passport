@@ -192,7 +192,11 @@ interface PlannedRow {
 class Report {
   rows: PlannedRow[] = [];
   warnings: string[] = [];
-  deferred: { gallery: GryfinGalleryImage[]; testimonials: GryfinTestimonial[]; enquiries: GryfinEnquiry[] } = {
+  deferred: {
+    gallery: GryfinGalleryImage[];
+    testimonials: GryfinTestimonial[];
+    enquiries: GryfinEnquiry[];
+  } = {
     gallery: [],
     testimonials: [],
     enquiries: [],
@@ -230,7 +234,13 @@ class Report {
     writeFileSync(
       path,
       JSON.stringify(
-        { generatedAt: new Date().toISOString(), applied: APPLY, rows: this.rows, warnings: this.warnings, deferred: this.deferred },
+        {
+          generatedAt: new Date().toISOString(),
+          applied: APPLY,
+          rows: this.rows,
+          warnings: this.warnings,
+          deferred: this.deferred,
+        },
         null,
         2,
       ),
@@ -278,12 +288,17 @@ const PUPPY_STATUS: Record<string, string> = {
 };
 
 function nonEmpty(...parts: (string | null | undefined)[]): string | null {
-  const joined = parts.filter((p): p is string => typeof p === "string" && p.trim().length > 0).join("\n\n");
+  const joined = parts
+    .filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+    .join("\n\n");
   return joined.length > 0 ? joined : null;
 }
 
 function firstUrl(single: string | null, many: string[] | null): string | null {
-  return [single, ...(many ?? [])].find((u): u is string => typeof u === "string" && u.length > 0) ?? null;
+  return (
+    [single, ...(many ?? [])].find((u): u is string => typeof u === "string" && u.length > 0) ??
+    null
+  );
 }
 
 function looksLikeRegNumber(text: string): boolean {
@@ -320,7 +335,11 @@ class Ledger {
       console.warn(`  ! ledger read failed (${error.message}); falling back to natural keys only`);
       return;
     }
-    for (const r of (data ?? []) as { source_table: string; source_id: string; target_id: string }[]) {
+    for (const r of (data ?? []) as {
+      source_table: string;
+      source_id: string;
+      target_id: string;
+    }[]) {
       this.map.set(`${r.source_table}:${r.source_id}`, r.target_id);
     }
     console.log(`  ledger: ${this.map.size} existing refs`);
@@ -330,11 +349,23 @@ class Ledger {
     return this.map.get(`${table}:${sourceId}`);
   }
 
-  async record(target: SupabaseClient, table: string, sourceId: string, targetId: string): Promise<void> {
+  async record(
+    target: SupabaseClient,
+    table: string,
+    sourceId: string,
+    targetId: string,
+  ): Promise<void> {
     this.map.set(`${table}:${sourceId}`, targetId);
     if (!USE_LEDGER || !APPLY) return;
     await target.from("import_external_refs").upsert(
-      { source: SOURCE_TAG, source_table: table, source_id: sourceId, target_table: table, target_id: targetId, imported_at: new Date().toISOString() },
+      {
+        source: SOURCE_TAG,
+        source_table: table,
+        source_id: sourceId,
+        target_table: table,
+        target_id: targetId,
+        imported_at: new Date().toISOString(),
+      },
       { onConflict: "source,source_table,source_id" },
     );
   }
@@ -346,22 +377,27 @@ class Ledger {
 
 async function main(): Promise<void> {
   console.log(`Gryfin -> Anemalo import  (${APPLY ? "APPLY" : "DRY RUN"})`);
-  const source = createClient(SOURCE_URL, SOURCE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
-  const target = createClient(TARGET_URL, TARGET_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+  const source = createClient(SOURCE_URL, SOURCE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const target = createClient(TARGET_URL, TARGET_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const report = new Report();
   const ledger = new Ledger();
   await ledger.load(target);
 
   // 1. Pull Gryfin -----------------------------------------------------------------------------
-  const [dogsR, littersR, puppiesR, galleryR, testimonialsR, enquiriesR, settingsR] = await Promise.all([
-    source.from("dogs").select("*"),
-    source.from("litters").select("*"),
-    source.from("puppies").select("*"),
-    source.from("gallery_images").select("*"),
-    source.from("testimonials").select("*"),
-    source.from("enquiries").select("*"),
-    source.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-  ]);
+  const [dogsR, littersR, puppiesR, galleryR, testimonialsR, enquiriesR, settingsR] =
+    await Promise.all([
+      source.from("dogs").select("*"),
+      source.from("litters").select("*"),
+      source.from("puppies").select("*"),
+      source.from("gallery_images").select("*"),
+      source.from("testimonials").select("*"),
+      source.from("enquiries").select("*"),
+      source.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+    ]);
   for (const r of [dogsR, littersR, puppiesR, galleryR, testimonialsR, enquiriesR, settingsR]) {
     if (r.error) throw new Error(`Gryfin read failed: ${r.error.message}`);
   }
@@ -369,7 +405,8 @@ async function main(): Promise<void> {
   const gLitters = (littersR.data ?? []) as GryfinLitter[];
   const gPuppies = (puppiesR.data ?? []) as GryfinPuppy[];
   const gSettings = settingsR.data as GryfinSiteSettings | null;
-  if (!gSettings) throw new Error("Gryfin site_settings row (id=1) not found — cannot build the organisation");
+  if (!gSettings)
+    throw new Error("Gryfin site_settings row (id=1) not found — cannot build the organisation");
   report.deferred.gallery = (galleryR.data ?? []) as GryfinGalleryImage[];
   report.deferred.testimonials = (testimonialsR.data ?? []) as GryfinTestimonial[];
   report.deferred.enquiries = (enquiriesR.data ?? []) as GryfinEnquiry[];
@@ -382,20 +419,30 @@ async function main(): Promise<void> {
   // 2. Resolve breed -------------------------------------------------------------------------
   let breedId: string | null = null;
   {
-    const { data } = await target.from("breeds").select("id").or("slug.ilike.%york%,name.ilike.%york%").maybeSingle();
+    const { data } = await target
+      .from("breeds")
+      .select("id")
+      .or("slug.ilike.%york%,name.ilike.%york%")
+      .maybeSingle();
     if (data) {
       breedId = (data as ExistingRow).id;
     } else if (CREATE_BREED && APPLY) {
       const { data: created, error } = await target
         .from("breeds")
-        .insert({ name: "Yorkshire Terrier", slug: "yorkshire-terrier", species_id: DOG_SPECIES_ID })
+        .insert({
+          name: "Yorkshire Terrier",
+          slug: "yorkshire-terrier",
+          species_id: DOG_SPECIES_ID,
+        })
         .select("id")
         .single();
       if (error) throw new Error(`breed create failed: ${error.message}`);
       breedId = (created as ExistingRow).id;
       console.log("  created breed: Yorkshire Terrier");
     } else {
-      report.warn("No Yorkshire Terrier row in Anemalo `breeds` — importing with breed_id=null (pass --create-breed to seed it).");
+      report.warn(
+        "No Yorkshire Terrier row in Anemalo `breeds` — importing with breed_id=null (pass --create-breed to seed it).",
+      );
     }
   }
 
@@ -407,12 +454,20 @@ async function main(): Promise<void> {
       ownerUserId = existing;
       console.log(`  owner: reusing auth user ${ownerUserId}`);
     } else if (APPLY) {
-      const { data, error } = await target.auth.admin.createUser({ email: OWNER_EMAIL, email_confirm: true });
+      const { data, error } = await target.auth.admin.createUser({
+        email: OWNER_EMAIL,
+        email_confirm: true,
+      });
       if (error || !data.user) throw new Error(`owner createUser failed: ${error?.message}`);
       ownerUserId = data.user.id;
       console.log(`  owner: created auth user ${ownerUserId}`);
     } else {
-      report.add({ table: "auth.users", op: "insert", sourceId: OWNER_EMAIL, data: { email: OWNER_EMAIL, email_confirm: true } });
+      report.add({
+        table: "auth.users",
+        op: "insert",
+        sourceId: OWNER_EMAIL,
+        data: { email: OWNER_EMAIL, email_confirm: true },
+      });
     }
     report.add({
       table: "profiles",
@@ -421,10 +476,25 @@ async function main(): Promise<void> {
       data: { id: ownerUserId, email: OWNER_EMAIL, display_name: gSettings.kennel_name },
       targetId: existing ? ownerUserId : undefined,
     });
-    report.add({ table: "user_roles", op: "insert", sourceId: OWNER_EMAIL, data: { user_id: ownerUserId, role: "breeder", status: "active" } });
+    report.add({
+      table: "user_roles",
+      op: "insert",
+      sourceId: OWNER_EMAIL,
+      data: { user_id: ownerUserId, role: "breeder", status: "active" },
+    });
     if (APPLY) {
-      await target.from("profiles").upsert({ id: ownerUserId, email: OWNER_EMAIL, display_name: gSettings.kennel_name }, { onConflict: "id" });
-      await target.from("user_roles").upsert({ user_id: ownerUserId, role: "breeder", status: "active" }, { onConflict: "user_id,role" });
+      await target
+        .from("profiles")
+        .upsert(
+          { id: ownerUserId, email: OWNER_EMAIL, display_name: gSettings.kennel_name },
+          { onConflict: "id" },
+        );
+      await target
+        .from("user_roles")
+        .upsert(
+          { user_id: ownerUserId, role: "breeder", status: "active" },
+          { onConflict: "user_id,role" },
+        );
     }
   }
 
@@ -439,15 +509,31 @@ async function main(): Promise<void> {
     city: locationParts[0] || null,
     public_location: gSettings.location || null,
     years_experience:
-      typeof gSettings.founded_year === "number" ? Math.max(0, new Date().getFullYear() - gSettings.founded_year) : null,
+      typeof gSettings.founded_year === "number"
+        ? Math.max(0, new Date().getFullYear() - gSettings.founded_year)
+        : null,
     verification_status: "approved",
     is_public: true,
     plan: "free",
     owner_user_id: ownerUserId,
   };
-  const existingOrg = await matchOne(target, "organisations", { org_type: "kennel" }, "name", gSettings.kennel_name);
-  const orgId = existingOrg ?? (APPLY ? await insertReturningId(target, "organisations", orgData) : "<new-org-id>");
-  report.add({ table: "organisations", op: existingOrg ? "update" : "insert", sourceId: "site_settings:1", data: orgData, targetId: existingOrg ?? undefined });
+  const existingOrg = await matchOne(
+    target,
+    "organisations",
+    { org_type: "kennel" },
+    "name",
+    gSettings.kennel_name,
+  );
+  const orgId =
+    existingOrg ??
+    (APPLY ? await insertReturningId(target, "organisations", orgData) : "<new-org-id>");
+  report.add({
+    table: "organisations",
+    op: existingOrg ? "update" : "insert",
+    sourceId: "site_settings:1",
+    data: orgData,
+    targetId: existingOrg ?? undefined,
+  });
   if (APPLY && existingOrg) await target.from("organisations").update(orgData).eq("id", orgId);
 
   if (gSettings.facebook_url || gSettings.tiktok_url) {
@@ -473,12 +559,23 @@ async function main(): Promise<void> {
     contact_mode: "both",
     show_anemalo_branding: true,
   };
-  report.add({ table: "organisation_site_configurations", op: "insert", sourceId: "site_settings:1", data: siteConfig });
-  if (APPLY) await target.from("organisation_site_configurations").upsert(siteConfig, { onConflict: "organisation_id" });
+  report.add({
+    table: "organisation_site_configurations",
+    op: "insert",
+    sourceId: "site_settings:1",
+    data: siteConfig,
+  });
+  if (APPLY)
+    await target
+      .from("organisation_site_configurations")
+      .upsert(siteConfig, { onConflict: "organisation_id" });
 
   // 6. Custom domain -------------------------------------------------------------------
   if (gSettings.domain) {
-    const host = gSettings.domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+    const host = gSettings.domain
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "")
+      .toLowerCase();
     const domainRow: Record<string, unknown> = {
       organisation_id: orgId,
       hostname: host,
@@ -487,21 +584,46 @@ async function main(): Promise<void> {
       verification_token: randomUUID(),
       is_primary: true,
     };
-    report.add({ table: "organisation_domains", op: "insert", sourceId: `domain:${host}`, data: domainRow });
-    if (APPLY) await target.from("organisation_domains").upsert(domainRow, { onConflict: "hostname" });
+    report.add({
+      table: "organisation_domains",
+      op: "insert",
+      sourceId: `domain:${host}`,
+      data: domainRow,
+    });
+    if (APPLY)
+      await target.from("organisation_domains").upsert(domainRow, { onConflict: "hostname" });
   }
 
   // 7. Owner membership --------------------------------------------------------------
-  const memberRow = { org_id: orgId, profile_id: ownerUserId, member_role: "owner", status: "active" };
-  report.add({ table: "organisation_members", op: "insert", sourceId: OWNER_EMAIL, data: memberRow });
-  if (APPLY) await target.from("organisation_members").upsert(memberRow, { onConflict: "org_id,profile_id" });
+  const memberRow = {
+    org_id: orgId,
+    profile_id: ownerUserId,
+    member_role: "owner",
+    status: "active",
+  };
+  report.add({
+    table: "organisation_members",
+    op: "insert",
+    sourceId: OWNER_EMAIL,
+    data: memberRow,
+  });
+  if (APPLY)
+    await target
+      .from("organisation_members")
+      .upsert(memberRow, { onConflict: "org_id,profile_id" });
 
   // 8. Parent dogs ------------------------------------------------------------------
   const dogIdMap = new Map<string, string>(); // gryfin dog id -> anemalo parent_dogs id
   for (const d of gDogs) {
     const sex = mapSex(d.sex);
     if (sex === null) {
-      report.add({ table: "parent_dogs", op: "skip", sourceId: d.id, reason: `unrecognised sex "${d.sex}"`, data: {} });
+      report.add({
+        table: "parent_dogs",
+        op: "skip",
+        sourceId: d.id,
+        reason: `unrecognised sex "${d.sex}"`,
+        data: {},
+      });
       continue;
     }
     const pedigreeNumber = d.pedigree && looksLikeRegNumber(d.pedigree) ? d.pedigree.trim() : null;
@@ -531,32 +653,47 @@ async function main(): Promise<void> {
       await ledger.record(target, "parent_dogs", d.id, id);
     }
     dogIdMap.set(d.id, id);
-    report.add({ table: "parent_dogs", op, sourceId: d.id, data: row, targetId: existing ?? undefined });
+    report.add({
+      table: "parent_dogs",
+      op,
+      sourceId: d.id,
+      data: row,
+      targetId: existing ?? undefined,
+    });
 
     if (IMPORT_ACHIEVEMENTS) {
       for (const title of d.achievements ?? []) {
         const achRow = { kennel_id: orgId, parent_dog_id: id, title };
-        report.add({ table: "achievements", op: "insert", sourceId: `${d.id}:${title}`, data: achRow });
+        report.add({
+          table: "achievements",
+          op: "insert",
+          sourceId: `${d.id}:${title}`,
+          data: achRow,
+        });
         if (APPLY) await target.from("achievements").insert(achRow);
       }
     }
     if ((d.photo_urls ?? []).length > 1) {
-      report.warn(`parent_dog ${d.id} has ${(d.photo_urls ?? []).length} photos; only the first maps (parent_dogs has one image slot).`);
+      report.warn(
+        `parent_dog ${d.id} has ${(d.photo_urls ?? []).length} photos; only the first maps (parent_dogs has one image slot).`,
+      );
     }
   }
 
   // 9. Litters --------------------------------------------------------------------
   const litterIdMap = new Map<string, string>();
   for (const l of gLitters) {
-    const motherId = l.mother_id ? dogIdMap.get(l.mother_id) ?? null : null;
-    const fatherId = l.father_id ? dogIdMap.get(l.father_id) ?? null : null;
+    const motherId = l.mother_id ? (dogIdMap.get(l.mother_id) ?? null) : null;
+    const fatherId = l.father_id ? (dogIdMap.get(l.father_id) ?? null) : null;
     if (l.mother_id && !motherId) report.warn(`litter ${l.id}: mother ${l.mother_id} not resolved`);
     if (l.father_id && !fatherId) report.warn(`litter ${l.id}: father ${l.father_id} not resolved`);
     const plannedIsDate = isIsoDate(l.planned_date);
     const descBits = nonEmpty(
       l.description,
       l.extra,
-      (l.expected_colors ?? []).length ? `Spodziewane kolory: ${(l.expected_colors ?? []).join(", ")}` : null,
+      (l.expected_colors ?? []).length
+        ? `Spodziewane kolory: ${(l.expected_colors ?? []).join(", ")}`
+        : null,
       !plannedIsDate && l.planned_date ? `Planowane: ${l.planned_date}` : null,
     );
     let status = LITTER_STATUS[l.status] ?? "planned";
@@ -574,7 +711,9 @@ async function main(): Promise<void> {
       status,
       is_published: l.visible_on_site === true,
     };
-    const existing = ledger.get("litters", l.id) ?? (await matchOne(target, "litters", { kennel_id: orgId }, "code", String(row.code)));
+    const existing =
+      ledger.get("litters", l.id) ??
+      (await matchOne(target, "litters", { kennel_id: orgId }, "code", String(row.code)));
     const op: Op = existing ? "update" : "insert";
     let id = existing ?? `<litter:${l.id}>`;
     if (APPLY) {
@@ -583,12 +722,18 @@ async function main(): Promise<void> {
       await ledger.record(target, "litters", l.id, id);
     }
     litterIdMap.set(l.id, id);
-    report.add({ table: "litters", op, sourceId: l.id, data: row, targetId: existing ?? undefined });
+    report.add({
+      table: "litters",
+      op,
+      sourceId: l.id,
+      data: row,
+      targetId: existing ?? undefined,
+    });
   }
 
   // 10. Puppies (+ images) -----------------------------------------------------------
   for (const p of gPuppies) {
-    const litterId = p.litter_id ? litterIdMap.get(p.litter_id) ?? null : null;
+    const litterId = p.litter_id ? (litterIdMap.get(p.litter_id) ?? null) : null;
     if (p.litter_id && !litterId) report.warn(`puppy ${p.id}: litter ${p.litter_id} not resolved`);
     const sex = mapSex(p.sex);
     if (p.sex && sex === null) report.warn(`puppy ${p.id}: unrecognised sex "${p.sex}" -> null`);
@@ -622,7 +767,8 @@ async function main(): Promise<void> {
       currency: null,
     };
     const existing =
-      ledger.get("animals", p.id) ?? (await matchOne(target, "animals", { organization_id: orgId }, "slug", String(row.slug)));
+      ledger.get("animals", p.id) ??
+      (await matchOne(target, "animals", { organization_id: orgId }, "slug", String(row.slug)));
     const op: Op = existing ? "update" : "insert";
     let id = existing ?? `<animal:${p.id}>`;
     if (APPLY) {
@@ -630,40 +776,71 @@ async function main(): Promise<void> {
       if (existing) await target.from("animals").update(row).eq("id", id);
       await ledger.record(target, "animals", p.id, id);
     }
-    report.add({ table: "animals", op, sourceId: p.id, data: row, targetId: existing ?? undefined });
+    report.add({
+      table: "animals",
+      op,
+      sourceId: p.id,
+      data: row,
+      targetId: existing ?? undefined,
+    });
 
-    const photos = [p.photo_url, ...(p.photo_urls ?? [])].filter((u): u is string => typeof u === "string" && u.length > 0);
+    const photos = [p.photo_url, ...(p.photo_urls ?? [])].filter(
+      (u): u is string => typeof u === "string" && u.length > 0,
+    );
     photos.forEach((url, i) => {
-      const imgRow = { animal_id: id, image_url: url, display_order: i, is_cover: i === 0, caption: null };
+      const imgRow = {
+        animal_id: id,
+        image_url: url,
+        display_order: i,
+        is_cover: i === 0,
+        caption: null,
+      };
       report.add({ table: "animal_images", op: "insert", sourceId: `${p.id}:${i}`, data: imgRow });
     });
     if (APPLY && photos.length > 0) {
       // idempotent: delete-then-insert this animal's image set
       await target.from("animal_images").delete().eq("animal_id", id);
       await target.from("animal_images").insert(
-        photos.map((url, i) => ({ animal_id: id, image_url: url, display_order: i, is_cover: i === 0, caption: null })),
+        photos.map((url, i) => ({
+          animal_id: id,
+          image_url: url,
+          display_order: i,
+          is_cover: i === 0,
+          caption: null,
+        })),
       );
     }
   }
 
   // 11. Deferred -----------------------------------------------------------------
   if (report.deferred.gallery.length)
-    report.warn(`${report.deferred.gallery.length} gallery_images deferred — no Anemalo org-gallery table (see docs/GRYFIN_IMPORT.md).`);
+    report.warn(
+      `${report.deferred.gallery.length} gallery_images deferred — no Anemalo org-gallery table (see docs/GRYFIN_IMPORT.md).`,
+    );
   if (report.deferred.testimonials.length)
-    report.warn(`${report.deferred.testimonials.length} testimonials deferred — no Anemalo reviews table.`);
+    report.warn(
+      `${report.deferred.testimonials.length} testimonials deferred — no Anemalo reviews table.`,
+    );
   if (report.deferred.enquiries.length)
-    report.warn(`${report.deferred.enquiries.length} enquiries deferred — no Anemalo organisation_enquiries table.`);
+    report.warn(
+      `${report.deferred.enquiries.length} enquiries deferred — no Anemalo organisation_enquiries table.`,
+    );
 
   report.summary();
   report.writeFile("gryfin-import.report.json");
-  if (!APPLY) console.log("\nDRY RUN — nothing was written. Re-run with --apply to perform the import.");
+  if (!APPLY)
+    console.log("\nDRY RUN — nothing was written. Re-run with --apply to perform the import.");
 }
 
 // --------------------------------------------------------------------------------------------
 // Target helpers
 // --------------------------------------------------------------------------------------------
 
-async function insertReturningId(client: SupabaseClient, table: string, data: Record<string, unknown>): Promise<string> {
+async function insertReturningId(
+  client: SupabaseClient,
+  table: string,
+  data: Record<string, unknown>,
+): Promise<string> {
   const { data: row, error } = await client.from(table).insert(data).select("id").single();
   if (error) throw new Error(`insert ${table} failed: ${error.message}`);
   return (row as ExistingRow).id;
@@ -683,12 +860,21 @@ async function matchOne(
   return data ? (data as ExistingRow).id : null;
 }
 
-async function matchParentDog(client: SupabaseClient, orgId: string, row: Record<string, unknown>): Promise<string | null> {
+async function matchParentDog(
+  client: SupabaseClient,
+  orgId: string,
+  row: Record<string, unknown>,
+): Promise<string | null> {
   const regName = row.registered_name as string | null;
-  if (regName) return matchOne(client, "parent_dogs", { kennel_id: orgId }, "registered_name", regName);
+  if (regName)
+    return matchOne(client, "parent_dogs", { kennel_id: orgId }, "registered_name", regName);
   const callName = row.call_name as string;
   const dob = row.date_of_birth as string | null;
-  let q = client.from("parent_dogs").select("id").eq("kennel_id", orgId).ilike("call_name", callName);
+  let q = client
+    .from("parent_dogs")
+    .select("id")
+    .eq("kennel_id", orgId)
+    .ilike("call_name", callName);
   if (dob) q = q.eq("date_of_birth", dob);
   const { data } = await q.limit(1).maybeSingle();
   return data ? (data as ExistingRow).id : null;
