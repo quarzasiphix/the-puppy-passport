@@ -9,6 +9,8 @@
     "plannedRoutes": "Planowane trasy",
     "howItWorks": "Jak to działa",
     "more": "Więcej",
+    "menuLabel": "Menu",
+    "home": "Start",
     "signIn": "Zaloguj się",
     "signOut": "Wyloguj się",
     "dashboard": "Panel",
@@ -1295,6 +1297,8 @@
   "dashboardShell": {
     "openMenu": "Otwórz menu",
     "backToAnemalo": "← Wróć do Anemalo",
+    "settings": "Ustawienia",
+    "profileMenuLabel": "Menu konta",
     "workspaces": {
       "customer": "Klient",
       "breeder": "Hodowca",

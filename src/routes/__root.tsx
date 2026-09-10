@@ -10,12 +10,14 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import ogImage from "@/assets/hero-breeder.jpg";
 import { reportLovableError } from "@/app/lovable-error-reporting";
 import { getCurrentUser, type CurrentUser } from "@/domains/identity";
 import { Toaster } from "@/shared/ui/sonner";
 import { I18nProvider } from "@/shared/i18n";
-import { SITE_ORIGIN } from "@/lib/sitemap";
+
+// Site-wide default social-share image — the real, hosted brand logo (see Logo component), not a
+// bundled asset, so this and the actual logo stay in sync if it's ever updated on the media CDN.
+const OG_IMAGE = "https://media.anemalo.com/logo.png";
 
 function NotFoundComponent() {
   return (
@@ -100,14 +102,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Anemalo" },
-      // Site-wide fallback — a real photo (not a logo/placeholder), so a shared link never renders
-      // as a bare text card. Per-page overrides (puppy/kennel photos) replace this further down the
-      // meta array where a page has one; see puppies.$id.tsx / @{$handle}.tsx.
-      { property: "og:image", content: `${SITE_ORIGIN}${ogImage}` },
-      { property: "og:image:width", content: "1600" },
-      { property: "og:image:height", content: "1200" },
+      // Site-wide fallback so a shared link never renders as a bare text card. The real brand
+      // logo, not a stock/AI photo — the previous hero photo used here looked bad blown up as a
+      // social-share thumbnail, same complaint as the homepage hero it also used to be. Per-page
+      // overrides (puppy/kennel photos) replace this further down the meta array where a page has
+      // one; see puppies.$id.tsx / @{$handle}.tsx.
+      { property: "og:image", content: OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `${SITE_ORIGIN}${ogImage}` },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

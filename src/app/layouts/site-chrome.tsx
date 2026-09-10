@@ -1,11 +1,22 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { Menu, Search, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
-import { toast } from "sonner";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  Menu,
+  Search,
+  ChevronDown,
+  Home,
+  Dog,
+  HeartHandshake,
+  Truck,
+  Users,
+  MapPin,
+  Route,
+  HelpCircle,
+} from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
 import { Logo } from "@/app/components/logo";
+import { UserMenu } from "@/app/components/user-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { useAuth } from "@/domains/identity";
-import { signOut } from "@/domains/identity";
 import { NotificationBell } from "@/domains/messaging";
 import { useTranslation } from "@/shared/i18n";
 import { LanguageSwitcher } from "@/shared/i18n/language-switcher";
@@ -27,35 +37,56 @@ import { LanguageSwitcher } from "@/shared/i18n/language-switcher";
 // breeder-identity redesign brief flagged ("too many similarly weighted items"). Those three move
 // into the "More" dropdown below — still one click away, just not fighting the primary five for
 // navbar space.
+// Icons are only rendered on the mobile drawer (desktop's <nav> stays text-only) — carried here
+// too so there's one list to keep in sync, not two.
 const nav = [
-  { to: "/find-a-dog", labelKey: "nav.findADog" },
-  { to: "/breeders", labelKey: "nav.breeders" },
-  { to: "/adoptions", labelKey: "nav.adoptions" },
-  { to: "/transport", labelKey: "nav.transport" },
-  { to: "/community", labelKey: "nav.community" },
+  { to: "/find-a-dog", labelKey: "nav.findADog", icon: Search },
+  { to: "/breeders", labelKey: "nav.breeders", icon: Dog },
+  { to: "/adoptions", labelKey: "nav.adoptions", icon: HeartHandshake },
+  { to: "/transport", labelKey: "nav.transport", icon: Truck },
+  { to: "/community", labelKey: "nav.community", icon: Users },
 ] as const;
 
 const moreNav = [
-  { to: "/breeder-map", labelKey: "nav.breederMap" },
-  { to: "/planned-routes", labelKey: "nav.plannedRoutes" },
-  { to: "/how-it-works", labelKey: "nav.howItWorks" },
+  { to: "/breeder-map", labelKey: "nav.breederMap", icon: MapPin },
+  { to: "/planned-routes", labelKey: "nav.plannedRoutes", icon: Route },
+  { to: "/how-it-works", labelKey: "nav.howItWorks", icon: HelpCircle },
 ] as const;
 
-export function SiteHeader() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { isSignedIn, firstName, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { t } = useTranslation();
+// The four primary destinations for the mobile bottom bar, in the same discovery-first order as
+// docs/PRODUCT_VISION.md's priority hierarchy. Deliberately a subset of `nav` above (Breeders and
+// Community stay reachable via the "Menu" tab below) — a bottom bar with more than ~5 columns
+// stops being legible at the 400px-wide floor this app supports.
+const bottomNav = [
+  { to: "/", labelKey: "nav.home", icon: Home, exact: true },
+  { to: "/find-a-dog", labelKey: "nav.findADog", icon: Search, exact: false },
+  { to: "/adoptions", labelKey: "nav.adoptions", icon: HeartHandshake, exact: false },
+  { to: "/transport", labelKey: "nav.transport", icon: Truck, exact: false },
+] as const;
 
-  async function handleSignOut() {
-    await signOut();
-    await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
-    await router.invalidate();
-    toast.success(t("nav.signedOutToast"));
-    await navigate({ to: "/" });
-  }
+// Shared between SiteHeader's hamburger trigger and MobileBottomNav's "Menu" tab so both open the
+// exact same nav Sheet (defined once, inside SiteHeader) instead of duplicating its contents.
+const MobileMenuContext = createContext<{ open: boolean; setOpen: (open: boolean) => void } | null>(
+  null,
+);
+
+export function MobileMenuProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <MobileMenuContext.Provider value={{ open, setOpen }}>{children}</MobileMenuContext.Provider>
+  );
+}
+
+function useMobileMenu() {
+  const ctx = useContext(MobileMenuContext);
+  if (!ctx) throw new Error("useMobileMenu() must be used within a MobileMenuProvider");
+  return ctx;
+}
+
+export function SiteHeader() {
+  const { open: mobileOpen, setOpen: setMobileOpen } = useMobileMenu();
+  const { isSignedIn, isLoading } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -96,20 +127,9 @@ export function SiteHeader() {
           {!isLoading && isSignedIn ? (
             <>
               <NotificationBell />
-              <Button asChild variant="ghost" className="hidden lg:inline-flex">
-                <Link to="/dashboard/buyer">
-                  <LayoutDashboard className="mr-1 size-4" /> {firstName ?? t("nav.dashboard")}
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden lg:inline-flex"
-                onClick={handleSignOut}
-                aria-label={t("nav.signOut")}
-              >
-                <LogOut className="size-4" />
-              </Button>
+              <div className="hidden lg:block">
+                <UserMenu showDashboardLink />
+              </div>
             </>
           ) : (
             <Link
@@ -137,71 +157,114 @@ export function SiteHeader() {
         </div>
       </div>
 
+      {/* Full-height flex column (header / scrollable nav / pinned account footer) so the drawer's
+          content is anchored top-and-bottom instead of a short list floating in an otherwise-empty
+          h-full sheet — a stack of plain links here previously left most of the drawer blank. */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-full max-w-xs">
-          <SheetHeader>
-            <SheetTitle className="font-display text-lg">Anemalo</SheetTitle>
-          </SheetHeader>
-          <nav className="mt-4 flex flex-col gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
-              >
-                {t(item.labelKey)}
-              </Link>
-            ))}
-            <div className="my-1 border-t border-border/60" />
-            {moreNav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary"
-              >
-                {t(item.labelKey)}
-              </Link>
-            ))}
-            <div className="my-2 border-t border-border/60" />
-            {!isLoading && isSignedIn ? (
-              <>
+        <SheetContent side="right" className="flex h-full w-full max-w-xs flex-col gap-0 p-0">
+          <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
+            <Logo className="size-8" />
+            <SheetTitle className="font-display text-lg font-semibold">Anemalo</SheetTitle>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto px-3 py-4">
+            <div className="flex flex-col gap-0.5">
+              {nav.map((item) => (
                 <Link
-                  to="/dashboard/buyer"
+                  key={item.to}
+                  to={item.to}
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-secondary"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                  activeProps={{ className: "bg-secondary text-primary" }}
                 >
-                  {t("nav.dashboard")}
+                  <item.icon className="size-4 text-muted-foreground" />
+                  {t(item.labelKey)}
                 </Link>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    handleSignOut();
-                  }}
-                  className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-muted-foreground hover:bg-secondary"
+              ))}
+            </div>
+
+            <p className="mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("nav.more")}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {moreNav.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  activeProps={{ className: "bg-secondary text-primary" }}
                 >
-                  {t("nav.signOut")}
-                </button>
-              </>
-            ) : (
-              <Link
-                to="/signin"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-secondary"
-              >
-                {t("nav.signIn")}
-              </Link>
-            )}
-            <Button asChild className="mt-3">
-              <Link to="/find-a-dog" onClick={() => setMobileOpen(false)}>
-                <Search className="mr-1 size-4" /> {t("nav.findADog")}
-              </Link>
-            </Button>
+                  <item.icon className="size-4" />
+                  {t(item.labelKey)}
+                </Link>
+              ))}
+            </div>
           </nav>
+
+          <div className="border-t border-border/60 px-5 py-4">
+            {!isLoading && isSignedIn ? (
+              <UserMenu showDashboardLink />
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Button asChild>
+                  <Link to="/find-a-dog" onClick={() => setMobileOpen(false)}>
+                    <Search className="mr-1 size-4" /> {t("nav.findADog")}
+                  </Link>
+                </Button>
+                <Link
+                  to="/signin"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-3 py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {t("nav.signIn")}
+                </Link>
+              </div>
+            )}
+          </div>
         </SheetContent>
       </Sheet>
     </header>
+  );
+}
+
+// Fixed bottom tab bar for small screens — the same breakpoint (`xl:hidden`) SiteHeader uses to
+// swap its own primary nav for the hamburger trigger, so exactly one nav pattern is visible at any
+// width. Sits above `env(safe-area-inset-bottom)` so it clears the home indicator on notched
+// phones instead of being covered by it. `_public.tsx` adds matching bottom padding to the page
+// so this bar never overlaps the last bit of page (or footer) content.
+export function MobileBottomNav() {
+  const { t } = useTranslation();
+  const { setOpen } = useMobileMenu();
+
+  return (
+    <nav
+      aria-label={t("nav.menuLabel")}
+      className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border/60 bg-background/95 backdrop-blur-md xl:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {bottomNav.map((item) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          activeOptions={item.exact ? { exact: true } : undefined}
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground transition-colors"
+          activeProps={{ className: "text-primary" }}
+        >
+          <item.icon className="size-5" />
+          {t(item.labelKey)}
+        </Link>
+      ))}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t("nav.openMenu")}
+        className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground transition-colors"
+      >
+        <Menu className="size-5" />
+        {t("nav.menuLabel")}
+      </button>
+    </nav>
   );
 }
 

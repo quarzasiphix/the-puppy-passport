@@ -7,6 +7,7 @@ import { getMyKennelProfile, getKennelSiteConfiguration } from "@/domains/breede
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { breederNav } from "@/app/config/navigation";
 import { NotificationBell } from "@/domains/messaging";
+import { UserMenu } from "@/app/components/user-menu";
 
 export const Route = createFileRoute("/dashboard/breeder")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["breeder"]),
@@ -14,8 +15,7 @@ export const Route = createFileRoute("/dashboard/breeder")({
 });
 
 function BreederDashboardLayout() {
-  const { userId, firstName } = useAuth();
-  const initials = firstName ? firstName[0].toUpperCase() : "?";
+  const { userId } = useAuth();
 
   const kennelQuery = useQuery({
     queryKey: ["my-kennel", userId],
@@ -48,12 +48,7 @@ function BreederDashboardLayout() {
       header={
         <header className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border/60 bg-background/85 px-6 py-3 backdrop-blur">
           <NotificationBell />
-          <div className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 py-1 pl-1 pr-3">
-            <div className="grid size-7 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {initials}
-            </div>
-            <span className="text-sm">{firstName ?? "Account"}</span>
-          </div>
+          <UserMenu settingsTo="/dashboard/breeder/settings" />
         </header>
       }
     >

@@ -5,6 +5,7 @@ import { requireRole } from "@/domains/identity";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { buyerNav } from "@/app/config/navigation";
 import { NotificationBell } from "@/domains/messaging";
+import { UserMenu } from "@/app/components/user-menu";
 
 export const Route = createFileRoute("/dashboard/buyer")({
   beforeLoad: ({ context }) => requireRole(context.auth, []),
@@ -14,12 +15,6 @@ export const Route = createFileRoute("/dashboard/buyer")({
 function BuyerDashboardLayout() {
   const { firstName, lastName } = useAuth();
   const displayName = [firstName, lastName].filter(Boolean).join(" ") || "your account";
-  const initials =
-    [firstName, lastName]
-      .filter(Boolean)
-      .map((n) => n![0])
-      .join("")
-      .toUpperCase() || "?";
 
   return (
     <DashboardShell
@@ -37,12 +32,7 @@ function BuyerDashboardLayout() {
           </Button>
           <div className="flex items-center gap-2">
             <NotificationBell />
-            <div className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 py-1 pl-1 pr-3">
-              <div className="grid size-7 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-                {initials}
-              </div>
-              <span className="text-sm">{firstName ?? "Account"}</span>
-            </div>
+            <UserMenu settingsTo="/dashboard/buyer/profile" />
           </div>
         </header>
       }

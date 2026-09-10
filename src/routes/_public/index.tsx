@@ -14,6 +14,7 @@ import {
   GitBranch,
   Heart,
   Sparkles,
+  PawPrint,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -26,7 +27,6 @@ import {
 } from "@/domains/marketplace";
 import { ActionLauncher } from "@/app/components/action-launcher";
 import { useTranslation } from "@/shared/i18n";
-import hero from "@/assets/hero-breeder.jpg";
 import transportImg from "@/assets/transport.jpg";
 
 export const Route = createFileRoute("/_public/")({
@@ -145,14 +145,21 @@ function Hero() {
 
         <div className="relative">
           <div className="absolute -left-6 -top-6 hidden size-64 rounded-full bg-accent/10 blur-3xl lg:block" />
-          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card shadow-xl">
-            <img
-              src={hero}
-              alt="Breeder handing over a puppy for transport"
-              width={1600}
-              height={1200}
-              className="aspect-[4/5] size-full object-cover"
+          {/* A color panel, not a stock/AI photo — on-brand (primary → accent, the site's own
+              palette) and never looks like a bad generated image, unlike the hero photo this
+              replaced. */}
+          <div className="relative aspect-[4/5] size-full overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-primary via-primary/85 to-accent shadow-xl">
+            <div
+              className="absolute -right-10 -top-10 size-56 rounded-full bg-white/10"
+              aria-hidden
             />
+            <div
+              className="absolute -bottom-16 -left-10 size-64 rounded-full bg-white/10"
+              aria-hidden
+            />
+            <div className="absolute inset-0 grid place-items-center">
+              <PawPrint className="size-32 text-white/20" strokeWidth={1} aria-hidden />
+            </div>
           </div>
           <div className="absolute -bottom-6 -left-6 hidden max-w-xs rounded-2xl border border-border/70 bg-card p-4 shadow-lg md:block">
             <div className="flex items-center gap-3">
