@@ -107,14 +107,18 @@ this for a real agreement):
   tree, not under it — factual labelling only, per that doc's "never judgemental" trust posture.
   WDF membership is one national member/contractual partner per country; each issues its own
   pedigrees and trains its own judges, mutually recognised across WDF members.
-- **Poland**: a search hit references *"Narodowy Związek Kynologiczny Polski — Project of WDF"* as
-  a WDF-affiliated Polish body, distinct from ZKwP (Poland's FCI-affiliated national club since
-  1938). **Unconfirmed**: whether this is the same organisation POK (`/p/pok`) serves — worth
-  asking the user directly rather than assuming, since it would materially change how a POK↔WDF
-  connector should be scoped (one registry vs. two).
+- **Poland — CONFIRMED by the user 2026-09-11: POK *is* the WDF-affiliated Polish body.** A search
+  hit named it *"Narodowy Związek Kynologiczny Polski — Project of WDF"*, distinct from ZKwP
+  (Poland's separate FCI-affiliated national club since 1938). This **collapses "the POK connector"
+  and "the WDF collaboration" into one relationship, not two**: POK is WDF's Polish national
+  member, so a POK↔Anemalo connector already sits inside the WDF network, and a future WDF-level
+  agreement (with the Italian umbrella body directly, or with another national WDF member) is the
+  *same* federation this doc's one-directional design already anticipates — not a second,
+  unrelated integration to scope from scratch. Re-read this doc's earlier sections (esp. "Start
+  one-directional") with POK *as* the concrete WDF instance, not a generic placeholder.
 - No sign of an existing digital pedigree database, API, or tech platform on WDF's side in what
   the search surfaced — the "access each other's databases" idea is very likely starting from
-  scratch on their end too, not integrating with something already built.
+  scratch on their end too (POK included), not integrating with something already built.
 
 The schema already supports N registries: each is an `organisations` row with `org_type =
 'kennel_club'`, each contributes its own `pedigree_sources` rows, and a single edge can carry
