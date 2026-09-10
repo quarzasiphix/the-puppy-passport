@@ -24,6 +24,7 @@ import { Logo } from "@/app/components/logo";
 import { useAuth } from "@/domains/identity";
 import { useTranslation } from "@/shared/i18n";
 import { LocaleSuggestionBanner } from "@/shared/i18n/locale-suggestion-banner";
+import { LanguageSwitcher } from "@/shared/i18n/language-switcher";
 
 export type DashboardNavItem = {
   to: string;
@@ -222,10 +223,13 @@ export function DashboardShell({
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground lg:flex">
           <div className="border-b border-sidebar-border p-5">
-            <Link to="/" className="flex items-center gap-2 text-primary">
-              <Logo className="size-9" />
-              <span className="font-display text-lg font-semibold">Anemalo</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/" className="flex flex-1 items-center gap-2 text-primary">
+                <Logo className="size-9" />
+                <span className="font-display text-lg font-semibold">Anemalo</span>
+              </Link>
+              <LanguageSwitcher />
+            </div>
             <div className="mt-4 rounded-xl border border-sidebar-border bg-background p-3">
               <WorkspaceSwitcher current={current} />
               {statusLine}
@@ -247,10 +251,11 @@ export function DashboardShell({
             >
               <Menu className="size-5" />
             </button>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <WorkspaceSwitcher current={current} />
             </div>
-            <Link to="/" className="ml-auto flex shrink-0 items-center gap-1.5 text-primary">
+            <LanguageSwitcher />
+            <Link to="/" className="flex shrink-0 items-center gap-1.5 text-primary">
               <Logo className="size-8" />
             </Link>
           </div>
@@ -261,9 +266,12 @@ export function DashboardShell({
               className="flex w-72 flex-col bg-sidebar p-0 text-sidebar-foreground"
             >
               <SheetHeader className="border-b border-sidebar-border p-5 text-left">
-                <SheetTitle className="font-display text-lg text-sidebar-foreground">
-                  Anemalo
-                </SheetTitle>
+                <div className="flex items-center gap-2">
+                  <SheetTitle className="flex-1 font-display text-lg text-sidebar-foreground">
+                    Anemalo
+                  </SheetTitle>
+                  <LanguageSwitcher />
+                </div>
                 <div className="mt-2 rounded-xl border border-sidebar-border bg-background p-3">
                   <WorkspaceSwitcher current={current} />
                   {statusLine}

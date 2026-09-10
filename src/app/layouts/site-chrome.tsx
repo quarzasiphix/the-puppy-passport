@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Menu, Search, LogOut, LayoutDashboard, Languages, ChevronDown } from "lucide-react";
+import { Menu, Search, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
@@ -15,7 +15,8 @@ import {
 import { useAuth } from "@/domains/identity";
 import { signOut } from "@/domains/identity";
 import { NotificationBell } from "@/domains/messaging";
-import { useTranslation, SUPPORTED_LOCALES, LOCALE_DISPLAY_NAMES } from "@/shared/i18n";
+import { useTranslation } from "@/shared/i18n";
+import { LanguageSwitcher } from "@/shared/i18n/language-switcher";
 
 // Animal discovery leads the navigation — Anemalo is a dedicated animal ecosystem, not a
 // transport company with a marketplace attached (see docs/PRODUCT_VISION.md). Transport stays a
@@ -39,30 +40,6 @@ const moreNav = [
   { to: "/planned-routes", labelKey: "nav.plannedRoutes" },
   { to: "/how-it-works", labelKey: "nav.howItWorks" },
 ] as const;
-
-function LanguageSwitcher() {
-  const { locale, setLocale, t } = useTranslation();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t("language.switchLabel")}>
-          <Languages className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {SUPPORTED_LOCALES.map((code) => (
-          <DropdownMenuItem
-            key={code}
-            onClick={() => setLocale(code)}
-            className={code === locale ? "font-semibold" : undefined}
-          >
-            {LOCALE_DISPLAY_NAMES[code]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
