@@ -124,6 +124,13 @@ export type Database = {
             referencedRelation: "parent_dogs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "achievements_parent_dog_id_fkey"
+            columns: ["parent_dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_parent_dogs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       animal_images: {
@@ -1975,6 +1982,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "litters_father_id_fkey"
+            columns: ["father_id"]
+            isOneToOne: false
+            referencedRelation: "public_parent_dogs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "litters_kennel_id_fkey"
             columns: ["kennel_id"]
             isOneToOne: false
@@ -1993,6 +2007,13 @@ export type Database = {
             columns: ["mother_id"]
             isOneToOne: false
             referencedRelation: "parent_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "litters_mother_id_fkey"
+            columns: ["mother_id"]
+            isOneToOne: false
+            referencedRelation: "public_parent_dogs"
             referencedColumns: ["id"]
           },
         ]
@@ -2392,6 +2413,63 @@ export type Database = {
           },
         ]
       }
+      organisation_gallery_images: {
+        Row: {
+          caption: string | null
+          category: Database["public"]["Enums"]["gallery_category"]
+          created_at: string
+          display_order: number
+          height: number | null
+          id: string
+          image_url: string
+          is_published: boolean
+          organisation_id: string
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          caption?: string | null
+          category?: Database["public"]["Enums"]["gallery_category"]
+          created_at?: string
+          display_order?: number
+          height?: number | null
+          id?: string
+          image_url: string
+          is_published?: boolean
+          organisation_id: string
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          caption?: string | null
+          category?: Database["public"]["Enums"]["gallery_category"]
+          created_at?: string
+          display_order?: number
+          height?: number | null
+          id?: string
+          image_url?: string
+          is_published?: boolean
+          organisation_id?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_gallery_images_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_gallery_images_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
+      }
       organisation_invitations: {
         Row: {
           accepted_by: string | null
@@ -2506,6 +2584,102 @@ export type Database = {
           {
             foreignKeyName: "organisation_members_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisation_reviews: {
+        Row: {
+          animal_id: string | null
+          breeder_response: string | null
+          breeder_response_at: string | null
+          content: string
+          created_at: string
+          id: string
+          moderation_status: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id: string
+          photo_url: string | null
+          published_at: string
+          rating: number
+          reservation_id: string | null
+          reviewer_display_name: string
+          reviewer_profile_id: string | null
+          source: Database["public"]["Enums"]["review_source"]
+          updated_at: string
+          verification_level: Database["public"]["Enums"]["review_verification_level"]
+        }
+        Insert: {
+          animal_id?: string | null
+          breeder_response?: string | null
+          breeder_response_at?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          moderation_status?: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id: string
+          photo_url?: string | null
+          published_at?: string
+          rating: number
+          reservation_id?: string | null
+          reviewer_display_name: string
+          reviewer_profile_id?: string | null
+          source?: Database["public"]["Enums"]["review_source"]
+          updated_at?: string
+          verification_level?: Database["public"]["Enums"]["review_verification_level"]
+        }
+        Update: {
+          animal_id?: string | null
+          breeder_response?: string | null
+          breeder_response_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          moderation_status?: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id?: string
+          photo_url?: string | null
+          published_at?: string
+          rating?: number
+          reservation_id?: string | null
+          reviewer_display_name?: string
+          reviewer_profile_id?: string | null
+          source?: Database["public"]["Enums"]["review_source"]
+          updated_at?: string
+          verification_level?: Database["public"]["Enums"]["review_verification_level"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_reviews_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_reviews_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_reviews_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
+            foreignKeyName: "organisation_reviews_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organisation_reviews_reviewer_profile_id_fkey"
+            columns: ["reviewer_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6162,6 +6336,65 @@ export type Database = {
           },
         ]
       }
+      public_parent_dogs: {
+        Row: {
+          breed_id: string | null
+          call_name: string | null
+          color: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          description: string | null
+          dog_id: string | null
+          dog_slug: string | null
+          health_tests: Json | null
+          id: string | null
+          is_active: boolean | null
+          kennel_id: string | null
+          pedigree_number: string | null
+          profile_image_url: string | null
+          registered_name: string | null
+          sex: Database["public"]["Enums"]["dog_sex"] | null
+          titles: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_dogs_breed_id_fkey"
+            columns: ["breed_id"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_dogs_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_dogs_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "public_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_dogs_kennel_id_fkey"
+            columns: ["kennel_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
+      }
       public_routes: {
         Row: {
           available_capacity: number | null
@@ -6351,6 +6584,24 @@ export type Database = {
       convert_welfare_case_to_transport_draft: {
         Args: { p_case_id: string }
         Returns: string
+      }
+      create_and_approve_own_organisation: {
+        Args: {
+          p_association_name?: string
+          p_city?: string
+          p_country?: string
+          p_description: string
+          p_membership_number?: string
+          p_name: string
+          p_org_type: Database["public"]["Enums"]["org_type"]
+          p_website?: string
+          p_years_experience?: number
+        }
+        Returns: {
+          granted_role: Database["public"]["Enums"]["platform_role"]
+          organisation_id: string
+          verification_id: string
+        }[]
       }
       create_notification_if_enabled: {
         Args: {
@@ -6578,6 +6829,34 @@ export type Database = {
         }
         Returns: undefined
       }
+      respond_to_review: {
+        Args: { p_response: string; p_review_id: string }
+        Returns: {
+          animal_id: string | null
+          breeder_response: string | null
+          breeder_response_at: string | null
+          content: string
+          created_at: string
+          id: string
+          moderation_status: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id: string
+          photo_url: string | null
+          published_at: string
+          rating: number
+          reservation_id: string | null
+          reviewer_display_name: string
+          reviewer_profile_id: string | null
+          source: Database["public"]["Enums"]["review_source"]
+          updated_at: string
+          verification_level: Database["public"]["Enums"]["review_verification_level"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organisation_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_moderation_appeal: {
         Args: {
           p_appeal_id: string
@@ -6634,6 +6913,38 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_review_moderation_status: {
+        Args: {
+          p_reason?: string
+          p_review_id: string
+          p_status: Database["public"]["Enums"]["review_moderation_status"]
+        }
+        Returns: {
+          animal_id: string | null
+          breeder_response: string | null
+          breeder_response_at: string | null
+          content: string
+          created_at: string
+          id: string
+          moderation_status: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id: string
+          photo_url: string | null
+          published_at: string
+          rating: number
+          reservation_id: string | null
+          reviewer_display_name: string
+          reviewer_profile_id: string | null
+          source: Database["public"]["Enums"]["review_source"]
+          updated_at: string
+          verification_level: Database["public"]["Enums"]["review_verification_level"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organisation_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       start_application_conversation: {
         Args: { p_animal_id: string; p_buyer_id?: string }
         Returns: string
@@ -6649,6 +6960,39 @@ export type Database = {
           p_supporting_document_url?: string
         }
         Returns: string
+      }
+      submit_reservation_review: {
+        Args: {
+          p_content: string
+          p_photo_url?: string
+          p_rating: number
+          p_reservation_id: string
+        }
+        Returns: {
+          animal_id: string | null
+          breeder_response: string | null
+          breeder_response_at: string | null
+          content: string
+          created_at: string
+          id: string
+          moderation_status: Database["public"]["Enums"]["review_moderation_status"]
+          organisation_id: string
+          photo_url: string | null
+          published_at: string
+          rating: number
+          reservation_id: string | null
+          reviewer_display_name: string
+          reviewer_profile_id: string | null
+          source: Database["public"]["Enums"]["review_source"]
+          updated_at: string
+          verification_level: Database["public"]["Enums"]["review_verification_level"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organisation_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       submit_transport_request: {
         Args: { p_draft_id?: string; p_request: Json }
@@ -6757,6 +7101,16 @@ export type Database = {
         | "completed"
         | "failed"
         | "refunded"
+      gallery_category:
+        | "puppies"
+        | "adults"
+        | "shows"
+        | "home"
+        | "play"
+        | "dogs"
+        | "litters"
+        | "families"
+        | "general"
       group_member_role: "member" | "moderator"
       handover_type: "pickup" | "delivery"
       housing_type: "house" | "apartment"
@@ -6985,6 +7339,9 @@ export type Database = {
         | "confirmed"
         | "cancelled"
         | "completed"
+      review_moderation_status: "visible" | "hidden_by_moderation"
+      review_source: "platform" | "legacy_import"
+      review_verification_level: "unverified" | "verified_buyer"
       risk_signal_type:
         | "repeated_rate_limit_hits"
         | "repeated_moderation_submission_failures"
@@ -7362,6 +7719,17 @@ export const Constants = {
         "failed",
         "refunded",
       ],
+      gallery_category: [
+        "puppies",
+        "adults",
+        "shows",
+        "home",
+        "play",
+        "dogs",
+        "litters",
+        "families",
+        "general",
+      ],
       group_member_role: ["member", "moderator"],
       handover_type: ["pickup", "delivery"],
       housing_type: ["house", "apartment"],
@@ -7616,6 +7984,9 @@ export const Constants = {
         "cancelled",
         "completed",
       ],
+      review_moderation_status: ["visible", "hidden_by_moderation"],
+      review_source: ["platform", "legacy_import"],
+      review_verification_level: ["unverified", "verified_buyer"],
       risk_signal_type: [
         "repeated_rate_limit_hits",
         "repeated_moderation_submission_failures",

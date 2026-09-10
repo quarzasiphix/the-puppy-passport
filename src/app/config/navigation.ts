@@ -50,6 +50,7 @@ export const buyerNav: DashboardNavItem[] = [
   { to: "/dashboard/buyer/applications", label: "Puppy applications", icon: Inbox },
   { to: "/dashboard/buyer/messages", label: "Messages", icon: MessageSquare },
   { to: "/dashboard/buyer/followed", label: "Followed profiles", icon: PawPrint },
+  { to: "/create-breeder", label: "Register a kennel / organisation", icon: HeartHandshake },
   { to: "/dashboard/buyer/profile", label: "Account", icon: User },
 ];
 

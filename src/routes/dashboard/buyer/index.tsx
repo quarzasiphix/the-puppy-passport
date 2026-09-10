@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
-import { Heart, MessageSquare, Truck } from "lucide-react";
+import { Dog, Heart, HeartHandshake, MessageSquare, Truck } from "lucide-react";
 import { useAuth } from "@/domains/identity";
 import {
   isClosed,
@@ -25,7 +25,13 @@ export const Route = createFileRoute("/dashboard/buyer/")({
 });
 
 function BuyerOverview() {
-  const { userId, firstName } = useAuth();
+  const { userId, firstName, roles } = useAuth();
+  const orgRole = roles.find(
+    (r) =>
+      ["breeder", "foundation_member", "shelter_member"].includes(r.role) && r.status === "active",
+  );
+  const orgDashboardPath =
+    orgRole?.role === "breeder" ? "/dashboard/breeder" : "/dashboard/foundation";
   const transportQuery = useQuery({
     queryKey: ["my-transport-requests", userId],
     enabled: !!userId,
@@ -67,6 +73,31 @@ function BuyerOverview() {
       )}
 
       <ActionLauncher variant="dashboard" />
+
+      <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
+            {orgRole ? <Dog className="size-5" /> : <HeartHandshake className="size-5" />}
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">
+              {orgRole
+                ? "You run a kennel or organisation on Anemalo"
+                : "Are you a breeder, shelter or foundation?"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {orgRole
+                ? "Manage your dogs, litters and public profile from your own dashboard."
+                : "Register your kennel or organisation to publish litters, adoptions and manage everything from one place."}
+            </p>
+          </div>
+          <Button asChild size="sm" className="ml-auto">
+            <Link to={orgRole ? orgDashboardPath : "/create-breeder"}>
+              {orgRole ? "Go to my dashboard" : "Get started"}
+            </Link>
+          </Button>
+        </div>
+      </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <Card title="Transport requests" icon={<Truck className="size-5" />}>

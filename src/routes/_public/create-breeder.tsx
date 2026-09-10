@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,6 +60,8 @@ function CreateBreeder() {
   const { userId, isLoading: authLoading } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const router = useRouter();
 
   const verificationQuery = useQuery({
     queryKey: ["my-org-verification", userId],
@@ -95,38 +97,42 @@ function CreateBreeder() {
     },
   });
 
+  // TESTING PHASE — no manual breeder/organisation verification review is active right now (user
+  // decision 2026-09-11: focus on making onboarding itself work, not gatekeeping who can publish
+  // a kennel). Submitting this form calls create_and_approve_own_organisation(), which inserts an
+  // ALREADY-approved user_verifications row and creates the organisation/membership/role in one
+  // step, instead of the old "insert pending, wait for an admin" path. That RPC is additive —
+  // approve_user_verification() (admin-gated) still exists untouched; reverting this later means
+  // going back to a plain `status: "pending"` insert here. `breeds` is collected but not stored
+  // anywhere yet (the RPC doesn't take it — no per-org "breeds" column; a kennel's breeds are
+  // derived from its real parent_dogs once added).
   async function onSubmit(values: FormValues) {
     if (!userId) return;
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.from("user_verifications").insert({
-      user_id: userId,
-      verification_type: verificationTypeFor(values.orgType),
-      status: "pending",
-      submitted_data: {
-        org_type: values.orgType,
-        name: values.name,
-        description: values.description,
-        city: values.city,
-        country: values.country,
-        public_location: `${values.city}, ${values.country}`,
-        association_name: values.associationName || null,
-        membership_number: values.membershipNumber || null,
-        years_experience: values.yearsExperience ?? null,
-        website: values.website || null,
-        breeds: values.breeds
-          ? values.breeds
-              .split(",")
-              .map((b) => b.trim())
-              .filter(Boolean)
-          : [],
-      },
+    const { error } = await supabase.rpc("create_and_approve_own_organisation", {
+      p_org_type: values.orgType,
+      p_name: values.name,
+      p_description: values.description,
+      p_city: values.city || undefined,
+      p_country: values.country || undefined,
+      p_association_name: values.associationName || undefined,
+      p_membership_number: values.membershipNumber || undefined,
+      p_years_experience: values.yearsExperience ?? undefined,
+      p_website: values.website || undefined,
     });
     if (error) {
       toast.error(getFriendlyErrorMessage(error, t("createBreederPage.couldNotSubmit")));
       return;
     }
     toast.success(t("createBreederPage.submittedToast"));
-    queryClient.invalidateQueries({ queryKey: ["my-org-verification", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
+    await queryClient.invalidateQueries({ queryKey: ["my-org-verification", userId] });
+    // requireRole's dashboard guard reads context.auth, which comes from a router-loader-level
+    // getCurrentUser() call — router.invalidate() is required (matches signin.tsx's own
+    // sign-in -> navigate sequence) or the new breeder role from the RPC above wouldn't be seen
+    // until some later, unrelated navigation happened to re-run the loader.
+    await router.invalidate();
+    await navigate({ to: "/dashboard/breeder" });
   }
 
   if (authLoading || (userId && verificationQuery.isLoading)) {
@@ -187,9 +193,7 @@ function CreateBreeder() {
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("createBreederPage.eyebrow")}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-medium">
-            {t("createBreederPage.title")}
-          </h1>
+          <h1 className="mt-1 font-display text-4xl font-medium">{t("createBreederPage.title")}</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">{t("createBreederPage.subtitle")}</p>
 
           <Form {...form}>
