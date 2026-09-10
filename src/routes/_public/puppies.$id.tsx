@@ -48,8 +48,20 @@ import { startApplicationConversation } from "@/domains/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { applicationStatusLabels, type ApplicationStatus } from "@/domains/marketplace";
 import { useTranslation } from "@/shared/i18n";
+import { SITE_ORIGIN } from "@/lib/sitemap";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+
+// schema.org availability for the Product structured data below. "draft" never reaches this page
+// (unpublished listings aren't queryable), so it's mapped defensively but shouldn't occur.
+const availabilityForStatus: Record<string, string> = {
+  available: "https://schema.org/InStock",
+  "applications-open": "https://schema.org/PreOrder",
+  reserved: "https://schema.org/LimitedAvailability",
+  sold: "https://schema.org/SoldOut",
+  draft: "https://schema.org/OutOfStock",
+};
+
 export const Route = createFileRoute("/_public/puppies/$id")({
   loader: async ({ params }) => {
     const puppy = await getPuppyById(params.id).catch(() => null);
@@ -63,21 +75,52 @@ export const Route = createFileRoute("/_public/puppies/$id")({
     ]);
     return { puppy, litter, parents, breeder };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: loaderData
-          ? `${loaderData.puppy.name} — ${loaderData.puppy.breed} — Anemalo`
-          : "Puppy — Anemalo",
-      },
-      {
-        name: "description",
-        content: loaderData
-          ? `${loaderData.puppy.name}, a ${loaderData.puppy.breed} puppy from ${loaderData.puppy.kennel} in ${loaderData.puppy.city}, ${loaderData.puppy.country}.`
-          : "A puppy listing on Anemalo.",
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const puppy = loaderData?.puppy;
+    const canonicalUrl = puppy ? `${SITE_ORIGIN}/puppies/${puppy.id}` : undefined;
+    return {
+      meta: [
+        { title: puppy ? `${puppy.name} — ${puppy.breed} — Anemalo` : "Puppy — Anemalo" },
+        {
+          name: "description",
+          content: puppy
+            ? `${puppy.name}, a ${puppy.breed} puppy from ${puppy.kennel} in ${puppy.city}, ${puppy.country}.`
+            : "A puppy listing on Anemalo.",
+        },
+        ...(puppy
+          ? [
+              { property: "og:title", content: `${puppy.name} — ${puppy.breed}` },
+              { property: "og:type", content: "product" },
+              { property: "og:image", content: puppy.gallery[0] || puppy.image },
+              {
+                "script:ld+json": {
+                  "@context": "https://schema.org",
+                  "@type": "Product",
+                  name: `${puppy.name} — ${puppy.breed}`,
+                  description: puppy.about || `${puppy.breed} puppy from ${puppy.kennel}.`,
+                  image: puppy.gallery.length ? puppy.gallery : puppy.image ? [puppy.image] : [],
+                  url: canonicalUrl,
+                  brand: { "@type": "Brand", name: puppy.kennel },
+                  offers: {
+                    "@type": "Offer",
+                    url: canonicalUrl,
+                    priceCurrency: "PLN",
+                    price: puppy.pricePLN,
+                    availability:
+                      availabilityForStatus[puppy.status] ?? "https://schema.org/InStock",
+                    // Not a marketplace where any random seller can list — see product rule 3 in
+                    // CLAUDE.md ("only approved breeders"); every offer is from Anemalo's own
+                    // verified-breeder catalog, never a third-party seller.
+                    seller: { "@type": "Organization", name: "Anemalo" },
+                  },
+                },
+              },
+            ]
+          : []),
+      ],
+      links: canonicalUrl ? [{ rel: "canonical", href: canonicalUrl }] : [],
+    };
+  },
   component: PuppyDetail,
 });
 
@@ -349,7 +392,7 @@ function PuppyDetail() {
                         <span>{formatPuppiesAvailable(locale, breeder.availablePuppies)}</span>
                       </div>
                       <Button asChild variant="outline" size="sm" className="mt-4">
-                        <Link to="/@$handle" params={{ handle: breeder.slug }}>
+                        <Link to="/@{$handle}" params={{ handle: breeder.slug }}>
                           {t("puppyDetail.viewKennelProfile")}
                         </Link>
                       </Button>

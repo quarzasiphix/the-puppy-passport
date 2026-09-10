@@ -83,7 +83,7 @@ function ProfilePage() {
             )}
             {kennelSlug && (
               <Link
-                to="/@$handle"
+                to="/@{$handle}"
                 params={{ handle: kennelSlug }}
                 className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
               >

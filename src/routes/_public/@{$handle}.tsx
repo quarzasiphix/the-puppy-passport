@@ -24,6 +24,7 @@ import { getBreederStats } from "@/domains/breeders";
 import { useAuth } from "@/domains/identity";
 import { listKennelPosts, KennelPostComposer, type PostSummary } from "@/domains/social";
 import { useTranslation } from "@/shared/i18n";
+import { SITE_ORIGIN } from "@/lib/sitemap";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { IdentityCard } from "./-components/breeder-profile/identity-card";
@@ -64,7 +65,7 @@ type LoaderData = {
 // schema-level thing that needed to change to support handles: which URL is canonical. The old
 // /breeders/$slug path now redirects here (see breeders.$slug.tsx) so the two never both get
 // indexed as separate pages for the same profile.
-export const Route = createFileRoute("/_public/@$handle")({
+export const Route = createFileRoute("/_public/@{$handle}")({
   loader: async ({ params }): Promise<LoaderData> => {
     const b = await getKennelBySlug(params.handle).catch(() => null);
     if (!b) throw notFound();
@@ -94,13 +95,34 @@ export const Route = createFileRoute("/_public/@$handle")({
           ? `${loaderData.b.kennel} — ${loaderData.b.breeds.join(", ") || "dog breeder"} in ${loaderData.b.city}, ${loaderData.b.country}. Follow their litters, dogs and history on Anemalo.`
           : "A breeder profile on Anemalo.",
       },
-      // Canonical tag: the old /breeders/$slug URL redirects here, so only this one is ever meant
-      // to be indexed for a given kennel (see the SEO note in breeders.$slug.tsx and
-      // docs/PRODUCT_VISION.md's future-microsite canonical-strategy note).
       ...(loaderData
-        ? [{ tag: "link", attrs: { rel: "canonical", href: `/@${loaderData.b.slug}` } } as const]
+        ? [
+            { property: "og:title", content: `${loaderData.b.kennel} (@${loaderData.b.slug})` },
+            { property: "og:type", content: "profile" },
+            { property: "og:image", content: loaderData.b.cover || loaderData.b.logo },
+            {
+              "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: loaderData.b.kennel,
+                url: `${SITE_ORIGIN}/@${loaderData.b.slug}`,
+                logo: loaderData.b.logo || undefined,
+                image: loaderData.b.cover || undefined,
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: loaderData.b.city || undefined,
+                  addressCountry: loaderData.b.country || undefined,
+                },
+              },
+            },
+          ]
         : []),
     ],
+    // Canonical tag: the old /breeders/$slug URL redirects here, so only this one is ever meant
+    // to be indexed for a given kennel (see the SEO note in breeders.$slug.tsx and
+    // docs/PRODUCT_VISION.md's future-microsite canonical-strategy note). Must be a top-level
+    // `links` entry, not nested inside `meta` — that shape never actually renders a <link> tag.
+    links: loaderData ? [{ rel: "canonical", href: `${SITE_ORIGIN}/@${loaderData.b.slug}` }] : [],
   }),
   component: BreederProfile,
 });

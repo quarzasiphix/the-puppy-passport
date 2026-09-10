@@ -41,7 +41,7 @@ import { Route as PublicCommunityRouteImport } from './routes/_public/community'
 import { Route as PublicBreedersRouteImport } from './routes/_public/breeders'
 import { Route as PublicBreederMapRouteImport } from './routes/_public/breeder-map'
 import { Route as PublicAdoptionsRouteImport } from './routes/_public/adoptions'
-import { Route as PublicAthandleRouteImport } from './routes/_public/@$handle'
+import { Route as PublicAtChar123handleChar125RouteImport } from './routes/_public/@{$handle}'
 import { Route as DashboardOperationsIndexRouteImport } from './routes/dashboard/operations/index'
 import { Route as DashboardFoundationIndexRouteImport } from './routes/dashboard/foundation/index'
 import { Route as DashboardDriverIndexRouteImport } from './routes/dashboard/driver/index'
@@ -293,11 +293,12 @@ const PublicAdoptionsRoute = PublicAdoptionsRouteImport.update({
   path: '/adoptions',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicAthandleRoute = PublicAthandleRouteImport.update({
-  id: '/@$handle',
-  path: '/@$handle',
-  getParentRoute: () => PublicRoute,
-} as any)
+const PublicAtChar123handleChar125Route =
+  PublicAtChar123handleChar125RouteImport.update({
+    id: '/@{$handle}',
+    path: '/@{$handle}',
+    getParentRoute: () => PublicRoute,
+  } as any)
 const DashboardOperationsIndexRoute =
   DashboardOperationsIndexRouteImport.update({
     id: '/',
@@ -811,7 +812,7 @@ const PublicCommunityGroupsSlugRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
-  '/@$handle': typeof PublicAthandleRoute
+  '/@{$handle}': typeof PublicAtChar123handleChar125Route
   '/adoptions': typeof PublicAdoptionsRouteWithChildren
   '/breeder-map': typeof PublicBreederMapRoute
   '/breeders': typeof PublicBreedersRouteWithChildren
@@ -935,7 +936,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
 }
 export interface FileRoutesByTo {
-  '/@$handle': typeof PublicAthandleRoute
+  '/@{$handle}': typeof PublicAtChar123handleChar125Route
   '/breeder-map': typeof PublicBreederMapRoute
   '/cookies': typeof PublicCookiesRoute
   '/create-breeder': typeof PublicCreateBreederRoute
@@ -1047,7 +1048,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_public': typeof PublicRouteWithChildren
-  '/_public/@$handle': typeof PublicAthandleRoute
+  '/_public/@{$handle}': typeof PublicAtChar123handleChar125Route
   '/_public/adoptions': typeof PublicAdoptionsRouteWithChildren
   '/_public/breeder-map': typeof PublicBreederMapRoute
   '/_public/breeders': typeof PublicBreedersRouteWithChildren
@@ -1175,7 +1176,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/@$handle'
+    | '/@{$handle}'
     | '/adoptions'
     | '/breeder-map'
     | '/breeders'
@@ -1299,7 +1300,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/routes/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/@$handle'
+    | '/@{$handle}'
     | '/breeder-map'
     | '/cookies'
     | '/create-breeder'
@@ -1410,7 +1411,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_public'
-    | '/_public/@$handle'
+    | '/_public/@{$handle}'
     | '/_public/adoptions'
     | '/_public/breeder-map'
     | '/_public/breeders'
@@ -1772,11 +1773,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAdoptionsRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/@$handle': {
-      id: '/_public/@$handle'
-      path: '/@$handle'
-      fullPath: '/@$handle'
-      preLoaderRoute: typeof PublicAthandleRouteImport
+    '/_public/@{$handle}': {
+      id: '/_public/@{$handle}'
+      path: '/@{$handle}'
+      fullPath: '/@{$handle}'
+      preLoaderRoute: typeof PublicAtChar123handleChar125RouteImport
       parentRoute: typeof PublicRoute
     }
     '/dashboard/operations/': {
@@ -2516,7 +2517,7 @@ const PublicTransportRouteWithChildren = PublicTransportRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
-  PublicAthandleRoute: typeof PublicAthandleRoute
+  PublicAtChar123handleChar125Route: typeof PublicAtChar123handleChar125Route
   PublicAdoptionsRoute: typeof PublicAdoptionsRouteWithChildren
   PublicBreederMapRoute: typeof PublicBreederMapRoute
   PublicBreedersRoute: typeof PublicBreedersRouteWithChildren
@@ -2549,7 +2550,7 @@ interface PublicRouteChildren {
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
-  PublicAthandleRoute: PublicAthandleRoute,
+  PublicAtChar123handleChar125Route: PublicAtChar123handleChar125Route,
   PublicAdoptionsRoute: PublicAdoptionsRouteWithChildren,
   PublicBreederMapRoute: PublicBreederMapRoute,
   PublicBreedersRoute: PublicBreedersRouteWithChildren,

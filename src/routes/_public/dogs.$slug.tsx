@@ -20,6 +20,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { useTranslation } from "@/shared/i18n";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { SITE_ORIGIN } from "@/lib/sitemap";
 
 import { EvidenceBadges } from "./-components/pedigree/evidence-badges";
 import { AncestorTreeView } from "./-components/pedigree/ancestor-tree";
@@ -70,15 +71,11 @@ export const Route = createFileRoute("/_public/dogs/$slug")({
             ? `${dog.registeredName}${bits ? ` — ${bits}` : ""}. Ancestry, evidence and kennel on the Anemalo public pedigree registry.`
             : "A dog on the Anemalo public pedigree registry.",
         },
-        ...(dog?.slug
-          ? [
-              {
-                tag: "link",
-                attrs: { rel: "canonical", href: `/dogs/${dog.slug}` },
-              } as const,
-            ]
-          : []),
       ],
+      // Must be a top-level `links` entry, not nested inside `meta` — that shape never actually
+      // renders a <link> tag (TanStack's head-tag builder only turns `meta`-array entries into
+      // <meta>, regardless of what a `tag` field on them says).
+      links: dog?.slug ? [{ rel: "canonical", href: `${SITE_ORIGIN}/dogs/${dog.slug}` }] : [],
     };
   },
   component: DogPage,
@@ -200,8 +197,10 @@ function DogPage() {
               <DogIcon className="size-8 text-muted-foreground" />
             )}
           </div>
-          <div>
-            <h1 className="font-display text-3xl font-medium">{dog.registeredName}</h1>
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-medium break-words sm:text-3xl">
+              {dog.registeredName}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {[
                 dog.callName ? `"${dog.callName}"` : null,
@@ -256,7 +255,7 @@ function DogPage() {
               </dl>
               {dog.kennelSlug && (
                 <Link
-                  to="/@$handle"
+                  to="/@{$handle}"
                   params={{ handle: dog.kennelSlug }}
                   className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
                 >

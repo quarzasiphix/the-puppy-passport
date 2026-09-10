@@ -10,10 +10,12 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import ogImage from "@/assets/hero-breeder.jpg";
 import { reportLovableError } from "@/app/lovable-error-reporting";
 import { getCurrentUser, type CurrentUser } from "@/domains/identity";
 import { Toaster } from "@/shared/ui/sonner";
 import { I18nProvider } from "@/shared/i18n";
+import { SITE_ORIGIN } from "@/lib/sitemap";
 
 function NotFoundComponent() {
   return (
@@ -97,7 +99,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Request animal transport across Poland and Europe, or find a dog from a verified breeder or foundation.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Anemalo" },
+      // Site-wide fallback — a real photo (not a logo/placeholder), so a shared link never renders
+      // as a bare text card. Per-page overrides (puppy/kennel photos) replace this further down the
+      // meta array where a page has one; see puppies.$id.tsx / @{$handle}.tsx.
+      { property: "og:image", content: `${SITE_ORIGIN}${ogImage}` },
+      { property: "og:image:width", content: "1600" },
+      { property: "og:image:height", content: "1200" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: `${SITE_ORIGIN}${ogImage}` },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

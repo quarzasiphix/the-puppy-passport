@@ -40,7 +40,7 @@ function ChampionsPage() {
           admin-verified achievements appear here.{" "}
           {kennel?.slug && (
             <Link
-              to="/@$handle"
+              to="/@{$handle}"
               params={{ handle: kennel.slug }}
               className="text-primary hover:underline"
             >
