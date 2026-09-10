@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { deleteCookie, getCookies } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
@@ -132,9 +133,25 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
 // It also provisions first-time passwordless users. The email/password path creates the
 // user_roles row and records consent inside signUp(); a Google or magic-link user would
 // otherwise arrive with zero roles (every role-gated RLS policy and the whole role UI then
-// misbehaves). `intent` comes from the signup UI — the OAuth redirect carries it in the query
-// string, magic links carry it in user_metadata — and stays constrained by the user_roles
-// self-apply RLS policy, so no privileged role can be granted here.
+// misbehaves). `intent` stays constrained by the user_roles self-apply RLS policy, so no
+// privileged role can be granted here regardless of source.
+//
+// Where `intent` comes from, in priority order:
+//   1. `data.intent` — the `?intent=` query param on the callback URL. Works for magic links
+//      (Supabase's own redirect, no third-party hop) but is UNRELIABLE for Google: Supabase's
+//      redirect-URL allowlist validation strips extra query params from OAuth `redirectTo` URLs
+//      in production (documented Supabase limitation — the Google -> GoTrue -> app round trip
+//      does not reliably preserve them). Confirmed live 2026-09-11: a breeder-intent Google
+//      sign-up was silently provisioned as a plain "customer".
+//   2. `ANEMALO_SIGNUP_INTENT_COOKIE` — a short-lived first-party cookie set by
+//      `signup.tsx`'s `onGoogleSignUp` right before starting the Google redirect. Cookies DO
+//      survive that round trip (SameSite=Lax rides along on the top-level navigation back to our
+//      own origin) — this is the reliable channel for Google specifically. Read once, then
+//      deleted, win or lose.
+//   3. `user.user_metadata.intent` — magic links only (set via `signInWithOtp`'s `options.data`).
+//   4. "customer" — safe default, matches the RLS policy's unrestricted-role set.
+export const ANEMALO_SIGNUP_INTENT_COOKIE = "anemalo_signup_intent";
+
 const completePasswordlessSignInSchema = z.object({
   code: z.string().min(1),
   intent: signupIntentSchema.optional(),
@@ -153,8 +170,13 @@ export const completePasswordlessSignIn = createServerFn({ method: "GET" })
     } = await supabase.auth.getUser();
     if (!user) return { error: "Sign-in could not be completed.", redirectTo: null };
 
+    const cookieIntent = signupIntentSchema.safeParse(getCookies()[ANEMALO_SIGNUP_INTENT_COOKIE]);
+    deleteCookie(ANEMALO_SIGNUP_INTENT_COOKIE);
     const metaIntent = signupIntentSchema.safeParse(user.user_metadata?.intent);
-    const intent: SignupIntent = data.intent ?? (metaIntent.success ? metaIntent.data : "customer");
+    const intent: SignupIntent =
+      data.intent ??
+      (cookieIntent.success ? cookieIntent.data : undefined) ??
+      (metaIntent.success ? metaIntent.data : "customer");
 
     const { data: existingRoles } = await supabase
       .from("user_roles")

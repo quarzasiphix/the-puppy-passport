@@ -76,6 +76,34 @@ is fine (`''`, not NULL).
 **Hard rule going forward** (now in `CLAUDE.md`): any future manual `insert into auth.users` must
 explicitly set `confirmation_token = ''`, `recovery_token = ''`, `email_change_token_new = ''`.
 
+## Incident 3 — Google sign-up silently ignored the chosen intent (found + fixed 2026-09-11)
+
+Reported by the user: picking "I'm a breeder" then "Continue with Google" wasn't properly
+registering a breeder. Confirmed real, root-caused:
+
+- `signup.tsx`'s `onGoogleSignUp` passed `intent` via a `?intent=` query param appended to the
+  OAuth `redirectTo` URL — the obvious approach, and the only one available since Google owns the
+  profile (can't set `user_metadata` up front, unlike the magic-link path).
+- **Supabase's redirect-URL allowlist validation strips extra query params from OAuth callback
+  URLs in production** — a documented, known limitation (confirmed via search: multiple
+  independent reports of exactly this). So `auth.callback.tsx` never actually received
+  `intent=breeder`; `completePasswordlessSignIn` fell through its fallback chain straight to
+  `"customer"`. The breeder application was silently never provisioned — the account was created,
+  just as an ordinary buyer with no `breeder`/`pending` role and no landing on `/create-breeder`.
+
+**Fix**: carry `intent` through a short-lived first-party cookie
+(`ANEMALO_SIGNUP_INTENT_COOKIE = "anemalo_signup_intent"`, `max-age=600`, `SameSite=Lax`) set
+client-side right before the Google redirect starts. Cookies aren't part of the URL, so the
+allowlist validation never touches them — and `SameSite=Lax` cookies do ride along on the
+top-level navigation back to our own origin after the Google/GoTrue round trip. Read (and deleted)
+server-side in `completePasswordlessSignIn`, ahead of the query param and `user_metadata` in the
+fallback chain (`src/domains/identity/services/actions.ts`). The query param stays as a harmless
+duplicate for magic links / any environment where it happens to survive.
+
+**Not yet live-tested against a real Google consent screen** (can't drive that from a coding
+session) — `tsc`/`eslint`/`build` all clean; verify with a real "sign up as breeder via Google"
+click before trusting it fully.
+
 ## Open, unverified
 
 - **"Confirm email" setting** (Supabase Dashboard → Authentication → Providers → Email) —

@@ -18,7 +18,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
-import { signUp, landingPathForIntent } from "@/domains/identity";
+import { signUp, landingPathForIntent, ANEMALO_SIGNUP_INTENT_COOKIE } from "@/domains/identity";
 import { Logo } from "@/app/components/logo";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
@@ -175,12 +175,23 @@ function SignUp() {
 
   async function onGoogleSignUp() {
     const supabase = getSupabaseBrowserClient();
-    // intent can't ride in OAuth user_metadata (Google owns the profile), so pass it back through
-    // our own callback URL — auth.callback.tsx validates it against the same enum.
+    const intent = form.getValues("intent");
+    // intent can't ride in OAuth user_metadata (Google owns the profile). The `?intent=` query
+    // param on redirectTo is the obvious way to pass it back, but Supabase's redirect-URL
+    // allowlist strips extra query params from OAuth callback URLs in production — it doesn't
+    // reliably survive the Google -> GoTrue -> app round trip (confirmed live 2026-09-11: a
+    // breeder sign-up silently landed as a plain customer). A short-lived first-party cookie
+    // does survive it (SameSite=Lax rides along on the top-level redirect back to our own
+    // origin), so that's the real channel now — completePasswordlessSignIn in actions.ts reads
+    // it. The query param stays too, as a harmless duplicate for environments where it happens
+    // to come through.
+    document.cookie = `${ANEMALO_SIGNUP_INTENT_COOKIE}=${intent}; path=/; max-age=600; SameSite=Lax${
+      window.location.protocol === "https:" ? "; Secure" : ""
+    }`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?intent=${form.getValues("intent")}`,
+        redirectTo: `${window.location.origin}/auth/callback?intent=${intent}`,
       },
     });
     if (error) toast.error(error.message);
