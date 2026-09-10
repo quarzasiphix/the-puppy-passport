@@ -111,16 +111,41 @@ every reader goes through the SDK.
 - No new endpoint. `public_parent_dogs` / `public_dogs` / `animal_images` selects add the
   `*_path` columns; the Worker does the string join.
 
+### A.4a Serving `media.anemalo.com` — R2 public custom domain, NOT a Worker
+
+**Decision: no Cloudflare Worker in the media *read* path.** `media.anemalo.com` is attached
+**directly to the `gryfinyork-media` R2 bucket** as a public custom domain (R2 → bucket → Settings
+→ Public access → Connect Domain). Reads are served by R2's edge + Cloudflare cache; there is no
+code to deploy or keep alive.
+
+- **Do NOT fold media into `anemalo-gateway`.** The gateway is the anon read-*data* API and
+  auto-deploys on every push — coupling latency-sensitive static media to that cadence, and
+  putting an R2 binding next to the public API, is exactly what the "separate `api.anemalo.com`
+  Worker" decision argued against (`API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md` §1, §3).
+- **As of 2026-09-11 `media.anemalo.com` is mis-routed to the `anemalo-gateway` Worker**
+  (`GET https://media.anemalo.com/` returns the gateway's `{"service":"anemalo-gateway",…}` JSON,
+  and every image path 404s). Fix: remove `media.anemalo.com` from the gateway Worker's
+  Domains & Routes, then connect it to the bucket as above.
+- GRYFIN's existing `media-worker` (behind `media.hodowlagryfinyork.pl`, R2 binding `MEDIA` →
+  `gryfinyork-media`, plus `/media-usage` accounting and the write proxy) is **left completely
+  untouched** — different hostname, same bucket. The Gryfin site cannot break from any of this.
+- A dedicated `anemalo-media` Worker is only worth it later if Anemalo needs edge image resizing,
+  signed URLs for *private* media, hotlink protection, or per-org usage metering. Not now.
+
 ### A.5 Go-forward upload path (breeder panel → R2)
 
-Unchanged from `STORAGE_AND_MEDIA.md`'s plan, stated here as the protocol the SDK assumes:
+The upload/write path is a **Supabase Edge Function**, not a Cloudflare Worker and not the gateway.
+Stated here as the protocol the SDK assumes:
 
 1. Breeder uploads in the **Anemalo breeder panel** (single source of truth — `/p/grif/c` is
    retired for GRYFIN, see `GRYFIN_IMPORT.md`).
-2. Client compresses / HEIC-converts, then `POST`s to an **`upload-media` Supabase Edge Function**
-   (mirrors `/p/grif/c`'s `upload-media` + `media-worker/`), authenticated with the caller's
-   Supabase `access_token`. The function verifies `is_org_member(org)`, writes the object to
-   `gryfinyork-media` at key `org/<org_id>/<kind>/<uuid>.<ext>`, returns `{ path }`.
+2. Client compresses / HEIC-converts, then `POST`s to an **`upload-media` Supabase Edge Function
+   on the Anemalo project** (`pgzvkkybqrhxedjoyjzy`) — a *new* function, not Gryfin's (that one is
+   single-tenant: any logged-in user = the one office account). Authenticated with the caller's
+   Anemalo `access_token`. It verifies `is_org_member(org)`, then writes to `gryfinyork-media` via
+   the **R2 S3 API** (access key id + secret as Edge Function secrets — same mechanism as
+   `STRIPE_SECRET_KEY`), at key `org/<org_id>/<kind>/<uuid>.<ext>`, and returns `{ path }`.
+   Mirrors `create-deposit-checkout-session`'s "verify caller, do the privileged thing" shape.
 3. The panel stores `path` in `*_path`. The public URL is only ever computed on read (A.4).
 4. Delete = the function removes the object + the row nulls `*_path`.
 
@@ -242,7 +267,7 @@ integration until the SDK exists, then rebased onto it.
 
 | Phase | Work | Unblocks |
 |---|---|---|
-| **S0** | `gryfinyork-media` *becomes* the Anemalo media bucket in place — no rename (R2 has none), no object move. Add `media.anemalo.com` as a 2nd R2 custom domain on it (keep `media.hodowlagryfinyork.pl`). **Confirm which Cloudflare account owns the bucket** vs. where `api.anemalo.com` / the Anemalo Workers run: same account → the `upload-media` Worker binds it natively (`[[r2_buckets]] bucket_name = "gryfinyork-media"`); different account → that Worker uses R2 S3-API keys as a secret (reads via the custom domain are unaffected either way). No app code. | A.4, step 6–7, S6 |
+| **S0** | `gryfinyork-media` *becomes* the Anemalo media bucket in place — no rename (R2 has none), no object move, no Worker. (a) Remove `media.anemalo.com` from the **`anemalo-gateway`** Worker's Domains & Routes (it's mis-attached there today — every image 404s). (b) Connect `media.anemalo.com` to the `gryfinyork-media` bucket as an **R2 public custom domain** (keep `media.hodowlagryfinyork.pl` on Gryfin's untouched `media-worker`). (c) Note which CF account owns the bucket — the Anemalo `upload-media` Edge Function (S6) writes via R2 S3-API keys regardless, so cross-account is fine. No app code. | A.4, A.4a, step 6–7, S6 |
 | **S1** | Media migration A.3 + gateway A.4 (`*_path` + resolved `url` in `/v1/site-content`). Update `/p/grif/p` branch mapper to read `path`+base. | one canonical media domain; SDK media resolver |
 | **S2** | `@anemalo/api-contract` + `@anemalo/site-sdk` (+ `/react`). Port `/p/grif/p` to consume it. | every future site |
 | **S3** | `anemalo-site-template` with 3 themes + one-command deploy. | step 4–5 |
