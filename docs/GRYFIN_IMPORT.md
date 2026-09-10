@@ -137,3 +137,11 @@ Done, on branches (both repos need a deploy):
   phone/email/socials come from a per-site fallback file).
 
 The gateway side is done and live; what's left is to build/preview the `/p/grif/p` branch.
+
+### Media
+
+GRYFIN's images were imported as absolute `https://media.hodowlagryfinyork.pl/...` URLs and serve
+fine as-is (verified `200 image/webp`). The go-forward plan — reuse the `gryfinyork-media` R2
+bucket as Anemalo's, front it with `media.anemalo.com`, store portable **paths** + resolve against
+a per-org base URL (so her own site keeps her CDN hostname) — is `docs/BREEDER_SITE_SDK.md` Part A,
+phases S0/S1. No object move; `media.anemalo.com` isn't configured yet, so nothing to apply.

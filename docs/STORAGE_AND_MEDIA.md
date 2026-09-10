@@ -62,6 +62,28 @@ in front of an R2 bucket bound to a Cloudflare Worker, then change `uploadPrivat
 argument, so nothing stops e.g. moving `kennel-media` to R2 first while `transport-documents` stays
 on Supabase Storage, if that's ever the right order.
 
+## Addressing model (2026-09-11) — store a path, resolve with a base
+
+Decided alongside the breeder-site SDK (`docs/BREEDER_SITE_SDK.md`, Part A — the authoritative
+version). Rows store a **portable media path** relative to the bucket root, never an absolute URL
+or CDN host. A URL is `<media base> + "/" + <path>`, computed on read:
+
+- Platform default base: `https://media.anemalo.com`.
+- Per-org override: `organisation_site_configurations.media_base_url` (nullable). GRYFIN YORK's
+  own site keeps serving `https://media.hodowlagryfinyork.pl/...` via this override while
+  `anemalo.com` + her `@handle` profile serve the identical bytes from `https://media.anemalo.com/...`
+  — same bucket, two CNAMEs.
+- Existing GRYFIN objects keep their current keys (`dogs/<uuid>.<ext>`, `puppies/<uuid>.<ext>` —
+  no object move). New uploads: `org/<organisation_id>/<kind>/<uuid>.<ext>`.
+- Additive migration: `*_path` columns beside the existing absolute `*_url` columns +
+  `media_base_url` on the site config; backfill GRYFIN's paths by stripping the
+  `https://media.hodowlagryfinyork.pl/` prefix. `/v1/site-content` then returns both `path`
+  (contract) and a resolved `url` (convenience). Full SQL + phasing in `BREEDER_SITE_SDK.md`
+  §A.3–A.5 and its phase table (S0/S1). **Not yet applied** — gated on `media.anemalo.com` being
+  attached to the bucket.
+- A first-class `media_assets` table is the long-term model but is deferred; the path+base rule
+  is forward-compatible with it.
+
 ## Decided direction (2026-09-10) — reuse Gryfin's bucket behind a custom domain
 
 When the R2 pass happens, the bucket strategy is settled: **reuse the existing `gryfinyork-media`

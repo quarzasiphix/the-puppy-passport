@@ -243,9 +243,11 @@ Target posture (mirror `/p/grif/p` exactly): **the breeder site app has no
      `site-content`. This is the path that needs the `resolve_org_by_hostname` RPC (§6).
 - **Enquiries**: `POST https://api.anemalo.com/v1/enquiry` with `{ org, name, email, message }` —
   a drop-in for `/p/grif/p`'s `submitEnquiry()`. Returns 501 until the backend table lands.
-- **Media**: `logo_url` / `cover_image_url` / `animal_images[].image_url` are returned as-is.
-  Today they're relative `/images/seed/...` paths in seed data; real uploads resolve to the
-  Anemalo storage/CDN origin. The template app must treat them as absolute-or-prefixable URLs.
+- **Media**: superseded by `docs/BREEDER_SITE_SDK.md` Part A — rows store a portable **path**,
+  `/v1/site-content` returns both `path` (contract) and a `url` resolved against the platform base
+  (`https://media.anemalo.com`) or the org's `media_base_url` override. GRYFIN's imported absolute
+  `media.hodowlagryfinyork.pl` URLs still work via that override. Not built yet (SDK doc phases
+  S0/S1).
 
 ### SEO / canonical strategy (the `docs/TODO_MULTI_TENANT_BREEDER_SITES.md` concern)
 
