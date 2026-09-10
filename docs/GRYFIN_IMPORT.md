@@ -64,12 +64,46 @@ double-import). The Gryfin source UUIDs are recorded in `animals.description` / 
 `.gryfin-migration/id-map.json` is written on apply so a second pass can diff. Dry-run mode
 (`SELECT`-only, reports the plan, writes nothing) runs first.
 
-## Status
+## Status — ✅ IMPORTED 2026-09-10
 
-- ✅ Full Gryfin snapshot captured (`.gryfin-migration/snapshot.json`).
-- ⏳ **Blocked on**: (a) Supabase MCP reconnected to the `anemalo` project (`pgzvkkybqrhxedjoyjzy`)
-  — currently only `gryfinyork` is connected; (b) Monika's email.
-- Then: dry-run report → review → apply. The live Gryfin site + DB are never touched.
+Applied to `anemalo` (`pgzvkkybqrhxedjoyjzy`) as migration `import_gryfin_york_kennel`, one
+transaction. Live Gryfin site + DB untouched. Verified row counts:
+
+| target | rows |
+|---|---|
+| `organisations` (`slug='gryfin-york'`) | 1 |
+| `organisation_site_configurations` | 1 |
+| `organisation_domains` (`hodowlagryfinyork.pl` + `www.`) | 2 |
+| `organisation_members` (Monika = `owner`) | 1 |
+| `breeds` (`yorkshire-terrier`, `size_category='small'`) | 1 |
+| `parent_dogs` | 11 |
+| `litters` (2 `born`, 2 `planned`) | 4 |
+| `animals` (`breeder_puppy`; 7 `sold` → Alumni, Timon `reserved`) | 8 |
+| `animal_images` | 55 |
+| `auth.users` + `auth.identities` + `profiles` (`ja@hodowlagryfinyork.pl`) | 1 each |
+| `user_roles` (`breeder` / `active`) | 1 |
+| pedigree graph `dogs` (auto, 11 parent + 8 puppy) | 19 |
+| pedigree graph `dog_parent_relationships` (auto; Miot S has no dam → 4×1 + 4×2) | 12 |
+
+`get_advisors(security)` after apply: no new findings — the import is pure DML into existing
+already-RLS'd tables (+ one `breeds` row), zero DDL. Deterministic UUIDs are in
+`.gryfin-migration/id-map.json`.
+
+**Monika's first sign-in**: her `auth.users` row has `email_confirmed_at` set and no password.
+She signs in via a magic link / password reset to `ja@hodowlagryfinyork.pl`. Add
+`https://anemalo.com/auth/callback` to the project's Auth → Redirect URLs first (see main CLAUDE.md).
+
+### Follow-ups (raised by the user 2026-09-10, not yet done)
+
+1. **Retire the seed/demo kennels** once Gryfin is fully live in the network — 3 orgs remain from
+   `supabase/seed.sql` (`cichy-las` 7 animals, `wolna-dolina` 3, `ratunek-dla-psow` 1 foundation),
+   all under `10000000-…` / `20000000-…` UUIDs. Goal: production shows only real Gryfin data.
+2. **Clickable parents on the puppy page** — `src/routes/_public/puppies.$id.tsx` `ParentCard`
+   is static. `getLitterParents()` (`src/domains/marketplace/services/marketplace.ts:563`) must
+   also return each parent's pedigree-graph `dogs.slug` so the card links to…
+3. **The individual dog page already exists**: `src/routes/_public/dogs.$slug.tsx` (pedigree
+   identity, 5-gen ancestor tree, evidence badges, claim flow). It just needs to be linked to from
+   the puppy page (2) and the breeder profile dog list.
 
 ## Bigger picture — this is Phase C of `docs/API_GATEWAY_AND_MULTI_TENANT_BREEDERS.md`
 
@@ -84,3 +118,22 @@ immediately), (d) the pedigree graph. Sequencing after the data import:
   (built this session); wire them into her flow.
 - **Gateway site wiring** — a fork of `/p/grif/p` that reads `api.anemalo.com/v1/site-content?org=gryfin-york`
   instead of its own Supabase, leaving her live site untouched until cutover.
+
+## Gateway wiring — status (2026-09-10)
+
+Done, on branches (both repos need a deploy):
+
+- **`anemalo/app`** migration `20260910100000_public_parent_dogs_view.sql` — *applied*. New
+  `public_parent_dogs` anon view = a kennel's breeding stock (`parent_dogs`, approved+public
+  kennels only, no `microchip_number`), carrying the linked pedigree `dogs.slug`.
+- **`anemalo-gateway`** commit *"site-content: split breeding stock from the pedigree graph"* —
+  committed, **not deployed** (needs `wrangler deploy`; no CF creds in the coding session).
+  `/v1/site-content` `dogs` now comes from `public_parent_dogs` (11 rows for GRYFIN, not the
+  19-row pedigree graph); the graph is still there as `pedigreeDogs` + `pedigreeRelationships`.
+- **`/p/grif/p`** branch `anemalo-gateway` — commit *"read site content from the Anemalo
+  platform"*. `src/lib/{api,mappers,anemalo-types,site-fallback}.ts` only; domain types and every
+  component/route unchanged. `main` still serves the live site. See `/p/grif/p/NOTES-ANEMALO.md`
+  for the deploy order and the remaining gaps (testimonials + standalone gallery have no Anemalo
+  home yet; phone/email/socials come from a per-site fallback file).
+
+Deploy order: gateway `wrangler deploy` **first**, then build/preview the `/p/grif/p` branch.
