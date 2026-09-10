@@ -1,12 +1,22 @@
 # Pedigree graph (Pedigree V1)
 
-Status: **migration written, NOT yet applied to the live project.** Applying it, regenerating
-`src/lib/supabase/types.ts`, running `get_advisors`, and live-smoke-testing the
-submission → resolution → canonical-write path is the required next step (blocked this pass by
-Supabase MCP account scope — only the unrelated `pok` project was reachable).
+Status (updated 2026-09-11): **applied and live** on the `anemalo` project. Both migrations
+(`20260910000100_pedigree_graph_schema.sql`, `20260910000200_pedigree_graph_rpcs.sql`, plus two
+small advisor-fixup follow-ups) are on the DB; all 6 RPCs exist
+(`create_pedigree_submission`, `attach_pedigree_submission_document`, `resolve_pedigree_slot`,
+`finalize_pedigree_submission`, `attach_breeder_pedigree_source`, `search_dogs_ranked`).
 
-Everything in `src/domains/pedigrees/` and the pedigree routes compiles clean and is logically
-correct against the two migrations, but **nothing is DB-verified**.
+Real production data: **36 `dogs`, 29 `dog_parent_relationships`, 5 `pedigree_sources`**
+(populated automatically by the identity trigger when GRYFIN YORK's breeding stock was imported —
+see `docs/GRYFIN_IMPORT.md`). `search_dogs_ranked('Tina', 5)` verified live, returns a correctly
+ranked real match. `/pedigrees` (search) and `/pedigrees/add` (the submission wizard — upload a
+document or type ancestors in, 6-slot v1: subject's parents + grandparents) both render 200
+against live data, checked directly.
+
+**Still genuinely untested**: `pedigree_submissions` and `dog_claims` are both **0 rows** — no
+real user has ever run the create-submission → resolve-slot → finalize write path end-to-end, or
+the dog-claim flow, through the actual UI. The RPCs and pages exist and are logically sound, but
+nobody has clicked through them for real yet.
 
 ## The model — every concept is its own row
 
