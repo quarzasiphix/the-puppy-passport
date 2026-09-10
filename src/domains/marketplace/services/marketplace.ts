@@ -58,6 +58,7 @@ export type AnimalRow = {
     country: string | null;
     verification_status: string;
     response_time: string | null;
+    organisation_site_configurations: { primary_color: string | null } | null;
   } | null;
 };
 
@@ -97,11 +98,12 @@ export function mapAnimalToPuppy(a: AnimalRow): PuppyWithExtras {
     about: a.description ?? "",
     temperament: a.temperament,
     idealHome: a.ideal_home,
+    accentColor: a.organisations?.organisation_site_configurations?.primary_color ?? null,
   };
 }
 
 export const animalSelect =
-  "id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time)";
+  "id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, breeds(name), animal_images(image_url, is_cover), litters(ready_date), organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time, organisation_site_configurations(primary_color))";
 
 // Stage IR-2: the search filters below are applied server-side (SQL WHERE, not a post-fetch JS
 // .filter() over every published row) so they scale independently of how many puppies are
@@ -136,8 +138,8 @@ export type PuppySearchFilters = {
 function animalSelectFor(filters?: PuppySearchFilters): string {
   const breedsPart = filters?.breed ? "breeds!inner(name)" : "breeds(name)";
   const orgsPart = filters?.country
-    ? "organisations!animals_organization_id_fkey!inner(id, name, slug, city, country, verification_status, response_time)"
-    : "organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time)";
+    ? "organisations!animals_organization_id_fkey!inner(id, name, slug, city, country, verification_status, response_time, organisation_site_configurations(primary_color))"
+    : "organisations!animals_organization_id_fkey(id, name, slug, city, country, verification_status, response_time, organisation_site_configurations(primary_color))";
   return `id, name, sex, color, date_of_birth, price, currency, availability_status, transport_available, description, temperament, ideal_home, litter_id, organization_id, ${breedsPart}, animal_images(image_url, is_cover), litters(ready_date), ${orgsPart}`;
 }
 
@@ -337,6 +339,7 @@ type OrgRow = {
   logo_url: string | null;
   owner_user_id: string;
   profiles: { display_name: string | null } | null;
+  organisation_site_configurations: { primary_color: string | null } | null;
 };
 
 async function orgBreeds(orgId: string): Promise<string[]> {
@@ -382,6 +385,7 @@ function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Br
     logo: o.logo_url ?? placeholderImg,
     handovers: 0,
     responseTime: o.response_time ?? "",
+    accentColor: o.organisation_site_configurations?.primary_color ?? null,
   };
 }
 
@@ -447,7 +451,7 @@ export async function mapOrgsToBreeders(rows: OrgRow[]): Promise<Breeder[]> {
 }
 
 export const orgSelect =
-  "id, name, slug, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name)";
+  "id, name, slug, description, city, country, years_experience, association_name, verification_status, response_time, cover_image_url, logo_url, owner_user_id, profiles!organisations_owner_user_id_fkey(display_name), organisation_site_configurations(primary_color)";
 export type { OrgRow };
 
 export async function listApprovedKennels() {

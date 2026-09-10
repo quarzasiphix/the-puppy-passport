@@ -1527,6 +1527,21 @@
     "wizard": {
       "stepPrefix": "Step",
       "ofLabel": "of"
+    },
+    "brandColor": {
+      "ocean": "Ocean Blue",
+      "plum": "Plum",
+      "berry": "Berry",
+      "amber": "Amber",
+      "sage": "Sage Green",
+      "slate": "Slate",
+      "rust": "Rust",
+      "teal": "Teal",
+      "settingLabel": "Brand color",
+      "settingHint": "Colors your dashboard, your public kennel page, and gives your puppies a subtle accent wherever they appear on Anemalo.",
+      "settingLocked": "Available on Breeder Pro and above.",
+      "none": "Anemalo default",
+      "saved": "Brand color updated."
     }
   }
 }

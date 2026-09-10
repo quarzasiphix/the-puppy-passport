@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { requireRole } from "@/domains/identity";
-import { getMyKennelProfile } from "@/domains/breeders";
+import { getMyKennelProfile, getKennelSiteConfiguration } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { breederNav } from "@/app/config/navigation";
 import { NotificationBell } from "@/domains/messaging";
@@ -22,10 +22,16 @@ function BreederDashboardLayout() {
     enabled: !!userId,
     queryFn: () => getMyKennelProfile(userId!),
   });
+  const siteConfigQuery = useQuery({
+    queryKey: ["kennel-site-config", kennelQuery.data?.id],
+    enabled: !!kennelQuery.data?.id,
+    queryFn: () => getKennelSiteConfiguration(kennelQuery.data!.id),
+  });
 
   return (
     <DashboardShell
       navItems={breederNav}
+      accentColor={siteConfigQuery.data?.primaryColor}
       statusLine={
         <>
           <div className="mt-2 text-xs text-muted-foreground">Kennel</div>

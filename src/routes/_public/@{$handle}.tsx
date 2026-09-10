@@ -23,6 +23,7 @@ import { ReportDialog, getTrustClaimMap } from "@/domains/trust";
 import { getBreederStats } from "@/domains/breeders";
 import { useAuth } from "@/domains/identity";
 import { listKennelPosts, KennelPostComposer, type PostSummary } from "@/domains/social";
+import { getAccentCssVars } from "@/domains/breeders";
 import { useTranslation } from "@/shared/i18n";
 import { SITE_ORIGIN } from "@/lib/sitemap";
 
@@ -185,9 +186,25 @@ function BreederProfile() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div>
-        <div className="relative h-56 bg-secondary md:h-72">
-          <img src={b.cover} alt="" className="size-full object-cover" />
+      {/* A kennel's own brand color (see brand-color.ts) — their whole public profile is "their
+          own space", not a mixed grid with other kennels, so it gets the full accent override
+          rather than the contained border/badge treatment used on shared marketplace cards. */}
+      <div style={getAccentCssVars(b.accentColor)}>
+        {/* A plain color band, not the kennel's cover photo — a wide crop of a close-up pet photo
+            reads badly as a banner (see the redesign note this replaced). Uses the kennel's own
+            brand color when set, the same site-wide primary/accent gradient otherwise. */}
+        <div
+          className={`relative h-40 md:h-52 ${
+            b.accentColor ? "" : "bg-gradient-to-br from-primary/25 via-accent/15 to-secondary"
+          }`}
+          style={
+            b.accentColor
+              ? {
+                  background: `linear-gradient(135deg, ${b.accentColor} 0%, ${b.accentColor}99 55%, var(--secondary) 100%)`,
+                }
+              : undefined
+          }
+        >
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-transparent" />
         </div>
 

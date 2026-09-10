@@ -35,6 +35,10 @@ export type Puppy = {
   gallery: string[];
   litterId: string;
   about: string;
+  /** The listing's kennel's brand color (organisation_site_configurations.primary_color), a raw
+   * hex string or null — see domains/breeders/services/brand-color.ts. Optional because the demo
+   * data below predates it; every real mapping (mapAnimalToPuppy) always sets it. */
+  accentColor?: string | null;
 };
 
 export type Litter = {
@@ -81,6 +85,10 @@ export type Breeder = {
   logo: string;
   handovers: number;
   responseTime: string;
+  /** This kennel's brand color (organisation_site_configurations.primary_color), a raw hex string
+   * or null — see domains/breeders/services/brand-color.ts. Optional for the same reason as
+   * ownerId above; buildBreeder in domains/marketplace/services/marketplace.ts always sets it. */
+  accentColor?: string | null;
 };
 
 export const breeders: Breeder[] = [

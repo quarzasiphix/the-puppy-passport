@@ -21,9 +21,12 @@ import {
   getKennelCapabilities,
   KENNEL_SECTIONS,
   KENNEL_SECTION_LABELS,
+  BREEDER_BRAND_PALETTE,
   type KennelSection,
   type KennelTheme,
 } from "@/domains/breeders";
+import { Check } from "lucide-react";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/dashboard/breeder/settings")({
@@ -94,6 +97,7 @@ function SettingsPage() {
 }
 
 function KennelPageSettings({ userId }: { userId: string | null }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const kennelQuery = useQuery({
     queryKey: ["my-kennel-id", userId],
@@ -162,6 +166,50 @@ function KennelPageSettings({ userId }: { userId: string | null }) {
             {!capabilities.canCustomizeTheme && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Available on Breeder Pro and above.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label>{t("breederPanel.brandColor.settingLabel")}</Label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("breederPanel.brandColor.settingHint")}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!capabilities.canCustomizeTheme}
+                onClick={() => mutation.mutate({ primaryColor: null })}
+                aria-label={t("breederPanel.brandColor.none")}
+                className={`flex size-10 items-center justify-center rounded-full border-2 bg-card disabled:cursor-not-allowed disabled:opacity-50 ${
+                  !config.primaryColor ? "border-primary" : "border-border"
+                }`}
+              >
+                {!config.primaryColor && <Check className="size-4 text-primary" />}
+              </button>
+              {BREEDER_BRAND_PALETTE.map((c) => {
+                const selected = config.primaryColor?.toLowerCase() === c.hex.toLowerCase();
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    disabled={!capabilities.canCustomizeTheme}
+                    onClick={() => mutation.mutate({ primaryColor: c.hex })}
+                    aria-label={t(c.labelKey)}
+                    title={t(c.labelKey)}
+                    style={{ backgroundColor: c.hex }}
+                    className={`flex size-10 items-center justify-center rounded-full border-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      selected ? "border-foreground" : "border-transparent"
+                    }`}
+                  >
+                    {selected && <Check className="size-4 text-white" />}
+                  </button>
+                );
+              })}
+            </div>
+            {!capabilities.canCustomizeTheme && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("breederPanel.brandColor.settingLocked")}
               </p>
             )}
           </div>

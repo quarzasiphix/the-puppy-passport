@@ -45,10 +45,13 @@ export function IdentityCard({
     <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
       <div className="p-6 md:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          {/* object-contain, not object-cover: a logo/crest is a whole design (an icon + a name
+              banner, in a non-square source image for most kennels), not a photo — cropping it to
+              fill a square box cuts off part of the mark instead of just re-framing a photo. */}
           <img
             src={b.logo}
             alt=""
-            className="size-24 shrink-0 rounded-2xl border-4 border-background object-cover shadow-md sm:size-28"
+            className="size-24 shrink-0 rounded-2xl border-4 border-background bg-card object-contain p-1 shadow-md sm:size-28"
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

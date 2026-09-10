@@ -1527,6 +1527,21 @@
     "wizard": {
       "stepPrefix": "Krok",
       "ofLabel": "z"
+    },
+    "brandColor": {
+      "ocean": "Błękit oceanu",
+      "plum": "Śliwkowy",
+      "berry": "Jagodowy",
+      "amber": "Bursztynowy",
+      "sage": "Szałwiowy",
+      "slate": "Grafitowy",
+      "rust": "Rdzawy",
+      "teal": "Morski",
+      "settingLabel": "Kolor marki",
+      "settingHint": "Koloruje Twój panel, publiczną stronę hodowli i nadaje Twoim szczeniakom subtelny akcent wszędzie tam, gdzie pojawiają się na Anemalo.",
+      "settingLocked": "Dostępne w planie Breeder Pro i wyższych.",
+      "none": "Domyślny Anemalo",
+      "saved": "Kolor marki zaktualizowany."
     }
   }
 }

@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { useTranslation, type Locale } from "@/shared/i18n";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "../services/buyer-activity";
+import { accentBorderStyle } from "@/domains/breeders";
 
 // Polish plural forms don't map to a single dot-path key (they depend on the count), so these
 // small formatting helpers build the final string around t() for the parts that are static —
@@ -45,7 +46,11 @@ export function formatWaitingList(locale: Locale, count: number): string {
     : `Waiting list: ${count} ${count === 1 ? "person" : "people"}`;
 }
 
-export function formatDate(locale: Locale, iso: string, options: Intl.DateTimeFormatOptions): string {
+export function formatDate(
+  locale: Locale,
+  iso: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
   return new Date(iso).toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", options);
 }
 
@@ -119,7 +124,10 @@ export function statusLabelFor(t: (key: string) => string, status: Puppy["status
 export function PuppyCard({ p }: { p: Puppy }) {
   const { t, locale } = useTranslation();
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <article
+      style={accentBorderStyle(p.accentColor)}
+      className={`group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg ${p.accentColor ? "border-l-4" : ""}`}
+    >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <img
           src={p.image}
@@ -172,7 +180,16 @@ export function PuppyCard({ p }: { p: Puppy }) {
             {formatDate(locale, p.readyDate, { day: "numeric", month: "short" })}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground">{p.kennel}</p>
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          {p.accentColor && (
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: p.accentColor }}
+              aria-hidden
+            />
+          )}
+          {p.kennel}
+        </p>
         <Button asChild className="mt-auto">
           <Link to="/puppies/$id" params={{ id: p.id }}>
             {t("cards.viewPuppy")}
@@ -264,11 +281,19 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <Meta
             label={planned ? t("cards.expectedBirth") : t("cards.born")}
-            value={formatDate(locale, l.birthDate, { day: "numeric", month: "short", year: "numeric" })}
+            value={formatDate(locale, l.birthDate, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
           />
           <Meta
             label={t("cards.collectionReady")}
-            value={formatDate(locale, l.readyDate, { day: "numeric", month: "short", year: "numeric" })}
+            value={formatDate(locale, l.readyDate, {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
           />
           <Meta label={t("cards.mother")} value={l.mother} />
           <Meta label={t("cards.father")} value={l.father} />
@@ -312,7 +337,10 @@ function Meta({ label, value }: { label: string; value: string }) {
 export function BreederCard({ b }: { b: Breeder }) {
   const { t, locale } = useTranslation();
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
+    <article
+      style={accentBorderStyle(b.accentColor)}
+      className={`flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card ${b.accentColor ? "border-l-4" : ""}`}
+    >
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={b.cover} alt={b.kennel} loading="lazy" className="size-full object-cover" />
         {b.verified && (
@@ -324,7 +352,16 @@ export function BreederCard({ b }: { b: Breeder }) {
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-display text-lg font-semibold">{b.kennel}</h3>
+            <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold">
+              {b.accentColor && (
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: b.accentColor }}
+                  aria-hidden
+                />
+              )}
+              {b.kennel}
+            </h3>
             <p className="text-sm text-muted-foreground">
               {b.name} · {b.city}, {b.country}
             </p>

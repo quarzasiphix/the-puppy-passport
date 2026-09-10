@@ -156,6 +156,7 @@ export function DashboardShell({
   statusLine,
   header,
   children,
+  accentColor,
 }: {
   navItems: DashboardNavItem[];
   /** Small text under the workspace switcher, e.g. kennel name + verification badge. */
@@ -163,11 +164,19 @@ export function DashboardShell({
   /** Optional sticky top bar rendered above the page content (search, notifications, user chip). */
   header?: React.ReactNode;
   children: React.ReactNode;
+  /** A kennel's chosen brand color (organisation_site_configurations.primary_color), as a raw hex
+   * string — overrides the `--accent`/`--accent-foreground` CSS variables for this whole shell, so
+   * every existing accent-toned element (QuickActionTile "accent" tone, badges, etc.) reflects it
+   * for free. Only ever passed for a breeder's own dashboard — see dashboard/breeder.tsx. */
+  accentColor?: string | null;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const current = "/" + pathname.split("/").slice(1, 3).join("/");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t } = useTranslation();
+  const accentStyle = accentColor
+    ? ({ "--accent": accentColor, "--accent-foreground": "#ffffff" } as React.CSSProperties)
+    : undefined;
 
   // Close the mobile nav whenever the route changes (tapping a link navigates but doesn't unmount
   // this shell, so the Sheet would otherwise stay open over the new page).
@@ -218,7 +227,7 @@ export function DashboardShell({
   );
 
   return (
-    <div className="min-h-screen bg-secondary/40">
+    <div className="min-h-screen bg-secondary/40" style={accentStyle}>
       <LocaleSuggestionBanner />
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground lg:flex">
