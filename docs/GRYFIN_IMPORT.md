@@ -37,11 +37,16 @@ a Cloudflare custom domain already in front of the R2 bucket. Per the decision i
 
 ## What does NOT migrate (and why)
 
-- **`testimonials` (19)** — Anemalo has no reviews table, *and* every row carries a third party's
-  personal name (the review author). No lawful basis to move other people's personal data into
-  Anemalo. Left in Gryfin. (A future Anemalo reviews table + a proper consent path could revisit.)
-- **`gallery_images` (30)** — no org-gallery table in Anemalo yet (breeder-panel gap). URLs are in
-  the snapshot; import them once that table exists.
+- **`testimonials` (19)** — **update 2026-09-11: Anemalo now has a reviews table**
+  (`organisation_reviews`, see `docs/REVIEWS.md`), so the original blocker ("no target table")
+  is gone. Still not imported: this session only has a *summary* of the 19 rows (author-name
+  sample, "all rating 5") in `.gryfin-migration/snapshot.json`, not the verbatim content per row
+  — fabricating review text attributed to real people would be actively wrong. Backfill as
+  `organisation_reviews` rows with `source='legacy_import'` once the exact rows are re-read from
+  the Gryfin project (reconnect Supabase MCP to `eqggerrzfwlfqibcdyjy`).
+- **`gallery_images` (30)** — **done 2026-09-11.** `organisation_gallery_images` exists and all 30
+  are imported (URLs kept as-is, `category='general'`) — see `docs/REVIEWS.md` /
+  `20260911000100_reviews_and_gallery.sql`.
 - **`enquiries` (4)** — transient lead-capture PII, no Anemalo target.
 - **FB / TikTok URLs** — no `organisations` social-links column yet.
 

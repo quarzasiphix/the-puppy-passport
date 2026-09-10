@@ -204,4 +204,11 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
   policy "works" just because it reads correctly).
 - `docs/LOCAL_SETUP.md` — how to run the local Supabase stack and demo logins.
 - `docs/STORAGE_AND_MEDIA.md` — the file-storage abstraction (`src/lib/storage/media.ts`), current
-  buckets, and the prepared-but-not-built Cloudflare R2 migration path.
+  buckets, and the R2 migration (`anemalo-media` bucket, `media.anemalo.com`).
+- `docs/EDGE_FUNCTION_ARCHITECTURE.md` — the edge-function tiers (anon gateway / authenticated
+  `anemalo-workspace` / webhook / direct-RLS-write) and the boundary for what belongs in an edge
+  function at all.
+- `docs/BREEDER_SITE_SDK.md` — the plan to turn the Gryfin gateway wiring into a reusable SDK +
+  template for future breeder sites.
+- `docs/REVIEWS.md` — the permanent, reservation-anchored review system (`organisation_reviews`):
+  verified-buyer-only creation, no delete, breeder replies, admin-only hide.
