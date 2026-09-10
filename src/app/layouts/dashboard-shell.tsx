@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { ChevronsUpDown, Menu } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Menu,
+  Check,
+  User,
+  Dog,
+  HeartHandshake,
+  Truck,
+  Car,
+  ShieldCheck,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,45 +35,77 @@ export type DashboardNavItem = {
 
 // Every role that has a dashboard, in switcher order. Kept in one place so a new workspace only
 // needs an entry here (not one in every layout file) to show up in the switcher.
-const workspaces: { to: string; label: string; roles: string[] }[] = [
-  { to: "/dashboard/buyer", label: "Customer", roles: [] }, // every signed-in user has this one
-  { to: "/dashboard/breeder", label: "Breeder", roles: ["breeder"] },
+const workspaces: { to: string; label: string; roles: string[]; icon: LucideIcon }[] = [
+  { to: "/dashboard/buyer", label: "Customer", roles: [], icon: User }, // every signed-in user has this one
+  { to: "/dashboard/breeder", label: "Breeder", roles: ["breeder"], icon: Dog },
   {
     to: "/dashboard/foundation",
     label: "Foundation",
     roles: ["foundation_member", "shelter_member"],
+    icon: HeartHandshake,
   },
-  { to: "/dashboard/operations", label: "Operations", roles: ["operations", "admin"] },
-  { to: "/dashboard/driver", label: "Driver", roles: ["driver"] },
-  { to: "/dashboard/admin", label: "Admin", roles: ["admin"] },
+  { to: "/dashboard/operations", label: "Operations", roles: ["operations", "admin"], icon: Truck },
+  { to: "/dashboard/driver", label: "Driver", roles: ["driver"], icon: Car },
+  { to: "/dashboard/admin", label: "Admin", roles: ["admin"], icon: ShieldCheck },
 ];
 
 // Lets a user with several roles switch workspace without a separate account per role — driven by
 // their real (server-verified) roles, not a value the frontend could fabricate; the underlying
 // pages are still independently guarded by RLS and each layout's own beforeLoad role check.
+// A clear icon+label pill instead of a plain text link — the thing it does (jump between, say,
+// your Customer and Breeder panel) should be obvious at a glance, not just discoverable by
+// noticing a tiny chevron next to some text.
 function WorkspaceSwitcher({ current }: { current: string }) {
   const { roles } = useAuth();
   const activeRoleNames = new Set(roles.filter((r) => r.status === "active").map((r) => r.role));
   const available = workspaces.filter(
     (w) => w.roles.length === 0 || w.roles.some((r) => activeRoleNames.has(r)),
   );
-  const currentLabel = workspaces.find((w) => w.to === current)?.label ?? "Dashboard";
+  const currentWorkspace = workspaces.find((w) => w.to === current);
+  const CurrentIcon = currentWorkspace?.icon ?? User;
+  const currentLabel = currentWorkspace?.label ?? "Dashboard";
 
   if (available.length <= 1) {
-    return <span className="text-sm font-semibold">{currentLabel}</span>;
+    return (
+      <span className="flex items-center gap-2 text-sm font-bold">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+          <CurrentIcon className="size-4" />
+        </span>
+        {currentLabel}
+      </span>
+    );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-semibold outline-none">
-        {currentLabel} <ChevronsUpDown className="size-3.5 text-muted-foreground" />
+      <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-xl bg-secondary/70 py-2 pl-2 pr-2.5 text-sm font-bold outline-none hover:bg-secondary">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+          <CurrentIcon className="size-4" />
+        </span>
+        <span className="flex-1 truncate text-left">{currentLabel}</span>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {available.map((w) => (
-          <DropdownMenuItem key={w.to} asChild>
-            <Link to={w.to}>{w.label}</Link>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="start" className="w-56">
+        {available.map((w) => {
+          const active = w.to === current;
+          return (
+            <DropdownMenuItem key={w.to} asChild className="gap-2.5 py-2.5">
+              <Link to={w.to}>
+                <span
+                  className={`grid size-7 shrink-0 place-items-center rounded-lg ${
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-foreground/70"
+                  }`}
+                >
+                  <w.icon className="size-4" />
+                </span>
+                <span className="flex-1 font-semibold">{w.label}</span>
+                {active && <Check className="size-4 shrink-0 text-primary" />}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
