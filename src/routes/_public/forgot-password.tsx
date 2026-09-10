@@ -3,7 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { PawPrint, Check } from "lucide-react";
+import { Check } from "lucide-react";
+import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
@@ -39,9 +40,7 @@ function ForgotPassword() {
     <div className="container-page grid min-h-[80vh] items-center py-16">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2 text-primary">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <PawPrint className="size-5" />
-          </span>
+          <Logo className="size-9" />
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
 
@@ -60,9 +59,7 @@ function ForgotPassword() {
           </div>
         ) : (
           <>
-            <h1 className="mt-6 font-display text-3xl font-medium">
-              {t("forgotPassword.title")}
-            </h1>
+            <h1 className="mt-6 font-display text-3xl font-medium">{t("forgotPassword.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t("forgotPassword.subtitle")}</p>
             <Form {...form}>
               <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">

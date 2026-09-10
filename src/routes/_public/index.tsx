@@ -99,7 +99,7 @@ function Hero() {
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
             <HeartHandshake className="size-3.5" /> {t("home.heroEyebrow")}
           </span>
-          <h1 className="mt-4 font-display text-5xl font-medium leading-[1.05] tracking-tight text-foreground md:text-6xl">
+          <h1 className="mt-4 font-display text-4xl font-medium leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl">
             {t("home.heroTitlePrefix")}{" "}
             <span className="italic text-primary">{t("home.heroTitleHighlight")}</span>
             {t("home.heroTitleSuffix")}
@@ -396,7 +396,7 @@ function VerifiedBreeders() {
 
 // Explains the breeder-profile + puppy-alumni model in plain terms — the redesign brief's
 // "Follow the journey" section. No new data fetch needed here: this is homepage positioning
-// copy about a real, already-built feature (@$handle.tsx), not a preview of fabricated data.
+// copy about a real, already-built feature (@{$handle}.tsx), not a preview of fabricated data.
 function FollowTheJourney() {
   const { t } = useTranslation();
   return (

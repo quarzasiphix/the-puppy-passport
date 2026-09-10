@@ -256,6 +256,14 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Magic-link sign-in email (src/routes/_public/signin.tsx / signup.tsx's "Email me a link" flow).
+# Local-stack only — a hosted project's templates are configured separately in the Dashboard
+# (Authentication → Emails → Templates → Magic Link), the same content_path pasted into "Message
+# body (HTML)". Uses {{ .Email }} and {{ .ConfirmationURL }}, the standard GoTrue template vars.
+[auth.email.template.magic_link]
+subject = "Sign in to Anemalo"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

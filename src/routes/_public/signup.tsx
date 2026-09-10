@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
-  PawPrint,
   Truck,
   Dog,
   HeartHandshake,
@@ -20,9 +19,11 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { signUp, landingPathForIntent } from "@/domains/identity";
+import { Logo } from "@/app/components/logo";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useTranslation } from "@/shared/i18n";
+import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 
 const schema = z.object({
   intent: z.enum(["customer", "buyer", "breeder", "foundation", "operations"]),
@@ -136,7 +137,13 @@ function SignUp() {
     });
     setSendingLink(false);
     if (error) {
-      toast.error(error.message);
+      // Most likely cause of a bare/unreadable failure here: no SMTP/email provider configured on
+      // this Supabase project (see docs/PRODUCTION_SETUP.md §7) — Supabase's Auth API can report
+      // that as a 500 with no usable message. Log the raw error for diagnosis either way.
+      console.error("signInWithOtp (signup) failed:", error);
+      toast.error(
+        getFriendlyErrorMessage(error, "Couldn't send the sign-up link. Please try again."),
+      );
       return false;
     }
     setSentTo(values.email);
@@ -197,9 +204,7 @@ function SignUp() {
     <div className="container-page grid min-h-[80vh] items-center py-16">
       <div className="mx-auto w-full max-w-lg rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2 text-primary">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <PawPrint className="size-5" />
-          </span>
+          <Logo className="size-9" />
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
 

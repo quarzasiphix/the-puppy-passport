@@ -42,7 +42,9 @@ function TransportPage() {
             <p className="text-xs font-medium uppercase tracking-wider text-accent">
               {t("transportPage.eyebrow")}
             </p>
-            <h1 className="mt-2 font-display text-5xl font-medium">{t("transportPage.title")}</h1>
+            <h1 className="mt-2 font-display text-3xl font-medium sm:text-5xl">
+              {t("transportPage.title")}
+            </h1>
             <p className="mt-3 max-w-xl text-muted-foreground">{t("transportPage.intro")}</p>
             {rating && (rating.review_count ?? 0) > 0 && (
               <div className="mt-3 flex items-center gap-1.5 text-sm">

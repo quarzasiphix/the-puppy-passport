@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { PawPrint } from "lucide-react";
+import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
@@ -65,9 +65,7 @@ function ResetPassword() {
     <div className="container-page grid min-h-[80vh] items-center py-16">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2 text-primary">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <PawPrint className="size-5" />
-          </span>
+          <Logo className="size-9" />
           <span className="font-display text-xl font-semibold">Anemalo</span>
         </div>
         <h1 className="mt-6 font-display text-3xl font-medium">{t("resetPassword.title")}</h1>

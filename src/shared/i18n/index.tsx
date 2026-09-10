@@ -91,6 +91,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, next);
   };
 
+  // Keep <html lang="…"> in sync with the active locale. This is what makes the app's real
+  // language legible to anything reading the DOM rather than our in-memory context — screen
+  // readers, browser translate prompts, and the Tovernet footer-strip embed (see
+  // SiteFooter in site-chrome.tsx), which resolves its own copy from this attribute when it
+  // isn't told the locale directly.
+  useEffect(() => {
+    if (typeof document !== "undefined") document.documentElement.lang = locale;
+  }, [locale]);
+
   const t = useMemo<TranslateFn>(() => {
     return (key: string) => {
       const inLocale = getByPath(resources[locale], key);

@@ -1,6 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Map, LayoutGrid, List, MapPin, Calendar } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  Map,
+  LayoutGrid,
+  List,
+  MapPin,
+  Calendar,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -67,6 +76,7 @@ function FindADog() {
   const puppies = Route.useLoaderData();
   const { t, locale } = useTranslation();
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [f, setF] = useState(defaultFilters);
   const breedOptions = getBreedOptions(t);
   const countryOptions = getCountryOptions(t);
@@ -135,8 +145,24 @@ function FindADog() {
         </div>
       </header>
 
+      {/* On mobile the full filter panel would push every result below the fold, so it collapses
+          behind this toggle; on lg it's always the left rail. */}
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((v) => !v)}
+        className="mb-4 flex w-full items-center justify-between rounded-xl border border-border/70 bg-card px-4 py-3 text-sm font-medium lg:hidden"
+        aria-expanded={filtersOpen}
+      >
+        <span className="flex items-center gap-2">
+          <SlidersHorizontal className="size-4" /> {t("findADog.filters")}
+        </span>
+        <ChevronDown className={`size-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+      </button>
+
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-2xl border border-border/70 bg-card p-5">
+        <aside
+          className={`rounded-2xl border border-border/70 bg-card p-5 ${filtersOpen ? "block" : "hidden"} lg:block`}
+        >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
               <SlidersHorizontal className="size-4" /> {t("findADog.filters")}

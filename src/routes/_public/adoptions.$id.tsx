@@ -19,6 +19,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { ReportDialog } from "@/domains/trust";
 import { startApplicationConversation } from "@/domains/messaging";
 import { useTranslation } from "@/shared/i18n";
+import { SITE_ORIGIN } from "@/lib/sitemap";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/_public/adoptions/$id")({
@@ -27,11 +28,28 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
     if (!animal) throw notFound();
     return animal;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.name} — Adoption — Anemalo` : "Adoption — Anemalo" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const a = loaderData;
+    const canonicalUrl = a ? `${SITE_ORIGIN}/adoptions/${a.id}` : undefined;
+    return {
+      meta: [
+        { title: a ? `${a.name} — Adoption — Anemalo` : "Adoption — Anemalo" },
+        {
+          name: "description",
+          content: a
+            ? `${a.name}, a ${a.breed} looking for a home with ${a.orgName} in ${a.city}, ${a.country}.`
+            : "An animal available for adoption on Anemalo.",
+        },
+        ...(a
+          ? [
+              { property: "og:title", content: `${a.name} — ${a.breed}` },
+              { property: "og:image", content: a.image },
+            ]
+          : []),
+      ],
+      links: canonicalUrl ? [{ rel: "canonical", href: canonicalUrl }] : [],
+    };
+  },
   component: AdoptionDetail,
 });
 
@@ -153,9 +171,7 @@ function AdoptionDetail() {
             )}
             {a.idealHome && (
               <div className="mt-4">
-                <h2 className="font-display text-lg font-semibold">
-                  {t("puppyDetail.idealHome")}
-                </h2>
+                <h2 className="font-display text-lg font-semibold">{t("puppyDetail.idealHome")}</h2>
                 <p className="mt-2 text-sm text-muted-foreground">{a.idealHome}</p>
               </div>
             )}

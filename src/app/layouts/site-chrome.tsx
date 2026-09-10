@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { PawPrint, Menu, Search, LogOut, LayoutDashboard, Languages, ChevronDown } from "lucide-react";
+import { Menu, Search, LogOut, LayoutDashboard, Languages, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
+import { Logo } from "@/app/components/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,9 +84,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
       <div className="container-page flex h-16 items-center gap-6">
         <Link to="/" className="flex items-center gap-2 text-primary">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <PawPrint className="size-5" />
-          </span>
+          <Logo className="size-9" />
           <span className="font-display text-xl font-semibold tracking-tight">Anemalo</span>
         </Link>
 
@@ -229,6 +228,44 @@ export function SiteHeader() {
   );
 }
 
+// Tovernet embeds this same "built by" strip on every client kennel site (see
+// docs/GRYFIN_IMPORT.md and tovernet-nest's public/embed/footer-strip.js) — Anemalo carries it
+// too, since Tovernet designs, builds, and runs Anemalo itself. The embed is locale-aware: it
+// reads data-lang once on mount, then TovernetStrip.setLang() below keeps it in sync with the
+// app's own language switch without a full remount or page reload.
+declare global {
+  interface Window {
+    TovernetStrip?: { setLang?: (lang: string) => void };
+  }
+}
+
+function TovernetFooterStrip() {
+  const { locale } = useTranslation();
+  const mountRef = useRef<HTMLDivElement>(null);
+
+  // Mount the embed script once — re-running this on every locale change would re-fetch and
+  // re-append a second <script>/strip. Language changes after the initial mount go through the
+  // script's own setLang() API instead (see the effect below).
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || mount.querySelector("script")) return;
+
+    const script = document.createElement("script");
+    script.src = "https://tovernet.online/embed/footer-strip.js";
+    script.async = true;
+    script.dataset.client = "anemalo";
+    script.dataset.lang = locale;
+    mount.appendChild(script);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    window.TovernetStrip?.setLang?.(locale);
+  }, [locale]);
+
+  return <div ref={mountRef} />;
+}
+
 export function SiteFooter() {
   const { t } = useTranslation();
   return (
@@ -236,9 +273,7 @@ export function SiteFooter() {
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2 text-primary">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <PawPrint className="size-5" />
-            </span>
+            <Logo className="size-9" />
             <span className="font-display text-lg font-semibold">Anemalo</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">{t("footer.tagline")}</p>
@@ -289,6 +324,9 @@ export function SiteFooter() {
           <span>{t("footer.welfareDisclaimer")}</span>
         </div>
       </div>
+
+      {/* Tovernet strip (embedded from tovernet.online, edit centrally there) */}
+      <TovernetFooterStrip />
     </footer>
   );
 }

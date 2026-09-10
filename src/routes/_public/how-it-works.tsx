@@ -51,15 +51,15 @@ function HowItWorks() {
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("howItWorksPage.eyebrow")}
           </p>
-          <h1 className="mt-2 font-display text-5xl font-medium">{t("howItWorksPage.title")}</h1>
+          <h1 className="mt-2 font-display text-3xl font-medium sm:text-5xl">
+            {t("howItWorksPage.title")}
+          </h1>
           <p className="mt-4 text-lg text-muted-foreground">{t("howItWorksPage.subtitle")}</p>
         </div>
       </section>
 
       <section className="container-page py-16">
-        <h2 className="mb-8 font-display text-3xl font-medium">
-          {t("howItWorksPage.stepsTitle")}
-        </h2>
+        <h2 className="mb-8 font-display text-3xl font-medium">{t("howItWorksPage.stepsTitle")}</h2>
         <ol className="grid gap-4 md:grid-cols-5">
           {steps.map(([title, d], i) => (
             <li key={title} className="rounded-2xl border border-border/70 bg-card p-6">
@@ -95,9 +95,7 @@ function HowItWorks() {
       <section className="container-page py-16">
         <div className="rounded-3xl border border-border/70 bg-card p-8 md:p-12">
           <h2 className="font-display text-3xl font-medium">{t("howItWorksPage.reviewsTitle")}</h2>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            {t("howItWorksPage.reviewsDesc")}
-          </p>
+          <p className="mt-2 max-w-2xl text-muted-foreground">{t("howItWorksPage.reviewsDesc")}</p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Button asChild>
               <Link to="/find-a-dog">{t("howItWorksPage.findYourDogCta")}</Link>

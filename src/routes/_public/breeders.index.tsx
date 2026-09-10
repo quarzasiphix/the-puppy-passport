@@ -61,7 +61,9 @@ function BreedersList() {
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("breedersPage.eyebrow")}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-medium">{t("breedersPage.title")}</h1>
+          <h1 className="mt-1 font-display text-3xl font-medium sm:text-4xl">
+            {t("breedersPage.title")}
+          </h1>
           <p className="mt-1 text-muted-foreground">{t("breedersPage.subtitle")}</p>
         </div>
         <div className="relative w-full max-w-sm">

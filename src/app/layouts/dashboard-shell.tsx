@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { PawPrint, ChevronsUpDown, Menu } from "lucide-react";
+import { ChevronsUpDown, Menu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
+import { Logo } from "@/app/components/logo";
 import { useAuth } from "@/domains/identity";
 
 export type DashboardNavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
@@ -121,9 +122,7 @@ export function DashboardShell({
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground lg:flex">
           <div className="border-b border-sidebar-border p-5">
             <Link to="/" className="flex items-center gap-2 text-primary">
-              <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-                <PawPrint className="size-5" />
-              </span>
+              <Logo className="size-9" />
               <span className="font-display text-lg font-semibold">Anemalo</span>
             </Link>
             <div className="mt-4 rounded-xl border border-sidebar-border bg-background p-3">
@@ -151,9 +150,7 @@ export function DashboardShell({
               <WorkspaceSwitcher current={current} />
             </div>
             <Link to="/" className="ml-auto flex shrink-0 items-center gap-1.5 text-primary">
-              <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-                <PawPrint className="size-4" />
-              </span>
+              <Logo className="size-8" />
             </Link>
           </div>
 
