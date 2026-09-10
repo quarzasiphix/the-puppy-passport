@@ -1,9 +1,12 @@
 # Storage & media
 
-Status (2026-09-09): **all file storage is Supabase Storage today.** Cloudflare R2 is a real,
+Status (2026-09-10): **all file storage is Supabase Storage today.** Cloudflare R2 is a real,
 intended future move — this doc is the "prepare to integrate" groundwork: one seam to change later
-instead of a scattered rewrite. No R2 bucket, Worker binding, or account decision has been made
-yet — nothing here should be read as R2 already being wired up.
+instead of a scattered rewrite. R2 is NOT wired up. The bucket *strategy* is decided (reuse
+`gryfinyork-media` behind `media.anemalo.com` — see "Decided direction" below), but no Anemalo-side
+R2 binding, custom domain, or `upload-media` function exists, and `src/lib/storage/media.ts` still
+calls Supabase Storage everywhere. The Gryfin data migration (`docs/GRYFIN_IMPORT.md`) deliberately
+does NOT depend on any of this — it stores Gryfin's existing public image URLs as-is.
 
 ## Current buckets (all `supabase/migrations/*.sql`)
 
@@ -59,11 +62,28 @@ in front of an R2 bucket bound to a Cloudflare Worker, then change `uploadPrivat
 argument, so nothing stops e.g. moving `kennel-media` to R2 first while `transport-documents` stays
 on Supabase Storage, if that's ever the right order.
 
+## Decided direction (2026-09-10) — reuse Gryfin's bucket behind a custom domain
+
+When the R2 pass happens, the bucket strategy is settled: **reuse the existing `gryfinyork-media`
+R2 bucket as Anemalo's media bucket**, put a Cloudflare custom domain (`media.anemalo.com` /
+`cdn.anemalo.com`) in front of it so the legacy bucket name is never publicly visible, and namespace
+future breeders' objects under an `org/<organisation_id>/…` prefix. **No object copy** — Gryfin's
+existing images are already in that bucket and keep serving unchanged; this is also why the Gryfin
+data migration (see `docs/GRYFIN_IMPORT.md`) stores Gryfin's existing image URLs as-is rather than
+re-hosting. Rejected alternative: a fresh `anemalo-media` bucket + an R2→R2 copy of every Gryfin
+object — cleaner namespace but a needless one-time migration for zero real benefit once the custom
+domain hides the name.
+
 ## Explicitly not done yet
 
-- No R2 bucket or Worker created.
-- No `upload-media` Edge Function.
-- No decision on which buckets move first, or whether all of them eventually do.
+- No R2 custom domain (`media.anemalo.com`) configured, no Worker binding to `gryfinyork-media`
+  from the Anemalo side.
+- No `upload-media` Edge Function on the Anemalo project.
+- `src/lib/storage/media.ts` still points every function at Supabase Storage.
+- No decision on which buckets move first, or whether all of them eventually do (the public
+  `kennel-media` / `post-media` are the obvious first candidates — they have no real upload flow
+  yet, so there's nothing to migrate, only to point at R2 from day one).
 - No signed-URL-from-R2 equivalent designed (R2 has its own presigned-URL mechanism, not
   identical to Supabase Storage's `createSignedUrl` — needs its own short design pass when this is
-  actually built, not assumed to be a drop-in swap).
+  actually built, not assumed to be a drop-in swap). Only relevant for the *private* buckets;
+  the public ones just need the custom-domain base URL.

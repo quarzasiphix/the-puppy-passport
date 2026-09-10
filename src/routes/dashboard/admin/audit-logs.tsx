@@ -52,37 +52,39 @@ function AuditLogsPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-3">When</th>
-                <th className="p-3">Actor</th>
-                <th className="p-3">Action</th>
-                <th className="p-3">Target</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {query.data.map((log) => (
-                <tr key={log.id}>
-                  <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
-                    {new Date(log.created_at).toLocaleString("en-GB")}
-                  </td>
-                  <td className="p-3">{log.profiles?.display_name ?? "System"}</td>
-                  <td className="p-3">
-                    <Badge variant="secondary" className="capitalize">
-                      {log.action.replace(/_/g, " ")}
-                    </Badge>
-                  </td>
-                  <td className="p-3 text-xs text-muted-foreground">
-                    {log.target_type}
-                    {log.target_id && (
-                      <span className="font-mono"> · {log.target_id.slice(0, 8)}…</span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-3">When</th>
+                  <th className="p-3">Actor</th>
+                  <th className="p-3">Action</th>
+                  <th className="p-3">Target</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {query.data.map((log) => (
+                  <tr key={log.id}>
+                    <td className="whitespace-nowrap p-3 text-xs text-muted-foreground">
+                      {new Date(log.created_at).toLocaleString("en-GB")}
+                    </td>
+                    <td className="p-3">{log.profiles?.display_name ?? "System"}</td>
+                    <td className="p-3">
+                      <Badge variant="secondary" className="capitalize">
+                        {log.action.replace(/_/g, " ")}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-xs text-muted-foreground">
+                      {log.target_type}
+                      {log.target_id && (
+                        <span className="font-mono"> · {log.target_id.slice(0, 8)}…</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

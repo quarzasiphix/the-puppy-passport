@@ -121,54 +121,56 @@ function ApplicationsPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-4">Buyer</th>
-                <th className="p-4">Puppy</th>
-                <th className="p-4">Location</th>
-                <th className="p-4">Purpose</th>
-                <th className="p-4">Collection</th>
-                <th className="p-4">Date</th>
-                <th className="p-4">Status</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {applications.map((a) => (
-                <tr key={a.id} className="hover:bg-secondary/40">
-                  <td className="p-4">
-                    <div className="font-medium">{a.profiles?.display_name ?? "Buyer"}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {a.housing_type === "house" ? "House" : "Apartment"}
-                      {a.has_garden ? ", garden" : ""}
-                    </div>
-                  </td>
-                  <td className="p-4">{a.animals?.name ?? "—"}</td>
-                  <td className="p-4 text-muted-foreground">
-                    {a.buyer_city}, {a.buyer_country}
-                  </td>
-                  <td className="p-4">{a.intended_purpose ?? "—"}</td>
-                  <td className="p-4">
-                    {a.collection_method ? collectionLabels[a.collection_method] : "—"}
-                  </td>
-                  <td className="p-4 text-muted-foreground">
-                    {new Date(a.submitted_at).toLocaleDateString("en-GB")}
-                  </td>
-                  <td className="p-4">
-                    <Badge className={applicationStatusStyles[a.status]}>
-                      {applicationStatusLabels[a.status]}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-right">
-                    <Button size="sm" variant="outline" onClick={() => setOpenId(a.id)}>
-                      Open
-                    </Button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-4">Buyer</th>
+                  <th className="p-4">Puppy</th>
+                  <th className="p-4">Location</th>
+                  <th className="p-4">Purpose</th>
+                  <th className="p-4">Collection</th>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {applications.map((a) => (
+                  <tr key={a.id} className="hover:bg-secondary/40">
+                    <td className="p-4">
+                      <div className="font-medium">{a.profiles?.display_name ?? "Buyer"}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">
+                        {a.housing_type === "house" ? "House" : "Apartment"}
+                        {a.has_garden ? ", garden" : ""}
+                      </div>
+                    </td>
+                    <td className="p-4">{a.animals?.name ?? "—"}</td>
+                    <td className="p-4 text-muted-foreground">
+                      {a.buyer_city}, {a.buyer_country}
+                    </td>
+                    <td className="p-4">{a.intended_purpose ?? "—"}</td>
+                    <td className="p-4">
+                      {a.collection_method ? collectionLabels[a.collection_method] : "—"}
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {new Date(a.submitted_at).toLocaleDateString("en-GB")}
+                    </td>
+                    <td className="p-4">
+                      <Badge className={applicationStatusStyles[a.status]}>
+                        {applicationStatusLabels[a.status]}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-right">
+                      <Button size="sm" variant="outline" onClick={() => setOpenId(a.id)}>
+                        Open
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

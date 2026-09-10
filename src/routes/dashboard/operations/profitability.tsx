@@ -59,56 +59,58 @@ function ProfitabilityPage() {
         <p className="text-sm text-muted-foreground">No routes yet.</p>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-3">Route</th>
-                <th className="p-3">Jobs</th>
-                <th className="p-3">Revenue</th>
-                <th className="p-3">Est. cost</th>
-                <th className="p-3">Margin</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {rows.map((r) => {
-                const revenue = r.actualRevenue > 0 ? r.actualRevenue : r.estimatedRevenue;
-                return (
-                  <tr key={r.route.id}>
-                    <td className="p-3">
-                      <div className="font-medium">{r.route.route_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.route.route_number}</div>
-                    </td>
-                    <td className="p-3">{r.jobCount}</td>
-                    <td className="p-3">
-                      {money(revenue)}
-                      {r.actualRevenue === 0 && r.estimatedRevenue > 0 && (
-                        <Badge variant="outline" className="ml-1.5 text-[10px]">
-                          estimated
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-3">{money(r.estimatedCost)}</td>
-                    <td className="p-3">
-                      {r.margin === null ? (
-                        <span className="text-muted-foreground">No cost estimate</span>
-                      ) : (
-                        <span
-                          className={`inline-flex items-center gap-1 font-medium ${r.margin >= 0 ? "text-success" : "text-destructive"}`}
-                        >
-                          {r.margin >= 0 ? (
-                            <TrendingUp className="size-3.5" />
-                          ) : (
-                            <TrendingDown className="size-3.5" />
-                          )}
-                          {money(r.margin)}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-3">Route</th>
+                  <th className="p-3">Jobs</th>
+                  <th className="p-3">Revenue</th>
+                  <th className="p-3">Est. cost</th>
+                  <th className="p-3">Margin</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {rows.map((r) => {
+                  const revenue = r.actualRevenue > 0 ? r.actualRevenue : r.estimatedRevenue;
+                  return (
+                    <tr key={r.route.id}>
+                      <td className="p-3">
+                        <div className="font-medium">{r.route.route_name}</div>
+                        <div className="text-xs text-muted-foreground">{r.route.route_number}</div>
+                      </td>
+                      <td className="p-3">{r.jobCount}</td>
+                      <td className="p-3">
+                        {money(revenue)}
+                        {r.actualRevenue === 0 && r.estimatedRevenue > 0 && (
+                          <Badge variant="outline" className="ml-1.5 text-[10px]">
+                            estimated
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-3">{money(r.estimatedCost)}</td>
+                      <td className="p-3">
+                        {r.margin === null ? (
+                          <span className="text-muted-foreground">No cost estimate</span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1 font-medium ${r.margin >= 0 ? "text-success" : "text-destructive"}`}
+                          >
+                            {r.margin >= 0 ? (
+                              <TrendingUp className="size-3.5" />
+                            ) : (
+                              <TrendingDown className="size-3.5" />
+                            )}
+                            {money(r.margin)}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

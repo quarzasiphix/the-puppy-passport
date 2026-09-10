@@ -37,3 +37,4 @@ playwright/.cache/
 *.njsproj
 *.sln
 *.sw?
+.gryfin-migration/

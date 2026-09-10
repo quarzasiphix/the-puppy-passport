@@ -62,62 +62,64 @@ function LittersPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-4">Litter</th>
-                <th className="p-4">Breed</th>
-                <th className="p-4">Parents</th>
-                <th className="p-4">Born</th>
-                <th className="p-4">Ready</th>
-                <th className="p-4">Puppies</th>
-                <th className="p-4">Status</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {litters.map((l) => (
-                <tr key={l.id} className="hover:bg-secondary/40">
-                  <td className="p-4 font-medium">{l.code}</td>
-                  <td className="p-4">{l.breeds?.name ?? "—"}</td>
-                  <td className="p-4 text-muted-foreground">
-                    {l.mother?.registered_name ?? "?"} × {l.father?.registered_name ?? "?"}
-                  </td>
-                  <td className="p-4">
-                    {l.birth_date ? new Date(l.birth_date).toLocaleDateString("en-GB") : "—"}
-                  </td>
-                  <td className="p-4">
-                    {l.ready_date ? new Date(l.ready_date).toLocaleDateString("en-GB") : "—"}
-                  </td>
-                  <td className="p-4">
-                    {l.totalPuppies}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({l.availablePuppies} avail · {l.reservedPuppies} res)
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <Badge variant="secondary" className="capitalize">
-                      {l.status.replace(/_/g, " ")}
-                    </Badge>
-                    {!l.is_published && (
-                      <Badge variant="outline" className="ml-1">
-                        Draft
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    <Link
-                      to="/dashboard/breeder/litters/$id"
-                      params={{ id: l.id }}
-                      className="text-primary hover:underline"
-                    >
-                      Open
-                    </Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-4">Litter</th>
+                  <th className="p-4">Breed</th>
+                  <th className="p-4">Parents</th>
+                  <th className="p-4">Born</th>
+                  <th className="p-4">Ready</th>
+                  <th className="p-4">Puppies</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {litters.map((l) => (
+                  <tr key={l.id} className="hover:bg-secondary/40">
+                    <td className="p-4 font-medium">{l.code}</td>
+                    <td className="p-4">{l.breeds?.name ?? "—"}</td>
+                    <td className="p-4 text-muted-foreground">
+                      {l.mother?.registered_name ?? "?"} × {l.father?.registered_name ?? "?"}
+                    </td>
+                    <td className="p-4">
+                      {l.birth_date ? new Date(l.birth_date).toLocaleDateString("en-GB") : "—"}
+                    </td>
+                    <td className="p-4">
+                      {l.ready_date ? new Date(l.ready_date).toLocaleDateString("en-GB") : "—"}
+                    </td>
+                    <td className="p-4">
+                      {l.totalPuppies}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        ({l.availablePuppies} avail · {l.reservedPuppies} res)
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <Badge variant="secondary" className="capitalize">
+                        {l.status.replace(/_/g, " ")}
+                      </Badge>
+                      {!l.is_published && (
+                        <Badge variant="outline" className="ml-1">
+                          Draft
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <Link
+                        to="/dashboard/breeder/litters/$id"
+                        params={{ id: l.id }}
+                        className="text-primary hover:underline"
+                      >
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

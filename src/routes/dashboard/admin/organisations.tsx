@@ -82,71 +82,73 @@ function OrganisationsPage() {
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-4">Name</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Location</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Featured</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filtered?.map((o) => (
-                <tr key={o.id} className="hover:bg-secondary/40">
-                  <td className="p-4 font-medium">{o.name}</td>
-                  <td className="p-4 capitalize text-muted-foreground">
-                    {o.org_type.replace(/_/g, " ")}
-                  </td>
-                  <td className="p-4 text-muted-foreground">
-                    {o.city}, {o.country}
-                  </td>
-                  <td className="p-4">
-                    <Badge className={statusStyles[o.verification_status]}>
-                      {o.verification_status}
-                    </Badge>
-                  </td>
-                  <td className="p-4">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      disabled={featuredMutation.isPending}
-                      onClick={() =>
-                        featuredMutation.mutate({ id: o.id, featured: !o.is_featured })
-                      }
-                    >
-                      <Star
-                        className={`size-4 ${o.is_featured ? "fill-warning text-warning" : "text-muted-foreground"}`}
-                      />
-                    </Button>
-                  </td>
-                  <td className="p-4 text-right">
-                    {o.verification_status === "suspended" ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={statusMutation.isPending}
-                        onClick={() => statusMutation.mutate({ id: o.id, status: "approved" })}
-                      >
-                        Restore
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={statusMutation.isPending}
-                        onClick={() => statusMutation.mutate({ id: o.id, status: "suspended" })}
-                      >
-                        Suspend
-                      </Button>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Type</th>
+                  <th className="p-4">Location</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Featured</th>
+                  <th className="p-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {filtered?.map((o) => (
+                  <tr key={o.id} className="hover:bg-secondary/40">
+                    <td className="p-4 font-medium">{o.name}</td>
+                    <td className="p-4 capitalize text-muted-foreground">
+                      {o.org_type.replace(/_/g, " ")}
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {o.city}, {o.country}
+                    </td>
+                    <td className="p-4">
+                      <Badge className={statusStyles[o.verification_status]}>
+                        {o.verification_status}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        disabled={featuredMutation.isPending}
+                        onClick={() =>
+                          featuredMutation.mutate({ id: o.id, featured: !o.is_featured })
+                        }
+                      >
+                        <Star
+                          className={`size-4 ${o.is_featured ? "fill-warning text-warning" : "text-muted-foreground"}`}
+                        />
+                      </Button>
+                    </td>
+                    <td className="p-4 text-right">
+                      {o.verification_status === "suspended" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={statusMutation.isPending}
+                          onClick={() => statusMutation.mutate({ id: o.id, status: "approved" })}
+                        >
+                          Restore
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={statusMutation.isPending}
+                          onClick={() => statusMutation.mutate({ id: o.id, status: "suspended" })}
+                        >
+                          Suspend
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

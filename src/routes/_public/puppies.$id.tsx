@@ -168,9 +168,24 @@ function PuppyDetail() {
     );
   }
 
+  const applicationCta = existingApplicationQuery.data ? (
+    <Button className="w-full" size="lg" variant="outline" asChild>
+      <Link to="/dashboard/buyer/applications">
+        {t("puppyDetail.applicationSentPrefix")}{" "}
+        {applicationStatusLabels[existingApplicationQuery.data.status as ApplicationStatus] ??
+          t("puppyDetail.viewStatus")}
+      </Link>
+    </Button>
+  ) : (
+    <Button className="w-full" size="lg" onClick={() => setOpenApply(true)}>
+      {t("puppyDetail.applyForPuppy")}
+    </Button>
+  );
+
   return (
     <TooltipProvider delayDuration={100}>
-      <div className="container-page py-6">
+      {/* pb-28 on mobile keeps the last content clear of the sticky action bar below */}
+      <div className="container-page py-4 pb-28 sm:py-6 lg:pb-6">
         <Link
           to="/find-a-dog"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -178,31 +193,37 @@ function PuppyDetail() {
           <ChevronLeft className="size-4" /> {t("puppyDetail.backToResults")}
         </Link>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-          <div>
-            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
+        {/* Explicit grid placement so DOM order (gallery → purchase panel → tabs) gives mobile the
+            price and Apply CTA right under the photos, while desktop keeps the sticky right rail. */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] lg:gap-8">
+          <div className="order-1 min-w-0 lg:order-none lg:col-start-1 lg:row-start-1">
+            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card sm:rounded-3xl">
               <div className="aspect-[4/3] bg-secondary">
                 <img
-                  src={puppy.gallery[active]}
+                  src={puppy.gallery[active] ?? puppy.gallery[0] ?? placeholderImg}
                   alt={puppy.name}
                   className="size-full object-cover"
                 />
               </div>
-              <div className="flex gap-2 p-3">
-                {puppy.gallery.map((g, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActive(i)}
-                    className={`aspect-square w-20 overflow-hidden rounded-lg border-2 ${active === i ? "border-primary" : "border-transparent"}`}
-                  >
-                    <img src={g} alt="" className="size-full object-cover" />
-                  </button>
-                ))}
-              </div>
+              {puppy.gallery.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {puppy.gallery.map((g, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActive(i)}
+                      className={`aspect-square w-16 shrink-0 overflow-hidden rounded-lg border-2 sm:w-20 ${active === i ? "border-primary" : "border-transparent"}`}
+                    >
+                      <img src={g} alt="" className="size-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
-            <Tabs defaultValue="about" className="mt-8">
-              <TabsList className="w-full justify-start overflow-x-auto">
+          <div className="order-3 min-w-0 lg:order-none lg:col-start-1 lg:row-start-2">
+            <Tabs defaultValue="about">
+              <TabsList className="-mx-1 flex w-[calc(100%+0.5rem)] justify-start overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>button]:shrink-0">
                 <TabsTrigger value="about">{t("puppyDetail.tabAbout")}</TabsTrigger>
                 <TabsTrigger value="litter">{t("puppyDetail.tabLitter")}</TabsTrigger>
                 <TabsTrigger value="parents">{t("puppyDetail.tabParents")}</TabsTrigger>
@@ -268,7 +289,9 @@ function PuppyDetail() {
 
               <TabsContent value="health" className="mt-6">
                 <SectionCard title={t("puppyDetail.healthTitle")}>
-                  <p className="mb-4 text-sm text-muted-foreground">{t("puppyDetail.healthIntro")}</p>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {t("puppyDetail.healthIntro")}
+                  </p>
                   <ul className="grid gap-3 md:grid-cols-2">
                     {[
                       { icon: BadgeCheck, label: t("puppyDetail.docMicrochip") },
@@ -296,8 +319,12 @@ function PuppyDetail() {
               <TabsContent value="breeder" className="mt-6">
                 <SectionCard title={t("puppyDetail.breederTitle")}>
                   <div className="flex items-start gap-4">
-                    <img src={breeder.cover} alt="" className="size-24 rounded-xl object-cover" />
-                    <div className="flex-1">
+                    <img
+                      src={breeder.cover}
+                      alt=""
+                      className="size-16 shrink-0 rounded-xl object-cover sm:size-24"
+                    />
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="font-display text-lg font-semibold">{breeder.kennel}</h4>
                         {breeder.verified && (
@@ -316,7 +343,9 @@ function PuppyDetail() {
                             {t("puppyDetail.responsePrefix")}: {breeder.responseTime}
                           </span>
                         )}
-                        {breeder.years > 0 && <span>{formatExperience(locale, breeder.years)}</span>}
+                        {breeder.years > 0 && (
+                          <span>{formatExperience(locale, breeder.years)}</span>
+                        )}
                         <span>{formatPuppiesAvailable(locale, breeder.availablePuppies)}</span>
                       </div>
                       <Button asChild variant="outline" size="sm" className="mt-4">
@@ -358,7 +387,9 @@ function PuppyDetail() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs text-muted-foreground">{t("puppyDetail.from")}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t("puppyDetail.from")}
+                          </div>
                           <div className="font-medium">
                             {puppy.country || t("puppyDetail.notSet")}
                           </div>
@@ -383,17 +414,19 @@ function PuppyDetail() {
             </Tabs>
           </div>
 
-          <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+          <aside className="order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-span-2 lg:self-start lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
               <div className="flex flex-wrap gap-1.5">
-                <Badge className={statusStyles[puppy.status]}>{statusLabelFor(t, puppy.status)}</Badge>
+                <Badge className={statusStyles[puppy.status]}>
+                  {statusLabelFor(t, puppy.status)}
+                </Badge>
                 {puppy.verified && (
                   <Badge className="bg-primary/90 text-primary-foreground">
                     <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedBreeder")}
                   </Badge>
                 )}
               </div>
-              <h1 className="mt-3 font-display text-3xl font-medium">{puppy.name}</h1>
+              <h1 className="mt-3 font-display text-2xl font-medium sm:text-3xl">{puppy.name}</h1>
               <p className="text-muted-foreground">
                 {puppy.breed} · {puppy.sex} · {puppy.color}
               </p>
@@ -437,20 +470,7 @@ function PuppyDetail() {
               </div>
 
               <div className="mt-5 space-y-2">
-                {existingApplicationQuery.data ? (
-                  <Button className="w-full" size="lg" variant="outline" asChild>
-                    <Link to="/dashboard/buyer/applications">
-                      {t("puppyDetail.applicationSentPrefix")}{" "}
-                      {applicationStatusLabels[
-                        existingApplicationQuery.data.status as ApplicationStatus
-                      ] ?? t("puppyDetail.viewStatus")}
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button className="w-full" size="lg" onClick={() => setOpenApply(true)}>
-                    {t("puppyDetail.applyForPuppy")}
-                  </Button>
-                )}
+                {applicationCta}
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
@@ -533,6 +553,33 @@ function PuppyDetail() {
           </aside>
         </div>
       </div>
+
+      {/* Mobile-only sticky action bar — the price + primary CTA stay reachable without scrolling
+          back up past six tabs of content. Hidden on lg where the sticky right rail does this job. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 backdrop-blur lg:hidden">
+        <div className="container-page flex items-center gap-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
+          <div className="min-w-0">
+            <div className="font-display text-lg font-semibold leading-tight">
+              {puppy.pricePLN.toLocaleString()} PLN
+            </div>
+            <div className="truncate text-xs text-muted-foreground">
+              ≈ €{puppy.priceEUR.toLocaleString()} · {statusLabelFor(t, puppy.status)}
+            </div>
+          </div>
+          <div className="ml-auto shrink-0">
+            {existingApplicationQuery.data ? (
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/dashboard/buyer/applications">{t("puppyDetail.viewStatus")}</Link>
+              </Button>
+            ) : (
+              <Button size="lg" onClick={() => setOpenApply(true)}>
+                {t("puppyDetail.applyForPuppy")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <ApplyDialog
         open={openApply}
         onOpenChange={setOpenApply}
@@ -550,8 +597,8 @@ function PuppyDetail() {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border/70 bg-card p-6">
-      <h3 className="mb-4 font-display text-xl font-semibold">{title}</h3>
+    <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-6">
+      <h3 className="mb-4 font-display text-lg font-semibold sm:text-xl">{title}</h3>
       {children}
     </section>
   );
