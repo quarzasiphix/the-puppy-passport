@@ -144,7 +144,7 @@ function DogPedigreeRow({
       </div>
 
       {open && (
-        <div className="mt-4 grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 border-t border-border/60 pt-4 grid-cols-1 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold text-muted-foreground">
               Pedigree document (scan / PDF) — optional

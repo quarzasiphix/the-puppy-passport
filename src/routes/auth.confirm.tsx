@@ -49,7 +49,7 @@ function AuthConfirm() {
   }
 
   return (
-    <div className="container-page grid min-h-[80vh] items-center py-16">
+    <div className="container-page grid grid-cols-1 min-h-[80vh] items-center py-16">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-border/70 bg-card p-8 text-center shadow-sm">
         <div className="flex items-center justify-center gap-2 text-primary">
           <Logo className="size-9" />

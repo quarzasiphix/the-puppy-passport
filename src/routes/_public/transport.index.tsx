@@ -37,7 +37,7 @@ function TransportPage() {
   return (
     <div>
       <section className="border-b border-border/60 bg-secondary/40">
-        <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.1fr_1fr]">
+        <div className="container-page grid gap-10 py-14 grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-accent">
               {t("transportPage.eyebrow")}
@@ -65,7 +65,7 @@ function TransportPage() {
               <Button asChild size="lg" variant="outline">
                 <Link to="/planned-routes">{t("transportPage.viewPlannedRoutes")}</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost">
+              <Button asChild size="lg" variant="ghost" className="h-auto whitespace-normal text-left">
                 <Link to="/estimate">{t("transportPage.getEstimate")}</Link>
               </Button>
             </div>
@@ -81,7 +81,7 @@ function TransportPage() {
       </section>
 
       <section className="container-page py-14">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {categories.map((c) => {
             const title = t(`transportPage.categories.${c.key}Title`);
             return (
@@ -131,7 +131,7 @@ function TransportPage() {
             <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
               {t("transportPage.communityRequestsDesc")}
             </p>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
               {publicRequests.map((req) => (
                 <div key={req.id} className="rounded-2xl border border-border/70 bg-card p-5">
                   <div className="flex items-center gap-2 text-sm">

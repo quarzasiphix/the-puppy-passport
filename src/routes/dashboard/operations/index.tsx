@@ -87,7 +87,7 @@ function OperationsOverview() {
           Real-time counts from submitted transport requests.
         </p>
       </header>
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-3 lg:grid-cols-5">
         {cards.map((c) => (
           <Link
             key={c.label}

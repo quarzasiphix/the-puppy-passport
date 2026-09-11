@@ -62,7 +62,7 @@ export function BuyerReservationsPage() {
                   {reservationStatusLabel(r.status)}
                 </Badge>
               </div>
-              <div className="mt-3 grid gap-2 text-sm md:grid-cols-3">
+              <div className="mt-3 grid gap-2 text-sm grid-cols-1 md:grid-cols-3">
                 <div>
                   <span className="text-muted-foreground">Deposit: </span>
                   {r.depositStatus === "paid" && r.depositPaidAt

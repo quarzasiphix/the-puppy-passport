@@ -146,7 +146,7 @@ function LitterDetail() {
             <p className="text-base font-semibold">{t("breederPanel.litterDetail.emptyPuppies")}</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {kPuppies.map((p) => {
               const photo = animalCoverPhotoUrl(p);
               return (

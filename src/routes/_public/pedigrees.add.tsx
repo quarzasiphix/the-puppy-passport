@@ -367,7 +367,7 @@ function AddPedigree() {
             return (
               <div key={slot.slotKey} className="rounded-2xl border border-border/70 bg-card p-3">
                 <div className="text-xs font-semibold text-foreground">{slot.label}</div>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <div className="mt-2 grid gap-2 grid-cols-1 sm:grid-cols-2">
                   <Input
                     placeholder={t("pedigree.fields.registeredName")}
                     value={d.registeredName}

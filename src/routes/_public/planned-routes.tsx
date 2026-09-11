@@ -63,7 +63,7 @@ function PlannedRoutesPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {routes.map((r) => (
             <div
               key={r.id}
@@ -154,8 +154,8 @@ function WaitlistDialog() {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Bell className="mr-1 size-4" /> {t("plannedRoutesPage.waitlistTrigger")}
+        <Button variant="outline" className="h-auto whitespace-normal text-left">
+          <Bell className="mr-1 size-4 shrink-0" /> {t("plannedRoutesPage.waitlistTrigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>

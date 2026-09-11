@@ -19,12 +19,14 @@ import {
   listMyApplications,
 } from "@/domains/marketplace";
 import { listSavedPuppies } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/buyer/")({
   component: BuyerOverview,
 });
 
 function BuyerOverview() {
+  const { t } = useTranslation();
   const { userId, firstName, roles } = useAuth();
   const orgRole = roles.find(
     (r) =>
@@ -53,20 +55,21 @@ function BuyerOverview() {
     <div>
       <header className="mb-6">
         <h1 className="font-display text-3xl font-medium">
-          Welcome back{firstName ? `, ${firstName}` : ""}
+          {t("buyerPanel.index.welcomeBack")}
+          {firstName ? `, ${firstName}` : ""}
         </h1>
-        <p className="text-sm text-muted-foreground">Here's where your journey stands today.</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.index.subtitle")}</p>
       </header>
 
       {mostRecentTransport && (
         <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
           <div className="flex flex-wrap items-center gap-3">
             <Badge className="bg-primary/20 text-primary">
-              Transport {mostRecentTransport.request_number}
+              {t("buyerPanel.index.transportBadgePrefix")} {mostRecentTransport.request_number}
             </Badge>
             <p className="text-sm">{nextActionForStatus(mostRecentTransport.status)}</p>
             <Button asChild size="sm" className="ml-auto">
-              <Link to="/dashboard/buyer/transport">View transport requests</Link>
+              <Link to="/dashboard/buyer/transport">{t("buyerPanel.index.viewTransportRequests")}</Link>
             </Button>
           </div>
         </div>
@@ -82,79 +85,88 @@ function BuyerOverview() {
           <div className="flex-1">
             <p className="text-sm font-semibold">
               {orgRole
-                ? "You run a kennel or organisation on Anemalo"
-                : "Are you a breeder, shelter or foundation?"}
+                ? t("buyerPanel.index.orgPromptTitleHasOrg")
+                : t("buyerPanel.index.orgPromptTitleNoOrg")}
             </p>
             <p className="text-sm text-muted-foreground">
               {orgRole
-                ? "Manage your dogs, litters and public profile from your own dashboard."
-                : "Register your kennel or organisation to publish litters, adoptions and manage everything from one place."}
+                ? t("buyerPanel.index.orgPromptBodyHasOrg")
+                : t("buyerPanel.index.orgPromptBodyNoOrg")}
             </p>
           </div>
           <Button asChild size="sm" className="ml-auto">
             <Link to={orgRole ? orgDashboardPath : "/create-breeder"}>
-              {orgRole ? "Go to my dashboard" : "Get started"}
+              {orgRole ? t("buyerPanel.index.goToMyDashboard") : t("buyerPanel.index.getStarted")}
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <Card title="Transport requests" icon={<Truck className="size-5" />}>
+      <div className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-3">
+        <Card title={t("buyerPanel.index.statTransportTitle")} icon={<Truck className="size-5" />}>
           <div className="font-display text-3xl font-semibold">
             {transportQuery.data?.length ?? "—"}
           </div>
           <div className="text-sm text-muted-foreground">
             {mostRecentTransport
-              ? `Latest: ${statusLabelFor(mostRecentTransport.status)}`
-              : "None yet"}
+              ? `${t("buyerPanel.index.statLatestPrefix")} ${statusLabelFor(mostRecentTransport.status, t)}`
+              : t("buyerPanel.index.statNoneYet")}
           </div>
         </Card>
-        <Card title="Applications" icon={<MessageSquare className="size-5" />}>
+        <Card
+          title={t("buyerPanel.index.statApplicationsTitle")}
+          icon={<MessageSquare className="size-5" />}
+        >
           <div className="font-display text-3xl font-semibold">
             {applicationsQuery.data?.length ?? "—"}
           </div>
-          <div className="text-sm text-muted-foreground">Puppy applications you've sent</div>
+          <div className="text-sm text-muted-foreground">
+            {t("buyerPanel.index.statApplicationsDesc")}
+          </div>
         </Card>
-        <Card title="Saved puppies" icon={<Heart className="size-5" />}>
+        <Card title={t("buyerPanel.index.statSavedTitle")} icon={<Heart className="size-5" />}>
           <div className="font-display text-3xl font-semibold">
             {savedQuery.data?.length ?? "—"}
           </div>
-          <div className="text-sm text-muted-foreground">Puppies you're keeping an eye on</div>
+          <div className="text-sm text-muted-foreground">{t("buyerPanel.index.statSavedDesc")}</div>
         </Card>
       </div>
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Your transport requests</h2>
+          <h2 className="font-display text-xl font-semibold">
+            {t("buyerPanel.index.yourTransportRequests")}
+          </h2>
           <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/buyer/transport">View all</Link>
+            <Link to="/dashboard/buyer/transport">{t("buyerPanel.index.viewAll")}</Link>
           </Button>
         </div>
-        {transportQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {transportQuery.isLoading && (
+          <p className="text-sm text-muted-foreground">{t("buyerPanel.index.loading")}</p>
+        )}
         {transportQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-            No transport requests yet.{" "}
+            {t("buyerPanel.index.noTransportYet")}{" "}
             <Link to="/transport/request" className="text-primary hover:underline">
-              Request transport
+              {t("buyerPanel.index.requestTransport")}
             </Link>
           </div>
         )}
         <ul className="space-y-2">
-          {transportQuery.data?.slice(0, 3).map((t) => (
+          {transportQuery.data?.slice(0, 3).map((req) => (
             <li
-              key={t.id}
+              key={req.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-4"
             >
               <div>
-                <div className="font-medium">{t.request_number}</div>
+                <div className="font-medium">{req.request_number}</div>
                 <div className="text-xs text-muted-foreground">
-                  {t.pickup_city ?? t.pickup_country} →{" "}
-                  {t.destination_city ?? t.destination_country}
+                  {req.pickup_city ?? req.pickup_country} →{" "}
+                  {req.destination_city ?? req.destination_country}
                 </div>
               </div>
-              <Badge variant={isOnHold(t.status) ? "destructive" : "secondary"}>
-                {statusLabelFor(t.status)}
+              <Badge variant={isOnHold(req.status) ? "destructive" : "secondary"}>
+                {statusLabelFor(req.status, t)}
               </Badge>
             </li>
           ))}
@@ -163,16 +175,18 @@ function BuyerOverview() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Your applications</h2>
+          <h2 className="font-display text-xl font-semibold">
+            {t("buyerPanel.index.yourApplications")}
+          </h2>
           <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/buyer/applications">View all</Link>
+            <Link to="/dashboard/buyer/applications">{t("buyerPanel.index.viewAll")}</Link>
           </Button>
         </div>
         {applicationsQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-            No applications yet.{" "}
+            {t("buyerPanel.index.noApplicationsYet")}{" "}
             <Link to="/find-a-dog" className="text-primary hover:underline">
-              Find a puppy
+              {t("buyerPanel.index.findAPuppy")}
             </Link>
           </div>
         )}
@@ -184,11 +198,12 @@ function BuyerOverview() {
             >
               <div>
                 <div className="font-medium">
-                  {a.animals?.name ?? "This listing"} —{" "}
-                  {a.animals?.organisations?.name ?? "Independent listing"}
+                  {a.animals?.name ?? t("buyerPanel.index.thisListing")} —{" "}
+                  {a.animals?.organisations?.name ?? t("buyerPanel.index.independentListing")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Applied {new Date(a.submitted_at).toLocaleDateString("en-GB")}
+                  {t("buyerPanel.index.appliedPrefix")}{" "}
+                  {new Date(a.submitted_at).toLocaleDateString("en-GB")}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -197,7 +212,7 @@ function BuyerOverview() {
                 </Badge>
                 <Button asChild size="sm" variant="outline">
                   <Link to="/puppies/$id" params={{ id: a.animal_id }}>
-                    Open puppy
+                    {t("buyerPanel.index.openPuppy")}
                   </Link>
                 </Button>
               </div>
@@ -208,17 +223,19 @@ function BuyerOverview() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">Saved puppies</h2>
+          <h2 className="font-display text-xl font-semibold">
+            {t("buyerPanel.index.statSavedTitle")}
+          </h2>
           <Button asChild variant="outline" size="sm">
-            <Link to="/dashboard/buyer/saved">View all</Link>
+            <Link to="/dashboard/buyer/saved">{t("buyerPanel.index.viewAll")}</Link>
           </Button>
         </div>
         {savedQuery.data?.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-            No saved puppies yet — tap the heart on any listing to save it here.
+            {t("buyerPanel.index.noSavedPuppies")}
           </div>
         )}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {savedQuery.data?.slice(0, 3).map((p) => (
             <Link
               key={p.id}
@@ -241,9 +258,9 @@ function BuyerOverview() {
   );
 }
 
-function statusLabelFor(status: string) {
-  if (isClosed(status)) return "Closed";
-  if (isOnHold(status)) return "On hold — action needed";
+function statusLabelFor(status: string, t: (key: string) => string) {
+  if (isClosed(status)) return t("buyerPanel.index.statusClosed");
+  if (isOnHold(status)) return t("buyerPanel.index.statusOnHold");
   const milestone = milestoneIndexForStatus(status);
   return transportMilestones[milestone ?? 0] ?? status.replace(/_/g, " ");
 }

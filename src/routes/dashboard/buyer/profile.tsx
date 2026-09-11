@@ -14,6 +14,7 @@ import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { AccountPrivacyCard } from "@/domains/identity";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/buyer/profile")({
   component: BuyerProfile,
@@ -29,34 +30,52 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const roleStatusCopy: Record<
-  string,
-  { label: string; icon: typeof CheckCircle2; className: string }
-> = {
-  pending: { label: "Verification pending", icon: Clock, className: "bg-accent/15 text-accent" },
-  active: { label: "Active", icon: CheckCircle2, className: "bg-success/15 text-success" },
-  suspended: {
-    label: "Suspended",
-    icon: AlertCircle,
-    className: "bg-destructive/10 text-destructive",
-  },
-  rejected: { label: "Rejected", icon: XCircle, className: "bg-destructive/10 text-destructive" },
-};
+function getRoleStatusCopy(
+  t: (key: string) => string,
+): Record<string, { label: string; icon: typeof CheckCircle2; className: string }> {
+  return {
+    pending: {
+      label: t("buyerPanel.profile.roleStatusPending"),
+      icon: Clock,
+      className: "bg-accent/15 text-accent",
+    },
+    active: {
+      label: t("buyerPanel.profile.roleStatusActive"),
+      icon: CheckCircle2,
+      className: "bg-success/15 text-success",
+    },
+    suspended: {
+      label: t("buyerPanel.profile.roleStatusSuspended"),
+      icon: AlertCircle,
+      className: "bg-destructive/10 text-destructive",
+    },
+    rejected: {
+      label: t("buyerPanel.profile.roleStatusRejected"),
+      icon: XCircle,
+      className: "bg-destructive/10 text-destructive",
+    },
+  };
+}
 
-const roleLabels: Record<string, string> = {
-  customer: "Transport customer",
-  buyer: "Buyer",
-  animal_owner: "Animal owner",
-  breeder: "Breeder",
-  foundation_member: "Foundation member",
-  shelter_member: "Shelter member",
-  operations: "Transport operations",
-  driver: "Driver",
-  moderator: "Moderator",
-  admin: "Administrator",
-};
+function getRoleLabels(t: (key: string) => string): Record<string, string> {
+  return {
+    customer: t("buyerPanel.profile.roleCustomer"),
+    buyer: t("buyerPanel.profile.roleBuyer"),
+    animal_owner: t("buyerPanel.profile.roleAnimalOwner"),
+    breeder: t("buyerPanel.profile.roleBreeder"),
+    foundation_member: t("buyerPanel.profile.roleFoundationMember"),
+    shelter_member: t("buyerPanel.profile.roleShelterMember"),
+    operations: t("buyerPanel.profile.roleOperations"),
+    driver: t("buyerPanel.profile.roleDriver"),
+    moderator: t("buyerPanel.profile.roleModerator"),
+    admin: t("buyerPanel.profile.roleAdmin"),
+  };
+}
 
 function BuyerProfile() {
+  const { t } = useTranslation();
+  const roleStatusCopy = getRoleStatusCopy(t);
+  const roleLabels = getRoleLabels(t);
   const { userId } = useAuth();
   const queryClient = useQueryClient();
 
@@ -117,36 +136,34 @@ function BuyerProfile() {
       })
       .eq("id", userId);
     if (error) {
-      toast.error(getFriendlyErrorMessage(error, "Could not update your profile."));
+      toast.error(getFriendlyErrorMessage(error, t("buyerPanel.profile.couldNotUpdate")));
       return;
     }
-    toast.success("Profile updated.");
+    toast.success(t("buyerPanel.profile.updated"));
     queryClient.invalidateQueries({ queryKey: ["my-profile", userId] });
   }
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Your account</h1>
-        <p className="text-sm text-muted-foreground">
-          Breeders see your name when reviewing applications.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.profile.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.profile.subtitle")}</p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
         <div className="max-w-2xl space-y-4 rounded-2xl border border-border/70 bg-card p-6">
           {profileQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{t("buyerPanel.profile.loading")}</p>
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="displayName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Display name</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.displayName")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -159,7 +176,7 @@ function BuyerProfile() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.phone")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -172,7 +189,7 @@ function BuyerProfile() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.city")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -185,7 +202,7 @@ function BuyerProfile() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.country")}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -198,7 +215,7 @@ function BuyerProfile() {
                     name="preferredLanguage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred language</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.preferredLanguage")}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
@@ -206,8 +223,8 @@ function BuyerProfile() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="pl">Polski</SelectItem>
+                            <SelectItem value="en">{t("buyerPanel.profile.languageEnglish")}</SelectItem>
+                            <SelectItem value="pl">{t("buyerPanel.profile.languagePolish")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -219,7 +236,7 @@ function BuyerProfile() {
                     name="preferredCurrency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred currency</FormLabel>
+                        <FormLabel>{t("buyerPanel.profile.preferredCurrency")}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger>
@@ -237,7 +254,9 @@ function BuyerProfile() {
                   />
                 </div>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Saving…" : "Save profile"}
+                  {form.formState.isSubmitting
+                    ? t("buyerPanel.profile.saving")
+                    : t("buyerPanel.profile.saveProfile")}
                 </Button>
               </form>
             </Form>
@@ -245,8 +264,12 @@ function BuyerProfile() {
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-card p-6">
-          <h2 className="mb-3 font-display text-lg font-semibold">Account status</h2>
-          {rolesQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          <h2 className="mb-3 font-display text-lg font-semibold">
+            {t("buyerPanel.profile.accountStatus")}
+          </h2>
+          {rolesQuery.isLoading && (
+            <p className="text-sm text-muted-foreground">{t("buyerPanel.profile.loading")}</p>
+          )}
           <ul className="space-y-2">
             {rolesQuery.data?.map((r) => {
               const copy = roleStatusCopy[r.status] ?? roleStatusCopy.pending;
@@ -263,12 +286,11 @@ function BuyerProfile() {
               );
             })}
             {rolesQuery.data?.length === 0 && (
-              <li className="text-sm text-muted-foreground">No roles yet.</li>
+              <li className="text-sm text-muted-foreground">{t("buyerPanel.profile.noRolesYet")}</li>
             )}
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
-            A pending breeder or foundation role can still be used to request transport — it just
-            can't publish listings until approved.
+            {t("buyerPanel.profile.pendingRoleNote")}
           </p>
         </div>
 

@@ -10,12 +10,14 @@ import {
   listMyScheduledTransportRequests,
   statusEventLabel,
 } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/buyer/scheduled")({
   component: ScheduledTransportsPage,
 });
 
 function ScheduledTransportsPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const query = useQuery({
     queryKey: ["my-scheduled-transports", userId],
@@ -27,30 +29,27 @@ function ScheduledTransportsPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Scheduled transports</h1>
-        <p className="text-sm text-muted-foreground">
-          Transport requests that have moved past quotation into a confirmed pickup date and route.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.scheduled.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.scheduled.subtitle")}</p>
       </header>
 
       {query.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.scheduled.loading")}</p>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <Truck className="mx-auto size-6 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            Nothing scheduled yet — once a quotation is accepted and a route is confirmed, it'll
-            appear here.
+            {t("buyerPanel.scheduled.emptyBody")}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {query.data.map((t) => (
+          {query.data.map((req) => (
             <ScheduledCard
-              key={t.id}
-              t={t}
-              expanded={openId === t.id}
-              onToggle={() => setOpenId(openId === t.id ? null : t.id)}
+              key={req.id}
+              item={req}
+              expanded={openId === req.id}
+              onToggle={() => setOpenId(openId === req.id ? null : req.id)}
             />
           ))}
         </div>
@@ -60,18 +59,19 @@ function ScheduledTransportsPage() {
 }
 
 function ScheduledCard({
-  t,
+  item,
   expanded,
   onToggle,
 }: {
-  t: Awaited<ReturnType<typeof listMyScheduledTransportRequests>>[number];
+  item: Awaited<ReturnType<typeof listMyScheduledTransportRequests>>[number];
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const timelineQuery = useQuery({
-    queryKey: ["transport-timeline", t.id],
+    queryKey: ["transport-timeline", item.id],
     enabled: expanded,
-    queryFn: () => getCustomerTimeline(t.id),
+    queryFn: () => getCustomerTimeline(item.id),
   });
 
   return (
@@ -79,27 +79,28 @@ function ScheduledCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="font-display text-lg font-semibold">
-            {t.animal_name ?? t.request_number}
+            {item.animal_name ?? item.request_number}
           </div>
           <div className="text-sm text-muted-foreground">
-            {t.pickup_city ?? t.pickup_country ?? "?"} <ArrowRight className="mx-1 inline size-3" />{" "}
-            {t.destination_city ?? t.destination_country ?? "?"}
+            {item.pickup_city ?? item.pickup_country ?? "?"}{" "}
+            <ArrowRight className="mx-1 inline size-3" />{" "}
+            {item.destination_city ?? item.destination_country ?? "?"}
           </div>
         </div>
-        <Badge variant="secondary">{statusEventLabel(t.status)}</Badge>
+        <Badge variant="secondary">{statusEventLabel(item.status)}</Badge>
       </div>
-      {(t.earliest_date || t.latest_date) && (
+      {(item.earliest_date || item.latest_date) && (
         <p className="mt-2 text-xs text-muted-foreground">
-          {t.earliest_date && new Date(t.earliest_date).toLocaleDateString("en-GB")}
-          {t.earliest_date && t.latest_date && " – "}
-          {t.latest_date && new Date(t.latest_date).toLocaleDateString("en-GB")}
+          {item.earliest_date && new Date(item.earliest_date).toLocaleDateString("en-GB")}
+          {item.earliest_date && item.latest_date && " – "}
+          {item.latest_date && new Date(item.latest_date).toLocaleDateString("en-GB")}
         </p>
       )}
       <button
         onClick={onToggle}
         className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline"
       >
-        Timeline{" "}
+        {t("buyerPanel.scheduled.timeline")}{" "}
         <ChevronDown className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
       {expanded && (
@@ -107,7 +108,7 @@ function ScheduledCard({
           {timelineQuery.data ? (
             <TransportTimeline events={timelineQuery.data} />
           ) : (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{t("buyerPanel.scheduled.loading")}</p>
           )}
         </div>
       )}

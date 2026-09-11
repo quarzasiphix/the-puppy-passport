@@ -208,7 +208,7 @@ function OperationsCalendar() {
         </section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
           {routesQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>

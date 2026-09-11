@@ -41,7 +41,7 @@ export function HomeTab({
               {t("breederProfile.seeAll")}
             </Button>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {puppies.slice(0, 3).map((p) => (
               <PuppyCard key={p.id} p={p} />
             ))}
@@ -54,7 +54,7 @@ export function HomeTab({
           <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
             <Sparkles className="size-4 text-accent" /> {t("breederProfile.planned")}
           </h3>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
             {plannedLitters.slice(0, 2).map((l) => (
               <LitterCard key={l.id} l={l} planned />
             ))}
@@ -67,7 +67,7 @@ export function HomeTab({
           <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
             <PawPrint className="size-4" /> {t("breederProfile.statBreedingDogs")}
           </h3>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             {parents.slice(0, 2).map((p, i) => (
               <ParentDogCard key={i} p={p} />
             ))}

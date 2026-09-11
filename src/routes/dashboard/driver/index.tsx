@@ -159,7 +159,7 @@ function DriverHome() {
                     <ArrowRight className="size-3.5" />
                     {job.destination_city ?? job.destination_country ?? "?"}
                   </div>
-                  <div className="mt-3 grid gap-2 rounded-lg bg-secondary/40 p-3 text-xs sm:grid-cols-2">
+                  <div className="mt-3 grid gap-2 rounded-lg bg-secondary/40 p-3 text-xs grid-cols-1 sm:grid-cols-2">
                     <div>
                       <div className="font-medium uppercase tracking-wide text-muted-foreground">
                         Pickup address

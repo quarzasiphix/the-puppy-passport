@@ -47,7 +47,7 @@ function SettingsPage() {
       <header className="mb-6">
         <h1 className="font-display text-3xl font-medium">Settings</h1>
       </header>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <div className="rounded-2xl border border-border/70 bg-card p-6">
           <h3 className="mb-3 font-display text-lg font-semibold">Account</h3>
           {profileQuery.isLoading ? (

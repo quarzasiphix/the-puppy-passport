@@ -86,7 +86,7 @@ function VehiclesPage() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-3">
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="name"
@@ -193,7 +193,7 @@ function VehiclesPage() {
         </Dialog>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {query.data?.map((v) => {
           const warnings = [
             ...expiryWarnings(v.insurance_expiry_date, "Insurance"),

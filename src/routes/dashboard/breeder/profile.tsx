@@ -102,7 +102,7 @@ function ProfilePage() {
       ) : !query.data ? (
         <p className="text-sm text-muted-foreground">No kennel found for your account yet.</p>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
           <Card title="Edit profile">
             <form
               onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
@@ -112,7 +112,7 @@ function ProfilePage() {
                 <Label>Description</Label>
                 <Textarea rows={5} {...form.register("description")} />
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <div>
                   <Label>Cover image URL</Label>
                   <Input placeholder="https://…" {...form.register("coverImageUrl")} />

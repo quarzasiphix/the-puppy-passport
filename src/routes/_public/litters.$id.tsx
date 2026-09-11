@@ -165,7 +165,7 @@ function LitterDetail() {
         <h2 className="mb-4 font-display text-xl font-semibold">
           {t("litterDetail.parentsTitle")}
         </h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           <ParentCard p={parents.mother ?? emptyParent} label={t("cards.mother")} />
           <ParentCard p={parents.father ?? emptyParent} label={t("cards.father")} />
         </div>
@@ -180,7 +180,7 @@ function LitterDetail() {
             <p className="text-sm text-muted-foreground">{t("litterDetail.noPuppiesYet")}</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {puppies.map((p) => (
               <PuppyCard key={p.id} p={p} />
             ))}

@@ -123,7 +123,7 @@ function AdoptionDetail() {
         <ChevronLeft className="size-4" /> {t("adoptionDetail.backToAll")}
       </Link>
 
-      <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
         <div>
           <div className="overflow-hidden rounded-2xl bg-secondary">
             <img src={a.image} alt={a.name} className="aspect-[4/3] w-full object-cover" />

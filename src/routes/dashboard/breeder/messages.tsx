@@ -51,7 +51,7 @@ function MessagesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[320px_1fr]">
           <Card title="Inbox">
             <ul className="-mx-2 divide-y divide-border/60">
               {query.data.map((c, i) => {

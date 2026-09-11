@@ -52,7 +52,7 @@ function FoundationOverview() {
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-4">
         <Kpi icon={PawPrint} label="Available for adoption" value={availableAnimals} />
         <Kpi icon={HeartHandshake} label="Total animal records" value={animals?.length ?? 0} />
         <Link to="/dashboard/foundation/applications">

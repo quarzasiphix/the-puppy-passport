@@ -137,7 +137,7 @@ function OpsRequestDetail() {
         <Badge className="capitalize">{r.status.replace(/_/g, " ")}</Badge>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-4">
           <Card title="Animal">
             <Grid>

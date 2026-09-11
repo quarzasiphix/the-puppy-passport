@@ -136,7 +136,7 @@ function RehomePage() {
             <Label>{t("rehomePage.dogName")}</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <Label>{t("rehomePage.sex")}</Label>
               <Select
@@ -161,7 +161,7 @@ function RehomePage() {
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <Label>{t("rehomePage.breedIfKnown")}</Label>
               <Select value={form.breedId} onValueChange={(v) => setForm({ ...form, breedId: v })}>
@@ -203,7 +203,7 @@ function RehomePage() {
               placeholder={t("rehomePage.descPlaceholder")}
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <Label>{t("rehomePage.temperament")}</Label>
               <Input

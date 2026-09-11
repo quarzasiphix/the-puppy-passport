@@ -61,7 +61,7 @@ function ChampionsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {Array.from(byDog.values()).map((dog) => (
             <div key={dog.name} className="rounded-2xl border border-border/70 bg-card p-5">
               <div className="flex items-center gap-2">

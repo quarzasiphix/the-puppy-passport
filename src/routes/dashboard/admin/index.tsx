@@ -36,7 +36,7 @@ function AdminOverview() {
           Real pending-review counts from the database.
         </p>
       </header>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <Link
           to="/dashboard/admin/breeder-verification"
           className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-6 transition-colors hover:bg-secondary/40"

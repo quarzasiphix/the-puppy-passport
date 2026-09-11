@@ -235,7 +235,7 @@ function DogPage() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_320px]">
             <div className="rounded-2xl border border-border/70 bg-card p-5">
               <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <Field label={t("pedigree.fields.registeredName")} value={dog.registeredName} />

@@ -212,7 +212,7 @@ function SignUp() {
   );
 
   return (
-    <div className="container-page grid min-h-[80vh] items-center py-16">
+    <div className="container-page grid grid-cols-1 min-h-[80vh] items-center py-16">
       <div className="mx-auto w-full max-w-lg rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
         <div className="flex items-center gap-2 text-primary">
           <Logo className="size-9" />
@@ -278,7 +278,7 @@ function SignUp() {
                           <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             {t("signUp.iAmHereTo")}
                           </FormLabel>
-                          <div className="grid gap-2">
+                          <div className="grid grid-cols-1 gap-2">
                             {intents.map((opt) => (
                               <button
                                 type="button"
@@ -343,7 +343,7 @@ function SignUp() {
                       <div className="h-px flex-1 bg-border" />
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                       <FormField
                         control={form.control}
                         name="firstName"
@@ -430,7 +430,7 @@ function SignUp() {
                   </>
                 ) : (
                   <>
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                       <FormField
                         control={form.control}
                         name="city"

@@ -322,7 +322,7 @@ export function SiteFooter() {
   const { t } = useTranslation();
   return (
     <footer className="mt-24 border-t border-border/60 bg-secondary/40">
-      <div className="container-page grid gap-10 py-14 md:grid-cols-4">
+      <div className="container-page grid gap-10 py-14 grid-cols-1 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2 text-primary">
             <Logo className="size-9" />

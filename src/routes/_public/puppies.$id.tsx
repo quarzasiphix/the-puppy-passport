@@ -238,7 +238,7 @@ function PuppyDetail() {
 
         {/* Explicit grid placement so DOM order (gallery → purchase panel → tabs) gives mobile the
             price and Apply CTA right under the photos, while desktop keeps the sticky right rail. */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] lg:gap-8">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] lg:gap-8">
           <div className="order-1 min-w-0 lg:order-none lg:col-start-1 lg:row-start-1">
             <div className="overflow-hidden rounded-2xl border border-border/70 bg-card sm:rounded-3xl">
               <div className="aspect-[4/3] bg-secondary">
@@ -281,7 +281,7 @@ function PuppyDetail() {
                     {puppy.about || t("puppyDetail.noDescription")}
                   </p>
                   {(puppy.temperament || puppy.idealHome) && (
-                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="mt-4 grid gap-3 grid-cols-1 md:grid-cols-2">
                       {puppy.temperament && (
                         <div className="rounded-xl border border-border/70 bg-background p-4">
                           <div className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -325,7 +325,7 @@ function PuppyDetail() {
                 </SectionCard>
               </TabsContent>
 
-              <TabsContent value="parents" className="mt-6 grid gap-4 md:grid-cols-2">
+              <TabsContent value="parents" className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-2">
                 <ParentCard p={parents.mother ?? emptyParent} label={t("cards.mother")} />
                 <ParentCard p={parents.father ?? emptyParent} label={t("cards.father")} />
               </TabsContent>
@@ -335,7 +335,7 @@ function PuppyDetail() {
                   <p className="mb-4 text-sm text-muted-foreground">
                     {t("puppyDetail.healthIntro")}
                   </p>
-                  <ul className="grid gap-3 md:grid-cols-2">
+                  <ul className="grid gap-3 grid-cols-1 md:grid-cols-2">
                     {[
                       { icon: BadgeCheck, label: t("puppyDetail.docMicrochip") },
                       { icon: Syringe, label: t("puppyDetail.docVaccinations") },
@@ -403,7 +403,7 @@ function PuppyDetail() {
 
               <TabsContent value="transport" className="mt-6">
                 <SectionCard title={t("puppyDetail.transportEstimateTitle")}>
-                  <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                  <div className="grid gap-3 grid-cols-1 md:grid-cols-[1fr_auto] md:items-end">
                     <div>
                       <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t("puppyDetail.destinationCountry")}

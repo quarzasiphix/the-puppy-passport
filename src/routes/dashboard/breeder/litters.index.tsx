@@ -84,7 +84,7 @@ function LittersPage() {
       </div>
 
       {kennel?.id && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
           <LitterFormDialog
             kennelId={kennel.id}
             defaultStatus="planned"

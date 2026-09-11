@@ -272,7 +272,7 @@ export function ApplyDialog({
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-4 md:grid-cols-2">{children}</div>;
+  return <div className="grid gap-4 grid-cols-1 md:grid-cols-2">{children}</div>;
 }
 function F({
   label,

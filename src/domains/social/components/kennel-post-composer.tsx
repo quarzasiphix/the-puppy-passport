@@ -85,7 +85,7 @@ export function KennelPostComposer({
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
         <div>
           <Label>Post type</Label>
           <Select value={postType} onValueChange={(v) => setPostType(v as PostType)}>

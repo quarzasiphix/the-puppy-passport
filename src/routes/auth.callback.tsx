@@ -50,7 +50,7 @@ export const Route = createFileRoute("/auth/callback")({
     });
   },
   component: () => (
-    <div className="grid min-h-[60vh] place-items-center text-sm text-muted-foreground">
+    <div className="grid grid-cols-1 min-h-[60vh] place-items-center text-sm text-muted-foreground">
       Signing you in…
     </div>
   ),

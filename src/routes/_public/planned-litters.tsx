@@ -28,7 +28,7 @@ function PlannedLittersPage() {
           <p className="text-sm text-muted-foreground">{t("plannedLittersPage.none")}</p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {plannedLitters.map((l) => (
             <LitterCard key={l.id} l={l} planned />
           ))}

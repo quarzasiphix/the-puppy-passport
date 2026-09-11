@@ -92,7 +92,7 @@ function ProfilePage() {
       ) : !query.data ? (
         <p className="text-sm text-muted-foreground">No organisation found for your account yet.</p>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
           <div className="rounded-2xl border border-border/70 bg-card p-6">
             <h3 className="mb-3 font-display text-lg font-semibold">Edit profile</h3>
             <form
@@ -103,7 +103,7 @@ function ProfilePage() {
                 <Label>Description</Label>
                 <Textarea rows={5} {...form.register("description")} />
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <div>
                   <Label>Cover image URL</Label>
                   <Input placeholder="https://…" {...form.register("coverImageUrl")} />

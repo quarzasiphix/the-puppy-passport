@@ -69,7 +69,7 @@ function DispatchPage() {
         ) : !workloadQuery.data?.length ? (
           <p className="text-sm text-muted-foreground">No drivers on file.</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {workloadQuery.data.map((d) => (
               <div key={d.id} className="rounded-xl border border-border/70 bg-card p-4">
                 <div className="flex items-center justify-between">

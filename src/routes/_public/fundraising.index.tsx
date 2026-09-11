@@ -35,7 +35,7 @@ function FundraisingListPage() {
           <p className="mt-3 font-medium">{t("fundraisingList.noCampaigns")}</p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {campaigns.map((c) => (
             <Link
               key={c.id}

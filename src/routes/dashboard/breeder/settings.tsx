@@ -64,7 +64,7 @@ function SettingsPage() {
       <header className="mb-6">
         <h1 className="font-display text-3xl font-medium">Settings</h1>
       </header>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card title="Account">
           {profileQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
@@ -216,7 +216,7 @@ function KennelPageSettings({ userId }: { userId: string | null }) {
 
           <div>
             <Label>Sections shown on your public kennel page</Label>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="mt-2 grid gap-2 grid-cols-1 sm:grid-cols-2">
               {KENNEL_SECTIONS.map((section) => (
                 <label key={section} className="flex items-center gap-2 text-sm">
                   <Checkbox

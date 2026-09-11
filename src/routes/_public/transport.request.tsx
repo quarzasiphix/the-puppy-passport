@@ -575,7 +575,7 @@ function TransportRequestPage() {
 
   if (!userId) {
     return (
-      <div className="container-page grid min-h-[60vh] place-items-center py-16 text-center">
+      <div className="container-page grid grid-cols-1 min-h-[60vh] place-items-center py-16 text-center">
         <div className="max-w-md">
           <Truck className="mx-auto size-8 text-primary" />
           <h1 className="mt-4 font-display text-3xl font-medium">
@@ -646,7 +646,7 @@ function TransportRequestPage() {
           if (step === STEP_COUNT - 1) form.handleSubmit(onSubmit)();
           else goNext();
         }}
-        className="grid gap-8 lg:grid-cols-[1fr_320px]"
+        className="grid gap-8 grid-cols-1 lg:grid-cols-[1fr_320px]"
       >
         <div className="space-y-6">
           {step === 0 && <Step1 form={form} />}
@@ -862,7 +862,7 @@ function Step1({ form }: { form: UseFormReturn<FormValues> }) {
           <RadioGroup
             value={field.value}
             onValueChange={field.onChange}
-            className="grid gap-2 md:grid-cols-2"
+            className="grid gap-2 grid-cols-1 md:grid-cols-2"
           >
             {purposeValues.map((v) => (
               <label
@@ -889,7 +889,7 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
   const { t } = useTranslation();
   return (
     <Section title={t("transportRequest.step2Section")}>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fAnimalName")}>
           <Input {...register("animalName")} />
           {formState.errors.animalName && (
@@ -946,7 +946,7 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
         </F>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
         <YesNo
           control={control}
           name="microchipKnown"
@@ -964,7 +964,7 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
         </F>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fVaccinationStatus")}>
           <Input
             placeholder={t("transportRequest.vaccinationStatusPlaceholder")}
@@ -981,7 +981,7 @@ function Step2({ form }: { form: UseFormReturn<FormValues> }) {
       <F label={t("transportRequest.fMedication")}>
         <Input {...register("medication")} />
       </F>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fBehaviouralNotes")}>
           <Textarea rows={2} {...register("behaviouralNotes")} />
         </F>
@@ -1012,7 +1012,7 @@ function Step3({ form }: { form: UseFormReturn<FormValues> }) {
         name="isCurrentOwner"
         label={t("transportRequest.isCurrentOwner")}
       />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fReleaseAuthorizedBy")}>
           <Input {...register("releaseAuthorizedBy")} />
         </F>
@@ -1029,7 +1029,7 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
   const { t } = useTranslation();
   return (
     <Section title={t("transportRequest.step4Section")}>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fPickupCountry")}>
           <Input {...register("pickupCountry")} />
         </F>
@@ -1058,7 +1058,7 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
           <Input {...register("destinationAddressExact")} />
         </F>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <F label={t("transportRequest.fEarliestDate")}>
           <Input type="date" {...register("earliestDate")} />
           {formState.errors.earliestDate && (
@@ -1085,7 +1085,7 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
             <RadioGroup
               value={field.value}
               onValueChange={field.onChange}
-              className="grid gap-2 md:grid-cols-2"
+              className="grid gap-2 grid-cols-1 md:grid-cols-2"
             >
               <label className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm">
                 <RadioGroupItem value="home_delivery" /> {t("transportRequest.homeDelivery")}
@@ -1107,7 +1107,7 @@ function Step5({ form }: { form: UseFormReturn<FormValues> }) {
   return (
     <Section title={t("transportRequest.step5Section")}>
       <p className="text-sm text-muted-foreground">{t("transportRequest.step5Intro")}</p>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
         <YesNo control={control} name="isDomestic" label={t("transportRequest.legalIsDomestic")} />
         <YesNo control={control} name="isSale" label={t("transportRequest.legalIsSale")} />
         <YesNo
@@ -1194,7 +1194,7 @@ function Step6({ form }: { form: UseFormReturn<FormValues> }) {
           <RadioGroup
             value={field.value}
             onValueChange={field.onChange}
-            className="grid gap-2 md:grid-cols-2"
+            className="grid gap-2 grid-cols-1 md:grid-cols-2"
           >
             {serviceValues.map((v) => (
               <label

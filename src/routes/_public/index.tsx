@@ -94,7 +94,7 @@ function Hero() {
   const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden border-b border-border/60 bg-secondary/40">
-      <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
+      <div className="container-page grid gap-10 py-14 grid-cols-1 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
         <div className="flex flex-col justify-center">
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
             <HeartHandshake className="size-3.5" /> {t("home.heroEyebrow")}
@@ -242,7 +242,7 @@ function ServiceCategories() {
         desc={t("home.serviceCategories.desc")}
         cta={{ label: t("home.serviceCategories.cta"), to: "/transport" }}
       />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {categories.map((c) => (
           <div key={c.title} className="rounded-2xl border border-border/70 bg-card p-6">
             <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -288,7 +288,7 @@ function Trust() {
   ];
   return (
     <section className="border-y border-border/60 bg-background">
-      <div className="container-page grid gap-6 py-10 md:grid-cols-5">
+      <div className="container-page grid gap-6 py-10 grid-cols-1 md:grid-cols-5">
         {items.map((it) => (
           <div key={it.label} className="flex items-start gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
@@ -348,7 +348,7 @@ function FeaturedPuppies() {
         desc={t("home.featuredPuppies.desc")}
         cta={{ label: t("home.featuredPuppies.cta"), to: "/find-a-dog" }}
       />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {featuredPuppies.map((p) => (
           <PuppyCard key={p.id} p={p} />
         ))}
@@ -370,7 +370,7 @@ function UpcomingLitters() {
           desc={t("home.upcomingLitters.desc")}
           cta={{ label: t("home.upcomingLitters.cta"), to: "/planned-litters" }}
         />
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
           {upcomingLitters.map((l) => (
             <LitterCard key={l.id} l={l} planned />
           ))}
@@ -392,7 +392,7 @@ function VerifiedBreeders() {
         desc={t("home.verifiedBreedersSection.desc")}
         cta={{ label: t("home.verifiedBreedersSection.cta"), to: "/breeders" }}
       />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {verifiedBreeders.map((b) => (
           <BreederCard key={b.id} b={b} />
         ))}
@@ -408,7 +408,7 @@ function FollowTheJourney() {
   const { t } = useTranslation();
   return (
     <section className="border-y border-border/60 bg-secondary/40 py-16">
-      <div className="container-page grid items-center gap-10 lg:grid-cols-2">
+      <div className="container-page grid items-center gap-10 grid-cols-1 lg:grid-cols-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("home.followJourneyEyebrow")}
@@ -461,7 +461,7 @@ function Pedigrees() {
   const { t } = useTranslation();
   return (
     <section className="container-page py-16">
-      <div className="grid items-center gap-10 lg:grid-cols-2">
+      <div className="grid items-center gap-10 grid-cols-1 lg:grid-cols-2">
         <div className="order-2 flex justify-center lg:order-1">
           <div className="grid w-full max-w-sm gap-2 rounded-2xl border border-border/70 bg-card p-6">
             {[
@@ -508,7 +508,7 @@ function TransportSection() {
   return (
     <section className="container-page py-16">
       <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
-        <div className="grid lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
           <div className="relative aspect-[4/3] lg:aspect-auto">
             <img
               src={transportImg}
@@ -594,7 +594,7 @@ function HowItWorksStrip() {
           title={t("home.howItWorksStrip.title")}
           cta={{ label: t("home.howItWorksStrip.cta"), to: "/how-it-works" }}
         />
-        <ol className="grid gap-4 md:grid-cols-5">
+        <ol className="grid gap-4 grid-cols-1 md:grid-cols-5">
           {steps.map(([t, d], i) => (
             <li key={t} className="rounded-2xl border border-border/70 bg-card p-5">
               <div className="grid size-8 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
@@ -614,7 +614,7 @@ function FinalCTA() {
   const { t } = useTranslation();
   return (
     <section className="container-page py-20">
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-between rounded-3xl border border-border/70 bg-primary p-10 text-primary-foreground">
           <div>
             <div className="grid size-12 place-items-center rounded-2xl bg-primary-foreground/15">

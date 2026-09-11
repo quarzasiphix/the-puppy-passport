@@ -6,11 +6,13 @@ import { useAuth } from "@/domains/identity";
 import { listFollowedBreeders, unfollowOrg } from "@/domains/marketplace";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 export const Route = createFileRoute("/dashboard/buyer/followed")({
   component: FollowedBreeders,
 });
 
 function FollowedBreeders() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -22,35 +24,31 @@ function FollowedBreeders() {
   const unfollowMutation = useMutation({
     mutationFn: (orgId: string) => unfollowOrg(userId!, orgId),
     onSuccess: () => {
-      toast.success("Unfollowed.");
+      toast.success(t("buyerPanel.followed.unfollowed"));
       queryClient.invalidateQueries({ queryKey: ["my-followed-breeders", userId] });
       queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("buyerPanel.followed.couldNotUpdate"))),
   });
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Followed breeders</h1>
-        <p className="text-sm text-muted-foreground">
-          You'll be notified when they publish new litters.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.followed.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.followed.subtitle")}</p>
       </header>
       {query.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.followed.loading")}</p>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">Not following any breeders yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Follow a kennel from its profile page to see their updates here.
-          </p>
+          <p className="font-medium">{t("buyerPanel.followed.emptyTitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("buyerPanel.followed.emptyBody")}</p>
           <Link to="/breeders" className="mt-3 inline-block text-sm text-primary hover:underline">
-            Browse verified breeders
+            {t("buyerPanel.followed.browseBreeders")}
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {query.data.map((b) => (
             <div key={b.id} className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <img src={b.cover} alt="" className="aspect-[16/9] w-full object-cover" />
@@ -62,7 +60,7 @@ function FollowedBreeders() {
                 <div className="mt-4 flex gap-2">
                   <Button asChild size="sm" variant="outline">
                     <Link to="/@{$handle}" params={{ handle: b.slug }}>
-                      View kennel
+                      {t("buyerPanel.followed.viewKennel")}
                     </Link>
                   </Button>
                   <Button
@@ -71,7 +69,7 @@ function FollowedBreeders() {
                     disabled={unfollowMutation.isPending}
                     onClick={() => unfollowMutation.mutate(b.id)}
                   >
-                    Unfollow
+                    {t("buyerPanel.followed.unfollow")}
                   </Button>
                 </div>
               </div>

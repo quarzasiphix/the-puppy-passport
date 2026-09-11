@@ -64,7 +64,7 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
           </h2>
         </div>
       )}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <Link
           to="/transport/request"
           className="group flex flex-col justify-between rounded-2xl border border-primary/30 bg-primary p-6 text-primary-foreground transition-transform hover:-translate-y-0.5 md:col-span-3 md:flex-row md:items-center"

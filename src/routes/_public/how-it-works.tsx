@@ -60,7 +60,7 @@ function HowItWorks() {
 
       <section className="container-page py-16">
         <h2 className="mb-8 font-display text-3xl font-medium">{t("howItWorksPage.stepsTitle")}</h2>
-        <ol className="grid gap-4 md:grid-cols-5">
+        <ol className="grid gap-4 grid-cols-1 md:grid-cols-5">
           {steps.map(([title, d], i) => (
             <li key={title} className="rounded-2xl border border-border/70 bg-card p-6">
               <div className="grid size-9 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
@@ -78,7 +78,7 @@ function HowItWorks() {
           <h2 className="mb-8 font-display text-3xl font-medium">
             {t("howItWorksPage.verifyTitle")}
           </h2>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-5">
             {trust.map((item) => (
               <div key={item.label} className="rounded-2xl border border-border/70 bg-card p-6">
                 <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">

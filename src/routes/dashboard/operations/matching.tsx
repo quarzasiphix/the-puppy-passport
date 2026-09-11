@@ -104,7 +104,7 @@ function MatchingPage() {
           <h3 className="mb-3 font-display text-base font-semibold">
             Unmatched demand by country pair
           </h3>
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
             {clusters.map((c) => (
               <div
                 key={`${c.pickupCountry}-${c.destinationCountry}`}

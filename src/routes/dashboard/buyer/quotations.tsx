@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/domains/identity";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { documentExpiryWarning, listMyQuotations, respondToQuotation } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/buyer/quotations")({
   component: BuyerQuotationsPage,
@@ -32,7 +33,20 @@ const statusStyles: Record<string, string> = {
   replaced: "bg-muted text-muted-foreground",
 };
 
+function getStatusLabels(t: (key: string) => string): Record<string, string> {
+  return {
+    sent: t("buyerPanel.quotations.statusSent"),
+    viewed: t("buyerPanel.quotations.statusViewed"),
+    accepted: t("buyerPanel.quotations.statusAccepted"),
+    rejected: t("buyerPanel.quotations.statusRejected"),
+    expired: t("buyerPanel.quotations.statusExpired"),
+    replaced: t("buyerPanel.quotations.statusReplaced"),
+  };
+}
+
 function BuyerQuotationsPage() {
+  const { t } = useTranslation();
+  const statusLabels = getStatusLabels(t);
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -45,29 +59,31 @@ function BuyerQuotationsPage() {
     mutationFn: ({ id, response }: { id: string; response: "accepted" | "rejected" }) =>
       respondToQuotation(id, response),
     onSuccess: (_data, vars) => {
-      toast.success(vars.response === "accepted" ? "Quotation accepted." : "Quotation declined.");
+      toast.success(
+        vars.response === "accepted"
+          ? t("buyerPanel.quotations.accepted")
+          : t("buyerPanel.quotations.declined"),
+      );
       queryClient.invalidateQueries({ queryKey: ["my-quotations", userId] });
       queryClient.invalidateQueries({ queryKey: ["my-transport-requests", userId] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not respond.")),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, t("buyerPanel.quotations.couldNotRespond"))),
   });
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Quotations</h1>
-        <p className="text-sm text-muted-foreground">
-          Review price quotes operations has prepared for your transport requests.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.quotations.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.quotations.subtitle")}</p>
       </header>
 
       {query.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.quotations.loading")}</p>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <Receipt className="mx-auto size-6 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            No quotations yet — you'll see one here once operations prepares it for a request.
+            {t("buyerPanel.quotations.emptyBody")}
           </p>
         </div>
       ) : (
@@ -79,7 +95,7 @@ function BuyerQuotationsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="font-medium">
-                      {q.transport_requests?.animal_name ?? "Animal"}{" "}
+                      {q.transport_requests?.animal_name ?? t("buyerPanel.quotations.animal")}{" "}
                       <span className="text-sm text-muted-foreground">
                         · {q.transport_requests?.request_number}
                       </span>
@@ -96,20 +112,19 @@ function BuyerQuotationsPage() {
                         }
                       >
                         {documentExpiryWarning(q.expiry_date) === "expired"
-                          ? `This quote expired on ${new Date(q.expiry_date).toLocaleDateString("en-GB")} — ask us for an updated price.`
-                          : `Valid until ${new Date(q.expiry_date).toLocaleDateString("en-GB")}`}
+                          ? `${t("buyerPanel.quotations.expiredOn")} ${new Date(q.expiry_date).toLocaleDateString("en-GB")} — ${t("buyerPanel.quotations.askForUpdatedPrice")}`
+                          : `${t("buyerPanel.quotations.validUntil")} ${new Date(q.expiry_date).toLocaleDateString("en-GB")}`}
                       </p>
                     )}
                     {q.assumptions && (
                       <p className="mt-2 max-w-md text-xs text-muted-foreground">{q.assumptions}</p>
                     )}
                     <p className="mt-2 text-xs text-muted-foreground">
-                      This is an estimate based on the details you provided — final confirmation
-                      happens after acceptance.
+                      {t("buyerPanel.quotations.estimateNote")}
                     </p>
                   </div>
                   <Badge className={statusStyles[q.status] ?? "bg-muted text-muted-foreground"}>
-                    {q.status}
+                    {statusLabels[q.status] ?? q.status}
                   </Badge>
                 </div>
                 {(q.status === "sent" || q.status === "viewed") && (
@@ -117,25 +132,27 @@ function BuyerQuotationsPage() {
                     {!isExpired && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm">Accept quotation</Button>
+                          <Button size="sm">{t("buyerPanel.quotations.acceptQuotation")}</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Accept this quotation?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              {t("buyerPanel.quotations.acceptConfirmTitle")}
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              This confirms you agree to {q.total_price?.toLocaleString()}{" "}
-                              {q.currency} for this transport. Operations will follow up on
-                              scheduling and remaining documents.
+                              {t("buyerPanel.quotations.acceptConfirmBodyPrefix")}{" "}
+                              {q.total_price?.toLocaleString()} {q.currency}{" "}
+                              {t("buyerPanel.quotations.acceptConfirmBodySuffix")}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t("buyerPanel.quotations.cancel")}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() =>
                                 respondMutation.mutate({ id: q.id, response: "accepted" })
                               }
                             >
-                              Accept
+                              {t("buyerPanel.quotations.accept")}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -147,7 +164,9 @@ function BuyerQuotationsPage() {
                       disabled={respondMutation.isPending}
                       onClick={() => respondMutation.mutate({ id: q.id, response: "rejected" })}
                     >
-                      {isExpired ? "Dismiss" : "Decline"}
+                      {isExpired
+                        ? t("buyerPanel.quotations.dismiss")
+                        : t("buyerPanel.quotations.decline")}
                     </Button>
                   </div>
                 )}

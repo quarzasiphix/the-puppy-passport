@@ -159,7 +159,7 @@ function FindADog() {
         <ChevronDown className={`size-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
       </button>
 
-      <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-[280px_1fr]">
         <aside
           className={`rounded-2xl border border-border/70 bg-card p-5 ${filtersOpen ? "block" : "hidden"} lg:block`}
         >
@@ -329,7 +329,7 @@ function FindADog() {
           )}
 
           {view === "grid" ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((p) => (
                 <PuppyCard key={p.id} p={p} />
               ))}
@@ -341,7 +341,7 @@ function FindADog() {
                   key={p.id}
                   to="/puppies/$id"
                   params={{ id: p.id }}
-                  className="grid gap-4 rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:bg-secondary/40 md:grid-cols-[180px_1fr_auto]"
+                  className="grid gap-4 rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:bg-secondary/40 grid-cols-1 md:grid-cols-[180px_1fr_auto]"
                 >
                   <img
                     src={p.image}

@@ -53,7 +53,7 @@ function FoundationMessages() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[320px_1fr]">
           <div className="rounded-2xl border border-border/70 bg-card">
             <ul className="divide-y divide-border/60">
               {query.data.map((c) => {

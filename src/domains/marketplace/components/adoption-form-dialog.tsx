@@ -135,7 +135,7 @@ export function AdoptionFormDialog({
               )}
             />
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="sex"
@@ -170,7 +170,7 @@ export function AdoptionFormDialog({
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="breedId"
@@ -208,7 +208,7 @@ export function AdoptionFormDialog({
               />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="adoptionFee"

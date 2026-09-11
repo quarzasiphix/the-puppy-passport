@@ -65,7 +65,7 @@ function EstimatePage() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="mt-8 space-y-4 rounded-2xl border border-border/70 bg-card p-6"
         >
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 {t("estimatePage.pickupCountry")}

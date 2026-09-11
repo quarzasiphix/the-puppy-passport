@@ -14,6 +14,7 @@ import {
 import { startApplicationConversation } from "@/domains/messaging";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 export const Route = createFileRoute("/dashboard/buyer/applications")({
   component: BuyerApplications,
 });
@@ -27,6 +28,7 @@ const withdrawable: string[] = [
 ];
 
 function BuyerApplications() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -39,10 +41,11 @@ function BuyerApplications() {
   const withdrawMutation = useMutation({
     mutationFn: withdrawApplication,
     onSuccess: () => {
-      toast.success("Application withdrawn.");
+      toast.success(t("buyerPanel.applications.withdrawn"));
       queryClient.invalidateQueries({ queryKey: ["my-applications", userId] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not withdraw.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("buyerPanel.applications.couldNotWithdraw"))),
   });
 
   const messageMutation = useMutation({
@@ -50,28 +53,29 @@ function BuyerApplications() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/buyer/messages", search: { conversation: conversationId } });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
+    onError: (err) =>
+      toast.error(
+        getFriendlyErrorMessage(err, t("buyerPanel.applications.couldNotOpenConversation")),
+      ),
   });
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Your applications</h1>
-        <p className="text-sm text-muted-foreground">
-          Every puppy application you've sent, and the breeder's response.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.applications.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.applications.subtitle")}</p>
       </header>
 
       {query.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.applications.loading")}</p>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">No applications yet</p>
+          <p className="font-medium">{t("buyerPanel.applications.emptyTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Find a puppy you love and apply from its listing page.
+            {t("buyerPanel.applications.emptyBody")}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/find-a-dog">Browse available puppies</Link>
+            <Link to="/find-a-dog">{t("buyerPanel.applications.browsePuppies")}</Link>
           </Button>
         </div>
       ) : (
@@ -81,10 +85,11 @@ function BuyerApplications() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="font-display text-lg font-semibold">
-                    {a.animals?.name ?? "This listing"}
+                    {a.animals?.name ?? t("buyerPanel.applications.thisListing")}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {a.animals?.organisations?.name ?? "Independent listing"} · Applied{" "}
+                    {a.animals?.organisations?.name ?? t("buyerPanel.applications.independentListing")}{" "}
+                    · {t("buyerPanel.applications.appliedPrefix")}{" "}
                     {new Date(a.submitted_at).toLocaleDateString("en-GB")}
                   </div>
                 </div>
@@ -94,14 +99,16 @@ function BuyerApplications() {
               </div>
               {a.breeder_response && (
                 <p className="mt-3 rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Breeder: </span>
+                  <span className="font-medium text-foreground">
+                    {t("buyerPanel.applications.breederPrefix")}{" "}
+                  </span>
                   {a.breeder_response}
                 </p>
               )}
               <div className="mt-4 flex gap-2">
                 <Button asChild size="sm" variant="outline">
                   <Link to="/puppies/$id" params={{ id: a.animal_id }}>
-                    Open puppy
+                    {t("buyerPanel.applications.openPuppy")}
                   </Link>
                 </Button>
                 <Button
@@ -110,7 +117,8 @@ function BuyerApplications() {
                   disabled={messageMutation.isPending}
                   onClick={() => messageMutation.mutate(a.animal_id)}
                 >
-                  <MessageCircle className="mr-1 size-3.5" /> Message breeder
+                  <MessageCircle className="mr-1 size-3.5" />{" "}
+                  {t("buyerPanel.applications.messageBreeder")}
                 </Button>
                 {withdrawable.includes(a.status) && (
                   <Button
@@ -120,7 +128,7 @@ function BuyerApplications() {
                     disabled={withdrawMutation.isPending}
                     onClick={() => withdrawMutation.mutate(a.id)}
                   >
-                    Withdraw
+                    {t("buyerPanel.applications.withdraw")}
                   </Button>
                 )}
               </div>

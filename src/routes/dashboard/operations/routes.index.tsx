@@ -94,7 +94,7 @@ function RoutesPage() {
                     </FormItem>
                   )}
                 />
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="departureDate"
@@ -162,7 +162,7 @@ function RoutesPage() {
               From open route waitlist entries — use this to decide what to plan next.
             </span>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {clustersQuery.data.map((c) => (
               <div
                 key={`${c.originCountry}-${c.destinationCountry}`}
@@ -185,7 +185,7 @@ function RoutesPage() {
         </section>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {query.data?.map((r) => (
           <Link
             key={r.id}

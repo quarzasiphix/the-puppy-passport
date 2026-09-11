@@ -126,7 +126,7 @@ function DriversPage() {
         </Dialog>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {query.data?.map((d) => {
           const warnings = expiryWarnings(d.document_expiry_date, "Qualification document");
           return (

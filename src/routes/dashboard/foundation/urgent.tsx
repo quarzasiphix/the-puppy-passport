@@ -185,7 +185,7 @@ function UrgentCasesPage() {
                   onChange={(e) => setForm({ ...form, animalName: e.target.value })}
                 />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
                   <Label>Current city</Label>
                   <Input
@@ -223,7 +223,7 @@ function UrgentCasesPage() {
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
                 />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
                   <Label>Contact name</Label>
                   <Input

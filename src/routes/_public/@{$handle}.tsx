@@ -240,7 +240,7 @@ function BreederProfile() {
 
             <TabsContent value="puppies" className="mt-6">
               {puppies.length ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {puppies.map((p) => (
                     <PuppyCard key={p.id} p={p} />
                   ))}
@@ -258,7 +258,7 @@ function BreederProfile() {
                   {t("breederProfile.currentAndPlanned")}
                 </h3>
                 {currentLitters.length || plannedLitters.length ? (
-                  <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
                     {[...currentLitters, ...plannedLitters].map((l) => (
                       <LitterCard key={l.id} l={l} planned={plannedLitters.includes(l)} />
                     ))}
@@ -273,7 +273,7 @@ function BreederProfile() {
 
             <TabsContent value="dogs" className="mt-6 space-y-8">
               {parents.length ? (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                   {parents.map((p, i) => (
                     <ParentDogCard key={i} p={p} />
                   ))}
@@ -288,7 +288,7 @@ function BreederProfile() {
                   <h3 className="mb-3 flex items-center gap-1.5 font-display text-lg font-semibold">
                     <Trophy className="size-4 text-accent" /> {t("breederProfile.champions")}
                   </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                     {champions.map((c) => (
                       <div
                         key={c.dogName}
@@ -331,7 +331,7 @@ function BreederProfile() {
               </EmptyState>
             </TabsContent>
 
-            <TabsContent value="about" className="mt-6 grid gap-6 lg:grid-cols-3">
+            <TabsContent value="about" className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-3">
               <div className="rounded-2xl border border-border/70 bg-card p-6 lg:col-span-2">
                 <h3 className="mb-3 font-display text-xl font-semibold">
                   {t("breederProfile.aboutKennelTitle")}

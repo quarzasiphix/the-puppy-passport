@@ -69,7 +69,7 @@ function ParentDogsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {parentDogs.map((p) => (
             <article key={p.id} className="rounded-2xl border border-border/70 bg-card p-4">
               <div className="flex items-start justify-between">

@@ -34,7 +34,7 @@ function ProfitabilityPage() {
         </p>
       </header>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="rounded-2xl border border-border/70 bg-card p-5">
           <div className="text-xs text-muted-foreground">Total revenue (all routes)</div>
           <div className="mt-1 font-display text-2xl font-semibold">{money(totals.revenue)}</div>

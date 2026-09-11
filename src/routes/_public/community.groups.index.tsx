@@ -63,7 +63,7 @@ function GroupsPage() {
       {groupsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground">{t("communityGroups.loading")}</p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           {groupsQuery.data?.map((group) => (
             <div key={group.id} className="rounded-2xl border border-border/70 bg-card p-4">
               <div className="flex items-start justify-between gap-2">

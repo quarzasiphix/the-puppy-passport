@@ -145,7 +145,7 @@ function CreateBreeder() {
 
   if (!userId) {
     return (
-      <div className="container-page grid min-h-[60vh] place-items-center py-16 text-center">
+      <div className="container-page grid grid-cols-1 min-h-[60vh] place-items-center py-16 text-center">
         <div className="max-w-md">
           <PawPrint className="mx-auto size-8 text-primary" />
           <h1 className="mt-4 font-display text-3xl font-medium">
@@ -188,7 +188,7 @@ function CreateBreeder() {
 
   return (
     <div className="container-page py-14">
-      <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-10 grid-cols-1 lg:grid-cols-[1fr_360px]">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("createBreederPage.eyebrow")}
@@ -199,7 +199,7 @@ function CreateBreeder() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
               <Section title={t("createBreederPage.sectionType")}>
-                <div className="grid gap-2 md:grid-cols-3">
+                <div className="grid gap-2 grid-cols-1 md:grid-cols-3">
                   {orgTypeOptions.map((opt) => (
                     <button
                       type="button"
@@ -218,7 +218,7 @@ function CreateBreeder() {
               </Section>
 
               <Section title={t("createBreederPage.sectionOrganisation")}>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="name"
@@ -275,7 +275,7 @@ function CreateBreeder() {
               </Section>
 
               <Section title={t("createBreederPage.sectionAssociation")}>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="associationName"
