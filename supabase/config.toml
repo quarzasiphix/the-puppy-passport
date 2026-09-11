@@ -264,6 +264,15 @@ otp_expiry = 3600
 subject = "Sign in to Anemalo"
 content_path = "./supabase/templates/magic_link.html"
 
+# Password reset email (src/routes/_public/forgot-password.tsx). Same "Local-stack only" caveat
+# as magic_link above — a hosted project's template lives in the Dashboard (Authentication →
+# Emails → Templates → Reset Password). Links to our own /reset-password with a raw
+# {{ .TokenHash }}, not {{ .ConfirmationURL }} — see the comment on completePasswordReset
+# (src/domains/identity/services/actions.ts) for why.
+[auth.email.template.recovery]
+subject = "Reset your Anemalo password"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

@@ -29,10 +29,12 @@ function ForgotPassword() {
   async function onSubmit(values: FormValues) {
     const supabase = getSupabaseBrowserClient();
     // Always show the same confirmation regardless of whether the email exists, so this can't be
-    // used to probe which addresses have an account.
-    await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    // used to probe which addresses have an account. The actual reset link is built entirely by
+    // supabase/templates/recovery.html ({{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}
+    // &type=recovery) — no redirectTo needed here, since that template no longer uses
+    // {{ .ConfirmationURL }}/{{ .RedirectTo }}. See completePasswordReset's comment
+    // (src/domains/identity/services/actions.ts) for why.
+    await supabase.auth.resetPasswordForEmail(values.email);
     setSent(true);
   }
 

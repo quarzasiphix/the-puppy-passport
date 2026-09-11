@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,7 +8,7 @@ import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { completePasswordReset } from "@/domains/identity";
 import { useTranslation } from "@/shared/i18n";
 
 const schema = z
@@ -22,39 +22,35 @@ const schema = z
   });
 type FormValues = z.infer<typeof schema>;
 
+// The reset-password link from the email (supabase/templates/recovery.html) carries a raw
+// token_hash, not Supabase's auto-consuming {{ .ConfirmationURL }} — see the comment on
+// completePasswordReset (src/domains/identity/services/actions.ts) for why. Nothing is verified
+// on page load; the token is only ever consumed inside completePasswordReset, fired by this
+// form's own submit, so an email-security scanner prefetching this URL can't burn the link.
+const searchSchema = z.object({ token_hash: z.string().optional() });
+
 export const Route = createFileRoute("/_public/reset-password")({
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Choose a new password — Anemalo" }] }),
   component: ResetPassword,
 });
 
 function ResetPassword() {
   const navigate = useNavigate();
-  // The reset-password link from the email carries a one-time recovery token in the URL; the
-  // browser client picks it up automatically on load and establishes a temporary session for
-  // exactly this purpose. Until that happens we can't safely show the form.
-  const [ready, setReady] = useState(false);
+  const { token_hash: tokenHash } = Route.useSearch();
   const { t } = useTranslation();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
   });
 
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => subscription.subscription.unsubscribe();
-  }, []);
-
   async function onSubmit(values: FormValues) {
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.updateUser({ password: values.password });
-    if (error) {
-      toast.error(error.message);
+    if (!tokenHash) return;
+    const result = await completePasswordReset({
+      data: { tokenHash, password: values.password },
+    });
+    if (result.error) {
+      toast.error(result.error);
       return;
     }
     toast.success(t("resetPassword.updatedToast"));
@@ -70,8 +66,13 @@ function ResetPassword() {
         </div>
         <h1 className="mt-6 font-display text-3xl font-medium">{t("resetPassword.title")}</h1>
 
-        {!ready ? (
-          <p className="mt-4 text-sm text-muted-foreground">{t("resetPassword.notReady")}</p>
+        {!tokenHash ? (
+          <>
+            <p className="mt-4 text-sm text-muted-foreground">{t("resetPassword.invalidLink")}</p>
+            <Button asChild className="mt-6" variant="outline">
+              <Link to="/forgot-password">{t("resetPassword.requestNewLink")}</Link>
+            </Button>
+          </>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
