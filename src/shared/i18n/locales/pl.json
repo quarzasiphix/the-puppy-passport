@@ -705,12 +705,21 @@
   },
   "resetPassword": {
     "title": "Ustaw nowe hasło",
-    "notReady": "Otwórz tę stronę z linku resetującego w wiadomości e-mail. Jeśli właśnie w niego kliknąłeś, powinno się to zaktualizować za chwilę.",
+    "invalidLink": "Ten link resetujący jest nieprawidłowy. Poproś o nowy poniżej.",
     "newPassword": "Nowe hasło",
     "confirmPassword": "Potwierdź hasło",
     "submit": "Zaktualizuj hasło",
     "submitting": "Aktualizowanie…",
-    "updatedToast": "Hasło zaktualizowane — jesteś zalogowany."
+    "updatedToast": "Hasło zaktualizowane — jesteś zalogowany.",
+    "requestNewLink": "Poproś o nowy link resetujący"
+  },
+  "authConfirm": {
+    "title": "Potwierdź, że to Ty",
+    "body": "Dla Twojego bezpieczeństwa dotknij „Kontynuuj”, aby dokończyć logowanie do Anemalo.",
+    "submit": "Kontynuuj",
+    "working": "Logowanie…",
+    "errorTitle": "Ten link jest nieprawidłowy lub wygasł",
+    "errorBody": "Poproś o nowy link do logowania i spróbuj ponownie."
   },
   "transportPage": {
     "eyebrow": "Usługi transportowe",

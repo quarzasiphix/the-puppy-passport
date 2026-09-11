@@ -17,6 +17,7 @@ import { Route as DashboardDriverRouteImport } from './routes/dashboard/driver'
 import { Route as DashboardBuyerRouteImport } from './routes/dashboard/buyer'
 import { Route as DashboardBreederRouteImport } from './routes/dashboard/breeder'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard/admin'
+import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as PublicTransportRouteImport } from './routes/_public/transport'
 import { Route as PublicTermsRouteImport } from './routes/_public/terms'
@@ -172,6 +173,11 @@ const DashboardBreederRoute = DashboardBreederRouteImport.update({
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/dashboard/admin',
   path: '/dashboard/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -843,6 +849,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof PublicTermsRoute
   '/transport': typeof PublicTransportRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
@@ -963,6 +970,7 @@ export interface FileRoutesByTo {
   '/signup': typeof PublicSignupRoute
   '/terms': typeof PublicTermsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/': typeof PublicIndexRoute
   '/adoptions/$id': typeof PublicAdoptionsIdRoute
   '/breeders/$slug': typeof PublicBreedersSlugRoute
@@ -1081,6 +1089,7 @@ export interface FileRoutesById {
   '/_public/terms': typeof PublicTermsRoute
   '/_public/transport': typeof PublicTransportRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/confirm': typeof AuthConfirmRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/breeder': typeof DashboardBreederRouteWithChildren
   '/dashboard/buyer': typeof DashboardBuyerRouteWithChildren
@@ -1210,6 +1219,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/transport'
     | '/auth/callback'
+    | '/auth/confirm'
     | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
@@ -1330,6 +1340,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/auth/callback'
+    | '/auth/confirm'
     | '/'
     | '/adoptions/$id'
     | '/breeders/$slug'
@@ -1447,6 +1458,7 @@ export interface FileRouteTypes {
     | '/_public/terms'
     | '/_public/transport'
     | '/auth/callback'
+    | '/auth/confirm'
     | '/dashboard/admin'
     | '/dashboard/breeder'
     | '/dashboard/buyer'
@@ -1551,6 +1563,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   PublicRoute: typeof PublicRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
   DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardBreederRoute: typeof DashboardBreederRouteWithChildren
   DashboardBuyerRoute: typeof DashboardBuyerRouteWithChildren
@@ -1615,6 +1628,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/admin'
       fullPath: '/dashboard/admin'
       preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -2855,6 +2875,7 @@ const DashboardOperationsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   PublicRoute: PublicRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
   DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardBreederRoute: DashboardBreederRouteWithChildren,
   DashboardBuyerRoute: DashboardBuyerRouteWithChildren,

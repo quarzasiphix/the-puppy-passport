@@ -8,12 +8,31 @@ export type LitterRow = Database["public"]["Tables"]["litters"]["Row"];
 export type AnimalRow = Database["public"]["Tables"]["animals"]["Row"];
 export type ParentDogRow = Database["public"]["Tables"]["parent_dogs"]["Row"];
 
+// The single-owner `organisations.owner_user_id` column only ever names the original creator —
+// it never grows to list co-owners added later via `organisation_members` (see
+// public.owns_org()'s 2026-09-11 update, which now treats an active `organisation_members` row
+// with member_role = 'owner' as ownership too). Looking a kennel up by `owner_user_id` alone
+// silently hides it from every co-owner, so resolve "my kennel" through `organisation_members`
+// instead — it already gets a row for the original owner at org-creation time as well.
+async function getMyActiveOrgIds(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisation_members")
+    .select("org_id")
+    .eq("profile_id", userId)
+    .eq("status", "active");
+  if (error) throw error;
+  return (data ?? []).map((m) => m.org_id);
+}
+
 export async function getMyKennel(userId: string) {
+  const orgIds = await getMyActiveOrgIds(userId);
+  if (!orgIds.length) return null;
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
     .select("id, name, slug, plan")
-    .eq("owner_user_id", userId)
+    .in("id", orgIds)
     .eq("org_type", "kennel")
     .maybeSingle();
   if (error) throw error;
@@ -21,13 +40,15 @@ export async function getMyKennel(userId: string) {
 }
 
 export async function getMyKennelProfile(userId: string) {
+  const orgIds = await getMyActiveOrgIds(userId);
+  if (!orgIds.length) return null;
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
     .select(
       "id, name, slug, description, cover_image_url, logo_url, city, country, association_name, membership_number, years_experience, response_time, transport_available, international_transport_available, verification_status, is_public, onboarding_completed_at",
     )
-    .eq("owner_user_id", userId)
+    .in("id", orgIds)
     .eq("org_type", "kennel")
     .maybeSingle();
   if (error) throw error;

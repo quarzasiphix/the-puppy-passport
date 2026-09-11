@@ -705,12 +705,21 @@
   },
   "resetPassword": {
     "title": "Choose a new password",
-    "notReady": "Open this page from the reset link in your email. If you just clicked it, this should update in a moment.",
+    "invalidLink": "This reset link is invalid. Request a new one below.",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "submit": "Update password",
     "submitting": "Updating…",
-    "updatedToast": "Password updated — you're signed in."
+    "updatedToast": "Password updated — you're signed in.",
+    "requestNewLink": "Request a new reset link"
+  },
+  "authConfirm": {
+    "title": "Confirm it's you",
+    "body": "For your security, tap continue to finish signing in to Anemalo.",
+    "submit": "Continue",
+    "working": "Signing you in…",
+    "errorTitle": "This link is invalid or has expired",
+    "errorBody": "Request a new sign-in link and try again."
   },
   "transportPage": {
     "eyebrow": "Transport services",
