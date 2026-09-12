@@ -144,7 +144,9 @@ export function PuppyCard({ p }: { p: Puppy }) {
         </div>
         <SaveButton animalId={p.id} />
         <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-          {p.verified && <VerifiedBadge>{t("cards.verifiedBreeder")}</VerifiedBadge>}
+          {p.verified && (
+            <VerifiedBadge accentColor={p.accentColor}>{t("cards.verifiedBreeder")}</VerifiedBadge>
+          )}
           {p.transportAvailable && (
             <Badge variant="secondary" className="bg-background/85">
               <Truck className="mr-1 size-3" /> {t("cards.transport")}
@@ -365,7 +367,9 @@ export function BreederCard({ b }: { b: Breeder }) {
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={b.cover} alt={b.kennel} loading="lazy" className="size-full object-cover" />
         {b.verified && (
-          <VerifiedBadge className="absolute right-3 top-3">{t("cards.verified")}</VerifiedBadge>
+          <VerifiedBadge accentColor={b.accentColor} className="absolute right-3 top-3">
+            {t("cards.verified")}
+          </VerifiedBadge>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">

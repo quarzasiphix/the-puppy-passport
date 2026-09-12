@@ -329,7 +329,9 @@ function PuppyDetail() {
                       {breeder.kennel}
                     </span>
                     {breeder.verified && (
-                      <VerifiedBadge>{t("cards.verifiedBreeder")}</VerifiedBadge>
+                      <VerifiedBadge accentColor={breeder.accentColor}>
+                        {t("cards.verifiedBreeder")}
+                      </VerifiedBadge>
                     )}
                   </div>
                   <p className="truncate text-xs text-muted-foreground sm:text-sm">
@@ -463,7 +465,11 @@ function PuppyDetail() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h4 className="font-display text-lg font-semibold">{breeder.kennel}</h4>
-                          {breeder.verified && <VerifiedBadge>{t("cards.verified")}</VerifiedBadge>}
+                          {breeder.verified && (
+                            <VerifiedBadge accentColor={breeder.accentColor}>
+                              {t("cards.verified")}
+                            </VerifiedBadge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {breeder.name} · {breeder.city}, {breeder.country}
@@ -571,7 +577,11 @@ function PuppyDetail() {
                   <Badge className={statusStyles[puppy.status]}>
                     {statusLabelFor(t, puppy.status)}
                   </Badge>
-                  {puppy.verified && <VerifiedBadge>{t("cards.verifiedBreeder")}</VerifiedBadge>}
+                  {puppy.verified && (
+                    <VerifiedBadge accentColor={breeder.accentColor}>
+                      {t("cards.verifiedBreeder")}
+                    </VerifiedBadge>
+                  )}
                 </div>
                 <h1 className="mt-3 font-display text-2xl font-medium sm:text-3xl">{puppy.name}</h1>
                 <p className="text-muted-foreground">
