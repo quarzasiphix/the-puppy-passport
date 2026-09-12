@@ -3,8 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { ScrollText } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { requireRole } from "@/domains/identity";
 
+// Admin-only within the shared admin/moderator dashboard — the full system audit trail, not a
+// day-to-day moderation surface.
 export const Route = createFileRoute("/dashboard/admin/audit-logs")({
+  beforeLoad: ({ context }) => requireRole(context.auth, ["admin"], "/dashboard/admin"),
   component: AuditLogsPage,
 });
 

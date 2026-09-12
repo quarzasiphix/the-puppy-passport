@@ -5621,6 +5621,7 @@ export type Database = {
           evidence_url: string | null
           id: string
           notes: string | null
+          organisation_id: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["verification_status"]
@@ -5634,6 +5635,7 @@ export type Database = {
           evidence_url?: string | null
           id?: string
           notes?: string | null
+          organisation_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["verification_status"]
@@ -5647,6 +5649,7 @@ export type Database = {
           evidence_url?: string | null
           id?: string
           notes?: string | null
+          organisation_id?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["verification_status"]
@@ -5656,6 +5659,20 @@ export type Database = {
           verification_type?: Database["public"]["Enums"]["verification_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "user_verifications_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_verifications_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
           {
             foreignKeyName: "user_verifications_reviewed_by_fkey"
             columns: ["reviewed_by"]
@@ -6585,7 +6602,20 @@ export type Database = {
         Args: { p_case_id: string }
         Returns: string
       }
-      create_and_approve_own_organisation: {
+      create_notification_if_enabled: {
+        Args: {
+          p_body?: string
+          p_category: string
+          p_dedup_key?: string
+          p_link_url?: string
+          p_notification_type: string
+          p_profile_id: string
+          p_template_version?: number
+          p_title: string
+        }
+        Returns: string
+      }
+      create_own_organisation: {
         Args: {
           p_association_name?: string
           p_city?: string
@@ -6602,19 +6632,6 @@ export type Database = {
           organisation_id: string
           verification_id: string
         }[]
-      }
-      create_notification_if_enabled: {
-        Args: {
-          p_body?: string
-          p_category: string
-          p_dedup_key?: string
-          p_link_url?: string
-          p_notification_type: string
-          p_profile_id: string
-          p_template_version?: number
-          p_title: string
-        }
-        Returns: string
       }
       create_pedigree_submission: {
         Args: {
@@ -6762,6 +6779,30 @@ export type Database = {
         }
         Returns: undefined
       }
+      moderator_set_animal_published: {
+        Args: { p_animal_id: string; p_published: boolean; p_reason?: string }
+        Returns: undefined
+      }
+      moderator_set_comment_moderation_status: {
+        Args: {
+          p_comment_id: string
+          p_reason?: string
+          p_status: Database["public"]["Enums"]["content_moderation_status"]
+        }
+        Returns: undefined
+      }
+      moderator_set_organisation_suspended: {
+        Args: { p_org_id: string; p_reason?: string; p_suspended: boolean }
+        Returns: undefined
+      }
+      moderator_set_post_moderation_status: {
+        Args: {
+          p_post_id: string
+          p_reason?: string
+          p_status: Database["public"]["Enums"]["content_moderation_status"]
+        }
+        Returns: undefined
+      }
       owner_role_for_org_type: {
         Args: { p_org_type: Database["public"]["Enums"]["org_type"] }
         Returns: Database["public"]["Enums"]["platform_role"]
@@ -6784,6 +6825,14 @@ export type Database = {
           p_source_event_type: string
           p_subject_profile_id: string
         }
+        Returns: undefined
+      }
+      reject_rehoming_review: {
+        Args: { p_reason: string; p_review_id: string }
+        Returns: undefined
+      }
+      reject_user_verification: {
+        Args: { p_reason: string; p_verification_id: string }
         Returns: undefined
       }
       release_legal_hold: {

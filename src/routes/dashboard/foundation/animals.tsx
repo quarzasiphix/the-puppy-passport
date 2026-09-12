@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { getMyFoundation, listFoundationAnimals, updateAdoptionAnimal } from "@/domains/breeders";
 import { AdoptionFormDialog } from "@/domains/marketplace";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/animals")({
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/dashboard/foundation/animals")({
 });
 
 function AnimalsPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
 
@@ -35,39 +37,47 @@ function AnimalsPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });
-      toast.success("Updated.");
+      toast.success(t("foundationPanel.animalsPage.updatedToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.animalsPage.updateFailed"))),
   });
 
   const adoptedMutation = useMutation({
     mutationFn: (id: string) => updateAdoptionAnimal(id, { availability_status: "adopted" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });
-      toast.success("Marked as adopted.");
+      toast.success(t("foundationPanel.animalsPage.adoptedToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.animalsPage.updateFailed"))),
   });
 
   return (
     <div>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium">Animals</h1>
+          <h1 className="font-display text-3xl font-medium">
+            {t("foundationPanel.animalsPage.title")}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Manage animals available for adoption — publish, update status, and connect them to
-            transport once collected.
+            {t("foundationPanel.animalsPage.subtitle")}
           </p>
         </div>
-        {org?.id && <AdoptionFormDialog orgId={org.id} trigger={<Button>Add animal</Button>} />}
+        {org?.id && (
+          <AdoptionFormDialog
+            orgId={org.id}
+            trigger={<Button>{t("foundationPanel.animalsPage.addAnimal")}</Button>}
+          />
+        )}
       </header>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("foundationPanel.animalsPage.loading")}</p>
       ) : !animals?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No animals yet. Add one to start the adoption process.
+            {t("foundationPanel.animalsPage.emptyBody")}
           </p>
         </div>
       ) : (
@@ -82,7 +92,8 @@ function AnimalsPage() {
                   <div>
                     <div className="font-display text-lg font-semibold">{a.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {a.breeds?.name ?? "Mixed breed"} · {a.sex ?? "sex not set"}
+                      {a.breeds?.name ?? t("foundationPanel.animalsPage.mixedBreed")} ·{" "}
+                      {a.sex ?? t("foundationPanel.animalsPage.sexNotSet")}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -91,7 +102,7 @@ function AnimalsPage() {
                     </Badge>
                     {!a.is_published && (
                       <Badge variant="outline" className="text-xs">
-                        Draft
+                        {t("foundationPanel.animalsPage.draftBadge")}
                       </Badge>
                     )}
                   </div>
@@ -102,7 +113,7 @@ function AnimalsPage() {
                     animal={a}
                     trigger={
                       <Button size="sm" variant="outline">
-                        Edit
+                        {t("foundationPanel.animalsPage.editButton")}
                       </Button>
                     }
                   />
@@ -114,15 +125,17 @@ function AnimalsPage() {
                       publishMutation.mutate({ id: a.id, isPublished: !a.is_published })
                     }
                   >
-                    {a.is_published ? "Unpublish" : "Publish"}
+                    {a.is_published
+                      ? t("foundationPanel.animalsPage.unpublishButton")
+                      : t("foundationPanel.animalsPage.publishButton")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled
-                    title="Applications review is coming in a later update"
+                    title={t("foundationPanel.animalsPage.applicationsComingSoon")}
                   >
-                    Applications
+                    {t("foundationPanel.animalsPage.applicationsButton")}
                   </Button>
                   <Button
                     size="sm"
@@ -130,7 +143,7 @@ function AnimalsPage() {
                     disabled={adoptedMutation.isPending || a.availability_status === "adopted"}
                     onClick={() => adoptedMutation.mutate(a.id)}
                   >
-                    Mark adopted
+                    {t("foundationPanel.animalsPage.markAdoptedButton")}
                   </Button>
                 </div>
               </div>

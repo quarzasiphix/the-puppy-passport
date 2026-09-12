@@ -10,7 +10,7 @@ export async function getMyFoundation(userId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
-    .select("id, name")
+    .select("id, name, verification_status")
     .eq("owner_user_id", userId)
     .in("org_type", ["foundation", "shelter", "rescue"])
     .maybeSingle();

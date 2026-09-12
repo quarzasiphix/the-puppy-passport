@@ -97,19 +97,17 @@ function CreateBreeder() {
     },
   });
 
-  // TESTING PHASE — no manual breeder/organisation verification review is active right now (user
-  // decision 2026-09-11: focus on making onboarding itself work, not gatekeeping who can publish
-  // a kennel). Submitting this form calls create_and_approve_own_organisation(), which inserts an
-  // ALREADY-approved user_verifications row and creates the organisation/membership/role in one
-  // step, instead of the old "insert pending, wait for an admin" path. That RPC is additive —
-  // approve_user_verification() (admin-gated) still exists untouched; reverting this later means
-  // going back to a plain `status: "pending"` insert here. `breeds` is collected but not stored
-  // anywhere yet (the RPC doesn't take it — no per-org "breeds" column; a kennel's breeds are
-  // derived from its real parent_dogs once added).
+  // Submitting this form calls create_own_organisation(), which creates the organisation +
+  // owner membership + an active role in one step — panel access is immediate — but leaves
+  // verification_status/user_verifications.status at 'pending' until an admin reviews it via
+  // approve_user_verification()/reject_user_verification(). See
+  // docs/BREEDER_VERIFICATION_AND_TRUST.md. `breeds` is collected but not stored anywhere yet
+  // (the RPC doesn't take it — no per-org "breeds" column; a kennel's breeds are derived from its
+  // real parent_dogs once added).
   async function onSubmit(values: FormValues) {
     if (!userId) return;
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.rpc("create_and_approve_own_organisation", {
+    const { error } = await supabase.rpc("create_own_organisation", {
       p_org_type: values.orgType,
       p_name: values.name,
       p_description: values.description,
@@ -132,7 +130,7 @@ function CreateBreeder() {
     // sign-in -> navigate sequence) or the new breeder role from the RPC above wouldn't be seen
     // until some later, unrelated navigation happened to re-run the loader.
     await router.invalidate();
-    await navigate({ to: "/dashboard/breeder" });
+    await navigate({ to: values.orgType === "kennel" ? "/dashboard/breeder" : "/dashboard/foundation" });
   }
 
   if (authLoading || (userId && verificationQuery.isLoading)) {
@@ -166,6 +164,17 @@ function CreateBreeder() {
     const submittedName =
       (verification.submitted_data as { name?: string } | null)?.name ??
       t("createBreederPage.defaultAppName");
+    // Panel access starts immediately at submission (create_own_organisation grants an active
+    // role right away) and only ends if an admin actually rejects it — pending/more-info states
+    // still have a working dashboard behind them, unlike approved-only access pre-2026-09-12.
+    const hasDashboardAccess =
+      verification.status !== "rejected" &&
+      verification.status !== "suspended" &&
+      verification.status !== "expired";
+    const dashboardPath =
+      (verification.submitted_data as { org_type?: string } | null)?.org_type === "kennel"
+        ? "/dashboard/breeder"
+        : "/dashboard/foundation";
     return (
       <div className="container-page py-14">
         <div className="mx-auto max-w-xl rounded-3xl border border-border/70 bg-card p-8 text-center">
@@ -176,9 +185,9 @@ function CreateBreeder() {
               ? t(statusCopyKeys[verification.status])
               : verification.status}
           </p>
-          {verification.status === "approved" && (
+          {hasDashboardAccess && (
             <Button asChild size="lg" className="mt-6">
-              <Link to="/dashboard/breeder">{t("createBreederPage.goToDashboard")}</Link>
+              <Link to={dashboardPath}>{t("createBreederPage.goToDashboard")}</Link>
             </Button>
           )}
         </div>

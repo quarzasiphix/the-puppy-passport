@@ -29,6 +29,7 @@ import {
   setOrgMemberStatus,
   type OrgMemberRole,
 } from "@/domains/identity";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/foundation/team")({
   component: TeamPage,
@@ -43,6 +44,7 @@ const invitableRoles: OrgMemberRole[] = [
 ];
 
 function TeamPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -73,42 +75,47 @@ function TeamPage() {
   const inviteMutation = useMutation({
     mutationFn: () => inviteOrgMember({ orgId: orgQuery.data!.id, email, role }),
     onSuccess: () => {
-      toast.success("Invitation sent.");
+      toast.success(t("foundationPanel.team.invitedToast"));
       setOpen(false);
       setEmail("");
       setRole("volunteer");
       invalidate();
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not invite.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.team.inviteFailed"))),
   });
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeOrgInvitation(id),
     onSuccess: invalidate,
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not revoke.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.team.revokeFailed"))),
   });
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => removeOrgMember(id),
     onSuccess: () => {
-      toast.success("Member removed.");
+      toast.success(t("foundationPanel.team.removedToast"));
       invalidate();
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not remove member.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.team.removeFailed"))),
   });
 
   const statusMutation = useMutation({
     mutationFn: (input: { id: string; status: "active" | "suspended" }) =>
       setOrgMemberStatus(input.id, input.status),
     onSuccess: invalidate,
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update status.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.team.statusUpdateFailed"))),
   });
 
   const roleMutation = useMutation({
     mutationFn: (input: { id: string; role: OrgMemberRole }) =>
       changeOrgMemberRole(input.id, input.role),
     onSuccess: invalidate,
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not change role.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.team.roleChangeFailed"))),
   });
 
   const pendingInvitations = invitationsQuery.data?.filter((i) => i.status === "pending") ?? [];
@@ -117,25 +124,22 @@ function TeamPage() {
     <div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-medium">Team</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Invite volunteers and staff to your organisation and manage their role. Only the
-            organisation's owner can invite or manage an administrator.
-          </p>
+          <h1 className="font-display text-2xl font-medium">{t("foundationPanel.team.title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("foundationPanel.team.subtitle")}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" disabled={!orgQuery.data?.id}>
-              <Plus className="mr-1 size-4" /> Invite
+              <Plus className="mr-1 size-4" /> {t("foundationPanel.team.inviteButton")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Invite someone to your team</DialogTitle>
+              <DialogTitle>{t("foundationPanel.team.inviteDialogTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label>Email</Label>
+                <Label>{t("foundationPanel.team.fieldEmail")}</Label>
                 <Input
                   type="email"
                   value={email}
@@ -144,7 +148,7 @@ function TeamPage() {
                 />
               </div>
               <div>
-                <Label>Role</Label>
+                <Label>{t("foundationPanel.team.fieldRole")}</Label>
                 <Select value={role} onValueChange={(v) => setRole(v as OrgMemberRole)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -163,7 +167,7 @@ function TeamPage() {
                 disabled={!email || inviteMutation.isPending}
                 onClick={() => inviteMutation.mutate()}
               >
-                Send invitation
+                {t("foundationPanel.team.sendInvitationButton")}
               </Button>
             </div>
           </DialogContent>
@@ -173,15 +177,16 @@ function TeamPage() {
       {!orgQuery.isLoading && !orgQuery.data && (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Team management is only available to approved foundation, shelter and rescue
-            organisations.
+            {t("foundationPanel.team.notAvailableNote")}
           </p>
         </div>
       )}
 
       {!!pendingInvitations.length && (
         <section className="mb-6">
-          <h2 className="mb-3 font-display text-lg font-semibold">Pending invitations</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold">
+            {t("foundationPanel.team.pendingInvitationsTitle")}
+          </h2>
           <div className="space-y-2">
             {pendingInvitations.map((inv) => (
               <div
@@ -199,7 +204,7 @@ function TeamPage() {
                   disabled={revokeMutation.isPending}
                   onClick={() => revokeMutation.mutate(inv.id)}
                 >
-                  Revoke
+                  {t("foundationPanel.team.revokeButton")}
                 </Button>
               </div>
             ))}
@@ -208,7 +213,9 @@ function TeamPage() {
       )}
 
       <section>
-        <h2 className="mb-3 font-display text-lg font-semibold">Members</h2>
+        <h2 className="mb-3 font-display text-lg font-semibold">
+          {t("foundationPanel.team.membersTitle")}
+        </h2>
         <div className="space-y-2">
           {membersQuery.data?.map((m) => (
             <div
@@ -216,10 +223,12 @@ function TeamPage() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-3"
             >
               <div>
-                <div className="text-sm font-medium">{m.profiles?.display_name ?? "Member"}</div>
+                <div className="text-sm font-medium">
+                  {m.profiles?.display_name ?? t("foundationPanel.team.defaultMemberName")}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {orgMemberRoleLabels[m.member_role]}
-                  {m.status === "suspended" && " · Suspended"}
+                  {m.status === "suspended" && ` · ${t("foundationPanel.team.suspendedSuffix")}`}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -253,7 +262,9 @@ function TeamPage() {
                       }
                     >
                       <UserX className="mr-1 size-3.5" />
-                      {m.status === "active" ? "Suspend" : "Restore"}
+                      {m.status === "active"
+                        ? t("foundationPanel.team.suspendButton")
+                        : t("foundationPanel.team.restoreButton")}
                     </Button>
                     <Button
                       size="sm"
@@ -261,7 +272,8 @@ function TeamPage() {
                       disabled={removeMutation.isPending}
                       onClick={() => removeMutation.mutate(m.id)}
                     >
-                      <UserMinus className="mr-1 size-3.5" /> Remove
+                      <UserMinus className="mr-1 size-3.5" />{" "}
+                      {t("foundationPanel.team.removeButton")}
                     </Button>
                   </>
                 )}

@@ -14,7 +14,7 @@ import {
 } from "@/domains/transport";
 import { ActionLauncher } from "@/app/components/action-launcher";
 import {
-  applicationStatusLabels,
+  getApplicationStatusLabels,
   applicationStatusStyles,
   listMyApplications,
 } from "@/domains/marketplace";
@@ -208,7 +208,7 @@ function BuyerOverview() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge className={applicationStatusStyles[a.status]}>
-                  {applicationStatusLabels[a.status]}
+                  {getApplicationStatusLabels(t)[a.status]}
                 </Badge>
                 <Button asChild size="sm" variant="outline">
                   <Link to="/puppies/$id" params={{ id: a.animal_id }}>

@@ -69,10 +69,10 @@ export function VerificationReviewList({
   const reject = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("user_verifications")
-        .update({ status: "rejected", notes: reason })
-        .eq("id", id);
+      const { error } = await supabase.rpc("reject_user_verification", {
+        p_verification_id: id,
+        p_reason: reason,
+      });
       if (error) throw error;
     },
     onSuccess: () => {

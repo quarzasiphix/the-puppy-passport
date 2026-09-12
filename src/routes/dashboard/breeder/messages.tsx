@@ -5,6 +5,7 @@ import { Card } from "@/shared/ui/panel";
 import { useAuth } from "@/domains/identity";
 import { listMyConversations, type ConversationListRow } from "@/domains/messaging";
 import { ChatThread } from "@/domains/messaging";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/messages")({
   validateSearch: (search: Record<string, unknown>): { conversation?: string } => ({
@@ -13,12 +14,20 @@ export const Route = createFileRoute("/dashboard/breeder/messages")({
   component: MessagesPage,
 });
 
-function threadLabel(c: NonNullable<ConversationListRow["conversations"]>, currentUserId: string) {
+function threadLabel(
+  c: NonNullable<ConversationListRow["conversations"]>,
+  currentUserId: string,
+  t: (key: string) => string,
+) {
   const other = c.conversation_participants.find((p) => p.profile_id !== currentUserId);
-  return { title: other?.profiles?.display_name ?? "Buyer", subtitle: c.animals?.name ?? "" };
+  return {
+    title: other?.profiles?.display_name ?? t("breederPanel.messages.buyer"),
+    subtitle: c.animals?.name ?? "",
+  };
 }
 
 function MessagesPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const search = Route.useSearch();
   const [activeId, setActiveId] = useState<string | undefined>(search.conversation);
@@ -39,23 +48,23 @@ function MessagesPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Messages</h1>
+        <h1 className="font-display text-3xl font-medium">{t("breederPanel.messages.title")}</h1>
       </header>
       {query.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.messages.loading")}</p>
       ) : !query.data?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">No conversations yet</p>
+          <p className="font-medium">{t("breederPanel.messages.emptyTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Message a buyer from the Applications page once someone applies.
+            {t("breederPanel.messages.emptyBody")}
           </p>
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-[320px_1fr]">
-          <Card title="Inbox">
+          <Card title={t("breederPanel.messages.inbox")}>
             <ul className="-mx-2 divide-y divide-border/60">
               {query.data.map((c, i) => {
-                const label = threadLabel(c, userId!);
+                const label = threadLabel(c, userId!, t);
                 return (
                   <li
                     key={c.id}
@@ -63,7 +72,9 @@ function MessagesPage() {
                     className={`cursor-pointer rounded-lg px-2 py-3 hover:bg-secondary/40 ${(activeId ?? query.data[0]?.id) === c.id ? "bg-secondary/40" : ""}`}
                   >
                     <div className="font-medium">{label.title}</div>
-                    <div className="text-xs text-muted-foreground">about {label.subtitle}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("breederPanel.messages.aboutPrefix")} {label.subtitle}
+                    </div>
                   </li>
                 );
               })}
@@ -72,14 +83,16 @@ function MessagesPage() {
           <Card
             title={
               active
-                ? `${threadLabel(active, userId!).title} — about ${threadLabel(active, userId!).subtitle}`
-                : "Conversation"
+                ? `${threadLabel(active, userId!, t).title} — ${t("breederPanel.messages.aboutPrefix")} ${threadLabel(active, userId!, t).subtitle}`
+                : t("breederPanel.messages.conversation")
             }
           >
             {active ? (
               <ChatThread conversationId={active.id} currentUserId={userId!} />
             ) : (
-              <p className="text-sm text-muted-foreground">Select a conversation.</p>
+              <p className="text-sm text-muted-foreground">
+                {t("breederPanel.messages.selectConversation")}
+              </p>
             )}
           </Card>
         </div>

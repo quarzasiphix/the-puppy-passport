@@ -5,8 +5,12 @@ import { Badge } from "@/shared/ui/badge";
 import { Switch } from "@/shared/ui/switch";
 import { listMarketsForAdmin, setMarketEnabled } from "@/domains/operations";
 import { getMaintenanceMode, setMaintenanceMode } from "@/domains/operations";
+import { requireRole } from "@/domains/identity";
 
+// Admin-only within the shared admin/moderator dashboard — platform-wide config (maintenance
+// mode, per-market enablement) that could take the whole site down if misused.
 export const Route = createFileRoute("/dashboard/admin/settings")({
+  beforeLoad: ({ context }) => requireRole(context.auth, ["admin"], "/dashboard/admin"),
   component: SettingsPage,
 });
 

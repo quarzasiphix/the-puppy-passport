@@ -26,6 +26,7 @@ import {
   welfareCaseStatusLabels,
   type WelfareCaseRow,
 } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/foundation/urgent")({
   component: UrgentCasesPage,
@@ -77,6 +78,7 @@ const emptyForm: FormValues = {
 };
 
 function UrgentCasesPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -111,59 +113,56 @@ function UrgentCasesPage() {
         welfareNotes: form.welfareNotes || undefined,
       }),
     onSuccess: () => {
-      toast.success(
-        "Case submitted — operations will review it. Submitting does not itself grant transport priority.",
-      );
+      toast.success(t("foundationPanel.urgent.submittedToast"));
       setOpen(false);
       setForm(emptyForm);
       queryClient.invalidateQueries({ queryKey: ["welfare-cases", orgQuery.data?.id] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not submit case.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.urgent.submitFailed"))),
   });
 
   const convertMutation = useMutation({
     mutationFn: (caseId: string) => convertWelfareCaseToTransportDraft(caseId),
     onSuccess: () => {
-      toast.success("A transport draft has been started for this case.");
+      toast.success(t("foundationPanel.urgent.convertedToast"));
       queryClient.invalidateQueries({ queryKey: ["welfare-cases", orgQuery.data?.id] });
     },
     onError: (err) =>
-      toast.error(getFriendlyErrorMessage(err, "Could not start a transport draft.")),
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.urgent.convertFailed"))),
   });
 
   return (
     <div>
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-medium">Urgent cases</h1>
+          <h1 className="font-display text-2xl font-medium">{t("foundationPanel.urgent.title")}</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Flag a welfare-urgent animal or transport need for Anemalo operations. Submitting a case
-            does not itself grant transport priority, bypass review, or confirm anything —
-            operations assesses every case before it becomes a real transport request.
+            {t("foundationPanel.urgent.subtitle")}
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" disabled={!orgQuery.data?.id}>
-              <Plus className="mr-1 size-4" /> New case
+              <Plus className="mr-1 size-4" /> {t("foundationPanel.urgent.newCaseButton")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Report an urgent case</DialogTitle>
+              <DialogTitle>{t("foundationPanel.urgent.dialogTitle")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <Label>What's the situation?</Label>
+                <Label>{t("foundationPanel.urgent.fieldSituation")}</Label>
                 <Textarea
                   rows={3}
                   value={form.reason}
                   onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                  placeholder="Describe the animal's situation and why transport is needed."
+                  placeholder={t("foundationPanel.urgent.situationPlaceholder")}
                 />
               </div>
               <div>
-                <Label>Urgency</Label>
+                <Label>{t("foundationPanel.urgent.fieldUrgency")}</Label>
                 <Select
                   value={form.urgency}
                   onValueChange={(v) => setForm({ ...form, urgency: v as FormValues["urgency"] })}
@@ -172,14 +171,20 @@ function UrgentCasesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="routine">Routine</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="routine">
+                      {t("foundationPanel.urgent.urgencyRoutine")}
+                    </SelectItem>
+                    <SelectItem value="urgent">
+                      {t("foundationPanel.urgent.urgencyUrgent")}
+                    </SelectItem>
+                    <SelectItem value="critical">
+                      {t("foundationPanel.urgent.urgencyCritical")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Animal (name or description)</Label>
+                <Label>{t("foundationPanel.urgent.fieldAnimal")}</Label>
                 <Input
                   value={form.animalName}
                   onChange={(e) => setForm({ ...form, animalName: e.target.value })}
@@ -187,28 +192,28 @@ function UrgentCasesPage() {
               </div>
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
-                  <Label>Current city</Label>
+                  <Label>{t("foundationPanel.urgent.fieldCurrentCity")}</Label>
                   <Input
                     value={form.locationCity}
                     onChange={(e) => setForm({ ...form, locationCity: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Current country</Label>
+                  <Label>{t("foundationPanel.urgent.fieldCurrentCountry")}</Label>
                   <Input
                     value={form.locationCountry}
                     onChange={(e) => setForm({ ...form, locationCountry: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Destination city</Label>
+                  <Label>{t("foundationPanel.urgent.fieldDestinationCity")}</Label>
                   <Input
                     value={form.destinationCity}
                     onChange={(e) => setForm({ ...form, destinationCity: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Destination country</Label>
+                  <Label>{t("foundationPanel.urgent.fieldDestinationCountry")}</Label>
                   <Input
                     value={form.destinationCountry}
                     onChange={(e) => setForm({ ...form, destinationCountry: e.target.value })}
@@ -216,7 +221,7 @@ function UrgentCasesPage() {
                 </div>
               </div>
               <div>
-                <Label>Deadline (if there is one)</Label>
+                <Label>{t("foundationPanel.urgent.fieldDeadline")}</Label>
                 <Input
                   type="date"
                   value={form.deadline}
@@ -225,14 +230,14 @@ function UrgentCasesPage() {
               </div>
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
-                  <Label>Contact name</Label>
+                  <Label>{t("foundationPanel.urgent.fieldContactName")}</Label>
                   <Input
                     value={form.contactName}
                     onChange={(e) => setForm({ ...form, contactName: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Contact phone</Label>
+                  <Label>{t("foundationPanel.urgent.fieldContactPhone")}</Label>
                   <Input
                     value={form.contactPhone}
                     onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
@@ -240,7 +245,7 @@ function UrgentCasesPage() {
                 </div>
               </div>
               <div>
-                <Label>Welfare notes (for operations)</Label>
+                <Label>{t("foundationPanel.urgent.fieldWelfareNotes")}</Label>
                 <Textarea
                   rows={2}
                   value={form.welfareNotes}
@@ -252,7 +257,9 @@ function UrgentCasesPage() {
                 disabled={!form.reason || createMutation.isPending}
                 onClick={() => createMutation.mutate()}
               >
-                {createMutation.isPending ? "Submitting…" : "Submit case"}
+                {createMutation.isPending
+                  ? t("foundationPanel.urgent.submitting")
+                  : t("foundationPanel.urgent.submitCaseButton")}
               </Button>
             </div>
           </DialogContent>
@@ -262,8 +269,7 @@ function UrgentCasesPage() {
       {!orgQuery.isLoading && !orgQuery.data && (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Urgent cases are only available to approved foundation, shelter and rescue
-            organisations.
+            {t("foundationPanel.urgent.notAvailableNote")}
           </p>
         </div>
       )}
@@ -278,12 +284,18 @@ function UrgentCasesPage() {
           />
         ))}
         {casesQuery.data?.length === 0 && (
-          <p className="text-sm text-muted-foreground">No urgent cases reported yet.</p>
+          <p className="text-sm text-muted-foreground">{t("foundationPanel.urgent.emptyBody")}</p>
         )}
       </div>
     </div>
   );
 }
+
+const urgencyLabelKeys: Record<string, string> = {
+  routine: "foundationPanel.urgent.urgencyRoutine",
+  urgent: "foundationPanel.urgent.urgencyUrgent",
+  critical: "foundationPanel.urgent.urgencyCritical",
+};
 
 function CaseCard({
   c,
@@ -294,6 +306,7 @@ function CaseCard({
   onConvert: () => void;
   isConverting: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -304,7 +317,7 @@ function CaseCard({
             </span>
             <Badge className={urgencyStyles[c.urgency]}>
               {c.urgency === "critical" && <AlertTriangle className="mr-1 size-3" />}
-              {c.urgency}
+              {t(urgencyLabelKeys[c.urgency] ?? c.urgency)}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{c.reason}</p>
@@ -314,13 +327,15 @@ function CaseCard({
       {c.status === "accepted_for_assessment" && (
         <div className="mt-3 border-t border-border/60 pt-3">
           <Button size="sm" disabled={isConverting} onClick={onConvert}>
-            {isConverting ? "Starting…" : "Start a transport request for this case"}
+            {isConverting
+              ? t("foundationPanel.urgent.startingButton")
+              : t("foundationPanel.urgent.startTransportButton")}
           </Button>
         </div>
       )}
       {c.status === "converted_to_transport" && (
         <p className="mt-3 text-xs text-muted-foreground">
-          A transport request has been started from this case.
+          {t("foundationPanel.urgent.convertedNote")}
         </p>
       )}
     </div>

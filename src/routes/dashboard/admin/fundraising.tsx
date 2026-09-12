@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { useAuth } from "@/domains/identity";
+import { useAuth, requireRole } from "@/domains/identity";
 import {
   activateCampaign,
   approveCampaign,
@@ -14,7 +14,10 @@ import {
 import { FUNDRAISING_ENABLED } from "@/domains/fundraising";
 import { FundraisingDisabledNotice } from "@/domains/fundraising";
 
+// Admin-only within the shared admin/moderator dashboard — financial oversight, not a moderation
+// action.
 export const Route = createFileRoute("/dashboard/admin/fundraising")({
+  beforeLoad: ({ context }) => requireRole(context.auth, ["admin"], "/dashboard/admin"),
   component: AdminFundraisingPage,
 });
 

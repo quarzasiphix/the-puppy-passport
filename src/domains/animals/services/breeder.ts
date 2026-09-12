@@ -31,7 +31,7 @@ export async function getMyKennel(userId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("organisations")
-    .select("id, name, slug, plan")
+    .select("id, name, slug, plan, verification_status")
     .in("id", orgIds)
     .eq("org_type", "kennel")
     .maybeSingle();

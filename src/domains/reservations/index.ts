@@ -17,7 +17,6 @@ export type {
 export {
   RESERVATION_STATUSES,
   RESERVATION_TRANSITIONS,
-  RESERVATION_STATUS_LABELS,
   RESERVATION_STATUS_STYLES,
   canTransitionReservation,
   assertReservationTransition,

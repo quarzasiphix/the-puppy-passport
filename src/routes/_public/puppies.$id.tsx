@@ -46,7 +46,7 @@ import { ReportDialog } from "@/domains/trust";
 import { useAuth } from "@/domains/identity";
 import { startApplicationConversation } from "@/domains/messaging";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { applicationStatusLabels, type ApplicationStatus } from "@/domains/marketplace";
+import { getApplicationStatusLabels, type ApplicationStatus } from "@/domains/marketplace";
 import { useTranslation } from "@/shared/i18n";
 import { SITE_ORIGIN } from "@/lib/sitemap";
 
@@ -215,7 +215,7 @@ function PuppyDetail() {
     <Button className="w-full" size="lg" variant="outline" asChild>
       <Link to="/dashboard/buyer/applications">
         {t("puppyDetail.applicationSentPrefix")}{" "}
-        {applicationStatusLabels[existingApplicationQuery.data.status as ApplicationStatus] ??
+        {getApplicationStatusLabels(t)[existingApplicationQuery.data.status as ApplicationStatus] ??
           t("puppyDetail.viewStatus")}
       </Link>
     </Button>

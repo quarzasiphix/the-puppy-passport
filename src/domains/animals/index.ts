@@ -7,3 +7,4 @@ export * from "./components/achievement-form-dialog";
 export * from "./components/litter-form-dialog";
 export * from "./components/parent-dog-form-dialog";
 export * from "./components/puppy-form-dialog";
+export * from "./components/achievement-verification-panel";

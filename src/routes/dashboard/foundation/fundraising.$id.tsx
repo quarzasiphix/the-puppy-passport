@@ -14,6 +14,7 @@ import {
 } from "@/domains/fundraising";
 import { FUNDRAISING_ENABLED } from "@/domains/fundraising";
 import { FundraisingDisabledNotice } from "@/domains/fundraising";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/fundraising/$id")({
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/dashboard/foundation/fundraising/$id")({
 });
 
 function CampaignDetailPage() {
+  const { t } = useTranslation();
   const { id } = Route.useParams();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
@@ -49,9 +51,12 @@ function CampaignDetailPage() {
     mutationFn: () => submitCampaignForReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-fundraising-campaigns", org?.id] });
-      toast.success("Submitted for admin review.");
+      toast.success(t("foundationPanel.fundraisingDetail.submittedToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not submit.")),
+    onError: (err) =>
+      toast.error(
+        getFriendlyErrorMessage(err, t("foundationPanel.fundraisingDetail.submitFailed")),
+      ),
   });
 
   if (!FUNDRAISING_ENABLED) {
@@ -59,7 +64,11 @@ function CampaignDetailPage() {
   }
 
   if (campaignsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("foundationPanel.fundraisingDetail.loading")}
+      </p>
+    );
   }
   if (!campaign) {
     throw notFound();
@@ -71,7 +80,7 @@ function CampaignDetailPage() {
         to="/dashboard/foundation/fundraising"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> All campaigns
+        <ArrowLeft className="size-3.5" /> {t("foundationPanel.fundraisingDetail.backToCampaigns")}
       </Link>
 
       <header className="rounded-2xl border border-border/70 bg-card p-6">
@@ -92,15 +101,19 @@ function CampaignDetailPage() {
             disabled={submitMutation.isPending}
             onClick={() => submitMutation.mutate()}
           >
-            Submit for admin review
+            {t("foundationPanel.fundraisingDetail.submitButton")}
           </Button>
         )}
       </header>
 
       <div className="mt-6">
-        <h2 className="mb-3 font-display text-lg font-semibold">Public updates & contributions</h2>
+        <h2 className="mb-3 font-display text-lg font-semibold">
+          {t("foundationPanel.fundraisingDetail.updatesTitle")}
+        </h2>
         {!contributionsQuery.data?.length ? (
-          <p className="text-sm text-muted-foreground">No contributions yet.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("foundationPanel.fundraisingDetail.noContributions")}
+          </p>
         ) : (
           <div className="space-y-2">
             {contributionsQuery.data.map((c) => (

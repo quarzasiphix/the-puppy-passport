@@ -5,3 +5,5 @@ export * from "./services/moderation";
 export * from "./services/trust-claims";
 export * from "./components/report-dialog";
 export * from "./components/verification-review-list";
+export * from "./components/moderation-panel";
+export * from "./components/reports-panel";

@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { getMyKennel, listKennelAchievements } from "@/domains/breeders";
 import { AchievementFormDialog } from "@/domains/animals";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/achievements")({
   component: AchievementsPage,
@@ -17,7 +18,17 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-destructive/10 text-destructive",
 };
 
+function getStatusLabels(t: (key: string) => string): Record<string, string> {
+  return {
+    pending: t("breederPanel.achievements.statusPending"),
+    approved: t("breederPanel.achievements.statusApproved"),
+    rejected: t("breederPanel.achievements.statusRejected"),
+  };
+}
+
 function AchievementsPage() {
+  const { t } = useTranslation();
+  const statusLabels = getStatusLabels(t);
   const { userId } = useAuth();
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
@@ -34,24 +45,24 @@ function AchievementsPage() {
     <div>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium">Achievements</h1>
-          <p className="text-sm text-muted-foreground">
-            Add titles, competition results and diplomas for your dogs — evidence is kept private
-            until a Anemalo administrator verifies it.
-          </p>
+          <h1 className="font-display text-3xl font-medium">{t("breederPanel.achievements.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("breederPanel.achievements.subtitle")}</p>
         </div>
         {kennel?.id && (
-          <AchievementFormDialog kennelId={kennel.id} trigger={<Button>Add achievement</Button>} />
+          <AchievementFormDialog
+            kennelId={kennel.id}
+            trigger={<Button>{t("breederPanel.achievements.addAchievement")}</Button>}
+          />
         )}
       </header>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.achievements.loading")}</p>
       ) : !achievements?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <Award className="mx-auto size-6 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            No achievements added yet. Once verified, they'll appear on your public kennel page.
+            {t("breederPanel.achievements.emptyBody")}
           </p>
         </div>
       ) : (
@@ -63,7 +74,7 @@ function AchievementsPage() {
                   <div className="font-medium">
                     {a.title}{" "}
                     <span className="text-sm text-muted-foreground">
-                      — {a.parent_dogs?.registered_name ?? "Unknown dog"}
+                      — {a.parent_dogs?.registered_name ?? t("breederPanel.achievements.unknownDog")}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -75,11 +86,13 @@ function AchievementsPage() {
                       .join(" · ")}
                   </div>
                   {a.verification_status === "rejected" && a.admin_notes && (
-                    <p className="mt-1 text-xs text-destructive">Not approved: {a.admin_notes}</p>
+                    <p className="mt-1 text-xs text-destructive">
+                      {t("breederPanel.achievements.notApprovedPrefix")} {a.admin_notes}
+                    </p>
                   )}
                 </div>
                 <Badge className={statusStyles[a.verification_status]}>
-                  {a.verification_status}
+                  {statusLabels[a.verification_status] ?? a.verification_status}
                 </Badge>
               </div>
             </div>

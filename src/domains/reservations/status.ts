@@ -67,14 +67,6 @@ export function assertReservationTransition(from: ReservationStatus, to: Reserva
 // Display
 // ---------------------------------------------------------------------------------------------
 
-export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
-  awaiting_breeder: "Awaiting breeder",
-  awaiting_buyer: "Awaiting buyer",
-  confirmed: "Confirmed",
-  cancelled: "Cancelled",
-  completed: "Completed",
-};
-
 export const RESERVATION_STATUS_STYLES: Record<ReservationStatus, string> = {
   awaiting_breeder: "bg-warning/20 text-foreground",
   awaiting_buyer: "bg-warning/20 text-foreground",
@@ -83,8 +75,18 @@ export const RESERVATION_STATUS_STYLES: Record<ReservationStatus, string> = {
   completed: "bg-muted text-muted-foreground",
 };
 
-export function reservationStatusLabel(status: string): string {
-  return RESERVATION_STATUS_LABELS[status as ReservationStatus] ?? status.replace(/_/g, " ");
+/** `t` is the i18n translate function (`useTranslation().t`) — status labels are user-facing
+ * (reservation lists on both the buyer and breeder dashboards) so they must localize, not read
+ * from a hardcoded English map. */
+export function reservationStatusLabel(status: string, t: (key: string) => string): string {
+  const labels: Record<ReservationStatus, string> = {
+    awaiting_breeder: t("reservationStatus.awaitingBreeder"),
+    awaiting_buyer: t("reservationStatus.awaitingBuyer"),
+    confirmed: t("reservationStatus.confirmed"),
+    cancelled: t("reservationStatus.cancelled"),
+    completed: t("reservationStatus.completed"),
+  };
+  return labels[status as ReservationStatus] ?? status.replace(/_/g, " ");
 }
 
 /** Statuses the breeder still needs to act on. Replaces the inline filter in the breeder overview. */

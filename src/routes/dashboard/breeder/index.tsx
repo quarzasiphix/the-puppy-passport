@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Dog, CalendarCheck, Truck, PawPrint, Baby, Inbox, User, ArrowRight } from "lucide-react";
+import {
+  Dog,
+  CalendarCheck,
+  Truck,
+  PawPrint,
+  Baby,
+  Inbox,
+  User,
+  ArrowRight,
+  Clock,
+} from "lucide-react";
 import { useAuth } from "@/domains/identity";
 import {
   getMyKennel,
@@ -75,6 +85,21 @@ function BreederOverview() {
         </h1>
         <p className="text-sm text-muted-foreground">{t("breederPanel.home.subtitle")}</p>
       </header>
+
+      {/* A rejected/suspended kennel's `breeder` role is itself no longer active (see
+          reject_user_verification()), so requireRole already keeps them out of this dashboard
+          entirely -- the only reachable non-approved state here is "pending review". */}
+      {kennel && kennel.verification_status === "pending" && (
+        <div className="flex items-start gap-3 rounded-2xl border border-accent/30 bg-accent/5 p-4">
+          <Clock className="mt-0.5 size-5 shrink-0 text-accent" />
+          <div>
+            <p className="text-sm font-semibold">{t("breederPanel.home.unverifiedBannerTitle")}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {t("breederPanel.home.unverifiedBannerBody")}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Big action tiles — the 4 things a breeder does most often, one tap away */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">

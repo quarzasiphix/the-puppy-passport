@@ -10,3 +10,4 @@ export * from "./services/profile";
 export * from "./services/session";
 export * from "./services/team";
 export * from "./components/account-privacy-card";
+export * from "./components/organisations-panel";

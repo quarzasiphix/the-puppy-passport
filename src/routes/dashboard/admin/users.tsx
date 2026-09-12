@@ -8,9 +8,13 @@ import {
   getAccountDeletionBlockers,
   listDeletionRequests,
   markDeletionRequestProcessed,
+  requireRole,
 } from "@/domains/identity";
 
+// Admin-only within the shared admin/moderator dashboard — GDPR deletion requests touch account
+// data a moderator has no reason to see (see the same split on fundraising/audit-logs/settings).
 export const Route = createFileRoute("/dashboard/admin/users")({
+  beforeLoad: ({ context }) => requireRole(context.auth, ["admin"], "/dashboard/admin"),
   component: UsersPage,
 });
 

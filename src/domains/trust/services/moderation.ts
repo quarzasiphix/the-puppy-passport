@@ -1,6 +1,8 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { notifyUserFromTemplate } from "@/domains/messaging";
 
+export type ContentModerationStatus = "visible" | "hidden" | "removed";
+
 export type ReportTargetType = "animal_listing" | "organisation" | "post" | "message" | "user";
 export type ReportReason =
   | "suspected_illegal_breeding"
@@ -246,6 +248,65 @@ export async function reviewModerationAppeal(input: {
     p_decision: input.decision,
     p_outcome_notes: input.outcomeNotes || undefined,
     p_internal_notes: input.internalNotes || undefined,
+  });
+  if (error) throw error;
+}
+
+// --- Enforcement actions --------------------------------------------------------------------
+// A moderation case decision used to only ever write a free-text `decision` string on the case
+// row -- nothing actually happened to the reported content. These are the real actions a
+// moderator can take against the specific target a case concerns, each a single audited RPC
+// (see 20260912001000_moderator_enforcement_actions.sql) rather than a direct table write, since
+// no RLS policy grants a moderator standing access to someone else's post/animal/organisation row.
+
+export async function setPostModerationStatus(
+  postId: string,
+  status: ContentModerationStatus,
+  reason?: string,
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("moderator_set_post_moderation_status", {
+    p_post_id: postId,
+    p_status: status,
+    p_reason: reason ?? undefined,
+  });
+  if (error) throw error;
+}
+
+export async function setCommentModerationStatus(
+  commentId: string,
+  status: ContentModerationStatus,
+  reason?: string,
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("moderator_set_comment_moderation_status", {
+    p_comment_id: commentId,
+    p_status: status,
+    p_reason: reason ?? undefined,
+  });
+  if (error) throw error;
+}
+
+export async function setAnimalPublished(animalId: string, published: boolean, reason?: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("moderator_set_animal_published", {
+    p_animal_id: animalId,
+    p_published: published,
+    p_reason: reason ?? undefined,
+  });
+  if (error) throw error;
+}
+
+export async function setOrganisationSuspended(
+  orgId: string,
+  suspended: boolean,
+  reason?: string,
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("moderator_set_organisation_suspended", {
+    p_org_id: orgId,
+    p_suspended: suspended,
+    p_reason: reason ?? undefined,
   });
   if (error) throw error;
 }

@@ -189,9 +189,20 @@ export const driverNav: DashboardNavItem[] = [
   { to: "/dashboard/driver", label: "My route", icon: Truck, exact: true },
 ];
 
-export const adminNav: DashboardNavItem[] = [
-  { to: "/dashboard/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+// One shared dashboard for moderator + admin (see routes/dashboard/admin.tsx) — a moderator gets
+// the items every moderator action in this session's build needs (verification, organisations,
+// listings, reports/moderation); the admin-only items are genuinely sensitive pages that each also
+// carry their own `requireRole(["admin"])`, so hiding them here is a UX nicety, not the real gate.
+const adminOnlyNavItems: DashboardNavItem[] = [
   { to: "/dashboard/admin/users", label: "Users", icon: Users },
+  { to: "/dashboard/admin/fundraising", label: "Fundraising", icon: Coins },
+  { to: "/dashboard/operations", label: "Transport operations", icon: Truck },
+  { to: "/dashboard/admin/audit-logs", label: "Audit logs", icon: ScrollText },
+  { to: "/dashboard/admin/settings", label: "Settings", icon: Settings },
+];
+
+const sharedAdminNavItems: DashboardNavItem[] = [
+  { to: "/dashboard/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/admin/organisations", label: "Organisations", icon: Building2 },
   { to: "/dashboard/admin/breeder-verification", label: "Breeder verification", icon: Dog },
   {
@@ -207,8 +218,8 @@ export const adminNav: DashboardNavItem[] = [
   },
   { to: "/dashboard/admin/reports", label: "Reports", icon: Flag },
   { to: "/dashboard/admin/moderation", label: "Moderation", icon: ShieldAlert },
-  { to: "/dashboard/admin/fundraising", label: "Fundraising", icon: Coins },
-  { to: "/dashboard/operations", label: "Transport operations", icon: Truck },
-  { to: "/dashboard/admin/audit-logs", label: "Audit logs", icon: ScrollText },
-  { to: "/dashboard/admin/settings", label: "Settings", icon: Settings },
 ];
+
+export function adminNavFor(isAdmin: boolean): DashboardNavItem[] {
+  return isAdmin ? [...sharedAdminNavItems, ...adminOnlyNavItems] : sharedAdminNavItems;
+}

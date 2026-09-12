@@ -75,7 +75,13 @@ export function IdentityCard({
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
             <div className="flex gap-2">
-              <Button size="lg" className="flex-1 sm:flex-none" onClick={onContact}>
+              <Button
+                size="lg"
+                className={`flex-1 sm:flex-none ${
+                  b.accentColor ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""
+                }`}
+                onClick={onContact}
+              >
                 <MessageCircle className="size-4" /> {t("breederProfile.contactBreeder")}
               </Button>
               <Button

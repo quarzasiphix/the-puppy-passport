@@ -91,10 +91,10 @@ export async function approveRehomingReview(id: string, animalId: string, ownerP
 
 export async function rejectRehomingReview(id: string, notes: string, ownerProfileId: string) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase
-    .from("rehoming_reviews")
-    .update({ admin_status: "rejected", admin_notes: notes, reviewed_at: new Date().toISOString() })
-    .eq("id", id);
+  const { error } = await supabase.rpc("reject_rehoming_review", {
+    p_review_id: id,
+    p_reason: notes,
+  });
   if (error) throw error;
 
   await notifyUserFromTemplate({

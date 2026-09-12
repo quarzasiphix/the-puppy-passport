@@ -15,20 +15,28 @@ export type ApplicationStatus =
   | "interview_planned"
   | "expired";
 
-export const applicationStatusLabels: Record<ApplicationStatus, string> = {
-  draft: "Draft",
-  submitted: "Submitted",
-  under_review: "Under review",
-  more_info_requested: "Breeder asked for more info",
-  call_requested: "Breeder invited you to a call",
-  interview_planned: "Interview planned",
-  waiting_list: "On the waiting list",
-  approved: "Approved",
-  rejected: "Not approved",
-  withdrawn: "Withdrawn",
-  converted_to_reservation: "Reserved",
-  expired: "Expired",
-};
+/** `t` is the i18n translate function (`useTranslation().t`) — application statuses are shown to
+ * buyers, breeders and foundation staff alike, so they must localize rather than read from a
+ * hardcoded English map. */
+export function getApplicationStatusLabels(t: (key: string) => string): Record<
+  ApplicationStatus,
+  string
+> {
+  return {
+    draft: t("applicationStatus.draft"),
+    submitted: t("applicationStatus.submitted"),
+    under_review: t("applicationStatus.underReview"),
+    more_info_requested: t("applicationStatus.moreInfoRequested"),
+    call_requested: t("applicationStatus.callRequested"),
+    interview_planned: t("applicationStatus.interviewPlanned"),
+    waiting_list: t("applicationStatus.waitingList"),
+    approved: t("applicationStatus.approved"),
+    rejected: t("applicationStatus.rejected"),
+    withdrawn: t("applicationStatus.withdrawn"),
+    converted_to_reservation: t("applicationStatus.convertedToReservation"),
+    expired: t("applicationStatus.expired"),
+  };
+}
 
 export const applicationStatusStyles: Record<ApplicationStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -214,6 +222,26 @@ export async function respondToApplication(params: {
     // Keyed on the specific status reached, not just the application -- a retry of *this*
     // transition dedupes, but a genuinely later, different status change still notifies.
     dedupKey: `application:${params.id}:${params.status}`,
-    payload: { animalName: params.animalName, statusLabel: applicationStatusLabels[params.status] },
+    // English only, unlike the dashboard UI's getApplicationStatusLabels(t) — this runs server-
+    // side with no React i18n context and no access to the recipient's preferred_language. A
+    // real fix needs a locale-aware server-side translate helper (look up the buyer's profile
+    // language, then a plain key->string lookup, not useTranslation()); not done here to avoid
+    // silently pretending notifications are localized when they aren't.
+    payload: { animalName: params.animalName, statusLabel: NOTIFICATION_STATUS_LABELS_EN[params.status] },
   });
 }
+
+const NOTIFICATION_STATUS_LABELS_EN: Record<ApplicationStatus, string> = {
+  draft: "Draft",
+  submitted: "Submitted",
+  under_review: "Under review",
+  more_info_requested: "Breeder asked for more info",
+  call_requested: "Breeder invited you to a call",
+  interview_planned: "Interview planned",
+  waiting_list: "On the waiting list",
+  approved: "Approved",
+  rejected: "Not approved",
+  withdrawn: "Withdrawn",
+  converted_to_reservation: "Reserved",
+  expired: "Expired",
+};

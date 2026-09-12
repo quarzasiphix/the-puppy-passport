@@ -27,6 +27,7 @@ import {
 } from "@/domains/fundraising";
 import { FUNDRAISING_ENABLED } from "@/domains/fundraising";
 import { FundraisingDisabledNotice } from "@/domains/fundraising";
+import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 export const Route = createFileRoute("/dashboard/foundation/fundraising/")({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/dashboard/foundation/fundraising/")({
 });
 
 function FundraisingPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -71,16 +73,19 @@ function FundraisingPage() {
       setDescription("");
       queryClient.invalidateQueries({ queryKey: ["org-fundraising-campaigns", org?.id] });
       queryClient.invalidateQueries({ queryKey: ["eligible-quotations", org?.id] });
-      toast.success("Draft campaign created.");
+      toast.success(t("foundationPanel.fundraisingList.createdToast"));
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not create campaign.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.fundraisingList.createFailed"))),
   });
 
   if (!FUNDRAISING_ENABLED) {
     return (
       <div>
         <header className="mb-6">
-          <h1 className="font-display text-3xl font-medium">Fundraising</h1>
+          <h1 className="font-display text-3xl font-medium">
+            {t("foundationPanel.fundraisingList.title")}
+          </h1>
         </header>
         <FundraisingDisabledNotice />
       </div>
@@ -93,29 +98,33 @@ function FundraisingPage() {
     <div>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium">Fundraising</h1>
+          <h1 className="font-display text-3xl font-medium">
+            {t("foundationPanel.fundraisingList.title")}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Help this animal reach its new home — connected to a real transport request and an
-            accepted quotation. Never for purchasing an animal.
+            {t("foundationPanel.fundraisingList.subtitle")}
           </p>
         </div>
         {isEligible && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button disabled={!optionsQuery.data?.length}>
-                <Plus className="mr-1 size-4" /> New campaign
+                <Plus className="mr-1 size-4" />{" "}
+                {t("foundationPanel.fundraisingList.newCampaignButton")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>New fundraising campaign</DialogTitle>
+                <DialogTitle>{t("foundationPanel.fundraisingList.dialogTitle")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Animal / transport request</Label>
+                  <Label>{t("foundationPanel.fundraisingList.fieldOption")}</Label>
                   <Select value={optionId} onValueChange={setOptionId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose an accepted quotation" />
+                      <SelectValue
+                        placeholder={t("foundationPanel.fundraisingList.optionPlaceholder")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {optionsQuery.data?.map((o) => (
@@ -126,20 +135,19 @@ function FundraisingPage() {
                     </SelectContent>
                   </Select>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Only animals with a real adoption/rehoming application, a real transport request
-                    and an accepted quotation appear here.
+                    {t("foundationPanel.fundraisingList.optionHint")}
                   </p>
                 </div>
                 <div>
-                  <Label>Title</Label>
+                  <Label>{t("foundationPanel.fundraisingList.fieldTitle")}</Label>
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Help Reksio reach his new home"
+                    placeholder={t("foundationPanel.fundraisingList.titlePlaceholder")}
                   />
                 </div>
                 <div>
-                  <Label>Why transport is needed (optional)</Label>
+                  <Label>{t("foundationPanel.fundraisingList.fieldDescription")}</Label>
                   <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
                 <Button
@@ -147,7 +155,7 @@ function FundraisingPage() {
                   disabled={!selectedOption || !title.trim() || createMutation.isPending}
                   onClick={() => selectedOption && createMutation.mutate(selectedOption)}
                 >
-                  Create draft
+                  {t("foundationPanel.fundraisingList.createDraftButton")}
                 </Button>
               </div>
             </DialogContent>
@@ -157,9 +165,11 @@ function FundraisingPage() {
 
       {!isEligible && (
         <div className="mb-6 rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-          Fundraising is only available to approved foundations, shelters and rescue organisations.
-          Your organisation's verification is{" "}
-          <span className="font-medium">{org?.verification_status ?? "pending"}</span>.
+          {t("foundationPanel.fundraisingList.notEligibleNotePrefix")}{" "}
+          <span className="font-medium">
+            {org?.verification_status ?? t("foundationPanel.fundraisingList.pendingStatus")}
+          </span>
+          .
         </div>
       )}
 
@@ -180,14 +190,15 @@ function FundraisingPage() {
                 <Badge variant="secondary">{campaignStatusLabels[c.status]}</Badge>
               </div>
               <div className="mt-2 text-sm text-muted-foreground">
-                {c.amountCollected} / {c.targetAmount} {c.currency} collected
+                {c.amountCollected} / {c.targetAmount} {c.currency}{" "}
+                {t("foundationPanel.fundraisingList.collectedSuffix")}
               </div>
             </Link>
           ))}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center text-sm text-muted-foreground">
-          No fundraising campaigns yet.
+          {t("foundationPanel.fundraisingList.emptyBody")}
         </div>
       )}
     </div>

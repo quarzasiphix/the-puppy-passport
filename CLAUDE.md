@@ -224,3 +224,29 @@ future session finds native `node`/`npm` genuinely missing from `PATH` — and e
   template for future breeder sites.
 - `docs/REVIEWS.md` — the permanent, reservation-anchored review system (`organisation_reviews`):
   verified-buyer-only creation, no delete, breeder replies, admin-only hide.
+
+## Module-level docs and the TODO list
+
+Every folder under `src/domains/*/` keeps its own `AGENTS.md` (e.g. `src/domains/trust/AGENTS.md`)
+— a short, factual doc covering: what the domain owns (which tables/RPCs it's the primary caller
+of), its file structure (services/components/hooks, and what each roughly does), its public API
+surface (what the barrel `index.ts` exports and why), known gaps or half-finished pieces specific
+to that domain, and a one-line "last significant change" note with a date. Same register as the
+top-level `docs/*.md` files — dense and factual, cites real file:line, never a vague summary, never
+marketing language. Not a duplicate of the barrel comment (`index.ts`'s own "public API of X"
+header) — the `AGENTS.md` is the deeper map a session would want before making its first non-trivial
+change in that domain.
+
+**Maintain it as you go, not as a one-off pass.** Whenever a task materially changes what a domain
+owns, how it's structured, or what's known-broken/half-built inside it, update that domain's
+`AGENTS.md` in the same session — a stale module doc is worse than none, since a future session
+will trust it. Creating a brand new domain folder means creating its `AGENTS.md` from the start,
+not leaving it for later.
+
+`TODO.md` (repo root, next to this file) is the single running list of known open work across the
+whole app — not a duplicate of any one domain's gaps, but the cross-cutting view (a schema drafted
+but not applied, a UI flow with a known dead end, a decision the product owner hasn't made yet).
+Add to it when you discover or create a real gap; remove/check off an item when it's actually done
+— don't let it silently rot into a list nobody trusts. It is not a replacement for `docs/DECISIONS.md`
+(accepted decisions) or the per-domain `AGENTS.md` files (domain-local detail) — it's specifically
+the "what's still open, project-wide" view.

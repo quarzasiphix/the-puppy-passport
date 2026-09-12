@@ -7,8 +7,10 @@ import { getMyKennel } from "@/domains/breeders";
 import { listReservationsForMyKennel } from "../services/reservations";
 import { reservationStatusLabel } from "../status";
 import { RequestDepositDialog } from "../components/request-deposit-dialog";
+import { useTranslation } from "@/shared/i18n";
 
 export function BreederReservationsPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const { data: orgId } = useQuery({
     queryKey: ["my-kennel-id", userId],
@@ -27,26 +29,30 @@ export function BreederReservationsPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Reservations</h1>
-        <p className="text-sm text-muted-foreground">Track deposits, agreements and handovers.</p>
+        <h1 className="font-display text-3xl font-medium">
+          {t("breederPanel.reservations.title")}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.reservations.subtitle")}</p>
       </header>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.reservations.loading")}</p>
       ) : !reservations?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">No reservations yet.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("breederPanel.reservations.emptyBody")}
+          </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
           <table className="w-full text-sm">
             <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="p-4">Puppy</th>
-                <th className="p-4">Buyer</th>
-                <th className="p-4">Deposit</th>
-                <th className="p-4">Agreement</th>
-                <th className="p-4">Collection</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t("breederPanel.reservations.colPuppy")}</th>
+                <th className="p-4">{t("breederPanel.reservations.colBuyer")}</th>
+                <th className="p-4">{t("breederPanel.reservations.colDeposit")}</th>
+                <th className="p-4">{t("breederPanel.reservations.colAgreement")}</th>
+                <th className="p-4">{t("breederPanel.reservations.colCollection")}</th>
+                <th className="p-4">{t("breederPanel.reservations.colStatus")}</th>
                 <th className="p-4"></th>
               </tr>
             </thead>
@@ -71,9 +77,9 @@ export function BreederReservationsPage() {
                   <td className="p-4 text-muted-foreground">
                     {r.plannedCollectionDate
                       ? new Date(r.plannedCollectionDate).toLocaleDateString("en-GB")
-                      : "Not set"}
+                      : t("breederPanel.reservations.notSet")}
                   </td>
-                  <td className="p-4">{reservationStatusLabel(r.status)}</td>
+                  <td className="p-4">{reservationStatusLabel(r.status, t)}</td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
                       {r.depositStatus === "not_required" &&
@@ -82,7 +88,7 @@ export function BreederReservationsPage() {
                       {r.status === "confirmed" && (
                         <Button size="sm" variant="outline" asChild>
                           <Link to="/transport/request" search={{ animalId: r.animalId }}>
-                            Request transport
+                            {t("breederPanel.reservations.requestTransport")}
                           </Link>
                         </Button>
                       )}

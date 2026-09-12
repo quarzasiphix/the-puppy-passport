@@ -8,3 +8,4 @@ export * from "./services/rehoming";
 export * from "./components/adoption-form-dialog";
 export * from "./components/apply-dialog";
 export * from "./components/cards";
+export * from "./components/rehoming-reviews-panel";

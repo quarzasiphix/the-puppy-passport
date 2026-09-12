@@ -6,7 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import {
-  applicationStatusLabels,
+  getApplicationStatusLabels,
   applicationStatusStyles,
   listMyApplications,
   withdrawApplication,
@@ -94,7 +94,7 @@ function BuyerApplications() {
                   </div>
                 </div>
                 <Badge className={applicationStatusStyles[a.status]}>
-                  {applicationStatusLabels[a.status]}
+                  {getApplicationStatusLabels(t)[a.status]}
                 </Badge>
               </div>
               {a.breeder_response && (

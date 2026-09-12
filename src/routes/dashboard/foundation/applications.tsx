@@ -9,7 +9,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { useAuth } from "@/domains/identity";
 import { getMyFoundation } from "@/domains/breeders";
 import {
-  applicationStatusLabels,
+  getApplicationStatusLabels,
   applicationStatusStyles,
   listApplicationsForOrg,
   respondToApplication,
@@ -18,6 +18,7 @@ import {
 import { startApplicationConversation } from "@/domains/messaging";
 import { createTransportDraftForFoundationAdoption } from "@/domains/transport";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
 import {
   CheckCircle2,
   XCircle,
@@ -33,13 +34,13 @@ export const Route = createFileRoute("/dashboard/foundation/applications")({
   component: ApplicationsPage,
 });
 
-const applicationTypeLabels: Record<string, string> = {
-  adoption: "Adoption",
-  rehoming_inquiry: "Rehoming inquiry",
-  purchase: "Purchase",
-};
-
 function ApplicationsPage() {
+  const { t } = useTranslation();
+  const applicationTypeLabels: Record<string, string> = {
+    adoption: t("foundationPanel.applications.typeAdoption"),
+    rehoming_inquiry: t("foundationPanel.applications.typeRehomingInquiry"),
+    purchase: t("foundationPanel.applications.typePurchase"),
+  };
   const { userId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -73,13 +74,14 @@ function ApplicationsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Applicant notified.");
+      toast.success(t("foundationPanel.applications.applicantNotifiedToast"));
       queryClient.invalidateQueries({ queryKey: ["foundation-applications", org?.id] });
       setOpenId(null);
       setReply("");
       setInternalNotes("");
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update.")),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("foundationPanel.applications.updateFailed"))),
   });
 
   const transportMutation = useMutation({
@@ -91,12 +93,12 @@ function ApplicationsPage() {
       });
     },
     onSuccess: () => {
-      toast.success(
-        "A transport draft has been started for this adoption. Find it under Transport requests.",
-      );
+      toast.success(t("foundationPanel.applications.transportStartedToast"));
     },
     onError: (err) =>
-      toast.error(getFriendlyErrorMessage(err, "Could not start a transport draft.")),
+      toast.error(
+        getFriendlyErrorMessage(err, t("foundationPanel.applications.transportStartFailed")),
+      ),
   });
 
   const messageMutation = useMutation({
@@ -107,25 +109,30 @@ function ApplicationsPage() {
     onSuccess: (conversationId) => {
       navigate({ to: "/dashboard/foundation/messages", search: { conversation: conversationId } });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not open conversation.")),
+    onError: (err) =>
+      toast.error(
+        getFriendlyErrorMessage(err, t("foundationPanel.applications.conversationFailed")),
+      ),
   });
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Adoption applications</h1>
+        <h1 className="font-display text-3xl font-medium">
+          {t("foundationPanel.applications.title")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Review and respond to people interested in adopting your animals.
+          {t("foundationPanel.applications.subtitle")}
         </p>
       </header>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("foundationPanel.applications.loading")}</p>
       ) : !applications?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
-          <p className="font-medium">No applications yet</p>
+          <p className="font-medium">{t("foundationPanel.applications.emptyTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Applications from people interested in your animals will show up here.
+            {t("foundationPanel.applications.emptyBody")}
           </p>
         </div>
       ) : (
@@ -134,12 +141,12 @@ function ApplicationsPage() {
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="p-4">Applicant</th>
-                  <th className="p-4">Animal</th>
-                  <th className="p-4">Type</th>
-                  <th className="p-4">Location</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Status</th>
+                  <th className="p-4">{t("foundationPanel.applications.colApplicant")}</th>
+                  <th className="p-4">{t("foundationPanel.applications.colAnimal")}</th>
+                  <th className="p-4">{t("foundationPanel.applications.colType")}</th>
+                  <th className="p-4">{t("foundationPanel.applications.colLocation")}</th>
+                  <th className="p-4">{t("foundationPanel.applications.colDate")}</th>
+                  <th className="p-4">{t("foundationPanel.applications.colStatus")}</th>
                   <th className="p-4"></th>
                 </tr>
               </thead>
@@ -147,10 +154,15 @@ function ApplicationsPage() {
                 {applications.map((a) => (
                   <tr key={a.id} className="hover:bg-secondary/40">
                     <td className="p-4">
-                      <div className="font-medium">{a.profiles?.display_name ?? "Applicant"}</div>
+                      <div className="font-medium">
+                        {a.profiles?.display_name ??
+                          t("foundationPanel.applications.defaultApplicant")}
+                      </div>
                       <div className="text-xs text-muted-foreground line-clamp-1">
-                        {a.housing_type === "house" ? "House" : "Apartment"}
-                        {a.has_garden ? ", garden" : ""}
+                        {a.housing_type === "house"
+                          ? t("foundationPanel.applications.house")
+                          : t("foundationPanel.applications.apartment")}
+                        {a.has_garden ? t("foundationPanel.applications.gardenSuffix") : ""}
                       </div>
                     </td>
                     <td className="p-4">{a.animals?.name ?? "—"}</td>
@@ -165,7 +177,7 @@ function ApplicationsPage() {
                     </td>
                     <td className="p-4">
                       <Badge className={applicationStatusStyles[a.status]}>
-                        {applicationStatusLabels[a.status]}
+                        {getApplicationStatusLabels(t)[a.status]}
                       </Badge>
                     </td>
                     <td className="p-4 text-right">
@@ -177,7 +189,7 @@ function ApplicationsPage() {
                           setInternalNotes(a.internal_notes ?? "");
                         }}
                       >
-                        Open
+                        {t("foundationPanel.applications.openButton")}
                       </Button>
                     </td>
                   </tr>
@@ -203,71 +215,89 @@ function ApplicationsPage() {
             <>
               <SheetHeader>
                 <SheetTitle className="font-display text-2xl">
-                  {active.profiles?.display_name ?? "Applicant"}
+                  {active.profiles?.display_name ??
+                    t("foundationPanel.applications.defaultApplicant")}
                 </SheetTitle>
                 <p className="text-sm text-muted-foreground">
-                  {applicationTypeLabels[active.application_type] ?? active.application_type} for{" "}
-                  {active.animals?.name ?? "this animal"} ·{" "}
+                  {applicationTypeLabels[active.application_type] ?? active.application_type}{" "}
+                  {t("foundationPanel.applications.forPrefix")}{" "}
+                  {active.animals?.name ?? t("foundationPanel.applications.thisAnimal")} ·{" "}
                   {new Date(active.submitted_at).toLocaleDateString("en-GB")}
                 </p>
               </SheetHeader>
               <div className="mt-6 space-y-5">
-                <Field label="Household">
-                  {active.housing_type === "house" ? "House" : "Apartment"}
-                  {active.has_garden ? ", garden or secure outdoor space" : ""}
+                <Field label={t("foundationPanel.applications.fieldHousehold")}>
+                  {active.housing_type === "house"
+                    ? t("foundationPanel.applications.house")
+                    : t("foundationPanel.applications.apartment")}
+                  {active.has_garden ? t("foundationPanel.applications.gardenOrOutdoor") : ""}
                   {active.has_children
-                    ? `, children (${active.children_ages || "ages not given"})`
+                    ? `${t("foundationPanel.applications.childrenPrefix")} (${active.children_ages || t("foundationPanel.applications.agesNotGiven")})`
                     : ""}
-                  {active.other_animals ? ` — other animals: ${active.other_animals}` : ""}
+                  {active.other_animals
+                    ? `${t("foundationPanel.applications.otherAnimalsPrefix")} ${active.other_animals}`
+                    : ""}
                   {active.landlord_permission != null &&
-                    ` · Landlord permission: ${active.landlord_permission ? "Yes" : "No"}`}
+                    `${t("foundationPanel.applications.landlordPermissionPrefix")} ${active.landlord_permission ? t("foundationPanel.applications.yes") : t("foundationPanel.applications.no")}`}
                 </Field>
-                <Field label="Experience">{active.previous_experience || "Not provided"}</Field>
-                <Field label="Breed/species knowledge">
-                  {active.breed_knowledge || "Not provided"}
+                <Field label={t("foundationPanel.applications.fieldExperience")}>
+                  {active.previous_experience || t("foundationPanel.applications.notProvided")}
                 </Field>
-                <Field label="Daily routine">
-                  {active.working_schedule && `Work: ${active.working_schedule}. `}
-                  {active.alone_time && `Time alone: ${active.alone_time}.`}
-                  {!active.working_schedule && !active.alone_time && "Not provided"}
+                <Field label={t("foundationPanel.applications.fieldBreedKnowledge")}>
+                  {active.breed_knowledge || t("foundationPanel.applications.notProvided")}
                 </Field>
-                <Field label="What they're looking for">
-                  {active.intended_purpose || "Not provided"}
+                <Field label={t("foundationPanel.applications.fieldDailyRoutine")}>
+                  {active.working_schedule &&
+                    `${t("foundationPanel.applications.workPrefix")} ${active.working_schedule}. `}
+                  {active.alone_time &&
+                    `${t("foundationPanel.applications.aloneTimePrefix")} ${active.alone_time}.`}
+                  {!active.working_schedule &&
+                    !active.alone_time &&
+                    t("foundationPanel.applications.notProvided")}
                 </Field>
-                <Field label="Veterinary planning">
-                  {active.veterinary_plan || "Not provided"}
+                <Field label={t("foundationPanel.applications.fieldLookingFor")}>
+                  {active.intended_purpose || t("foundationPanel.applications.notProvided")}
                 </Field>
-                <Field label="Collection">
-                  {active.collection_method?.replace(/_/g, " ") || "Not specified"}
-                  {active.transport_required && " · Interested in Anemalo transport"}
+                <Field label={t("foundationPanel.applications.fieldVetPlanning")}>
+                  {active.veterinary_plan || t("foundationPanel.applications.notProvided")}
+                </Field>
+                <Field label={t("foundationPanel.applications.fieldCollection")}>
+                  {active.collection_method?.replace(/_/g, " ") ||
+                    t("foundationPanel.applications.notSpecified")}
+                  {active.transport_required &&
+                    t("foundationPanel.applications.interestedInTransport")}
                   {active.preferred_collection_date &&
-                    ` · Preferred ${new Date(active.preferred_collection_date).toLocaleDateString("en-GB")}`}
+                    `${t("foundationPanel.applications.preferredPrefix")} ${new Date(active.preferred_collection_date).toLocaleDateString("en-GB")}`}
                 </Field>
-                <Field label="Contact">
+                <Field label={t("foundationPanel.applications.fieldContact")}>
                   {active.phone} · {active.buyer_city}, {active.buyer_country}
                 </Field>
-                <Field label="Message">{active.message || "No message included."}</Field>
+                <Field label={t("foundationPanel.applications.fieldMessage")}>
+                  {active.message || t("foundationPanel.applications.noMessageIncluded")}
+                </Field>
                 {active.breeder_response && (
-                  <Field label="Your previous reply">{active.breeder_response}</Field>
+                  <Field label={t("foundationPanel.applications.fieldYourPreviousReply")}>
+                    {active.breeder_response}
+                  </Field>
                 )}
                 <div>
                   <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Reply (sent with your decision — visible to the applicant)
+                    {t("foundationPanel.applications.replyLabel")}
                   </div>
                   <Textarea
                     rows={4}
-                    placeholder="Send a message to the applicant…"
+                    placeholder={t("foundationPanel.applications.replyPlaceholder")}
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
                   />
                 </div>
                 <div>
                   <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Internal notes (never shown to the applicant)
+                    {t("foundationPanel.applications.internalNotesLabel")}
                   </div>
                   <Textarea
                     rows={3}
-                    placeholder="Notes for your team only…"
+                    placeholder={t("foundationPanel.applications.internalNotesPlaceholder")}
                     value={internalNotes}
                     onChange={(e) => setInternalNotes(e.target.value)}
                   />
@@ -279,7 +309,8 @@ function ApplicationsPage() {
                     disabled={transportMutation.isPending}
                     onClick={() => transportMutation.mutate()}
                   >
-                    <Truck className="mr-1 size-4" /> Start a transport request for this adoption
+                    <Truck className="mr-1 size-4" />{" "}
+                    {t("foundationPanel.applications.startTransportButton")}
                   </Button>
                 )}
               </div>
@@ -290,48 +321,55 @@ function ApplicationsPage() {
                   disabled={messageMutation.isPending}
                   onClick={() => messageMutation.mutate()}
                 >
-                  <MessageCircle className="mr-1 size-4" /> Message applicant
+                  <MessageCircle className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.messageApplicantButton")}
                 </Button>
                 <Button
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "approved" })}
                 >
-                  <CheckCircle2 className="mr-1 size-4" /> Approve
+                  <CheckCircle2 className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.approveButton")}
                 </Button>
                 <Button
                   variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "rejected" })}
                 >
-                  <XCircle className="mr-1 size-4" /> Reject
+                  <XCircle className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.rejectButton")}
                 </Button>
                 <Button
                   variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "more_info_requested" })}
                 >
-                  <Info className="mr-1 size-4" /> Request info
+                  <Info className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.requestInfoButton")}
                 </Button>
                 <Button
                   variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "call_requested" })}
                 >
-                  <Phone className="mr-1 size-4" /> Invite to call
+                  <Phone className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.inviteToCallButton")}
                 </Button>
                 <Button
                   variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "interview_planned" })}
                 >
-                  <CalendarClock className="mr-1 size-4" /> Plan interview
+                  <CalendarClock className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.planInterviewButton")}
                 </Button>
                 <Button
                   variant="outline"
                   disabled={respondMutation.isPending}
                   onClick={() => respondMutation.mutate({ status: "waiting_list" })}
                 >
-                  <ListPlus className="mr-1 size-4" /> Add to waiting list
+                  <ListPlus className="mr-1 size-4" />{" "}
+                  {t("foundationPanel.applications.addToWaitingListButton")}
                 </Button>
               </div>
             </>

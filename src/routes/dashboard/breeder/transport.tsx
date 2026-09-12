@@ -11,12 +11,14 @@ import {
   isOnHold,
   isClosed,
 } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/transport")({
   component: BreederTransportPage,
 });
 
 function BreederTransportPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const { data: orgId } = useQuery({
     queryKey: ["my-kennel-id", userId],
@@ -35,47 +37,45 @@ function BreederTransportPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Transport</h1>
-        <p className="text-sm text-muted-foreground">
-          Transport requests linked to puppies from your kennel.
-        </p>
+        <h1 className="font-display text-3xl font-medium">{t("breederPanel.transport.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.transport.subtitle")}</p>
       </header>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.transport.loading")}</p>
       ) : !requests?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No linked transport requests yet — they'll show up here once a buyer or you request
-            transport for a puppy from a confirmed reservation.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("breederPanel.transport.emptyBody")}</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {requests.map((t) => (
+          {requests.map((req) => (
             <Card
-              key={t.id}
-              title={`${t.animal_name ?? t.animals?.name ?? "Puppy"} — ${t.pickup_city ?? "?"} → ${t.destination_city ?? "?"}`}
+              key={req.id}
+              title={`${req.animal_name ?? req.animals?.name ?? t("breederPanel.transport.puppy")} — ${req.pickup_city ?? "?"} → ${req.destination_city ?? "?"}`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Badge variant="secondary">{t.requested_service_type}</Badge>
+                  <Badge variant="secondary">{req.requested_service_type}</Badge>
                   <span className="text-muted-foreground">
-                    Requested {new Date(t.created_at).toLocaleDateString("en-GB")}
+                    {t("breederPanel.transport.requestedPrefix")}{" "}
+                    {new Date(req.created_at).toLocaleDateString("en-GB")}
                   </span>
-                  {t.earliest_date && (
+                  {req.earliest_date && (
                     <span className="text-muted-foreground">
-                      Earliest {new Date(t.earliest_date).toLocaleDateString("en-GB")}
+                      {t("breederPanel.transport.earliestPrefix")}{" "}
+                      {new Date(req.earliest_date).toLocaleDateString("en-GB")}
                     </span>
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-medium">{t.request_number}</div>
+                  <div className="text-xs font-medium">{req.request_number}</div>
                   <div className="text-xs text-muted-foreground">
-                    {isClosed(t.status)
-                      ? "Closed"
-                      : isOnHold(t.status)
-                        ? "On hold — action needed"
-                        : (transportMilestones[milestoneIndexForStatus(t.status) ?? 0] ?? t.status)}
+                    {isClosed(req.status)
+                      ? t("breederPanel.transport.statusClosed")
+                      : isOnHold(req.status)
+                        ? t("breederPanel.transport.statusOnHold")
+                        : (transportMilestones[milestoneIndexForStatus(req.status) ?? 0] ??
+                          req.status)}
                   </div>
                 </div>
               </div>

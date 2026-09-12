@@ -1,11 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NotImplemented } from "@/shared/ui/not-implemented";
+import { useTranslation } from "@/shared/i18n";
+
+function BuyerDocuments() {
+  const { t } = useTranslation();
+  return (
+    <NotImplemented
+      title={t("buyerPanel.documents.title")}
+      purpose={t("buyerPanel.documents.purpose")}
+    />
+  );
+}
 
 export const Route = createFileRoute("/dashboard/buyer/documents")({
-  component: () => (
-    <NotImplemented
-      title="Documents"
-      purpose="A per-reservation checklist (sales agreement, deposit receipt, pedigree copy, health book) will live here once you have a confirmed reservation."
-    />
-  ),
+  component: BuyerDocuments,
 });

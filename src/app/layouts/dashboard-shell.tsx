@@ -53,7 +53,9 @@ const workspaces: { to: string; id: string; roles: string[]; icon: LucideIcon }[
   },
   { to: "/dashboard/operations", id: "operations", roles: ["operations", "admin"], icon: Truck },
   { to: "/dashboard/driver", id: "driver", roles: ["driver"], icon: Car },
-  { to: "/dashboard/admin", id: "admin", roles: ["admin"], icon: ShieldCheck },
+  // Moderator and admin share one dashboard (routes/dashboard/admin.tsx) — a moderator sees the
+  // same "Admin" workspace entry, just fewer items once inside (adminNavFor in navigation.ts).
+  { to: "/dashboard/admin", id: "admin", roles: ["moderator", "admin"], icon: ShieldCheck },
 ];
 
 // Lets a user with several roles switch workspace without a separate account per role — driven by

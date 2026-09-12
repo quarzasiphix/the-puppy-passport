@@ -4,12 +4,14 @@ import { Trophy } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { getMyKennel, listKennelAchievements } from "@/domains/breeders";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/breeder/champions")({
   component: ChampionsPage,
 });
 
 function ChampionsPage() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const { data: kennel } = useQuery({
     queryKey: ["my-kennel", userId],
@@ -25,7 +27,7 @@ function ChampionsPage() {
   const verified = (achievements ?? []).filter((a) => a.verification_status === "approved");
   const byDog = new Map<string, { name: string; titles: string[] }>();
   for (const a of verified) {
-    const name = a.parent_dogs?.registered_name ?? "Unknown dog";
+    const name = a.parent_dogs?.registered_name ?? t("breederPanel.champions.unknownDog");
     const entry = byDog.get(a.parent_dog_id) ?? { name, titles: [] };
     entry.titles.push(a.title);
     byDog.set(a.parent_dog_id, entry);
@@ -34,30 +36,28 @@ function ChampionsPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">Champion dogs</h1>
+        <h1 className="font-display text-3xl font-medium">{t("breederPanel.champions.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          A preview of what shows on your public kennel page's "Champions" section — only
-          admin-verified achievements appear here.{" "}
+          {t("breederPanel.champions.subtitle")}{" "}
           {kennel?.slug && (
             <Link
               to="/@{$handle}"
               params={{ handle: kennel.slug }}
               className="text-primary hover:underline"
             >
-              View public page
+              {t("breederPanel.champions.viewPublicPage")}
             </Link>
           )}
         </p>
       </header>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{t("breederPanel.champions.loading")}</p>
       ) : byDog.size === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
           <Trophy className="mx-auto size-6 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            No verified achievements yet. Add and submit one from the Achievements page — once an
-            admin verifies it, your dog appears here and publicly.
+            {t("breederPanel.champions.emptyBody")}
           </p>
         </div>
       ) : (
@@ -69,9 +69,9 @@ function ChampionsPage() {
                 <div className="font-display text-lg font-semibold">{dog.name}</div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {dog.titles.map((t) => (
-                  <Badge key={t} variant="secondary">
-                    {t}
+                {dog.titles.map((title) => (
+                  <Badge key={title} variant="secondary">
+                    {title}
                   </Badge>
                 ))}
               </div>

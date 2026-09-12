@@ -43,12 +43,14 @@ import {
   reviewableStatuses,
   transportMilestones,
 } from "@/domains/transport";
+import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/buyer/transport")({
   component: BuyerTransport,
 });
 
 function BuyerTransport() {
+  const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -61,30 +63,32 @@ function BuyerTransport() {
     enabled: !!userId,
     queryFn: () => listMyDrafts(userId!),
   });
-  const submitted = query.data?.filter((t) => t.status !== "draft") ?? [];
+  const submitted = query.data?.filter((req) => req.status !== "draft") ?? [];
 
   async function handleDeleteDraft(id: string) {
     try {
       await deleteDraft(id);
-      toast.success("Draft deleted.");
+      toast.success(t("buyerPanel.transport.draftDeleted"));
       queryClient.invalidateQueries({ queryKey: ["my-transport-drafts", userId] });
     } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, "Could not delete draft."));
+      toast.error(getFriendlyErrorMessage(err, t("buyerPanel.transport.couldNotDeleteDraft")));
     }
   }
 
   return (
     <div>
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-3xl font-medium">Transport</h1>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.transport.title")}</h1>
         <Button asChild>
-          <Link to="/transport/request">Request transport</Link>
+          <Link to="/transport/request">{t("buyerPanel.transport.requestTransport")}</Link>
         </Button>
       </header>
 
       {draftsQuery.data && draftsQuery.data.length > 0 && (
         <section className="mb-6">
-          <h2 className="mb-3 font-display text-lg font-semibold">Drafts</h2>
+          <h2 className="mb-3 font-display text-lg font-semibold">
+            {t("buyerPanel.transport.drafts")}
+          </h2>
           <div className="space-y-2">
             {draftsQuery.data.map((d) => (
               <div
@@ -92,17 +96,19 @@ function BuyerTransport() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border/70 bg-secondary/30 p-4"
               >
                 <div>
-                  <div className="font-medium">{d.animal_name || "Unnamed request"}</div>
+                  <div className="font-medium">
+                    {d.animal_name || t("buyerPanel.transport.unnamedRequest")}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {d.pickup_city ?? "?"} <ArrowRight className="mx-1 inline size-3" />{" "}
-                    {d.destination_city ?? "?"} · Saved{" "}
+                    {d.destination_city ?? "?"} · {t("buyerPanel.transport.savedPrefix")}{" "}
                     {new Date(d.updated_at).toLocaleDateString("en-GB")}
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button asChild size="sm" variant="outline">
                     <Link to="/transport/request" search={{ draft: d.id }}>
-                      <FileEdit className="mr-1 size-4" /> Resume
+                      <FileEdit className="mr-1 size-4" /> {t("buyerPanel.transport.resume")}
                     </Link>
                   </Button>
                   <AlertDialog>
@@ -113,13 +119,17 @@ function BuyerTransport() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
-                        <AlertDialogDescription>This can't be undone.</AlertDialogDescription>
+                        <AlertDialogTitle>
+                          {t("buyerPanel.transport.deleteDraftConfirmTitle")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("buyerPanel.transport.cannotBeUndone")}
+                        </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("buyerPanel.transport.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={() => handleDeleteDraft(d.id)}>
-                          Delete
+                          {t("buyerPanel.transport.delete")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -132,36 +142,32 @@ function BuyerTransport() {
       )}
 
       {query.isLoading && (
-        <p className="text-sm text-muted-foreground">Loading your transport requests…</p>
+        <p className="text-sm text-muted-foreground">{t("buyerPanel.transport.loadingRequests")}</p>
       )}
       {query.isError && (
-        <p className="text-sm text-destructive">
-          Could not load your transport requests. Please try again.
-        </p>
+        <p className="text-sm text-destructive">{t("buyerPanel.transport.loadError")}</p>
       )}
       {query.data && submitted.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            You haven't submitted a transport request yet.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("buyerPanel.transport.emptyBody")}</p>
           <Button asChild className="mt-4">
-            <Link to="/transport/request">Request transport</Link>
+            <Link to="/transport/request">{t("buyerPanel.transport.requestTransport")}</Link>
           </Button>
         </div>
       )}
 
       <div className="space-y-3">
-        {submitted.map((t) => {
-          const milestone = milestoneIndexForStatus(t.status);
-          const statusLabel = isClosed(t.status)
-            ? "Closed"
-            : isOnHold(t.status)
-              ? "On hold — action needed"
-              : (transportMilestones[milestone ?? 0] ?? t.status);
+        {submitted.map((req) => {
+          const milestone = milestoneIndexForStatus(req.status);
+          const statusLabel = isClosed(req.status)
+            ? t("buyerPanel.transport.statusClosed")
+            : isOnHold(req.status)
+              ? t("buyerPanel.transport.statusOnHold")
+              : (transportMilestones[milestone ?? 0] ?? req.status);
           return (
             <RequestCard
-              key={t.id}
-              t={t}
+              key={req.id}
+              item={req}
               milestone={milestone}
               statusLabel={statusLabel}
               userId={userId!}
@@ -174,43 +180,45 @@ function BuyerTransport() {
 }
 
 function RequestCard({
-  t,
+  item,
   milestone,
   statusLabel,
   userId,
 }: {
-  t: Awaited<ReturnType<typeof listMyTransportRequests>>[number];
+  item: Awaited<ReturnType<typeof listMyTransportRequests>>[number];
   milestone: number | null;
   statusLabel: string;
   userId: string;
 }) {
+  const { t } = useTranslation();
   const [showDocs, setShowDocs] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
   const conversationQuery = useQuery({
-    queryKey: ["transport-conversation", t.id],
+    queryKey: ["transport-conversation", item.id],
     enabled: showChat,
-    queryFn: () => startTransportConversation(t.id),
+    queryFn: () => startTransportConversation(item.id),
   });
   const timelineQuery = useQuery({
-    queryKey: ["transport-timeline", t.id],
+    queryKey: ["transport-timeline", item.id],
     enabled: showTimeline,
-    queryFn: () => getCustomerTimeline(t.id),
+    queryFn: () => getCustomerTimeline(item.id),
   });
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="font-display text-lg font-semibold">{t.request_number}</div>
+          <div className="font-display text-lg font-semibold">{item.request_number}</div>
           <div className="text-sm text-muted-foreground">
-            {t.pickup_city ?? t.pickup_country ?? "?"} <ArrowRight className="mx-1 inline size-3" />{" "}
-            {t.destination_city ?? t.destination_country ?? "?"}
+            {item.pickup_city ?? item.pickup_country ?? "?"}{" "}
+            <ArrowRight className="mx-1 inline size-3" />{" "}
+            {item.destination_city ?? item.destination_country ?? "?"}
           </div>
         </div>
-        <Badge variant={isOnHold(t.status) ? "destructive" : "secondary"}>{statusLabel}</Badge>
+        <Badge variant={isOnHold(item.status) ? "destructive" : "secondary"}>{statusLabel}</Badge>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">{nextActionForStatus(t.status)}</p>
-      {milestone !== null && !isClosed(t.status) && (
+      <p className="mt-2 text-sm text-muted-foreground">{nextActionForStatus(item.status)}</p>
+      {milestone !== null && !isClosed(item.status) && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {transportMilestones.map((s, i) => (
             <span
@@ -227,7 +235,7 @@ function RequestCard({
           onClick={() => setShowDocs((v) => !v)}
           className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
         >
-          Documents{" "}
+          {t("buyerPanel.transport.documents")}{" "}
           <ChevronDown
             className={`size-3.5 transition-transform ${showDocs ? "rotate-180" : ""}`}
           />
@@ -236,7 +244,7 @@ function RequestCard({
           onClick={() => setShowChat((v) => !v)}
           className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
         >
-          <MessageCircle className="size-3.5" /> Message operations{" "}
+          <MessageCircle className="size-3.5" /> {t("buyerPanel.transport.messageOperations")}{" "}
           <ChevronDown
             className={`size-3.5 transition-transform ${showChat ? "rotate-180" : ""}`}
           />
@@ -245,18 +253,18 @@ function RequestCard({
           onClick={() => setShowTimeline((v) => !v)}
           className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
         >
-          <Clock3 className="size-3.5" /> Timeline{" "}
+          <Clock3 className="size-3.5" /> {t("buyerPanel.transport.timeline")}{" "}
           <ChevronDown
             className={`size-3.5 transition-transform ${showTimeline ? "rotate-180" : ""}`}
           />
         </button>
-        {reviewableStatuses.has(t.status) && (
-          <ReviewTransportDialog transportRequestId={t.id} userId={userId} />
+        {reviewableStatuses.has(item.status) && (
+          <ReviewTransportDialog transportRequestId={item.id} userId={userId} />
         )}
       </div>
       {showDocs && (
         <div className="mt-3 border-t border-border/60 pt-3">
-          <TransportDocumentChecklist transportRequestId={t.id} userId={userId} />
+          <TransportDocumentChecklist transportRequestId={item.id} userId={userId} />
         </div>
       )}
       {showChat && (
@@ -264,7 +272,7 @@ function RequestCard({
           {conversationQuery.data ? (
             <ChatThread conversationId={conversationQuery.data} currentUserId={userId} />
           ) : (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{t("buyerPanel.transport.loading")}</p>
           )}
         </div>
       )}
@@ -273,7 +281,7 @@ function RequestCard({
           {timelineQuery.data ? (
             <TransportTimeline events={timelineQuery.data} />
           ) : (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">{t("buyerPanel.transport.loading")}</p>
           )}
         </div>
       )}

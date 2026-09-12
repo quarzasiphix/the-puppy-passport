@@ -18,13 +18,24 @@ import type { CSSProperties } from "react";
 // just reusing the one that already exists ("perhaps a premium feature in the future" — it already
 // is, today, via the existing plan system).
 export type BreederBrandColorKey =
-  "ocean" | "plum" | "berry" | "amber" | "sage" | "slate" | "rust" | "teal";
+  | "ocean"
+  | "plum"
+  | "berry"
+  | "magenta"
+  | "amber"
+  | "sage"
+  | "slate"
+  | "rust"
+  | "teal";
 
 export const BREEDER_BRAND_PALETTE: { key: BreederBrandColorKey; hex: string; labelKey: string }[] =
   [
     { key: "ocean", hex: "#1F5C8B", labelKey: "breederPanel.brandColor.ocean" },
     { key: "plum", hex: "#6B3468", labelKey: "breederPanel.brandColor.plum" },
     { key: "berry", hex: "#9C3556", labelKey: "breederPanel.brandColor.berry" },
+    // Vivid magenta/hot-pink — brighter than "berry", for a kennel with a bright pink brand
+    // (e.g. GRYFIN YORK's hodowlagryfinyork.pl, whose real site uses this exact magenta).
+    { key: "magenta", hex: "#E22F99", labelKey: "breederPanel.brandColor.magenta" },
     { key: "amber", hex: "#9C6A1A", labelKey: "breederPanel.brandColor.amber" },
     { key: "sage", hex: "#3F6E52", labelKey: "breederPanel.brandColor.sage" },
     { key: "slate", hex: "#43566B", labelKey: "breederPanel.brandColor.slate" },

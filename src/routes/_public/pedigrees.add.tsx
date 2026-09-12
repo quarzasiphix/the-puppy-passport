@@ -108,6 +108,10 @@ function AddPedigree() {
 
   const runMatching = useMutation({
     mutationFn: async () => {
+      // Ancestors are optional — OCR is a documented no-op (see ocrNotAvailable below), so
+      // anyone who picks "upload a document" and doesn't also hand-type an ancestor would
+      // otherwise have no way to ever reach the submit step. A subject-only submission is valid:
+      // finalize_pedigree_submission only requires a resolved subject, nothing downstream of it.
       const out: Record<string, DogSearchResult[]> = {};
       for (const entry of filledAncestors) {
         const q = entry.pedigreeNumber || entry.registeredName;
@@ -396,11 +400,12 @@ function AddPedigree() {
             <Button variant="outline" onClick={() => setStep(1)}>
               {t("pedigree.add.back")}
             </Button>
-            <Button
-              disabled={runMatching.isPending || filledAncestors.length === 0}
-              onClick={() => runMatching.mutate()}
-            >
-              {runMatching.isPending ? t("pedigree.add.matching") : t("pedigree.add.reviewMatches")}
+            <Button disabled={runMatching.isPending} onClick={() => runMatching.mutate()}>
+              {runMatching.isPending
+                ? t("pedigree.add.matching")
+                : filledAncestors.length === 0
+                  ? t("pedigree.add.continue")
+                  : t("pedigree.add.reviewMatches")}
             </Button>
           </div>
         </section>
@@ -414,6 +419,11 @@ function AddPedigree() {
             decisions={decisions}
             candidatesBySlot={candidatesBySlot}
           />
+          {filledAncestors.length === 0 && (
+            <p className="rounded-2xl border border-dashed border-border/70 bg-card p-4 text-xs text-muted-foreground">
+              {t("pedigree.add.noAncestorsNote")}
+            </p>
+          )}
           {filledAncestors.map((entry) => {
             const cands = candidatesBySlot[entry.slotKey] ?? [];
             const decision = decisions[entry.slotKey];
