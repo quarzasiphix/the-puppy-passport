@@ -14,7 +14,12 @@ this domain) both depend on what's here.
   (`services/guards.ts:8-21`) — checks `role in allowedRoles && status === 'active'` only; does
   **not** read `organisations.verification_status` (relevant to the 2026-09-12 breeder
   self-registration rework — panel access and org verification are intentionally decoupled at this
-  layer).
+  layer). `platform_role` gained `transport_company_owner` the same day
+  (`20260912170832_transport_company_owner_role_enum.sql`, added first in its own migration since a
+  new enum value can't be referenced in the same transaction that adds it) — a deliberately
+  separate role from `driver`, which stays the individual freelance mobile-job-workspace role
+  (`is_my_driver_id()`-gated); reusing it for company owners would either give every owner a mobile
+  job workspace they don't want, or force those checks to special-case context.
 - `organisations` (admin-side): `listAllOrganisationsForAdmin`, `setOrganisationVerificationStatus`,
   `setOrganisationFeatured`, `listFeaturedOrganisations` (`services/organisations.ts`). Comment:
   "'admins manage all organisations' RLS already existed... only the UI was ever missing" — i.e.
@@ -93,3 +98,16 @@ this domain) both depend on what's here.
 2026-09-12 (this session, but not in this domain's own files): the breeder self-registration
 rework relies on `requireRole`'s existing role-only check being exactly what it already is — no
 code change was needed in `services/guards.ts` itself, confirmed by reading it during that work.
+Same day, later: `create_own_organisation()` extended twice more — once to accept
+`org_type = 'transport_company'` (granting `transport_company_owner`,
+`20260912140000_transport_company_verification.sql`, which also moved
+`approve_user_verification()`/`reject_user_verification()` from `is_admin()` to `is_moderator()` —
+`is_admin()` staff keep working unaffected, since `is_moderator() := has_role(auth.uid(),
+'moderator') OR is_admin()`), and once to accept a trailing optional `p_registration_number`
+(`20260912160000_org_registration_number.sql` — foundations/shelters get a "registration number
+(KRS)" label, transport companies an "operator license number" label, both mapping to the same
+previously-unused `organisations.registration_number` column; the old 9-arg RPC overload was
+explicitly `drop function`-ed in the same migration, since `create or replace` with a different
+signature creates a second overload rather than replacing the first). A new dashboard panel for
+this role (`dashboard/transport-company/`) was missing entirely and had to be built the same day to
+unblock a broken production build — see `src/domains/breeders/AGENTS.md` and `TODO.md`.

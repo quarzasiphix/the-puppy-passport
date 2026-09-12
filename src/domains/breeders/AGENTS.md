@@ -19,7 +19,13 @@ entity" (`types.ts:3-5`).
   live in `../animals/services/breeder.ts`/`foundation.ts` and are only re-exported here (see
   `index.ts:3-9` — a known, deliberate, not-yet-fixed structural overlap: "those two files were the
   prototype's single 'breeder.ts' data module and mix org-profile concerns with animal-record
-  concerns... tracked as follow-up work in `docs/FILE_MIGRATION_MAP.md`").
+  concerns... tracked as follow-up work in `docs/FILE_MIGRATION_MAP.md`"). A third file joined this
+  overlap 2026-09-12: `../animals/services/transport-company.ts` (`getMyTransportCompany`/
+  `getMyTransportCompanyProfile`), also re-exported here, also org-profile concerns living outside
+  this domain. Its `getMyActiveOrgIds()` resolves "my org" through `organisation_members` (any
+  active row, any `member_role`), not `organisations.owner_user_id` directly — the co-owner gap
+  `getMyKennel()`/`getMyKennelProfile()` were fixed for the same day (`owns_org_supports_co_owners`
+  migration); `getMyFoundation()` still has this bug, not fixed in that pass.
 - `services/brand-color.ts` — the curated brand-color palette (`BREEDER_BRAND_PALETTE`) and
   `getAccentCssVars`/`accentBorderStyle` helpers that apply `organisation_site_configurations
   .primary_color`/`organisations` accent color across the dashboard shell and public profile. As of
@@ -69,4 +75,8 @@ entity" (`types.ts:3-5`).
 2026-09-12 (this session): added a "magenta" `BREEDER_BRAND_PALETTE` entry and applied it to a real
 kennel's brand color; separately, the "Contact breeder" button on the public profile
 (`src/routes/_public/-components/breeder-profile/identity-card.tsx`, not in this domain) was
-changed to actually use the org's accent color instead of always rendering the site default.
+changed to actually use the org's accent color instead of always rendering the site default. Same
+day, separately: `transport-company.ts` added (see "What this owns"/"Does not own" above) alongside
+a new `dashboard/transport-company/` panel that consumes its two functions — that panel's own route
+files were entirely missing until built later the same day to unblock a broken production build
+(`create-breeder.tsx` referenced a route that didn't exist yet — see `TODO.md`).

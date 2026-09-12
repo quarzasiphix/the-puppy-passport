@@ -1,10 +1,25 @@
 # Breeder verification & trust — analysis and proposal
 
-Status: **discussion doc, 2026-09-12. No schema changes, no code changes.** Written in response to
-the product owner's request to rethink the verification/lockout model, add a WNI (weterynaryjny
-numer inspektoratu) axis, and separate "verified breeder" into distinct facts. This is a review of
-what already exists plus a proposal — not a decision record. See `docs/DECISIONS.md` for where
-accepted decisions eventually get recorded.
+Status: **discussion doc, 2026-09-12 — the core question this doc opens with (open question #1)
+was decided and applied later the same day.** Product decision: self-registration creates a real,
+usable organisation + active role *immediately*, but `verification_status`/`user_verifications
+.status` stay `pending` (and the org stays `is_public = false`) until an admin/moderator actually
+reviews it. Applied via `create_own_organisation()` (replacing the short-lived, fully-auto-approve
+`create_and_approve_own_organisation()` from earlier the same day) —
+`supabase/migrations/20260912000100_breeder_self_registration_pending_review.sql`, extended for
+`transport_company` in `20260912140000_transport_company_verification.sql` and for a KRS/operator-
+license `registration_number` field in `20260912160000_org_registration_number.sql`. Full detail:
+`docs/REGISTRATION_FLOW_AUDIT.md` and `src/domains/identity/AGENTS.md`.
+
+The rest of this document — the WNI axis, the kennel-club registry, the admin-panel tradeoff — was
+**not** part of that 2026-09-12 fix and remains an open proposal, not a decision. See `TODO.md`
+("Verification & trust") for the current state of each of those threads individually.
+
+Original status line, preserved for context: **discussion doc, 2026-09-12. No schema changes, no
+code changes.** Written in response to the product owner's request to rethink the verification/
+lockout model, add a WNI (weterynaryjny numer inspektoratu) axis, and separate "verified breeder"
+into distinct facts. This is a review of what already exists plus a proposal — not a decision
+record. See `docs/DECISIONS.md` for where accepted decisions eventually get recorded.
 
 ## TL;DR
 
@@ -25,6 +40,13 @@ already-drafted migration, add one new small piece for WNI, and decide the admin
 That's a much smaller and safer project than it sounded like in the original ask.
 
 ## Correcting a premise: is anyone actually locked out today?
+
+**Resolved 2026-09-12, later the same day**: could not find a lockout in the code at the time this
+was written, and none was ever found — the fix that shipped (`create_own_organisation()`) is
+exactly the decoupling described in this section's last paragraph: pending verification no longer
+touches panel access at all, only public visibility. `open question #1` below was answered by
+implementing the "already true" case robustly rather than by finding and fixing an actual lockout
+bug. Original analysis preserved below.
 
 I could not find a lockout in the current code. Specifically:
 

@@ -1,0 +1,84 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Button } from "@/shared/ui/button";
+import { useAuth, getMyProfile, updateMyPhone } from "@/domains/identity";
+import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { useTranslation } from "@/shared/i18n";
+
+export const Route = createFileRoute("/dashboard/transport-company/settings")({
+  component: SettingsPage,
+});
+
+const schema = z.object({ phone: z.string().optional() });
+type FormValues = z.infer<typeof schema>;
+
+function SettingsPage() {
+  const { t } = useTranslation();
+  const { userId } = useAuth();
+  const queryClient = useQueryClient();
+  const profileQuery = useQuery({
+    queryKey: ["my-profile", userId],
+    enabled: !!userId,
+    queryFn: getMyProfile,
+  });
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    values: profileQuery.data ? { phone: profileQuery.data.phone ?? "" } : undefined,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (values: FormValues) => updateMyPhone(userId!, values.phone || null),
+    onSuccess: () => {
+      toast.success(t("transportCompanyPanel.settingsPage.savedToast"));
+      queryClient.invalidateQueries({ queryKey: ["my-profile", userId] });
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.settingsPage.saveFailed"))),
+  });
+
+  return (
+    <div>
+      <header className="mb-6">
+        <h1 className="font-display text-3xl font-medium">
+          {t("transportCompanyPanel.settingsPage.title")}
+        </h1>
+      </header>
+      <div className="max-w-xl rounded-2xl border border-border/70 bg-card p-6">
+        <h3 className="mb-3 font-display text-lg font-semibold">
+          {t("transportCompanyPanel.settingsPage.accountTitle")}
+        </h3>
+        {profileQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">
+            {t("transportCompanyPanel.settingsPage.loading")}
+          </p>
+        ) : (
+          <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-3">
+            <div>
+              <Label>{t("transportCompanyPanel.settingsPage.emailLabel")}</Label>
+              <Input value={profileQuery.data?.email ?? ""} disabled />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("transportCompanyPanel.settingsPage.emailChangeNote")}
+              </p>
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.settingsPage.phoneLabel")}</Label>
+              <Input {...form.register("phone")} />
+            </div>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending
+                ? t("transportCompanyPanel.settingsPage.saving")
+                : t("transportCompanyPanel.settingsPage.saveChanges")}
+            </Button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}

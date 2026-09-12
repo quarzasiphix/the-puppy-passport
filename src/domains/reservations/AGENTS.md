@@ -16,6 +16,20 @@ itself, not just the UI)" per `docs/DOMAIN_MODEL.md`.
   server-side" (`services/reservations.ts:76-78`, migration
   `20260909000100_reservation_deposit_payments.sql`). Actual payment collection is the separate
   `payments` domain's concern (Stripe Checkout session), not this one.
+- **Cancellation** (added 2026-09-12) — `cancelReservation()` wraps `cancel_reservation()`
+  (`20260912120000_reservation_cancellation.sql`); either party or an admin, any non-terminal
+  reservation. A paid deposit is never refunded (money is effectively the breeder's once paid); a
+  merely-requested one reverts to `not_required`. UI: `components/cancel-reservation-dialog.tsx`
+  (`CancelReservationDialog`), already wired into both `pages/*.tsx`.
+- **Breeder payout tracking** (added 2026-09-12, manual-payout v1) — `reservation_payouts` table,
+  one row per reservation, auto-created by a DB trigger when `deposit_status` flips to `paid`. Read
+  via `listMyOrgPayouts()`/`listAllPayouts()` (`services/payouts.ts`, a new file — not part of
+  `services/reservations.ts`), the only write is admin-only `markReservationPayoutPaid()` (wraps
+  `mark_reservation_payout_paid()`). See
+  `docs/RESERVATION_PAYMENT_DESIGN.md` "Breeder payout tracking" for the full design (20-day SLA,
+  v1's no-platform-fee assumption, RLS shape). UI: `/dashboard/breeder/payouts` (read-only),
+  `/dashboard/operations/payouts` (internal, mark-as-paid action) — both outside this domain's own
+  route files (thin route wrappers, same pattern as the reservation list pages).
 - `status.ts` — the reservation state machine: `RESERVATION_STATUSES`
   (`awaiting_breeder|awaiting_buyer|confirmed|cancelled|completed`), `RESERVATION_TRANSITIONS`
   (explicit legal-transition map), `canTransitionReservation`/`assertReservationTransition`,
@@ -28,10 +42,11 @@ itself, not just the UI)" per `docs/DOMAIN_MODEL.md`.
 ## File structure
 
 - `index.ts` — curated re-export (unlike most domains' `export *`) of specific names from
-  `services/reservations`, `types`, `status`, `pages/breeder-reservations-page`,
+  `services/reservations`, `services/payouts`, `types`, `status`, `pages/breeder-reservations-page`,
   `pages/buyer-reservations-page`, `components/request-deposit-dialog`, `components/pay-deposit
-  -button`.
-- `services/reservations.ts` — list/convert/deposit-request functions above.
+  -button`, `components/cancel-reservation-dialog`.
+- `services/reservations.ts` — list/convert/deposit-request/**cancel** functions above.
+- `services/payouts.ts` (new 2026-09-12) — `PayoutRow` + the three payout functions above.
 - `status.ts` — state machine + `reservationStatusLabel(status, t)` (converted 2026-09-12 from a
   hardcoded `RESERVATION_STATUS_LABELS` `Record` to a `t()`-based function — the old export was
   removed entirely, not deprecated-in-place, so anything still importing
@@ -44,6 +59,9 @@ itself, not just the UI)" per `docs/DOMAIN_MODEL.md`.
 - `components/request-deposit-dialog.tsx`, `components/pay-deposit-button.tsx` — breeder-side
   "request a deposit" and buyer-side "pay the deposit" UI, the latter presumably calling into the
   `payments` domain's `createDepositCheckoutSession` (not verified in this pass).
+- `components/cancel-reservation-dialog.tsx` (new 2026-09-12) — `CancelReservationDialog`, shared
+  verbatim by both list pages (`cancel_reservation()` authorizes either party itself, so the same
+  component works unmodified from both sides).
 
 ## Public API
 
@@ -64,7 +82,10 @@ directly (the barrel comment: "never reach into ./services, ./pages or internal 
 
 ## Last significant change
 
-2026-09-12: `reservationStatusLabel` converted from a hardcoded English `Record` lookup to a
-`t()`-based function (both call sites, in the two `pages/*.tsx` files, updated to pass `t`); this
-was done as part of the same pass that fixed `applicationStatusLabels` in the `marketplace` domain
-— see the repo-root `TODO.md`.
+2026-09-12: cancellation (`cancel_reservation()` + `CancelReservationDialog`) and breeder payout
+tracking (`reservation_payouts` + `services/payouts.ts` + both payout dashboard pages) added — see
+`docs/RESERVATION_PAYMENT_DESIGN.md` for the full design. Same day, separately:
+`reservationStatusLabel` converted from a hardcoded English `Record` lookup to a `t()`-based
+function (both call sites, in the two `pages/*.tsx` files, updated to pass `t`) as part of the same
+pass that fixed `applicationStatusLabels` in the `marketplace` domain — see the repo-root
+`TODO.md`.

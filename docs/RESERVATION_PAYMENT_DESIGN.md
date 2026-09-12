@@ -1,11 +1,51 @@
 # Reservation & payment design
 
-Status (updated 2026-09-09): **reservation state machine implemented (frontend); deposit (zaliczka)
-payments now wired end-to-end for the "platform collects, manual payout" model** — schema, RPC,
-edge functions and UI all exist. **No Stripe *secret* key exists yet** — `STRIPE_SECRET_KEY`/
-`STRIPE_WEBHOOK_SECRET` are unset, so `create-deposit-checkout-session` returns a clear 503 "Stripe
-is not configured yet" until real keys are added as Supabase Edge Function secrets. Stripe Connect
-(per-breeder split payout) was deliberately **not** built — see "What is NOT built" below.
+Status (updated 2026-09-12): **reservation state machine implemented (frontend); deposit (zaliczka)
+payments wired end-to-end for the "platform collects, manual payout" model; cancellation and
+breeder payout tracking now also real and applied** — schema, RPCs, edge functions and UI all
+exist for all four pieces (deposit request/pay, cancellation, payout tracking). **Stripe *secret*
+key status as of 2026-09-09 was unset** — `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` unset would
+make `create-deposit-checkout-session` return a clear 503 "Stripe is not configured yet"; this has
+not been independently re-checked since (no `stripe` edge-function log lines found in a 2026-09-12
+sweep, meaning either it's still unconfigured or simply hasn't been called in production yet —
+confirm directly in the Supabase dashboard before assuming either way). Stripe Connect (per-breeder
+split payout) was deliberately **not** built — see "What is NOT built" below.
+
+## Cancellation (built 2026-09-12)
+
+`cancel_reservation(reservation_id, reason?)` — `supabase/migrations/20260912120000_reservation_
+cancellation.sql`. Either party (buyer, the owning org via `owns_org()`, or an admin) can cancel any
+non-terminal reservation. Adds `cancelled_at`/`cancelled_by`/`cancellation_reason` columns. Business
+rule: **a paid deposit is never refunded on cancellation** — "platform collects, manual payout"
+already means the money is effectively the breeder's once paid, so a `'paid'` `deposit_status` is
+left untouched; a merely-*requested*-but-unpaid deposit (`'pending'`) reverts to `'not_required'`
+instead, mirroring the stripe-webhook's own `checkout.session.expired` handling. Also frees the
+animal back to `available` if this reservation was the reason it was `reserved`. UI:
+`CancelReservationDialog` (`src/domains/reservations/components/`), wired into both
+`buyer-reservations-page.tsx` and `breeder-reservations-page.tsx` — only rendered for
+`awaiting_breeder`/`awaiting_buyer`/`confirmed` reservations, shows the non-refundable warning only
+when `depositStatus === 'paid'`.
+
+## Breeder payout tracking (manual-payout v1, built 2026-09-12)
+
+Once a deposit is paid, Anemalo owes that money to the breeder (still no Stripe Connect — a manual
+bank-transfer payout). `supabase/migrations/20260912130000_reservation_payouts.sql`:
+
+- `reservation_payouts` table (`owed | paid`), one row per reservation, created automatically by a
+  trigger (`create_reservation_payout_on_deposit_paid`, fires on `deposit_status` flipping to
+  `'paid'` — survives any future write path, not just today's one webhook call). `due_at` = 20 days
+  from `deposit_paid_at` (a comfortable buffer over Stripe's own Poland settlement timing).
+- **v1 assumption: the full `deposit_amount` is owed, no platform-fee deduction** — no fee concept
+  exists anywhere in this schema yet (`platform_fee` is still a deferred `reservations` column, see
+  below). Cancellation never touches a paid deposit (see above) — that money is correctly still
+  owed regardless of a later cancellation.
+- RLS mirrors `organisation_trust_claims`: the owning org can `SELECT` its own payouts (`owns_org()`
+  only, no self-service update at all), admin `for all`. A breeder can see what's owed to them but
+  can never mark themselves paid.
+- `mark_reservation_payout_paid(payout_id, reference?)` — admin/ops-only, one-way `owed → paid`,
+  audited. UI: `/dashboard/breeder/payouts` (read-only, grouped totals by currency, overdue badge
+  past the 20-day SLA) and `/dashboard/operations/payouts` (internal-only, all breeders, the
+  "Mark as paid" action with an optional bank-transfer reference).
 
 Both edge functions auto-detect **test vs live mode from the key's own prefix**
 (`supabase/functions/_shared/stripe-mode.ts` — `sk_test_`/`sk_live_`, etc.), logged on every call

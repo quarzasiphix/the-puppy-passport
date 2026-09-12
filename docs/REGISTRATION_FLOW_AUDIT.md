@@ -1,5 +1,21 @@
 # Registration & onboarding — audit (2026-09-11)
 
+**Update 2026-09-12**: the "auto-approve breeder/foundation/shelter applications" testing-phase
+relaxation documented below (`create_and_approve_own_organisation()`) was **superseded the very
+next day** by a different, more permanent product decision — not a revert back to admin-gated-only
+access, but a genuinely new middle state: self-registration now creates a real organisation +
+active role **immediately** (so panel access is unconditional from the moment of signup), while
+`verification_status`/`user_verifications.status` stay `pending` — and therefore the org stays
+`is_public = false`, invisible everywhere public — until an admin/moderator actually reviews it.
+Implemented as `create_own_organisation()`
+(`supabase/migrations/20260912000100_breeder_self_registration_pending_review.sql`), which replaced
+(literally `drop function`-ed) the auto-approve RPC. Also extended the same day to cover a new
+`transport_company` org type (own `transport_company_owner` role) and a `registration_number`
+field (KRS for foundations/shelters, operator license for transport companies) — see
+`docs/BREEDER_VERIFICATION_AND_TRUST.md`'s resolution banner and `src/domains/identity/AGENTS.md`
+for the full chain. **Incident 2** (the `auth.users` NULL-token landmine) and **Incident 3** (the
+Google-OAuth-intent-cookie fix) below are unaffected by this and remain accurate as written.
+
 Full read-through of every signup/signin path + a live production incident investigation,
 prompted by a user asking to delete `a46153d5-61c2-48b2-b3f7-4e8fc749edfc` (a real Google sign-up,
 "Aneta Kostowska") and re-verify the flow. Verdict: **architecture is sound**; two real incidents

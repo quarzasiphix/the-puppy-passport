@@ -24,9 +24,22 @@ app. Backs "the center of the platform" per `docs/DOMAIN_MODEL.md`'s description
 - `drivers`, `driver_transport_job_view` — `services/driver.ts` (216 lines, 13 exports) — the
   driver's own job list/detail, status advancement (`advance_transport_job_status` RPC). Reads only
   the column-minimized view, never the base table directly with full columns.
-- `routes`, `route_stops`, `route_assignments`, `route_waitlist`, `vehicles` —
-  `services/routes.ts` (231 lines, 15 exports) and `services/fleet.ts` (46 lines, 8 exports).
-  Assignment goes through `assign_request_to_route`/`assign_driver_to_job` RPCs.
+- `routes`, `route_stops`, `route_assignments`, `route_waitlist`, `vehicles`, `drivers` —
+  `services/routes.ts` (231 lines, 15 exports) and `services/fleet.ts`. Assignment goes through
+  `assign_request_to_route`/`assign_driver_to_job` RPCs.
+- **Fleet multi-tenancy** (added 2026-09-12, `20260912150000_fleet_multi_tenancy.sql`) — `vehicles`
+  and `drivers` gained a nullable `organization_id`. `NULL` stays Anemalo's own internal fleet
+  (ops-staff-managed, unaffected); non-null is a `transport_company` org's own fleet. `listVehicles`
+  /`createVehicle`/`listDrivers`/`createDriver` (`services/fleet.ts`) are **unmodified and shared**
+  by both the internal ops panel (`dashboard/operations/{vehicles,drivers}.tsx`) and the new
+  self-service transport-company panel (`dashboard/transport-company/{vehicles,drivers}.tsx`) — no
+  client-side org filter needed for reads, since two new RLS policies ("company members manage
+  their own vehicles/drivers", `is_org_member()`-gated) already scope a non-ops caller to their own
+  company's rows; a create just needs to pass `organization_id` in the insert payload. Also added
+  `listMyFleetJobs()` — a company's "Jobs" tab, requests assigned to their own fleet, gated by a
+  third new **read-only** RLS policy on `transport_requests` (a company never writes `.status`
+  directly; that stays `change_ops_request_status()`/`advance_transport_job_status()`, or the
+  individually assigned driver's own `/dashboard/driver` workspace via `is_my_driver_id()`).
 - `services/calendar.ts` (268 lines) — "a real view over the existing
   routes/route_stops/route_assignments/vehicles/drivers/transport_requests model — no new
   scheduling tables" (`:1-2`); explicitly the fulfillment of a gap `docs/IMPLEMENTATION_PLAN.md`
@@ -81,5 +94,7 @@ app. Backs "the center of the platform" per `docs/DOMAIN_MODEL.md`'s description
 
 ## Last significant change
 
-Not determined from in-domain evidence in this pass; file created 2026-09-12 as part of the
-project-wide `AGENTS.md` rollout.
+2026-09-12: fleet multi-tenancy (see "What this owns" above) plus the new transport-company
+dashboard panel (`src/routes/dashboard/transport-company/`, not in this domain — built the same
+day to unblock a broken production build, see `TODO.md`) that consumes this domain's fleet
+functions unmodified.

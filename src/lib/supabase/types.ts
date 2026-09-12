@@ -1275,6 +1275,7 @@ export type Database = {
           internal_notes: string | null
           internal_verification_status: Database["public"]["Enums"]["driver_verification_status"]
           name: string
+          organization_id: string | null
           profile_id: string | null
           qualification_status: string
           training_documents: Json
@@ -1290,6 +1291,7 @@ export type Database = {
           internal_notes?: string | null
           internal_verification_status?: Database["public"]["Enums"]["driver_verification_status"]
           name: string
+          organization_id?: string | null
           profile_id?: string | null
           qualification_status?: string
           training_documents?: Json
@@ -1305,11 +1307,26 @@ export type Database = {
           internal_notes?: string | null
           internal_verification_status?: Database["public"]["Enums"]["driver_verification_status"]
           name?: string
+          organization_id?: string | null
           profile_id?: string | null
           qualification_status?: string
           training_documents?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "drivers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
           {
             foreignKeyName: "drivers_profile_id_fkey"
             columns: ["profile_id"]
@@ -4056,6 +4073,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reservation_payouts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "reservation_payouts_paid_by_fkey"
             columns: ["paid_by"]
             isOneToOne: false
@@ -5788,6 +5812,7 @@ export type Database = {
           model: string | null
           name: string
           next_service_date: string | null
+          organization_id: string | null
           registration_number: string | null
           temperature_monitoring: boolean
           vehicle_type: string | null
@@ -5812,6 +5837,7 @@ export type Database = {
           model?: string | null
           name: string
           next_service_date?: string | null
+          organization_id?: string | null
           registration_number?: string | null
           temperature_monitoring?: boolean
           vehicle_type?: string | null
@@ -5836,13 +5862,29 @@ export type Database = {
           model?: string | null
           name?: string
           next_service_date?: string | null
+          organization_id?: string | null
           registration_number?: string | null
           temperature_monitoring?: boolean
           vehicle_type?: string | null
           ventilation_info?: string | null
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+        ]
       }
       welfare_case_documents: {
         Row: {
@@ -6708,6 +6750,7 @@ export type Database = {
           p_membership_number?: string
           p_name: string
           p_org_type: Database["public"]["Enums"]["org_type"]
+          p_registration_number?: string
           p_website?: string
           p_years_experience?: number
         }
@@ -7406,6 +7449,7 @@ export type Database = {
         | "driver"
         | "moderator"
         | "admin"
+        | "transport_company_owner"
       post_media_type: "image" | "video"
       post_type:
         | "general"
@@ -8004,6 +8048,7 @@ export const Constants = {
         "pedigrees",
         "health_documents",
       ],
+      payout_status: ["owed", "paid"],
       pedigree_parent_role: ["sire", "dam"],
       pedigree_source_review_state: ["pending", "accepted", "rejected"],
       pedigree_source_type: [
@@ -8043,6 +8088,7 @@ export const Constants = {
         "driver",
         "moderator",
         "admin",
+        "transport_company_owner",
       ],
       post_media_type: ["image", "video"],
       post_type: [

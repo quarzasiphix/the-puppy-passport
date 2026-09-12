@@ -56,6 +56,21 @@ see the "Module-level docs and the TODO list" section in `CLAUDE.md` for the mai
 - [ ] **`dog_registry_identifiers` deferred.** Per-dog multi-registry identifiers (FCI + national +
       breed club numbers on one dog) — flagged in the kennel-registry doc as worth adding only once
       the product actually surfaces it. Not started.
+- [x] **Transport-company dashboard panel — built 2026-09-12 (this session).** `org_type =
+      'transport_company'` had full nav config (`transportCompanyNav`) and i18n copy already
+      written (overview KPIs, vehicles, drivers, jobs, team, profile, settings) but **zero route
+      files existed** — `create-breeder.tsx`'s `dashboardPathForOrgType()` pointed at
+      `/dashboard/transport-company`, which didn't resolve, breaking `tsc --noEmit`/the production
+      build outright. Built all 8 route files (`dashboard/transport-company.tsx` layout +
+      `index`/`vehicles`/`drivers`/`jobs`/`team`/`profile`/`settings`), reusing existing
+      domain functions verbatim (`getMyTransportCompany(Profile)` in
+      `src/domains/animals/services/transport-company.ts`, already written and re-exported via
+      `breeders`; `listVehicles`/`createVehicle`/`listDrivers`/`createDriver` in
+      `src/domains/transport/services/fleet.ts`, RLS-scoped by `organization_id` so no client-side
+      org filter was needed; the generic `inviteOrgMember`/`listOrgMembers`/etc. team RPCs from
+      `identity`, cloned from `foundation/team.tsx`). Added one new function,
+      `listMyFleetJobs()` (`fleet.ts`), for the read-only Jobs tab. `npx tsc --noEmit` and
+      `npm run build` both clean afterward.
 
 ## Server-side / notification i18n
 
