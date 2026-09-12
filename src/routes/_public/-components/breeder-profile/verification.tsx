@@ -30,7 +30,9 @@ export function VerificationBadges({ b, trustClaims }: { b: Breeder; trustClaims
       {badges.map((v) => (
         <Tooltip key={v.key}>
           <TooltipTrigger asChild>
-            <VerifiedBadge className="cursor-help">{v.label}</VerifiedBadge>
+            <VerifiedBadge accentColor={b.accentColor} className="cursor-help">
+              {v.label}
+            </VerifiedBadge>
           </TooltipTrigger>
           <TooltipContent className="max-w-[240px]">{v.explanation}</TooltipContent>
         </Tooltip>

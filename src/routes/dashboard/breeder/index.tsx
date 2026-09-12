@@ -217,9 +217,13 @@ function BreederOverview() {
             {recentPuppies.map((p) => {
               const photo = animalCoverPhotoUrl(p);
               return (
-                <div
+                // Whole row navigates, matching the litters section above — was previously only
+                // the small trailing arrow, same "not just the button" gap reported for the
+                // public marketplace cards.
+                <Link
                   key={p.id}
-                  className="flex items-center gap-3 rounded-3xl bg-card p-3 shadow-sm"
+                  to="/dashboard/breeder/puppies"
+                  className="flex items-center gap-3 rounded-3xl bg-card p-3 shadow-sm transition hover:shadow-md"
                 >
                   {photo ? (
                     <img src={photo} alt="" className="size-16 shrink-0 rounded-2xl object-cover" />
@@ -238,14 +242,13 @@ function BreederOverview() {
                       {puppyStatusLabel(t, p.availability_status)}
                     </Badge>
                   </div>
-                  <Link
-                    to="/dashboard/breeder/puppies"
+                  <span
+                    aria-hidden
                     className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                    aria-label={t("breederPanel.home.openPuppies")}
                   >
                     <ArrowRight className="size-5" />
-                  </Link>
-                </div>
+                  </span>
+                </Link>
               );
             })}
           </div>

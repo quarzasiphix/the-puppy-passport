@@ -126,8 +126,20 @@ export function PuppyCard({ p }: { p: Puppy }) {
   return (
     <article
       style={accentGlowStyle(p.accentColor)}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
     >
+      {/* "Stretched link" — the whole card navigates, not just the "View puppy" button. Sits
+          first in DOM order (so anything painted after it, like SaveButton and the button itself,
+          naturally layers on top and still gets its own click) and is hidden from assistive tech
+          since the real "View puppy" link below already provides an accessible, properly-labeled
+          route to the same place — a screen reader user doesn't need this one announced too. */}
+      <Link
+        to="/puppies/$id"
+        params={{ id: p.id }}
+        className="absolute inset-0 z-0"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <img
           src={p.image}
@@ -193,9 +205,12 @@ export function PuppyCard({ p }: { p: Puppy }) {
             global --accent variable — a Tailwind accent class would paint every branded kennel's
             button the same site-default color instead of each kennel's own hex. Safe on the
             single-kennel profile page too, just redundant with that page's --accent override. */}
+        {/* `relative` lifts this into the same positioned-stacking bucket as the stretched card
+            link above, so DOM order (this comes later) puts it on top and it stays clickable
+            instead of being covered by that full-card overlay. */}
         <Button
           asChild
-          className="mt-auto hover:opacity-90"
+          className="relative mt-auto hover:opacity-90"
           style={p.accentColor ? { backgroundColor: p.accentColor, color: "#ffffff" } : undefined}
         >
           <Link to="/puppies/$id" params={{ id: p.id }}>
@@ -210,7 +225,14 @@ export function PuppyCard({ p }: { p: Puppy }) {
 export function AdoptionCard({ a }: { a: AdoptionListing }) {
   const { t, locale } = useTranslation();
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
+      <Link
+        to="/adoptions/$id"
+        params={{ id: a.id }}
+        className="absolute inset-0 z-0"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <img
           src={a.image}
@@ -256,7 +278,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
         </span>
         <p className="line-clamp-2 text-sm text-muted-foreground">{a.description}</p>
         <p className="text-sm text-muted-foreground">{a.orgName}</p>
-        <Button asChild className="mt-auto">
+        <Button asChild className="relative mt-auto">
           <Link to="/adoptions/$id" params={{ id: a.id }}>
             {locale === "pl" ? `${t("cards.meet")}: ${a.name}` : `${t("cards.meet")} ${a.name}`}
           </Link>
@@ -269,7 +291,14 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
 export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolean }) {
   const { t, locale } = useTranslation();
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
+    <article className="relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
+      <Link
+        to="/litters/$id"
+        params={{ id: l.id }}
+        className="absolute inset-0 z-0"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={l.image} alt={l.code} loading="lazy" className="size-full object-cover" />
         {/* Inline style when a kennel has its own color, for the same mixed-multi-kennel-page
@@ -324,7 +353,7 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
             two flex-1 buttons can't shrink below their own text, and "Dołącz do listy
             oczekujących" (Join waiting list) alone is wider than a phone screen's card. Stack
             full-width below `sm`, restore the even side-by-side split above it. */}
-        <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+        <div className="relative mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
           <Button asChild variant="outline" className="w-full sm:flex-1">
             <Link to="/litters/$id" params={{ id: l.id }}>
               {t("cards.viewLitter")}
@@ -362,8 +391,15 @@ export function BreederCard({ b }: { b: Breeder }) {
   return (
     <article
       style={accentGlowStyle(b.accentColor)}
-      className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
+      className="relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
     >
+      <Link
+        to="/@{$handle}"
+        params={{ handle: b.slug }}
+        className="absolute inset-0 z-0"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={b.cover} alt={b.kennel} loading="lazy" className="size-full object-cover" />
         {b.verified && (
@@ -408,7 +444,7 @@ export function BreederCard({ b }: { b: Breeder }) {
           <span>{formatExperience(locale, b.years)}</span>
           <span>{formatPuppiesAvailable(locale, b.availablePuppies)}</span>
         </div>
-        <Button asChild variant="outline" className="mt-1">
+        <Button asChild variant="outline" className="relative mt-1">
           <Link to="/@{$handle}" params={{ handle: b.slug }}>
             {t("cards.viewProfile")}
           </Link>
