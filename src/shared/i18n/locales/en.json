@@ -1959,8 +1959,21 @@
       "agreedPricePrefix": "Agreed price:",
       "requestTransport": "Request transport",
       "transportAlreadyRequested": "Transport already requested",
-      "viewTransportStatus": "View transport status"
+      "viewTransportStatus": "View transport status",
+      "depositPaidToast": "Payment received — your deposit is paid.",
+      "depositCancelledToast": "Checkout cancelled — your deposit hasn't been charged."
     }
+  },
+  "payments": {
+    "payDepositButton": "Pay deposit —",
+    "payDepositFailed": "Could not start payment. Please try again.",
+    "requestDepositButton": "Request deposit",
+    "requestDepositDialogTitle": "Request a deposit",
+    "requestDepositExplain": "The buyer will be able to pay this online. It's collected by Anemalo — you'll be paid out separately.",
+    "fieldAmount": "Amount",
+    "fieldCurrency": "Currency",
+    "requestedToast": "Deposit requested — the buyer can now pay it.",
+    "requestFailed": "Could not request deposit."
   },
   "foundationPanel": {
     "documents": {

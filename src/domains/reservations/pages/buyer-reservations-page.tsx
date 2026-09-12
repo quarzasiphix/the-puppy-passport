@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
@@ -17,11 +19,47 @@ import { useTranslation } from "@/shared/i18n";
 export function BuyerReservationsPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const queryClient = useQueryClient();
   const { data: reservations, isLoading } = useQuery({
     queryKey: ["my-reservations", userId],
     enabled: !!userId,
     queryFn: () => listMyReservationsAsBuyer(userId!),
   });
+
+  // PayDepositButton sends the buyer to a Stripe-hosted Checkout page and back to this exact
+  // route with `?deposit=success` / `?deposit=cancelled` appended (see its success/cancel URLs).
+  // That redirect itself proves nothing was actually charged — deposit_status only ever flips to
+  // 'paid' server-side via the stripe-webhook edge function (see docs/RESERVATION_PAYMENT_DESIGN.md)
+  // — so this only ever shows an acknowledgement + triggers a refetch, never marks anything paid
+  // itself. The webhook is normally faster than this page finishing its redirect, but isn't
+  // guaranteed to be, so a second refetch shortly after covers the rare case where the first one
+  // still shows 'pending'. Runs once on mount; the query param is stripped afterwards so a later
+  // refresh/back-navigation doesn't re-show the toast.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const depositResult = params.get("deposit");
+    if (depositResult !== "success" && depositResult !== "cancelled") return;
+
+    // Strip the param first (not last) so every branch below — including an early return — still
+    // cleans up the URL; otherwise a refresh or back-navigation would replay the toast forever.
+    params.delete("deposit");
+    const rest = params.toString();
+    window.history.replaceState({}, "", window.location.pathname + (rest ? `?${rest}` : ""));
+
+    if (depositResult === "cancelled") {
+      toast.info(t("buyerPanel.reservations.depositCancelledToast"));
+      return;
+    }
+
+    toast.success(t("buyerPanel.reservations.depositPaidToast"));
+    queryClient.invalidateQueries({ queryKey: ["my-reservations", userId] });
+    const recheck = setTimeout(
+      () => queryClient.invalidateQueries({ queryKey: ["my-reservations", userId] }),
+      2500,
+    );
+    return () => clearTimeout(recheck);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+  }, []);
 
   // Once a buyer submits transport for a confirmed reservation, the page needs to say so instead
   // of showing "Request transport" again as if nothing happened — see docs/DECISIONS.md.
@@ -35,17 +73,13 @@ export function BuyerReservationsPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="font-display text-3xl font-medium">
-          {t("buyerPanel.reservations.title")}
-        </h1>
+        <h1 className="font-display text-3xl font-medium">{t("buyerPanel.reservations.title")}</h1>
       </header>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">{t("buyerPanel.reservations.loading")}</p>
       ) : !reservations?.length ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("buyerPanel.reservations.emptyBody")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("buyerPanel.reservations.emptyBody")}</p>
         </div>
       ) : (
         <div className="space-y-3">

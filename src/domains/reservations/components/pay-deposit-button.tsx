@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { createDepositCheckoutSession } from "@/domains/payments";
+import { useTranslation } from "@/shared/i18n";
 
 // Buyer-side action: redirects to a Stripe Checkout Session for the reservation's deposit. Never
 // marks anything paid itself — deposit_status only ever flips to 'paid' via the stripe-webhook
@@ -18,6 +19,7 @@ export function PayDepositButton({
   currency: string;
 }) {
   const posthog = usePostHog();
+  const { t } = useTranslation();
   const mutation = useMutation({
     mutationFn: async () => {
       const returnPath = window.location.pathname;
@@ -35,8 +37,7 @@ export function PayDepositButton({
     onError: (err) => {
       // The edge function returns a plain 503 with a "not configured" message until a real Stripe
       // account is wired up — surface that as-is rather than a generic failure.
-      const message =
-        err instanceof Error ? err.message : "Could not start payment. Please try again.";
+      const message = err instanceof Error ? err.message : t("payments.payDepositFailed");
       toast.error(message);
     },
   });
@@ -44,7 +45,7 @@ export function PayDepositButton({
   return (
     <Button size="sm" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
       <CreditCard className="mr-1 size-4" />
-      Pay deposit — {depositAmount} {currency}
+      {t("payments.payDepositButton")} {depositAmount} {currency}
     </Button>
   );
 }

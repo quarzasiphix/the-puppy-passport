@@ -1959,8 +1959,21 @@
       "agreedPricePrefix": "Uzgodniona cena:",
       "requestTransport": "Zamów transport",
       "transportAlreadyRequested": "Transport już zamówiony",
-      "viewTransportStatus": "Zobacz status transportu"
+      "viewTransportStatus": "Zobacz status transportu",
+      "depositPaidToast": "Płatność otrzymana — zadatek został opłacony.",
+      "depositCancelledToast": "Płatność anulowana — zadatek nie został pobrany."
     }
+  },
+  "payments": {
+    "payDepositButton": "Zapłać zadatek —",
+    "payDepositFailed": "Nie udało się rozpocząć płatności. Spróbuj ponownie.",
+    "requestDepositButton": "Poproś o zadatek",
+    "requestDepositDialogTitle": "Poproś o zadatek",
+    "requestDepositExplain": "Kupujący będzie mógł zapłacić online. Płatność zbiera Anemalo — wypłata dla Ciebie nastąpi osobno.",
+    "fieldAmount": "Kwota",
+    "fieldCurrency": "Waluta",
+    "requestedToast": "Zażądano zadatku — kupujący może go teraz opłacić.",
+    "requestFailed": "Nie udało się zażądać zadatku."
   },
   "foundationPanel": {
     "documents": {

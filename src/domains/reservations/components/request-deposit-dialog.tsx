@@ -15,11 +15,13 @@ import {
 } from "@/shared/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { requestReservationDeposit } from "../services/reservations";
+import { useTranslation } from "@/shared/i18n";
 
 // Breeder-side action: sets the deposit amount and moves deposit_status to 'pending', which makes
 // the buyer's "Pay deposit" button appear. All real authorization/state-machine rules live
 // server-side in request_reservation_deposit() — this dialog is just the entry point to it.
 export function RequestDepositDialog({ reservationId }: { reservationId: string }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"PLN" | "EUR">("PLN");
@@ -27,19 +29,18 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
   const posthog = usePostHog();
 
   const mutation = useMutation({
-    mutationFn: () =>
-      requestReservationDeposit(reservationId, Number.parseFloat(amount), currency),
+    mutationFn: () => requestReservationDeposit(reservationId, Number.parseFloat(amount), currency),
     onSuccess: () => {
       posthog.capture("deposit_requested", {
         amount: Number.parseFloat(amount),
         currency,
       });
-      toast.success("Deposit requested — the buyer can now pay it.");
+      toast.success(t("payments.requestedToast"));
       setOpen(false);
       setAmount("");
       queryClient.invalidateQueries({ queryKey: ["kennel-reservations"] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not request deposit."),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("payments.requestFailed")),
   });
 
   const parsedAmount = Number.parseFloat(amount);
@@ -49,21 +50,18 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <Wallet className="mr-1 size-4" /> Request deposit
+          <Wallet className="mr-1 size-4" /> {t("payments.requestDepositButton")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Request a deposit</DialogTitle>
+          <DialogTitle>{t("payments.requestDepositDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            The buyer will be able to pay this online. It's collected by Anemalo — you'll be paid
-            out separately.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("payments.requestDepositExplain")}</p>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
-              <Label>Amount</Label>
+              <Label>{t("payments.fieldAmount")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -74,7 +72,7 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
               />
             </div>
             <div>
-              <Label>Currency</Label>
+              <Label>{t("payments.fieldCurrency")}</Label>
               <Select value={currency} onValueChange={(v) => setCurrency(v as "PLN" | "EUR")}>
                 <SelectTrigger>
                   <SelectValue />
@@ -91,7 +89,7 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
             disabled={!isValid || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            Request deposit
+            {t("payments.requestDepositButton")}
           </Button>
         </div>
       </DialogContent>

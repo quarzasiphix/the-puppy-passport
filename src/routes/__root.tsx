@@ -114,7 +114,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      // The real Anemalo paw+pin mark (see Logo component), replacing the Lovable-starter
+      // default favicon (an orange/pink/blue gradient heart, nothing to do with this brand) that
+      // was still sitting in public/favicon.ico untouched since the project's Lovable scaffold.
+      // PNG favicons alongside the .ico so modern browsers render a crisp icon at their native
+      // tab/pinned-tile size instead of the browser's own downscale of one arbitrary size.
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "icon", href: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
