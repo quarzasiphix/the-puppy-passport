@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { Wallet } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -23,11 +24,16 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"PLN" | "EUR">("PLN");
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const mutation = useMutation({
     mutationFn: () =>
       requestReservationDeposit(reservationId, Number.parseFloat(amount), currency),
     onSuccess: () => {
+      posthog.capture("deposit_requested", {
+        amount: Number.parseFloat(amount),
+        currency,
+      });
       toast.success("Deposit requested — the buyer can now pay it.");
       setOpen(false);
       setAmount("");

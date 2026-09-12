@@ -43,20 +43,22 @@ export function IdentityCard({
 
   return (
     <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
-      <div className="p-6 md:p-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+      <div className="p-4 sm:p-6 md:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
           {/* object-contain, not object-cover: a logo/crest is a whole design (an icon + a name
               banner, in a non-square source image for most kennels), not a photo — cropping it to
               fill a square box cuts off part of the mark instead of just re-framing a photo. */}
           <img
             src={b.logo}
             alt=""
-            className="size-24 shrink-0 rounded-2xl border-4 border-background bg-card object-contain p-1 shadow-md sm:size-28"
+            className="size-20 shrink-0 rounded-2xl border-4 border-background bg-card object-contain p-1 shadow-md sm:size-28"
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h1 className="font-display text-2xl font-medium sm:text-3xl">{b.kennel}</h1>
-              <span className="text-base font-medium text-muted-foreground">@{b.slug}</span>
+              <h1 className="font-display text-xl font-medium sm:text-3xl">{b.kennel}</h1>
+              <span className="text-sm font-medium text-muted-foreground sm:text-base">
+                @{b.slug}
+              </span>
             </div>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="size-3.5 shrink-0" />
@@ -73,11 +75,19 @@ export function IdentityCard({
               <VerificationBadges b={b} trustClaims={trustClaims} />
             </div>
           </div>
+          {/* Two roughly-equal-weight CTAs, one of which ("Contact breeder" / "Skontaktuj się z
+              hodowcą") runs noticeably longer in Polish than English. Both used to be flex-1 in a
+              single row: fine in English, but flexbox never shrinks a flex item below its own
+              content's intrinsic width by default, so the Polish pair together needed more room
+              than a phone screen has — the Follow button (with the heart icon buyers were
+              reporting as "missing") got pushed past the card's right edge and clipped by its
+              overflow-hidden. Stacking full-width below `sm` removes the fixed-width race
+              entirely; side-by-side returns once there's room. */}
           <div className="flex flex-col gap-2 sm:items-end">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 size="lg"
-                className={`flex-1 sm:flex-none ${
+                className={`w-full sm:w-auto ${
                   b.accentColor ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""
                 }`}
                 onClick={onContact}
@@ -87,7 +97,7 @@ export function IdentityCard({
               <Button
                 size="lg"
                 variant="outline"
-                className="flex-1 sm:flex-none"
+                className="w-full sm:w-auto"
                 disabled={followPending}
                 onClick={() =>
                   isSignedIn ? onFollow() : toast.info(t("breederProfile.signInToFollow"))
@@ -110,9 +120,9 @@ export function IdentityCard({
 
       <div className="grid grid-cols-3 divide-x divide-y divide-border/70 border-t border-border/70 bg-secondary/30 sm:grid-cols-5 sm:divide-y-0">
         {statItems.map((it) => (
-          <div key={it.label} className="px-2 py-4 text-center">
-            <div className="font-display text-xl font-semibold sm:text-2xl">{it.value}</div>
-            <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground sm:text-xs">
+          <div key={it.label} className="px-1.5 py-3 text-center sm:px-2 sm:py-4">
+            <div className="font-display text-lg font-semibold sm:text-2xl">{it.value}</div>
+            <div className="mt-0.5 text-[10px] leading-tight text-muted-foreground sm:text-xs">
               {it.label}
             </div>
           </div>

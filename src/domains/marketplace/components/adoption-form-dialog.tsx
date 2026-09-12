@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -59,6 +60,7 @@ export function AdoptionFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const isEdit = !!animal;
 
   const breedsQuery = useQuery({ queryKey: ["breeds"], queryFn: listBreeds, enabled: open });
@@ -104,7 +106,12 @@ export function AdoptionFormDialog({
       if (isEdit) return updateAdoptionAnimal(animal.id, payload);
       return createAdoptionAnimal(payload);
     },
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog.capture("adoption_listing_saved", {
+        operation: isEdit ? "updated" : "created",
+        has_adoption_fee: Boolean(values.adoptionFee),
+        currency: values.currency,
+      });
       toast.success(isEdit ? "Updated." : "Added — it's still a draft until you publish it.");
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["foundation-animals"] });

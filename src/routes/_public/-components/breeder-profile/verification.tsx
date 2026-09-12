@@ -1,7 +1,7 @@
-import { ShieldCheck, BadgeCheck } from "lucide-react";
-import { Badge } from "@/shared/ui/badge";
+import { BadgeCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { trustClaimLabel, trustClaimExplanation } from "@/domains/trust";
+import { VerifiedBadge } from "@/domains/breeders";
 import { useTranslation } from "@/shared/i18n";
 import type { Breeder, Stats, TrustClaims } from "./types";
 
@@ -30,9 +30,7 @@ export function VerificationBadges({ b, trustClaims }: { b: Breeder; trustClaims
       {badges.map((v) => (
         <Tooltip key={v.key}>
           <TooltipTrigger asChild>
-            <Badge className="cursor-help gap-1 border-primary/30 bg-primary/90 text-primary-foreground">
-              <ShieldCheck className="size-3" /> {v.label}
-            </Badge>
+            <VerifiedBadge className="cursor-help">{v.label}</VerifiedBadge>
           </TooltipTrigger>
           <TooltipContent className="max-w-[240px]">{v.explanation}</TooltipContent>
         </Tooltip>

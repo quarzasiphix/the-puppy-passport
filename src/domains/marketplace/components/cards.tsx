@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MapPin, Calendar, Truck, ShieldCheck, Heart } from "lucide-react";
+import { MapPin, Calendar, Truck, Heart } from "lucide-react";
 import type { Puppy, Litter, Breeder } from "@/lib/mock-data";
 import type { AdoptionListing } from "../services/marketplace";
 import { Badge } from "@/shared/ui/badge";
@@ -9,7 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { useTranslation, type Locale } from "@/shared/i18n";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "../services/buyer-activity";
-import { accentBorderStyle } from "@/domains/breeders";
+import { accentGlowStyle, VerifiedBadge } from "@/domains/breeders";
 
 // Polish plural forms don't map to a single dot-path key (they depend on the count), so these
 // small formatting helpers build the final string around t() for the parts that are static —
@@ -125,8 +125,8 @@ export function PuppyCard({ p }: { p: Puppy }) {
   const { t, locale } = useTranslation();
   return (
     <article
-      style={accentBorderStyle(p.accentColor)}
-      className={`group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg ${p.accentColor ? "border-l-4" : ""}`}
+      style={accentGlowStyle(p.accentColor)}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <img
@@ -144,11 +144,7 @@ export function PuppyCard({ p }: { p: Puppy }) {
         </div>
         <SaveButton animalId={p.id} />
         <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-          {p.verified && (
-            <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-              <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedBreeder")}
-            </Badge>
-          )}
+          {p.verified && <VerifiedBadge>{t("cards.verifiedBreeder")}</VerifiedBadge>}
           {p.transportAvailable && (
             <Badge variant="secondary" className="bg-background/85">
               <Truck className="mr-1 size-3" /> {t("cards.transport")}
@@ -218,11 +214,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
               {t("cards.privateRehoming")}
             </Badge>
           ) : (
-            a.verified && (
-              <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-                <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedFoundation")}
-              </Badge>
-            )
+            a.verified && <VerifiedBadge>{t("cards.verifiedFoundation")}</VerifiedBadge>
           )}
           {a.transportAvailable && (
             <Badge variant="secondary" className="bg-background/85">
@@ -308,14 +300,18 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
             {formatWaitingList(locale, l.waitingList)}
           </p>
         )}
-        <div className="mt-auto flex gap-2 pt-2">
-          <Button asChild variant="outline" className="flex-1">
+        {/* Same overflow bug as the profile header's Contact/Follow pair (see identity-card.tsx):
+            two flex-1 buttons can't shrink below their own text, and "Dołącz do listy
+            oczekujących" (Join waiting list) alone is wider than a phone screen's card. Stack
+            full-width below `sm`, restore the even side-by-side split above it. */}
+        <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+          <Button asChild variant="outline" className="w-full sm:flex-1">
             <Link to="/litters/$id" params={{ id: l.id }}>
               {t("cards.viewLitter")}
             </Link>
           </Button>
           {planned && (
-            <Button className="flex-1" disabled title={t("cards.joinWaitingListTooltip")}>
+            <Button className="w-full sm:flex-1" disabled title={t("cards.joinWaitingListTooltip")}>
               {t("cards.joinWaitingList")}
             </Button>
           )}
@@ -338,15 +334,13 @@ export function BreederCard({ b }: { b: Breeder }) {
   const { t, locale } = useTranslation();
   return (
     <article
-      style={accentBorderStyle(b.accentColor)}
-      className={`flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card ${b.accentColor ? "border-l-4" : ""}`}
+      style={accentGlowStyle(b.accentColor)}
+      className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={b.cover} alt={b.kennel} loading="lazy" className="size-full object-cover" />
         {b.verified && (
-          <Badge className="absolute right-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground">
-            <ShieldCheck className="mr-1 size-3" /> {t("cards.verified")}
-          </Badge>
+          <VerifiedBadge className="absolute right-3 top-3">{t("cards.verified")}</VerifiedBadge>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">

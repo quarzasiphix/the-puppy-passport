@@ -18,15 +18,7 @@ import type { CSSProperties } from "react";
 // just reusing the one that already exists ("perhaps a premium feature in the future" — it already
 // is, today, via the existing plan system).
 export type BreederBrandColorKey =
-  | "ocean"
-  | "plum"
-  | "berry"
-  | "magenta"
-  | "amber"
-  | "sage"
-  | "slate"
-  | "rust"
-  | "teal";
+  "ocean" | "plum" | "berry" | "magenta" | "amber" | "sage" | "slate" | "rust" | "teal";
 
 export const BREEDER_BRAND_PALETTE: { key: BreederBrandColorKey; hex: string; labelKey: string }[] =
   [
@@ -67,10 +59,19 @@ export function getAccentCssVars(hex: string | null | undefined): CSSProperties 
 }
 
 /** A contained, non-cascading accent for a card that sits in a shared grid alongside other
- * kennels' cards (breeders list, puppy cards on the marketplace) — a colored left edge, deliberately
- * NOT a CSS-var override, so it can never bleed into that card's own badges/buttons (a "Verified"
- * badge, a status pill) that aren't meant to carry any one kennel's branding. */
-export function accentBorderStyle(hex: string | null | undefined): CSSProperties | undefined {
+ * kennels' cards (breeders list, puppy cards on the marketplace, a single kennel's own section on
+ * a mixed page like a puppy's detail page) — deliberately NOT a CSS-var override, so it can never
+ * bleed into that card's own badges/buttons (a "Verified" badge, a status pill) that aren't meant
+ * to carry any one kennel's branding.
+ *
+ * A soft, colored ambient shadow, not a flat colored line down the side (the previous
+ * `accentBorderStyle`, replaced here 2026 — read as a dated "forum signature" accent rather than
+ * a personalized one). Layers a tight neutral shadow for the card's own depth with a wider, low-
+ * opacity tint of the brand color for the "glow"; falls back to nothing when a kennel hasn't set
+ * one. */
+export function accentGlowStyle(hex: string | null | undefined): CSSProperties | undefined {
   if (!hex) return undefined;
-  return { borderLeftColor: hex, borderLeftWidth: 4 };
+  return {
+    boxShadow: `0 1px 2px 0 rgb(0 0 0 / 0.04), 0 12px 28px -10px ${hex}59, 0 4px 10px -6px ${hex}40`,
+  };
 }

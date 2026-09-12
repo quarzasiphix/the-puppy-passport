@@ -7,11 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { PostHogProvider, usePostHog } from "posthog-js/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "@/app/lovable-error-reporting";
-import { getCurrentUser, type CurrentUser } from "@/domains/identity";
+import { getCurrentUser, type CurrentUser, useAuth } from "@/domains/identity";
 import { Toaster } from "@/shared/ui/sonner";
 import { I18nProvider } from "@/shared/i18n";
 
@@ -142,16 +143,85 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function PostHogRoot({ children }: { children: ReactNode }) {
+  if (typeof window === "undefined") return children;
+
+  const apiKey = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+  const apiHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
+
+  if (!apiKey || !apiHost) {
+    if (import.meta.env.DEV) {
+      const variableName = !apiKey
+        ? "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN"
+        : "VITE_PUBLIC_POSTHOG_HOST";
+      throw new Error(
+        `${variableName} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${variableName} is configured`,
+      );
+    }
+
+    return children;
+  }
+
+  return (
+    <PostHogProvider
+      apiKey={apiKey}
+      options={{
+        api_host: apiHost,
+        defaults: "2025-05-24",
+        capture_exceptions: true,
+        debug: import.meta.env.DEV,
+      }}
+    >
+      <PostHogIdentity />
+      {children}
+    </PostHogProvider>
+  );
+}
+
+function PostHogIdentity() {
+  const posthog = usePostHog();
+  const { userId, email, firstName, lastName, roles, isLoading } = useAuth();
+  const identifiedUserId = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!userId) {
+      // Do not reset an initially anonymous visitor: preserve their anonymous activity until a
+      // real sign-out occurs. Reset only after this browser was previously identified.
+      if (identifiedUserId.current) posthog.reset();
+      identifiedUserId.current = null;
+      return;
+    }
+
+    if (identifiedUserId.current === userId) return;
+
+    // A direct account switch must not merge activity between two authenticated people.
+    if (identifiedUserId.current) posthog.reset();
+
+    posthog.identify(userId, {
+      email: email ?? undefined,
+      name: [firstName, lastName].filter(Boolean).join(" ") || undefined,
+      roles: roles.map(({ role }) => role),
+    });
+    identifiedUserId.current = userId;
+  }, [email, firstName, isLoading, lastName, posthog, roles, userId]);
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-center" richColors />
-      </I18nProvider>
+      <PostHogRoot>
+        <I18nProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </I18nProvider>
+      </PostHogRoot>
     </QueryClientProvider>
   );
 }

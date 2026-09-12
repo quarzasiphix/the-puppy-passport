@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { usePostHog } from "posthog-js/react";
 import { Controller, useForm, type Control, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -345,6 +346,7 @@ function mapRowToFormValues(row: Record<string, unknown>, current: FormValues): 
 
 function TransportRequestPage() {
   const { userId, isLoading: authLoading } = useAuth();
+  const posthog = usePostHog();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -529,6 +531,10 @@ function TransportRequestPage() {
         ),
       );
       setDraftId(saved.id);
+      posthog.capture("transport_request_draft_saved", {
+        step: step + 1,
+        linked_animal: Boolean(animalId),
+      });
       toast.success(t("transportRequest.toastDraftSaved"));
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, t("transportRequest.toastCouldNotSaveDraft")));
@@ -559,6 +565,13 @@ function TransportRequestPage() {
       // submit_transport_request() updates the existing draft row in place (draft -> submitted)
       // when a draft id is passed, so there is no separate row left behind to clean up here.
       setResult({ requestNumber: created.request_number ?? "", status: created.status });
+      posthog.capture("transport_request_submitted", {
+        request_purpose: values.requestPurpose,
+        size_category: values.sizeCategory,
+        service_type: values.requestedServiceType,
+        number_of_animals: values.numberOfAnimals,
+        linked_animal: Boolean(animalId),
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, t("transportRequest.toastCouldNotSubmit")));

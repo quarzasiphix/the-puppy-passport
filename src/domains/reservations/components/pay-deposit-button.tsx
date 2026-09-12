@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -16,6 +17,7 @@ export function PayDepositButton({
   depositAmount: number;
   currency: string;
 }) {
+  const posthog = usePostHog();
   const mutation = useMutation({
     mutationFn: async () => {
       const returnPath = window.location.pathname;
@@ -24,6 +26,10 @@ export function PayDepositButton({
         `${window.location.origin}${returnPath}?deposit=success`,
         `${window.location.origin}${returnPath}?deposit=cancelled`,
       );
+      posthog.capture("deposit_checkout_started", {
+        amount: depositAmount,
+        currency,
+      });
       window.location.href = checkoutUrl;
     },
     onError: (err) => {

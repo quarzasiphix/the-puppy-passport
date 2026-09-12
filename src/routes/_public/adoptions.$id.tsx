@@ -2,20 +2,14 @@ import { useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  ChevronLeft,
-  MapPin,
-  ShieldCheck,
-  Truck,
-  HeartHandshake,
-  MessageCircle,
-} from "lucide-react";
+import { ChevronLeft, MapPin, Truck, HeartHandshake, MessageCircle } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { getAdoptionById } from "@/domains/marketplace";
 import { useAuth } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { VerifiedBadge } from "@/domains/breeders";
 import { ReportDialog } from "@/domains/trust";
 import { startApplicationConversation } from "@/domains/messaging";
 import { useTranslation } from "@/shared/i18n";
@@ -134,11 +128,7 @@ function AdoptionDetail() {
               {a.category === "private_rehoming" ? (
                 <Badge variant="secondary">{t("cards.privateRehoming")}</Badge>
               ) : (
-                a.verified && (
-                  <Badge className="border-primary/30 bg-primary/90 text-primary-foreground">
-                    <ShieldCheck className="mr-1 size-3" /> {t("cards.verifiedFoundation")}
-                  </Badge>
-                )
+                a.verified && <VerifiedBadge>{t("cards.verifiedFoundation")}</VerifiedBadge>
               )}
               {a.transportAvailable && (
                 <Badge variant="secondary">

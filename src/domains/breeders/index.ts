@@ -15,3 +15,4 @@ export * from "./services/breeder-stats";
 export * from "./services/brand-color";
 export * from "./components/panel-ui";
 export * from "./components/welcome-modal";
+export * from "./components/verified-badge";

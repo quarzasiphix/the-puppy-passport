@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePostHog } from "posthog-js/react";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Camera, Check, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -76,6 +77,7 @@ export function PuppyFormDialog({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const isEdit = !!puppy;
   const showLitterPicker = !isEdit && !!litterOptions?.length;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +149,12 @@ export function PuppyFormDialog({
       }
     },
     onSuccess: () => {
+      posthog.capture("puppy_listing_saved", {
+        operation: isEdit ? "updated" : "created",
+        has_cover_photo: Boolean(photoFile || existingPhotoUrl),
+        has_price: Boolean(values.price),
+        currency: values.currency,
+      });
       toast.success(
         isEdit
           ? t("breederPanel.puppyForm.savedUpdated")

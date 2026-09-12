@@ -118,3 +118,41 @@
   margin-inline: auto;
   padding-inline: 1.5rem;
 }
+
+/* A gentle, periodic white sheen across a "verified" badge (see VerifiedBadge in
+   src/domains/breeders/components/verified-badge.tsx) — a pause between sweeps, not a
+   constantly-moving shimmer, so it reads as a premium accent rather than a distraction.
+   Self-contained: no extra DOM node needed, the sweep is the element's own ::after. */
+.verified-shine {
+  position: relative;
+  overflow: hidden;
+}
+.verified-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklch, white 70%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: verified-shine-sweep 3.6s ease-in-out infinite;
+}
+@keyframes verified-shine-sweep {
+  0%,
+  40% {
+    transform: translateX(-120%);
+  }
+  70%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .verified-shine::after {
+    content: none;
+    animation: none;
+  }
+}

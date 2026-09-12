@@ -209,7 +209,12 @@ function BreederProfile() {
           }
         />
 
-        <div className="container-page -mt-20 pb-16">
+        {/* Not the shared container-page utility here — its fixed 1.5rem side padding wastes real
+            width on a phone-sized screen where every extra pixel matters for the puppy/litter
+            grids below. px-4 sm:px-6 keeps the same 1.5rem on tablet/desktop but tightens to 1rem
+            on mobile; ProfileTabsNav's sticky bar cancels this exact value with a matching
+            negative margin to go edge-to-edge when stuck, so the two must stay in sync. */}
+        <div className="mx-auto max-w-[1280px] px-4 -mt-20 pb-16 sm:px-6">
           <IdentityCard
             b={b}
             stats={stats}
