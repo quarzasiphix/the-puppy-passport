@@ -1485,7 +1485,26 @@
       "colCollection": "Odbiór",
       "colStatus": "Status",
       "notSet": "Nie ustawiono",
-      "requestTransport": "Zamów transport"
+      "requestTransport": "Zamów transport",
+      "messageBuyer": "Napisz do kupującego",
+      "depositPaidOn": "Opłacono",
+      "conversationFailed": "Nie udało się otworzyć konwersacji."
+    },
+    "payouts": {
+      "title": "Wypłaty",
+      "subtitle": "Co Anemalo jest Ci winne z opłaconych zadatków i kiedy zostanie to przelane na Twoje konto bankowe.",
+      "owedStatTitle": "Aktualnie należne Tobie",
+      "loading": "Wczytywanie…",
+      "emptyBody": "Nic jeszcze nie jest należne — pojawi się tutaj, gdy kupujący opłaci zadatek za jedną z Twoich rezerwacji.",
+      "colPuppy": "Szczeniak",
+      "colAmount": "Kwota",
+      "colStatus": "Status",
+      "colDueBy": "Termin",
+      "colPaidOn": "Wypłacono",
+      "statusOwed": "Należne",
+      "statusPaid": "Wypłacone",
+      "overdueBadge": "Po terminie",
+      "explainer": "Wypłacane przelewem bankowym, zwykle w ciągu 20 dni od opłacenia zadatku. Nie musisz nic robić — przelejemy środki i oznaczymy to tutaj po wysłaniu."
     },
     "profileEditor": {
       "title": "Profil publiczny",
@@ -1523,6 +1542,7 @@
       "pedigrees": "Rodowody",
       "buyerApplications": "Zgłoszenia kupujących",
       "reservations": "Rezerwacje",
+      "payouts": "Wypłaty",
       "transport": "Transport",
       "publicProfile": "Profil publiczny",
       "achievements": "Osiągnięcia",
@@ -1961,7 +1981,9 @@
       "transportAlreadyRequested": "Transport już zamówiony",
       "viewTransportStatus": "Zobacz status transportu",
       "depositPaidToast": "Płatność otrzymana — zadatek został opłacony.",
-      "depositCancelledToast": "Płatność anulowana — zadatek nie został pobrany."
+      "depositCancelledToast": "Płatność anulowana — zadatek nie został pobrany.",
+      "messageBreeder": "Napisz do hodowcy",
+      "conversationFailed": "Nie udało się otworzyć konwersacji."
     }
   },
   "payments": {
@@ -1973,7 +1995,21 @@
     "fieldAmount": "Kwota",
     "fieldCurrency": "Waluta",
     "requestedToast": "Zażądano zadatku — kupujący może go teraz opłacić.",
-    "requestFailed": "Nie udało się zażądać zadatku."
+    "requestFailed": "Nie udało się zażądać zadatku.",
+    "nonRefundableNotice": "Po opłaceniu ten zadatek jest bezzwrotny — nie jest zwracany, jeśli rezerwacja zostanie później anulowana. Trafia do hodowcy."
+  },
+  "reservationCancel": {
+    "cancelButton": "Anuluj rezerwację",
+    "dialogTitle": "Anulować tę rezerwację?",
+    "dialogBody": "To zwolni szczeniaka dla innych kupujących i nie można tego cofnąć.",
+    "nonRefundableWarning": "Zadatek za tę rezerwację został już opłacony. Zgodnie z zasadami Anemalo opłacone zadatki są bezzwrotne i nie są zwracane — trafiają do hodowcy.",
+    "reasonLabel": "Powód (opcjonalnie)",
+    "reasonPlaceholder": "Dlaczego ta rezerwacja jest anulowana?",
+    "backButton": "Wróć",
+    "confirmButton": "Tak, anuluj rezerwację",
+    "cancellingButton": "Anulowanie…",
+    "cancelledToast": "Rezerwacja anulowana.",
+    "cancelFailed": "Nie udało się anulować rezerwacji."
   },
   "foundationPanel": {
     "documents": {
@@ -2228,6 +2264,16 @@
     "confirmed": "Potwierdzona",
     "cancelled": "Anulowana",
     "completed": "Zakończona"
+  },
+  "depositStatus": {
+    "notRequired": "Niewymagany",
+    "pending": "Oczekuje na płatność",
+    "paid": "Opłacony"
+  },
+  "agreementStatus": {
+    "notSent": "Niewysłana",
+    "sent": "Wysłana",
+    "signed": "Podpisana"
   },
   "applicationStatus": {
     "draft": "Wersja robocza",

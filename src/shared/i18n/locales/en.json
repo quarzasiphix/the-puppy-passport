@@ -1485,7 +1485,26 @@
       "colCollection": "Collection",
       "colStatus": "Status",
       "notSet": "Not set",
-      "requestTransport": "Request transport"
+      "requestTransport": "Request transport",
+      "messageBuyer": "Message buyer",
+      "depositPaidOn": "Paid",
+      "conversationFailed": "Could not open conversation."
+    },
+    "payouts": {
+      "title": "Payouts",
+      "subtitle": "What Anemalo owes you from paid deposits, and when it's due to be sent to your bank account.",
+      "owedStatTitle": "Currently owed to you",
+      "loading": "Loading…",
+      "emptyBody": "Nothing owed yet — this fills in once a buyer pays a deposit on one of your reservations.",
+      "colPuppy": "Puppy",
+      "colAmount": "Amount",
+      "colStatus": "Status",
+      "colDueBy": "Due by",
+      "colPaidOn": "Paid on",
+      "statusOwed": "Owed",
+      "statusPaid": "Paid",
+      "overdueBadge": "Overdue",
+      "explainer": "Paid out by bank transfer, usually within 20 days of the deposit being paid. You don't need to do anything — we'll transfer it and mark it here once sent."
     },
     "profileEditor": {
       "title": "Public profile",
@@ -1523,6 +1542,7 @@
       "pedigrees": "Pedigrees",
       "buyerApplications": "Buyer applications",
       "reservations": "Reservations",
+      "payouts": "Payouts",
       "transport": "Transport",
       "publicProfile": "Public profile",
       "achievements": "Achievements",
@@ -1961,7 +1981,9 @@
       "transportAlreadyRequested": "Transport already requested",
       "viewTransportStatus": "View transport status",
       "depositPaidToast": "Payment received — your deposit is paid.",
-      "depositCancelledToast": "Checkout cancelled — your deposit hasn't been charged."
+      "depositCancelledToast": "Checkout cancelled — your deposit hasn't been charged.",
+      "messageBreeder": "Message breeder",
+      "conversationFailed": "Could not open conversation."
     }
   },
   "payments": {
@@ -1973,7 +1995,21 @@
     "fieldAmount": "Amount",
     "fieldCurrency": "Currency",
     "requestedToast": "Deposit requested — the buyer can now pay it.",
-    "requestFailed": "Could not request deposit."
+    "requestFailed": "Could not request deposit.",
+    "nonRefundableNotice": "Once paid, this deposit is non-refundable — it is not returned if the reservation is later cancelled. It goes to the breeder."
+  },
+  "reservationCancel": {
+    "cancelButton": "Cancel reservation",
+    "dialogTitle": "Cancel this reservation?",
+    "dialogBody": "This frees the puppy up for other buyers and cannot be undone.",
+    "nonRefundableWarning": "This reservation's deposit has already been paid. Per Anemalo's policy, paid deposits are non-refundable and are not returned — they go to the breeder.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "Why is this reservation being cancelled?",
+    "backButton": "Never mind",
+    "confirmButton": "Yes, cancel reservation",
+    "cancellingButton": "Cancelling…",
+    "cancelledToast": "Reservation cancelled.",
+    "cancelFailed": "Could not cancel the reservation."
   },
   "foundationPanel": {
     "documents": {
@@ -2228,6 +2264,16 @@
     "confirmed": "Confirmed",
     "cancelled": "Cancelled",
     "completed": "Completed"
+  },
+  "depositStatus": {
+    "notRequired": "Not required",
+    "pending": "Awaiting payment",
+    "paid": "Paid"
+  },
+  "agreementStatus": {
+    "notSent": "Not sent",
+    "sent": "Sent",
+    "signed": "Signed"
   },
   "applicationStatus": {
     "draft": "Draft",

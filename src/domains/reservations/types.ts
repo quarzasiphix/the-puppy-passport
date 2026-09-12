@@ -15,6 +15,7 @@ export type ReservationRow = {
   planned_collection_date: string | null;
   created_at: string;
   animal_id: string;
+  buyer_id: string;
   animals: { name: string; breeds: { name: string } | null } | null;
   profiles: {
     first_name: string | null;
@@ -29,6 +30,7 @@ export type ReservationRow = {
 export type ReservationSummary = {
   id: string;
   animalId: string;
+  buyerId: string;
   puppyName: string;
   breed: string;
   status: ReservationStatus;

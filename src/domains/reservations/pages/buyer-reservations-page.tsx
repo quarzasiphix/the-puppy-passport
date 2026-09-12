@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MessageCircle } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
@@ -11,19 +12,34 @@ import {
   transportMilestones,
   milestoneIndexForStatus,
 } from "@/domains/transport";
+import { startApplicationConversation } from "@/domains/messaging";
 import { listMyReservationsAsBuyer } from "../services/reservations";
-import { reservationStatusLabel } from "../status";
+import { reservationStatusLabel, depositStatusLabel, agreementStatusLabel } from "../status";
 import { PayDepositButton } from "../components/pay-deposit-button";
+import { CancelReservationDialog } from "../components/cancel-reservation-dialog";
 import { useTranslation } from "@/shared/i18n";
+import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+
+const CANCELLABLE_STATUSES = ["awaiting_breeder", "awaiting_buyer", "confirmed"];
 
 export function BuyerReservationsPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: reservations, isLoading } = useQuery({
     queryKey: ["my-reservations", userId],
     enabled: !!userId,
     queryFn: () => listMyReservationsAsBuyer(userId!),
+  });
+
+  const messageMutation = useMutation({
+    mutationFn: (animalId: string) => startApplicationConversation(animalId),
+    onSuccess: (conversationId) => {
+      navigate({ to: "/dashboard/buyer/messages", search: { conversation: conversationId } });
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("buyerPanel.reservations.conversationFailed"))),
   });
 
   // PayDepositButton sends the buyer to a Stripe-hosted Checkout page and back to this exact
@@ -107,13 +123,13 @@ export function BuyerReservationsPage() {
                   </span>
                   {r.depositStatus === "paid" && r.depositPaidAt
                     ? `${t("buyerPanel.reservations.paidPrefix")} ${new Date(r.depositPaidAt).toLocaleDateString("en-GB")}`
-                    : r.depositStatus.replace(/_/g, " ")}
+                    : depositStatusLabel(r.depositStatus, t)}
                 </div>
                 <div>
                   <span className="text-muted-foreground">
                     {t("buyerPanel.reservations.agreementPrefix")}{" "}
                   </span>
-                  {r.agreementStatus.replace(/_/g, " ")}
+                  {agreementStatusLabel(r.agreementStatus, t)}
                 </div>
                 {r.agreedPrice != null && (
                   <div>
@@ -125,14 +141,35 @@ export function BuyerReservationsPage() {
                 )}
               </div>
               {r.depositStatus === "pending" && r.depositAmount != null && (
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
                   <PayDepositButton
                     reservationId={r.id}
                     depositAmount={r.depositAmount}
                     currency={r.currency}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {t("payments.nonRefundableNotice")}
+                  </p>
                 </div>
               )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={messageMutation.isPending}
+                  onClick={() => messageMutation.mutate(r.animalId)}
+                >
+                  <MessageCircle className="mr-1 size-4" />
+                  {t("buyerPanel.reservations.messageBreeder")}
+                </Button>
+                {CANCELLABLE_STATUSES.includes(r.status) && (
+                  <CancelReservationDialog
+                    reservationId={r.id}
+                    depositStatus={r.depositStatus}
+                    invalidateQueryKey={["my-reservations", userId]}
+                  />
+                )}
+              </div>
               {r.status === "confirmed" &&
                 (() => {
                   const existing = transportByAnimalQuery.data?.get(r.animalId);

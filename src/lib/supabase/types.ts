@@ -4007,6 +4007,70 @@ export type Database = {
           },
         ]
       }
+      reservation_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          due_at: string
+          id: string
+          organization_id: string
+          paid_at: string | null
+          paid_by: string | null
+          payout_reference: string | null
+          reservation_id: string
+          status: Database["public"]["Enums"]["payout_status"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          due_at: string
+          id?: string
+          organization_id: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_reference?: string | null
+          reservation_id: string
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          due_at?: string
+          id?: string
+          organization_id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payout_reference?: string | null
+          reservation_id?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_payouts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_payouts_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_payouts_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: true
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           agreed_price: number | null
@@ -4014,6 +4078,9 @@ export type Database = {
           animal_id: string
           application_id: string
           buyer_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           collection_method:
             | Database["public"]["Enums"]["collection_method"]
             | null
@@ -4039,6 +4106,9 @@ export type Database = {
           animal_id: string
           application_id: string
           buyer_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           collection_method?:
             | Database["public"]["Enums"]["collection_method"]
             | null
@@ -4064,6 +4134,9 @@ export type Database = {
           animal_id?: string
           application_id?: string
           buyer_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           collection_method?:
             | Database["public"]["Enums"]["collection_method"]
             | null
@@ -4101,6 +4174,13 @@ export type Database = {
           {
             foreignKeyName: "reservations_buyer_id_fkey"
             columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_cancelled_by_fkey"
+            columns: ["cancelled_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6569,6 +6649,10 @@ export type Database = {
         Returns: boolean
       }
       can_view_post: { Args: { p_post_id: string }; Returns: boolean }
+      cancel_reservation: {
+        Args: { p_reason?: string; p_reservation_id: string }
+        Returns: undefined
+      }
       change_ops_request_status: {
         Args: {
           p_customer_note?: string
@@ -6771,6 +6855,10 @@ export type Database = {
       }
       last_auth_at: { Args: never; Returns: string }
       leave_organisation: { Args: { p_org_id: string }; Returns: undefined }
+      mark_reservation_payout_paid: {
+        Args: { p_payout_id: string; p_payout_reference?: string }
+        Returns: undefined
+      }
       mark_risk_signal_reviewed: {
         Args: {
           p_is_false_positive: boolean
@@ -7281,6 +7369,7 @@ export type Database = {
         | "association"
         | "pedigrees"
         | "health_documents"
+      payout_status: "owed" | "paid"
       pedigree_parent_role: "sire" | "dam"
       pedigree_source_review_state: "pending" | "accepted" | "rejected"
       pedigree_source_type:

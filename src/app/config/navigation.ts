@@ -107,6 +107,12 @@ export const breederNav: DashboardNavItem[] = [
     section: "breederPanel.nav.sectionSales",
   },
   {
+    to: "/dashboard/breeder/payouts",
+    label: "breederPanel.nav.payouts",
+    icon: Coins,
+    section: "breederPanel.nav.sectionSales",
+  },
+  {
     to: "/dashboard/breeder/transport",
     label: "breederPanel.nav.transport",
     icon: Truck,
@@ -171,6 +177,7 @@ export const operationsNav: DashboardNavItem[] = [
   { to: "/dashboard/operations/quotations", label: "Quotations", icon: Receipt },
   { to: "/dashboard/operations/routes", label: "Planned routes", icon: RouteIcon },
   { to: "/dashboard/operations/profitability", label: "Profitability", icon: TrendingUp },
+  { to: "/dashboard/operations/payouts", label: "Payouts", icon: Coins },
   { to: "/dashboard/operations/active", label: "Active transports", icon: Truck },
   { to: "/dashboard/operations/matching", label: "Matching suggestions", icon: Sparkles },
   { to: "/dashboard/operations/dispatch", label: "Dispatch", icon: Users },

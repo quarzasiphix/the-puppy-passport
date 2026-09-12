@@ -94,6 +94,28 @@ export function isReservationAwaitingBreederAction(status: ReservationStatus): b
   return status === "awaiting_breeder" || status === "awaiting_buyer";
 }
 
+// `reservations.deposit_status` / `.agreement_status` (public.deposit_status / .agreement_status
+// enums) — same "must localize, not raw-replace the DB value" reasoning as reservationStatusLabel
+// above. Both the buyer and breeder reservation lists used to render these with
+// `status.replace(/_/g, " ")`, which is readable English but was never translated for pl.
+export function depositStatusLabel(status: string, t: (key: string) => string): string {
+  const labels: Record<string, string> = {
+    not_required: t("depositStatus.notRequired"),
+    pending: t("depositStatus.pending"),
+    paid: t("depositStatus.paid"),
+  };
+  return labels[status] ?? status.replace(/_/g, " ");
+}
+
+export function agreementStatusLabel(status: string, t: (key: string) => string): string {
+  const labels: Record<string, string> = {
+    not_sent: t("agreementStatus.notSent"),
+    sent: t("agreementStatus.sent"),
+    signed: t("agreementStatus.signed"),
+  };
+  return labels[status] ?? status.replace(/_/g, " ");
+}
+
 // ---------------------------------------------------------------------------------------------
 // Roadmap — the target vocabulary once payments land. NOT wired: needs a DB enum migration.
 // Kept here so the payment/reservation UI can be typed against the intended contract today.

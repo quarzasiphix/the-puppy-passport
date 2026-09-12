@@ -1,17 +1,25 @@
-import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { MessageCircle } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { getMyKennel } from "@/domains/breeders";
+import { startApplicationConversation } from "@/domains/messaging";
 import { listReservationsForMyKennel } from "../services/reservations";
-import { reservationStatusLabel } from "../status";
+import { reservationStatusLabel, depositStatusLabel, agreementStatusLabel } from "../status";
 import { RequestDepositDialog } from "../components/request-deposit-dialog";
+import { CancelReservationDialog } from "../components/cancel-reservation-dialog";
 import { useTranslation } from "@/shared/i18n";
+import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+
+const CANCELLABLE_STATUSES = ["awaiting_breeder", "awaiting_buyer", "confirmed"];
 
 export function BreederReservationsPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const { data: orgId } = useQuery({
     queryKey: ["my-kennel-id", userId],
     enabled: !!userId,
@@ -24,6 +32,16 @@ export function BreederReservationsPage() {
     queryKey: ["kennel-reservations", orgId],
     enabled: !!orgId,
     queryFn: () => listReservationsForMyKennel(orgId!),
+  });
+
+  const messageMutation = useMutation({
+    mutationFn: ({ animalId, buyerId }: { animalId: string; buyerId: string }) =>
+      startApplicationConversation(animalId, buyerId),
+    onSuccess: (conversationId) => {
+      navigate({ to: "/dashboard/breeder/messages", search: { conversation: conversationId } });
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("breederPanel.reservations.conversationFailed"))),
   });
 
   return (
@@ -66,12 +84,18 @@ export function BreederReservationsPage() {
                       variant={r.depositStatus === "paid" ? "default" : "secondary"}
                       className={r.depositStatus === "paid" ? "bg-success/15 text-success" : ""}
                     >
-                      {r.depositStatus.replace(/_/g, " ")}
+                      {depositStatusLabel(r.depositStatus, t)}
                     </Badge>
+                    {r.depositStatus === "paid" && r.depositPaidAt && (
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {t("breederPanel.reservations.depositPaidOn")}{" "}
+                        {new Date(r.depositPaidAt).toLocaleDateString("en-GB")}
+                      </div>
+                    )}
                   </td>
                   <td className="p-4">
                     <Badge variant="secondary" className="capitalize">
-                      {r.agreementStatus.replace(/_/g, " ")}
+                      {agreementStatusLabel(r.agreementStatus, t)}
                     </Badge>
                   </td>
                   <td className="p-4 text-muted-foreground">
@@ -81,7 +105,7 @@ export function BreederReservationsPage() {
                   </td>
                   <td className="p-4">{reservationStatusLabel(r.status, t)}</td>
                   <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       {r.depositStatus === "not_required" &&
                         r.status !== "cancelled" &&
                         r.status !== "completed" && <RequestDepositDialog reservationId={r.id} />}
@@ -91,6 +115,24 @@ export function BreederReservationsPage() {
                             {t("breederPanel.reservations.requestTransport")}
                           </Link>
                         </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={messageMutation.isPending}
+                        onClick={() =>
+                          messageMutation.mutate({ animalId: r.animalId, buyerId: r.buyerId })
+                        }
+                      >
+                        <MessageCircle className="mr-1 size-4" />
+                        {t("breederPanel.reservations.messageBuyer")}
+                      </Button>
+                      {CANCELLABLE_STATUSES.includes(r.status) && (
+                        <CancelReservationDialog
+                          reservationId={r.id}
+                          depositStatus={r.depositStatus}
+                          invalidateQueryKey={["kennel-reservations", orgId]}
+                        />
                       )}
                     </div>
                   </td>

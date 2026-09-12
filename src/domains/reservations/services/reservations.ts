@@ -6,12 +6,13 @@ import type {
 } from "../types";
 
 const reservationSelect =
-  "id, status, agreed_price, currency, deposit_amount, deposit_status, deposit_requested_at, deposit_paid_at, agreement_status, planned_collection_date, created_at, animal_id, animals(name, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
+  "id, status, agreed_price, currency, deposit_amount, deposit_status, deposit_requested_at, deposit_paid_at, agreement_status, planned_collection_date, created_at, animal_id, buyer_id, animals(name, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
 
 function mapReservation(r: ReservationRow): ReservationSummary {
   return {
     id: r.id,
     animalId: r.animal_id,
+    buyerId: r.buyer_id,
     puppyName: r.animals?.name ?? "Unknown puppy",
     breed: r.animals?.breeds?.name ?? "Mixed breed",
     status: r.status,
@@ -86,6 +87,21 @@ export async function requestReservationDeposit(
     p_reservation_id: reservationId,
     p_deposit_amount: depositAmount,
     p_currency: currency ?? undefined,
+  });
+  if (error) throw error;
+}
+
+// Either party (buyer or breeder) or an admin may cancel — see cancel_reservation() (migration
+// 20260912120000_reservation_cancellation.sql) for the real authorization/state-machine rules.
+// A *paid* deposit is deliberately never refunded here — "platform collects, manual payout"
+// already means the money is effectively the breeder's once paid; only a merely-requested,
+// still-unpaid deposit reverts to not_required. The RPC also frees the animal back to
+// 'available' when this reservation is the reason it was marked reserved.
+export async function cancelReservation(reservationId: string, reason?: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.rpc("cancel_reservation", {
+    p_reservation_id: reservationId,
+    p_reason: reason?.trim() || undefined,
   });
   if (error) throw error;
 }

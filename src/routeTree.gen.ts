@@ -60,6 +60,7 @@ import { Route as DashboardOperationsRoutesRouteImport } from './routes/dashboar
 import { Route as DashboardOperationsReviewQueueRouteImport } from './routes/dashboard/operations/review-queue'
 import { Route as DashboardOperationsQuotationsRouteImport } from './routes/dashboard/operations/quotations'
 import { Route as DashboardOperationsProfitabilityRouteImport } from './routes/dashboard/operations/profitability'
+import { Route as DashboardOperationsPayoutsRouteImport } from './routes/dashboard/operations/payouts'
 import { Route as DashboardOperationsNewRequestsRouteImport } from './routes/dashboard/operations/new-requests'
 import { Route as DashboardOperationsMatchingRouteImport } from './routes/dashboard/operations/matching'
 import { Route as DashboardOperationsIncidentsRouteImport } from './routes/dashboard/operations/incidents'
@@ -96,6 +97,7 @@ import { Route as DashboardBreederReservationsRouteImport } from './routes/dashb
 import { Route as DashboardBreederPuppiesRouteImport } from './routes/dashboard/breeder/puppies'
 import { Route as DashboardBreederProfileRouteImport } from './routes/dashboard/breeder/profile'
 import { Route as DashboardBreederPedigreesRouteImport } from './routes/dashboard/breeder/pedigrees'
+import { Route as DashboardBreederPayoutsRouteImport } from './routes/dashboard/breeder/payouts'
 import { Route as DashboardBreederParentDogsRouteImport } from './routes/dashboard/breeder/parent-dogs'
 import { Route as DashboardBreederMessagesRouteImport } from './routes/dashboard/breeder/messages'
 import { Route as DashboardBreederLittersRouteImport } from './routes/dashboard/breeder/litters'
@@ -399,6 +401,12 @@ const DashboardOperationsProfitabilityRoute =
     path: '/profitability',
     getParentRoute: () => DashboardOperationsRoute,
   } as any)
+const DashboardOperationsPayoutsRoute =
+  DashboardOperationsPayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => DashboardOperationsRoute,
+  } as any)
 const DashboardOperationsNewRequestsRoute =
   DashboardOperationsNewRequestsRouteImport.update({
     id: '/new-requests',
@@ -605,6 +613,11 @@ const DashboardBreederPedigreesRoute =
     path: '/pedigrees',
     getParentRoute: () => DashboardBreederRoute,
   } as any)
+const DashboardBreederPayoutsRoute = DashboardBreederPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => DashboardBreederRoute,
+} as any)
 const DashboardBreederParentDogsRoute =
   DashboardBreederParentDogsRouteImport.update({
     id: '/parent-dogs',
@@ -886,6 +899,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
@@ -922,6 +936,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/payouts': typeof DashboardOperationsPayoutsRoute
   '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
@@ -1000,6 +1015,7 @@ export interface FileRoutesByTo {
   '/dashboard/breeder/documents': typeof DashboardBreederDocumentsRoute
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
@@ -1035,6 +1051,7 @@ export interface FileRoutesByTo {
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/payouts': typeof DashboardOperationsPayoutsRoute
   '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
@@ -1127,6 +1144,7 @@ export interface FileRoutesById {
   '/dashboard/breeder/litters': typeof DashboardBreederLittersRouteWithChildren
   '/dashboard/breeder/messages': typeof DashboardBreederMessagesRoute
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
+  '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
   '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
@@ -1163,6 +1181,7 @@ export interface FileRoutesById {
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
+  '/dashboard/operations/payouts': typeof DashboardOperationsPayoutsRoute
   '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
@@ -1256,6 +1275,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
@@ -1292,6 +1312,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/incidents'
     | '/dashboard/operations/matching'
     | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/payouts'
     | '/dashboard/operations/profitability'
     | '/dashboard/operations/quotations'
     | '/dashboard/operations/review-queue'
@@ -1370,6 +1391,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/documents'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
@@ -1405,6 +1427,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/incidents'
     | '/dashboard/operations/matching'
     | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/payouts'
     | '/dashboard/operations/profitability'
     | '/dashboard/operations/quotations'
     | '/dashboard/operations/review-queue'
@@ -1496,6 +1519,7 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/litters'
     | '/dashboard/breeder/messages'
     | '/dashboard/breeder/parent-dogs'
+    | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
     | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
@@ -1532,6 +1556,7 @@ export interface FileRouteTypes {
     | '/dashboard/operations/incidents'
     | '/dashboard/operations/matching'
     | '/dashboard/operations/new-requests'
+    | '/dashboard/operations/payouts'
     | '/dashboard/operations/profitability'
     | '/dashboard/operations/quotations'
     | '/dashboard/operations/review-queue'
@@ -1931,6 +1956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardOperationsProfitabilityRouteImport
       parentRoute: typeof DashboardOperationsRoute
     }
+    '/dashboard/operations/payouts': {
+      id: '/dashboard/operations/payouts'
+      path: '/payouts'
+      fullPath: '/dashboard/operations/payouts'
+      preLoaderRoute: typeof DashboardOperationsPayoutsRouteImport
+      parentRoute: typeof DashboardOperationsRoute
+    }
     '/dashboard/operations/new-requests': {
       id: '/dashboard/operations/new-requests'
       path: '/new-requests'
@@ -2181,6 +2213,13 @@ declare module '@tanstack/react-router' {
       path: '/pedigrees'
       fullPath: '/dashboard/breeder/pedigrees'
       preLoaderRoute: typeof DashboardBreederPedigreesRouteImport
+      parentRoute: typeof DashboardBreederRoute
+    }
+    '/dashboard/breeder/payouts': {
+      id: '/dashboard/breeder/payouts'
+      path: '/payouts'
+      fullPath: '/dashboard/breeder/payouts'
+      preLoaderRoute: typeof DashboardBreederPayoutsRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
     '/dashboard/breeder/parent-dogs': {
@@ -2687,6 +2726,7 @@ interface DashboardBreederRouteChildren {
   DashboardBreederLittersRoute: typeof DashboardBreederLittersRouteWithChildren
   DashboardBreederMessagesRoute: typeof DashboardBreederMessagesRoute
   DashboardBreederParentDogsRoute: typeof DashboardBreederParentDogsRoute
+  DashboardBreederPayoutsRoute: typeof DashboardBreederPayoutsRoute
   DashboardBreederPedigreesRoute: typeof DashboardBreederPedigreesRoute
   DashboardBreederProfileRoute: typeof DashboardBreederProfileRoute
   DashboardBreederPuppiesRoute: typeof DashboardBreederPuppiesRoute
@@ -2704,6 +2744,7 @@ const DashboardBreederRouteChildren: DashboardBreederRouteChildren = {
   DashboardBreederLittersRoute: DashboardBreederLittersRouteWithChildren,
   DashboardBreederMessagesRoute: DashboardBreederMessagesRoute,
   DashboardBreederParentDogsRoute: DashboardBreederParentDogsRoute,
+  DashboardBreederPayoutsRoute: DashboardBreederPayoutsRoute,
   DashboardBreederPedigreesRoute: DashboardBreederPedigreesRoute,
   DashboardBreederProfileRoute: DashboardBreederProfileRoute,
   DashboardBreederPuppiesRoute: DashboardBreederPuppiesRoute,
@@ -2837,6 +2878,7 @@ interface DashboardOperationsRouteChildren {
   DashboardOperationsIncidentsRoute: typeof DashboardOperationsIncidentsRoute
   DashboardOperationsMatchingRoute: typeof DashboardOperationsMatchingRoute
   DashboardOperationsNewRequestsRoute: typeof DashboardOperationsNewRequestsRoute
+  DashboardOperationsPayoutsRoute: typeof DashboardOperationsPayoutsRoute
   DashboardOperationsProfitabilityRoute: typeof DashboardOperationsProfitabilityRoute
   DashboardOperationsQuotationsRoute: typeof DashboardOperationsQuotationsRoute
   DashboardOperationsReviewQueueRoute: typeof DashboardOperationsReviewQueueRoute
@@ -2859,6 +2901,7 @@ const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
   DashboardOperationsIncidentsRoute: DashboardOperationsIncidentsRoute,
   DashboardOperationsMatchingRoute: DashboardOperationsMatchingRoute,
   DashboardOperationsNewRequestsRoute: DashboardOperationsNewRequestsRoute,
+  DashboardOperationsPayoutsRoute: DashboardOperationsPayoutsRoute,
   DashboardOperationsProfitabilityRoute: DashboardOperationsProfitabilityRoute,
   DashboardOperationsQuotationsRoute: DashboardOperationsQuotationsRoute,
   DashboardOperationsReviewQueueRoute: DashboardOperationsReviewQueueRoute,
