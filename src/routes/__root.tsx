@@ -178,6 +178,14 @@ function PostHogRoot({ children }: { children: ReactNode }) {
         defaults: "2025-05-24",
         capture_exceptions: true,
         debug: import.meta.env.DEV,
+        // Explicit, not just relying on the versioned `defaults` bundle's current behavior — forms
+        // across the app collect real PII (names, phone numbers, addresses). maskAllInputs mirrors
+        // the SDK default already, but pinning it here means a future posthog-js/library default
+        // change can't silently start recording raw input values. Password fields are always
+        // masked by the SDK regardless of this setting.
+        session_recording: {
+          maskAllInputs: true,
+        },
       }}
     >
       <PostHogIdentity />

@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
-import { completePasswordlessSignIn, signupIntentSchema } from "@/domains/identity";
+import { completePasswordlessSignIn, signupMethodSchema } from "@/domains/identity";
 
 // Where every passwordless flow redirects back to — Google OAuth and email magic links alike
 // (src/routes/_public/signin.tsx and signup.tsx both pass this as `redirectTo`/`emailRedirectTo`).
@@ -13,9 +13,10 @@ import { completePasswordlessSignIn, signupIntentSchema } from "@/domains/identi
 const searchSchema = z.object({
   code: z.string().optional(),
   next: z.string().optional(),
-  // Present only on the OAuth signup path (signup.tsx appends it to redirectTo). Magic links
-  // carry the same hint in user_metadata instead, read server-side in completePasswordlessSignIn.
-  intent: signupIntentSchema.optional(),
+  // Google-only PostHog labeling hint (see signupMethodSchema) — signup.tsx appends it to
+  // redirectTo. Magic links carry the same hint in user_metadata instead, read server-side in
+  // completePasswordlessSignIn -> provisionAfterPasswordlessAuth.
+  method: signupMethodSchema.optional(),
   error: z.string().optional(),
   error_description: z.string().optional(),
 });
@@ -36,18 +37,22 @@ export const Route = createFileRoute("/auth/callback")({
     }
 
     const result = await completePasswordlessSignIn({
-      data: { code: search.code, intent: search.intent },
+      data: { code: search.code, method: search.method },
     });
     if (result.error) {
       throw redirect({ to: "/signin", search: { oauthError: result.error } });
     }
 
-    throw redirect({
-      to:
-        search.next && search.next.startsWith("/")
-          ? search.next
-          : (result.redirectTo ?? "/dashboard/buyer"),
-    });
+    if (search.next && search.next.startsWith("/")) {
+      throw redirect({ to: search.next });
+    }
+    if (result.redirectTo === "/create-breeder") {
+      throw redirect({
+        to: "/create-breeder",
+        search: result.isNewUser && result.method ? { method: result.method } : undefined,
+      });
+    }
+    throw redirect({ to: "/dashboard/buyer" });
   },
   component: () => (
     <div className="grid grid-cols-1 min-h-[60vh] place-items-center text-sm text-muted-foreground">

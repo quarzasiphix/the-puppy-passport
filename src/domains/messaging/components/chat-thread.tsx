@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Paperclip, X } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Textarea } from "@/shared/ui/textarea";
 import { Button } from "@/shared/ui/button";
 import {
@@ -18,6 +19,7 @@ export function ChatThread({
   currentUserId: string;
 }) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +40,7 @@ export function ChatThread({
         attachment: attachment ?? undefined,
       }),
     onSuccess: () => {
+      posthog.capture("message_sent", { has_attachment: !!attachment });
       setDraft("");
       setAttachment(null);
       if (fileInputRef.current) fileInputRef.current.value = "";

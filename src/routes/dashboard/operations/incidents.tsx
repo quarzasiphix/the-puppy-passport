@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -44,6 +45,7 @@ const severityStyles: Record<string, string> = {
 
 function IncidentsPage() {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const query = useQuery({ queryKey: ["ops-incidents"], queryFn: listIncidents });
 
   const resolveMutation = useMutation({
@@ -56,6 +58,7 @@ function IncidentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      posthog.capture("transport_incident_resolved");
       toast.success("Marked resolved.");
       queryClient.invalidateQueries({ queryKey: ["ops-incidents"] });
     },

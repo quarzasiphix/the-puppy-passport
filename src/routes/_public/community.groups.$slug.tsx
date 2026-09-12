@@ -3,6 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Truck, Users } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -38,6 +39,7 @@ function GroupDetailPage() {
   const { userId, isSignedIn } = useAuth();
   const { t, locale } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [newPost, setNewPost] = useState("");
 
   const myGroupIdsQuery = useQuery({
@@ -50,6 +52,10 @@ function GroupDetailPage() {
   const membershipMutation = useMutation({
     mutationFn: () => (isMember ? leaveGroup(userId!, group.id) : joinGroup(userId!, group.id)),
     onSuccess: () => {
+      posthog.capture("community_group_membership_changed", {
+        action: isMember ? "left" : "joined",
+        group_type: group.group_type,
+      });
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
     },
@@ -69,6 +75,7 @@ function GroupDetailPage() {
     mutationFn: () =>
       createGroupPost({ authorProfileId: userId!, groupId: group.id, content: newPost.trim() }),
     onSuccess: () => {
+      posthog.capture("community_post_created", { scope: "group" });
       setNewPost("");
       queryClient.invalidateQueries({ queryKey: ["group-posts", group.id] });
       toast.success(t("communityGroupDetail.postedToGroupToast"));

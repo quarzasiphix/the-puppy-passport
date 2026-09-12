@@ -1,35 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
-import { deleteCookie, getCookies } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
 type PlatformRole = Database["public"]["Tables"]["user_roles"]["Row"]["role"];
 
-// The 5 registration purposes from the product spec, shared by every entry point that can create
-// an account: the email/password form, the magic-link form, and the OAuth callback. "customer"/
-// "buyer" are unrestricted and activate immediately; "breeder"/"foundation"/"operations" always
-// start pending — the user_roles self-apply RLS policy enforces the same rule server-side no
-// matter what a client sends here.
-export const SIGNUP_INTENTS = ["customer", "buyer", "breeder", "foundation", "operations"] as const;
-export const signupIntentSchema = z.enum(SIGNUP_INTENTS);
-export type SignupIntent = (typeof SIGNUP_INTENTS)[number];
-
-const roleForIntent: Record<SignupIntent, { role: PlatformRole; status: "active" | "pending" }> = {
-  customer: { role: "customer", status: "active" },
-  buyer: { role: "buyer", status: "active" },
-  breeder: { role: "breeder", status: "pending" },
-  foundation: { role: "foundation_member", status: "pending" },
-  operations: { role: "operations", status: "pending" },
+// Every brand-new account gets this single, unrestricted, immediately-active role — no upfront
+// "what are you here to do" choice. What kind of account this really is (a plain buyer, or the
+// owner of a kennel/foundation/shelter/transport company) is decided afterwards, once signed in,
+// on the full-screen chooser at /create-breeder — see that route for the org-type path, which
+// grants an *additional* role (breeder/foundation_member/shelter_member/transport_company_owner)
+// on top of this one via create_own_organisation().
+const NEW_ACCOUNT_ROLE: { role: PlatformRole; status: "active" } = {
+  role: "buyer",
+  status: "active",
 };
 
-// Single source of truth for where a *newly registered* user lands, keyed off their chosen
-// intent: breeders and foundations go straight into kennel/organisation setup, everyone else to
-// the buyer dashboard (the app's shared signed-in home). Returning users always go to the shared
-// home regardless of intent.
-export function landingPathForIntent(intent: SignupIntent): "/create-breeder" | "/dashboard/buyer" {
-  return intent === "breeder" || intent === "foundation" ? "/create-breeder" : "/dashboard/buyer";
-}
+// OAuth (Google) can't carry `method` in user_metadata (Google owns the profile), so it rides the
+// `?method=` query param on the callback URL instead; magic links carry it in user_metadata (set
+// via signInWithOtp's options.data). Used only to label the post-signup `signup_completed`
+// PostHog event fired from /create-breeder — never affects role/redirect logic.
+export const signupMethodSchema = z.enum(["google", "magic_link"]);
+export type SignupMethod = z.infer<typeof signupMethodSchema>;
 
 // Records the user's acceptance of the current Terms + Privacy versions as a real, versioned fact
 // (every signup UI shows "by continuing you agree to…"). Best-effort: a consent-write failure
@@ -62,7 +54,6 @@ const signUpSchema = z.object({
   phone: z.string().optional(),
   country: z.string().optional(),
   city: z.string().optional(),
-  intent: signupIntentSchema,
 });
 
 export const signUp = createServerFn({ method: "POST" })
@@ -87,17 +78,16 @@ export const signUp = createServerFn({ method: "POST" })
     if (error) return { error: error.message };
     if (!signUpData.user) return { error: "Account could not be created." };
 
-    const roleToInsert = roleForIntent[data.intent];
     const { error: roleError } = await supabase.from("user_roles").insert({
       user_id: signUpData.user.id,
-      role: roleToInsert.role,
-      status: roleToInsert.status,
+      role: NEW_ACCOUNT_ROLE.role,
+      status: NEW_ACCOUNT_ROLE.status,
     });
     if (roleError) return { error: roleError.message };
 
     await recordInitialConsent(supabase, signUpData.user.id);
 
-    return { error: null, intent: data.intent };
+    return { error: null };
   });
 
 const signInSchema = z.object({
@@ -133,41 +123,25 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
 // It also provisions first-time passwordless users. The email/password path creates the
 // user_roles row and records consent inside signUp(); a Google or magic-link user would
 // otherwise arrive with zero roles (every role-gated RLS policy and the whole role UI then
-// misbehaves). `intent` stays constrained by the user_roles self-apply RLS policy, so no
-// privileged role can be granted here regardless of source.
+// misbehaves) — provisioned with the same generic NEW_ACCOUNT_ROLE signUp() uses.
 //
-// Where `intent` comes from, in priority order:
-//   1. `data.intent` — the `?intent=` query param on the callback URL. Works for magic links
-//      (Supabase's own redirect, no third-party hop) but is UNRELIABLE for Google: Supabase's
-//      redirect-URL allowlist validation strips extra query params from OAuth `redirectTo` URLs
-//      in production (documented Supabase limitation — the Google -> GoTrue -> app round trip
-//      does not reliably preserve them). Confirmed live 2026-09-11: a breeder-intent Google
-//      sign-up was silently provisioned as a plain "customer".
-//   2. `ANEMALO_SIGNUP_INTENT_COOKIE` — a short-lived first-party cookie set by
-//      `signup.tsx`'s `onGoogleSignUp` right before starting the Google redirect. Cookies DO
-//      survive that round trip (SameSite=Lax rides along on the top-level navigation back to our
-//      own origin) — this is the reliable channel for Google specifically. Read once, then
-//      deleted, win or lose.
-//   3. `user.user_metadata.intent` — magic links only (set via `signInWithOtp`'s `options.data`).
-//   4. "customer" — safe default, matches the RLS policy's unrestricted-role set.
-export const ANEMALO_SIGNUP_INTENT_COOKIE = "anemalo_signup_intent";
-
-// Shared by every passwordless entry point (OAuth code exchange, magic-link token verification)
-// once a session/user has been established. Provisions first-time passwordless users the same
-// way signUp() does for the password path — a Google or magic-link user would otherwise arrive
-// with zero roles.
+// `method` is a pure PostHog labeling hint (see signupMethodSchema above), never role/redirect
+// logic — it comes from `data.method` (the `?method=` query param, Google only — Supabase's
+// redirect-URL allowlist strips other query params off OAuth callback URLs in production, but the
+// literal `redirectTo` URL survives untouched) or `user.user_metadata.method` (magic links, set
+// via `signInWithOtp`'s `options.data`).
 async function provisionAfterPasswordlessAuth(
   supabase: ReturnType<typeof getSupabaseServerClient>,
   user: { id: string; user_metadata?: Record<string, unknown> | null },
-  dataIntent: SignupIntent | undefined,
-): Promise<{ error: string | null; redirectTo: "/dashboard/buyer" | "/create-breeder" | null }> {
-  const cookieIntent = signupIntentSchema.safeParse(getCookies()[ANEMALO_SIGNUP_INTENT_COOKIE]);
-  deleteCookie(ANEMALO_SIGNUP_INTENT_COOKIE);
-  const metaIntent = signupIntentSchema.safeParse(user.user_metadata?.intent);
-  const intent: SignupIntent =
-    dataIntent ??
-    (cookieIntent.success ? cookieIntent.data : undefined) ??
-    (metaIntent.success ? metaIntent.data : "customer");
+  dataMethod: SignupMethod | undefined,
+): Promise<{
+  error: string | null;
+  redirectTo: "/dashboard/buyer" | "/create-breeder" | null;
+  isNewUser: boolean;
+  method: SignupMethod | null;
+}> {
+  const metaMethod = signupMethodSchema.safeParse(user.user_metadata?.method);
+  const method: SignupMethod | null = dataMethod ?? (metaMethod.success ? metaMethod.data : null);
 
   const { data: existingRoles } = await supabase
     .from("user_roles")
@@ -176,26 +150,26 @@ async function provisionAfterPasswordlessAuth(
     .limit(1);
 
   if (existingRoles?.length) {
-    // Returning user — nothing to provision, and their intent hint is stale by now.
-    return { error: null, redirectTo: "/dashboard/buyer" };
+    // Returning user — nothing to provision.
+    return { error: null, redirectTo: "/dashboard/buyer", isNewUser: false, method: null };
   }
 
-  const roleToInsert = roleForIntent[intent];
   const { error: roleError } = await supabase.from("user_roles").insert({
     user_id: user.id,
-    role: roleToInsert.role,
-    status: roleToInsert.status,
+    role: NEW_ACCOUNT_ROLE.role,
+    status: NEW_ACCOUNT_ROLE.status,
   });
-  if (roleError) return { error: roleError.message, redirectTo: null };
+  if (roleError)
+    return { error: roleError.message, redirectTo: null, isNewUser: false, method: null };
 
   await recordInitialConsent(supabase, user.id);
 
-  return { error: null, redirectTo: landingPathForIntent(intent) };
+  return { error: null, redirectTo: "/create-breeder", isNewUser: true, method };
 }
 
 const completePasswordlessSignInSchema = z.object({
   code: z.string().min(1),
-  intent: signupIntentSchema.optional(),
+  method: signupMethodSchema.optional(),
 });
 
 export const completePasswordlessSignIn = createServerFn({ method: "GET" })
@@ -204,14 +178,20 @@ export const completePasswordlessSignIn = createServerFn({ method: "GET" })
     const supabase = getSupabaseServerClient();
 
     const { error } = await supabase.auth.exchangeCodeForSession(data.code);
-    if (error) return { error: error.message, redirectTo: null };
+    if (error) return { error: error.message, redirectTo: null, isNewUser: false, method: null };
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { error: "Sign-in could not be completed.", redirectTo: null };
+    if (!user)
+      return {
+        error: "Sign-in could not be completed.",
+        redirectTo: null,
+        isNewUser: false,
+        method: null,
+      };
 
-    return provisionAfterPasswordlessAuth(supabase, user, data.intent);
+    return provisionAfterPasswordlessAuth(supabase, user, data.method);
   });
 
 // Completes a magic-link sign-in from src/routes/auth.confirm.tsx. Deliberately a POST, fired
@@ -224,7 +204,6 @@ export const completePasswordlessSignIn = createServerFn({ method: "GET" })
 // button click, means a GET-only prefetcher never triggers verification at all.
 const completeEmailOtpSchema = z.object({
   tokenHash: z.string().min(1),
-  intent: signupIntentSchema.optional(),
 });
 
 export const completeEmailOtp = createServerFn({ method: "POST" })
@@ -236,14 +215,22 @@ export const completeEmailOtp = createServerFn({ method: "POST" })
       token_hash: data.tokenHash,
       type: "magiclink",
     });
-    if (error) return { error: error.message, redirectTo: null };
+    if (error) return { error: error.message, redirectTo: null, isNewUser: false, method: null };
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { error: "Sign-in could not be completed.", redirectTo: null };
+    if (!user)
+      return {
+        error: "Sign-in could not be completed.",
+        redirectTo: null,
+        isNewUser: false,
+        method: null,
+      };
 
-    return provisionAfterPasswordlessAuth(supabase, user, data.intent);
+    // Magic-link method always comes from user_metadata (set by sendMagicLink in signup.tsx),
+    // never a request param.
+    return provisionAfterPasswordlessAuth(supabase, user, undefined);
   });
 
 // Completes a password reset from src/routes/_public/reset-password.tsx. Verification and the

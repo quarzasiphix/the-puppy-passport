@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MapPin, UserPlus, UserCheck, Dog } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
@@ -41,6 +42,7 @@ function ProfilePage() {
   const { profile, posts, kennelSlug } = Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const isOwnProfile = userId === profile.id;
 
   const followingQuery = useQuery({
@@ -55,6 +57,7 @@ function ProfilePage() {
         ? unfollowProfile(userId!, profile.id)
         : followProfile(userId!, profile.id),
     onSuccess: () => {
+      posthog.capture(followingQuery.data ? "profile_unfollowed" : "profile_followed");
       queryClient.invalidateQueries({ queryKey: ["is-following-profile", userId, profile.id] });
       toast.success(followingQuery.data ? "Unfollowed." : "Following.");
     },

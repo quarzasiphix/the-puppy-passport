@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowRight, UserRound } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -34,6 +35,7 @@ function workloadColor(count: number) {
 
 function DispatchPage() {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [selectedDriver, setSelectedDriver] = useState<Record<string, string>>({});
 
   const workloadQuery = useQuery({ queryKey: ["driver-workloads"], queryFn: listDriverWorkloads });
@@ -46,6 +48,7 @@ function DispatchPage() {
     mutationFn: (input: { transportRequestId: string; driverId: string }) =>
       assignDriverToJob(input),
     onSuccess: () => {
+      posthog.capture("transport_driver_assigned");
       toast.success("Driver assigned.");
       queryClient.invalidateQueries({ queryKey: ["driver-workloads"] });
       queryClient.invalidateQueries({ queryKey: ["unassigned-ready-jobs"] });

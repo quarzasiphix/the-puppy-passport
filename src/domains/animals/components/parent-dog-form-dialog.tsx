@@ -14,6 +14,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { usePostHog } from "posthog-js/react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { listBreeds, type ParentDogRow } from "../services/breeder";
 
@@ -66,6 +67,7 @@ export function ParentDogFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const isEdit = !!parentDog;
 
   const breedsQuery = useQuery({ queryKey: ["breeds"], queryFn: listBreeds, enabled: open });
@@ -114,7 +116,8 @@ export function ParentDogFormDialog({
       const { error } = await supabase.from("parent_dogs").insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, values) => {
+      posthog.capture("parent_dog_saved", { is_edit: isEdit, sex: values.sex });
       toast.success(isEdit ? "Parent dog updated." : "Parent dog added.");
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["kennel-parent-dogs"] });

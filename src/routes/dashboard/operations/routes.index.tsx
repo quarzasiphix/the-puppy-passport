@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, TrendingUp } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
@@ -32,6 +33,7 @@ type FormValues = {
 function RoutesPage() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const query = useQuery({ queryKey: ["routes"], queryFn: listRoutes });
   const clustersQuery = useQuery({ queryKey: ["demand-clusters"], queryFn: listDemandClusters });
   const form = useForm<FormValues>({
@@ -58,6 +60,7 @@ function RoutesPage() {
         status: "planning",
       }),
     onSuccess: () => {
+      posthog.capture("transport_route_created");
       toast.success("Route created.");
       setOpen(false);
       form.reset();

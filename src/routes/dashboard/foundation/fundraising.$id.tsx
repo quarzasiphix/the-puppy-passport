@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
@@ -26,6 +27,7 @@ function CampaignDetailPage() {
   const { id } = Route.useParams();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const orgQuery = useQuery({
     queryKey: ["my-foundation", userId],
@@ -50,6 +52,7 @@ function CampaignDetailPage() {
   const submitMutation = useMutation({
     mutationFn: () => submitCampaignForReview(id),
     onSuccess: () => {
+      posthog.capture("fundraising_campaign_submitted_for_review");
       queryClient.invalidateQueries({ queryKey: ["org-fundraising-campaigns", org?.id] });
       toast.success(t("foundationPanel.fundraisingDetail.submittedToast"));
     },

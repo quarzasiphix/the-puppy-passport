@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Send } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -50,6 +51,7 @@ const statusStyles: Record<string, string> = {
 function QuotationsPage() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const query = useQuery({ queryKey: ["ops-quotations"], queryFn: listOpsQuotations });
   const requestsQuery = useQuery({
@@ -82,6 +84,7 @@ function QuotationsPage() {
         expiryDate: values.expiryDate || null,
       }),
     onSuccess: () => {
+      posthog.capture("transport_quotation_created");
       toast.success("Quotation drafted.");
       setOpen(false);
       form.reset();
@@ -94,6 +97,7 @@ function QuotationsPage() {
   const sendMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => sendQuotation(id),
     onSuccess: () => {
+      posthog.capture("transport_quotation_sent");
       toast.success("Sent to the customer.");
       queryClient.invalidateQueries({ queryKey: ["ops-quotations"] });
     },

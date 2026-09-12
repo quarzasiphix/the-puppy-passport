@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -158,10 +159,12 @@ function PayoutsPage() {
 function MarkPaidDialog({ payout, onDone }: { payout: PayoutRow; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [reference, setReference] = useState("");
+  const posthog = usePostHog();
 
   const mutation = useMutation({
     mutationFn: () => markReservationPayoutPaid(payout.id, reference),
     onSuccess: () => {
+      posthog.capture("payout_marked_paid");
       toast.success(`Marked ${payout.kennelName}'s payout as paid.`);
       setOpen(false);
       setReference("");

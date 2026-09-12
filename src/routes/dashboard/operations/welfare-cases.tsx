@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -25,6 +26,7 @@ const urgencyStyles: Record<string, string> = {
 
 function OpsWelfareCasesPage() {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [notesByCase, setNotesByCase] = useState<Record<string, string>>({});
 
   const casesQuery = useQuery({ queryKey: ["ops-welfare-cases"], queryFn: listOpsWelfareCases });
@@ -47,7 +49,8 @@ function OpsWelfareCasesPage() {
         decision: input.decision,
         reviewNotes: notesByCase[input.caseId],
       }),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      posthog.capture("welfare_case_reviewed", { decision: input.decision });
       toast.success("Case reviewed.");
       queryClient.invalidateQueries({ queryKey: ["ops-welfare-cases"] });
     },

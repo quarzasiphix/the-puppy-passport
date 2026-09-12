@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Check } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_public/forgot-password")({
 
 function ForgotPassword() {
   const [sent, setSent] = useState(false);
+  const posthog = usePostHog();
   const hydrated = useHydrated();
   const { t } = useTranslation();
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { email: "" } });
@@ -36,6 +38,7 @@ function ForgotPassword() {
     // (src/domains/identity/services/actions.ts) for why.
     await supabase.auth.resetPasswordForEmail(values.email);
     setSent(true);
+    posthog.capture("password_reset_requested");
   }
 
   return (

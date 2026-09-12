@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -36,6 +37,7 @@ export function VerificationReviewList({
   emptyLabel: string;
 }) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -60,6 +62,7 @@ export function VerificationReviewList({
       if (error) throw error;
     },
     onSuccess: () => {
+      posthog.capture("verification_approved", { verification_type: verificationType });
       toast.success("Approved — the organisation is now live.");
       queryClient.invalidateQueries({ queryKey: ["admin-verifications", verificationType] });
     },
@@ -76,6 +79,7 @@ export function VerificationReviewList({
       if (error) throw error;
     },
     onSuccess: () => {
+      posthog.capture("verification_rejected", { verification_type: verificationType });
       toast.success("Application rejected.");
       setRejectingId(null);
       setRejectReason("");

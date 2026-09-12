@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { usePostHog } from "posthog-js/react";
 import { createAchievement, listKennelParentDogs } from "../services/breeder";
 
 type FormValues = {
@@ -40,6 +41,7 @@ export function AchievementFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const parentDogsQuery = useQuery({
     queryKey: ["kennel-parent-dogs", kennelId],
@@ -59,6 +61,7 @@ export function AchievementFormDialog({
         evidence_url: values.evidenceUrl || null,
       }),
     onSuccess: () => {
+      posthog.capture("achievement_submitted");
       toast.success(
         "Submitted for review — it'll show as verified once an admin checks the evidence.",
       );

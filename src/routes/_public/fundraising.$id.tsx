@@ -3,6 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, FlaskConical, MapPin } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -37,6 +38,7 @@ function CampaignPage() {
   const { userId, isSignedIn } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [amount, setAmount] = useState("20");
   const [message, setMessage] = useState("");
   const [anonymous, setAnonymous] = useState(false);
@@ -59,6 +61,7 @@ function CampaignPage() {
         publicMessage: message.trim() || undefined,
       }),
     onSuccess: () => {
+      posthog.capture("fundraising_contribution_submitted", { anonymous });
       setSubmitted(true);
       queryClient.invalidateQueries({ queryKey: ["campaign-public-contributions", campaign?.id] });
     },

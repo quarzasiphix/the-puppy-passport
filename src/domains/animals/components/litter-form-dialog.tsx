@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Dog } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
@@ -87,6 +88,7 @@ export function LitterFormDialog({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const isEdit = !!litter;
 
   const breedsQuery = useQuery({ queryKey: ["breeds"], queryFn: listBreeds, enabled: open });
@@ -149,6 +151,11 @@ export function LitterFormDialog({
       return createLitter(payload);
     },
     onSuccess: () => {
+      posthog.capture("litter_listing_saved", {
+        is_edit: isEdit,
+        status: values.status,
+        is_published: values.isPublished,
+      });
       toast.success(
         isEdit
           ? t("breederPanel.litterForm.savedUpdated")

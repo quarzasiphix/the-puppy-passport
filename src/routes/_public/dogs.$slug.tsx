@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, Dog as DogIcon, Flag, PawPrint } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 
 import {
   getDogBySlug,
@@ -96,6 +97,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
 function ClaimDogCard({ dog }: { dog: DogIdentity }) {
   const { t } = useTranslation();
   const { userId, isSignedIn } = useAuth();
+  const posthog = usePostHog();
   const [message, setMessage] = useState("");
   const [done, setDone] = useState(false);
 
@@ -110,7 +112,8 @@ function ClaimDogCard({ dog }: { dog: DogIdentity }) {
         message: message.trim() || null,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, claimType) => {
+      posthog.capture("dog_claim_submitted", { claim_type: claimType });
       setDone(true);
       toast.success(t("pedigree.claim.submitted"));
     },

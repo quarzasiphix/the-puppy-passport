@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Flag, CheckCircle2 } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "@/shared/ui/label";
@@ -64,6 +65,7 @@ export function ReportDialog({
   triggerLabel?: string;
 }) {
   const { userId } = useAuth();
+  const posthog = usePostHog();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason | "">("");
   const [description, setDescription] = useState("");
@@ -78,7 +80,10 @@ export function ReportDialog({
         reason: reason as ReportReason,
         description: description || null,
       }),
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      posthog.capture("report_submitted", { target_type: targetType, reason });
+      setSubmitted(true);
+    },
     onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not send report.")),
   });
 

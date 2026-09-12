@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Upload, PencilLine, Network, ChevronLeft, Check, UserPlus } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 
 import {
   createPedigreeSubmission,
@@ -76,6 +77,7 @@ function AddPedigree() {
   const { subject: subjectSlug } = Route.useSearch();
   const { isSignedIn } = useAuth();
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   const [step, setStep] = useState(0);
   const [method, setMethod] = useState<Method | null>(null);
@@ -199,7 +201,14 @@ function AddPedigree() {
 
       return { submissionId };
     },
-    onSuccess: (r) => setResult(r),
+    onSuccess: (r) => {
+      posthog.capture("pedigree_submission_created", {
+        method: method ?? "manual_entry",
+        source_type: sourceType,
+        signed_in: isSignedIn,
+      });
+      setResult(r);
+    },
     onError: (err) => toast.error(getFriendlyErrorMessage(err, t("pedigree.add.submitFailed"))),
   });
 

@@ -101,7 +101,9 @@ function HowItWorks() {
               <Link to="/find-a-dog">{t("howItWorksPage.findYourDogCta")}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/create-breeder">{t("howItWorksPage.imBreederCta")}</Link>
+              <Link to="/create-breeder" search={{ type: "kennel" }}>
+                {t("howItWorksPage.imBreederCta")}
+              </Link>
             </Button>
           </div>
         </div>

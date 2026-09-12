@@ -170,6 +170,29 @@ export const foundationNav: DashboardNavItem[] = [
   { to: "/dashboard/foundation/settings", label: "Settings", icon: Settings },
 ];
 
+export const transportCompanyNav: DashboardNavItem[] = [
+  {
+    to: "/dashboard/transport-company",
+    label: "transportCompanyPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  { to: "/dashboard/transport-company/vehicles", label: "transportCompanyPanel.nav.vehicles", icon: Car },
+  { to: "/dashboard/transport-company/drivers", label: "transportCompanyPanel.nav.drivers", icon: UserRound },
+  { to: "/dashboard/transport-company/jobs", label: "transportCompanyPanel.nav.jobs", icon: Truck },
+  { to: "/dashboard/transport-company/team", label: "transportCompanyPanel.nav.team", icon: Users },
+  {
+    to: "/dashboard/transport-company/profile",
+    label: "transportCompanyPanel.nav.publicProfile",
+    icon: Building2,
+  },
+  {
+    to: "/dashboard/transport-company/settings",
+    label: "transportCompanyPanel.nav.settings",
+    icon: Settings,
+  },
+];
+
 export const operationsNav: DashboardNavItem[] = [
   { to: "/dashboard/operations", label: "Operations overview", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/operations/new-requests", label: "New requests", icon: Inbox },

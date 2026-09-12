@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -38,6 +39,7 @@ function FundraisingPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [open, setOpen] = useState(false);
   const [optionId, setOptionId] = useState<string>("");
   const [title, setTitle] = useState("");
@@ -67,6 +69,7 @@ function FundraisingPage() {
     mutationFn: (option: EligibleQuotationOption) =>
       createCampaign({ organisationId: org!.id, option, title, description }),
     onSuccess: () => {
+      posthog.capture("fundraising_campaign_created");
       setOpen(false);
       setOptionId("");
       setTitle("");

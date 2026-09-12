@@ -3,6 +3,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, Clock, Lock } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -50,6 +51,7 @@ function OpsRequestDetail() {
   const { id } = useParams({ from: "/dashboard/operations/requests/$id" });
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [dialogStatus, setDialogStatus] = useState<TransportStatus | null>(null);
   const [internalNote, setInternalNote] = useState("");
   const [customerNote, setCustomerNote] = useState("");
@@ -90,6 +92,7 @@ function OpsRequestDetail() {
         customerNote,
       }),
     onSuccess: () => {
+      posthog.capture("transport_request_status_changed", { new_status: dialogStatus });
       toast.success("Status updated.");
       setDialogStatus(null);
       setInternalNote("");
@@ -105,6 +108,7 @@ function OpsRequestDetail() {
   const amendmentMutation = useMutation({
     mutationFn: (input: { amendmentId: string; approve: boolean }) => reviewAmendment(input),
     onSuccess: (_data, variables) => {
+      posthog.capture("transport_amendment_reviewed", { approved: variables.approve });
       toast.success(variables.approve ? "Amendment approved." : "Amendment rejected.");
       queryClient.invalidateQueries({ queryKey: ["ops-request", id] });
       queryClient.invalidateQueries({ queryKey: ["ops-request-amendments", id] });

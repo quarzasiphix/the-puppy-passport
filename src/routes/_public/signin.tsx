@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { usePostHog } from "posthog-js/react";
 import { Mail } from "lucide-react";
 import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
@@ -60,6 +61,7 @@ function SignIn() {
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const hydrated = useHydrated();
   const { t } = useTranslation();
   const { oauthError } = Route.useSearch();
@@ -112,6 +114,7 @@ function SignIn() {
       }
     }
     setSentTo(email);
+    posthog.capture("signin_magic_link_sent");
     return true;
   }
 
@@ -132,11 +135,13 @@ function SignIn() {
     }
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
     await router.invalidate();
+    posthog.capture("signin_completed", { method: "password" });
     await navigate({ to: "/dashboard/buyer" });
   }
 
   async function onGoogleSignIn() {
     const supabase = getSupabaseBrowserClient();
+    posthog.capture("signin_google_started");
     // This call only ever starts the redirect to Google; the code exchange is server-side.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

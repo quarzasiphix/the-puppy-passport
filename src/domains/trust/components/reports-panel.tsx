@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Flag, Gavel, Trash2 } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { dismissReport, escalateReportToCase, listOpenCaseReportIds, listReports } from "@/domains/trust";
@@ -21,6 +22,7 @@ const reasonLabels: Record<string, string> = {
 /** Shared by /dashboard/admin/reports and /dashboard/moderator/reports. */
 export function ReportsPanel() {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const reportsQuery = useQuery({ queryKey: ["admin-reports"], queryFn: listReports });
   const casedIdsQuery = useQuery({
     queryKey: ["admin-report-case-ids"],
@@ -30,6 +32,7 @@ export function ReportsPanel() {
   const escalate = useMutation({
     mutationFn: escalateReportToCase,
     onSuccess: () => {
+      posthog.capture("report_escalated_to_case");
       toast.success("Escalated to a moderation case.");
       queryClient.invalidateQueries({ queryKey: ["admin-report-case-ids"] });
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
@@ -40,6 +43,7 @@ export function ReportsPanel() {
   const dismiss = useMutation({
     mutationFn: dismissReport,
     onSuccess: () => {
+      posthog.capture("report_dismissed");
       toast.success("Report dismissed.");
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
     },

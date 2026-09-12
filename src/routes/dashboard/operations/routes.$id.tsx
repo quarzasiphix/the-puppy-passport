@@ -3,6 +3,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, TriangleAlert } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/dashboard/operations/routes/$id")({
 function RouteDetail() {
   const { id } = useParams({ from: "/dashboard/operations/routes/$id" });
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [pickerRequestId, setPickerRequestId] = useState<string>("");
 
   const routeQuery = useQuery({ queryKey: ["route", id], queryFn: () => getRoute(id) });
@@ -40,6 +42,7 @@ function RouteDetail() {
         transportRequestId: pickerRequestId,
       }),
     onSuccess: () => {
+      posthog.capture("transport_request_assigned_to_route");
       toast.success("Request assigned to route.");
       setPickerRequestId("");
       queryClient.invalidateQueries({ queryKey: ["route-assignments", id] });

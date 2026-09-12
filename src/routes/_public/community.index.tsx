@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Users, Heart, MessageCircle, Send } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -54,6 +55,7 @@ function CommunityPage() {
   const { userId } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [newPost, setNewPost] = useState("");
 
   const postsQuery = useQuery({ queryKey: ["public-posts"], queryFn: listPublicPosts });
@@ -102,6 +104,7 @@ function CommunityPage() {
   const createPostMutation = useMutation({
     mutationFn: () => createPost({ authorProfileId: userId!, content: newPost.trim() }),
     onSuccess: () => {
+      posthog.capture("community_post_created", { scope: "public" });
       setNewPost("");
       queryClient.invalidateQueries({ queryKey: ["public-posts"] });
       toast.success(t("communityPage.postedToast"));
@@ -218,6 +221,7 @@ function PostCard({
   userId: string | null | undefined;
 }) {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const { t, locale } = useTranslation();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
@@ -240,6 +244,7 @@ function PostCard({
   const commentMutation = useMutation({
     mutationFn: () => createComment(post.id, userId!, newComment.trim()),
     onSuccess: () => {
+      posthog.capture("community_comment_created");
       setNewComment("");
       queryClient.invalidateQueries({ queryKey: ["post-comments", post.id] });
       queryClient.invalidateQueries({ queryKey: ["post-comment-counts"] });

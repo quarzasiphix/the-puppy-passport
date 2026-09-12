@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CheckCircle2, ChevronDown, ChevronUp, XCircle } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
@@ -30,6 +31,7 @@ const outcomeStyles: Record<MatchOutcome, string> = {
 function MatchingPage() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const requestsQuery = useQuery({
@@ -69,7 +71,8 @@ function MatchingPage() {
         outcome,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      posthog.capture("transport_match_proposed", { score: variables.score });
       toast.success("Proposed assignment created — request added to the route.");
       queryClient.invalidateQueries({ queryKey: ["unmatched-requests"] });
     },
@@ -84,7 +87,10 @@ function MatchingPage() {
       score: number;
       outcome: MatchOutcome;
     }) => logMatchDecision({ actorId: userId!, ...input, action: "dismissed" }),
-    onSuccess: () => toast.success("Suggestion dismissed."),
+    onSuccess: () => {
+      posthog.capture("transport_match_dismissed");
+      toast.success("Suggestion dismissed.");
+    },
   });
 
   const clusters = requestsQuery.data ? clusterByDemand(requestsQuery.data) : [];

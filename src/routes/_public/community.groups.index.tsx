@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Users, ArrowRight } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
@@ -31,6 +32,7 @@ function GroupsPage() {
   const { userId, isSignedIn } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const groupsQuery = useQuery({ queryKey: ["groups"], queryFn: listGroups });
   const myGroupIdsQuery = useQuery({
@@ -43,7 +45,10 @@ function GroupsPage() {
   const joinMutation = useMutation({
     mutationFn: (groupId: string) =>
       myGroupIds.has(groupId) ? leaveGroup(userId!, groupId) : joinGroup(userId!, groupId),
-    onSuccess: () => {
+    onSuccess: (_data, groupId) => {
+      posthog.capture("community_group_membership_changed", {
+        action: myGroupIds.has(groupId) ? "left" : "joined",
+      });
       queryClient.invalidateQueries({ queryKey: ["my-group-ids", userId] });
     },
     onError: (err) =>

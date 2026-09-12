@@ -8,6 +8,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { useTranslation, type Locale } from "@/shared/i18n";
+import { usePostHog } from "posthog-js/react";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "../services/buyer-activity";
 import { accentGlowStyle, VerifiedBadge } from "@/domains/breeders";
 
@@ -60,6 +61,7 @@ export function useIsSaved(animalId: string) {
   const { userId } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const savedQuery = useQuery({
     queryKey: ["saved-animal-ids", userId],
     enabled: !!userId,
@@ -73,7 +75,10 @@ export function useIsSaved(animalId: string) {
       if (isSaved) await unsaveAnimal(userId, animalId);
       else await saveAnimal(userId, animalId);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-animal-ids", userId] }),
+    onSuccess: () => {
+      posthog.capture(isSaved ? "animal_unsaved" : "animal_saved");
+      queryClient.invalidateQueries({ queryKey: ["saved-animal-ids", userId] });
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : t("cards.couldNotUpdate")),
   });
   return { isSaved, toggle: () => toggle.mutate(), pending: toggle.isPending };

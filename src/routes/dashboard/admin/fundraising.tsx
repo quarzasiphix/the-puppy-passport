@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/shared/ui/badge";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { useAuth, requireRole } from "@/domains/identity";
 import {
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/dashboard/admin/fundraising")({
 function AdminFundraisingPage() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const campaignsQuery = useQuery({
     queryKey: ["all-fundraising-campaigns"],
@@ -36,6 +38,7 @@ function AdminFundraisingPage() {
   const approveMutation = useMutation({
     mutationFn: (id: string) => approveCampaign(id, userId!),
     onSuccess: () => {
+      posthog.capture("fundraising_campaign_approved");
       invalidate();
       toast.success("Approved.");
     },
@@ -44,6 +47,7 @@ function AdminFundraisingPage() {
   const activateMutation = useMutation({
     mutationFn: (id: string) => activateCampaign(id),
     onSuccess: () => {
+      posthog.capture("fundraising_campaign_activated");
       invalidate();
       toast.success("Campaign is now active.");
     },
@@ -52,6 +56,7 @@ function AdminFundraisingPage() {
   const suspendMutation = useMutation({
     mutationFn: (id: string) => suspendCampaign(id),
     onSuccess: () => {
+      posthog.capture("fundraising_campaign_suspended");
       invalidate();
       toast.success("Suspended.");
     },

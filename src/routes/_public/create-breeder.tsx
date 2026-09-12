@@ -1,21 +1,44 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { PawPrint, ShieldCheck, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
+import {
+  PawPrint,
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Building2,
+} from "lucide-react";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
-import { useAuth } from "@/domains/identity";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { useAuth, signupMethodSchema } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useTranslation } from "@/shared/i18n";
 
+const orgTypeValues = ["kennel", "foundation", "shelter", "transport_company"] as const;
+
+const searchSchema = z.object({
+  // Lets a type-specific CTA (e.g. "List your kennel") skip straight past the client/org chooser
+  // into the org-type onboarding form for a signed-in user.
+  type: z.enum(orgTypeValues).optional(),
+  // Google-only PostHog labeling hint for the signup_completed event, forwarded here by
+  // auth.callback.tsx for a first-time OAuth/magic-link signup — see actions.ts.
+  method: signupMethodSchema.optional(),
+});
+
 export const Route = createFileRoute("/_public/create-breeder")({
-  head: () => ({ meta: [{ title: "Apply for verification — Anemalo" }] }),
+  validateSearch: searchSchema,
+  head: () => ({ meta: [{ title: "Get started — Anemalo" }] }),
   component: CreateBreeder,
 });
 
@@ -23,6 +46,7 @@ const orgTypeOptions = [
   { value: "kennel" as const, labelKey: "createBreederPage.orgTypeKennel" },
   { value: "foundation" as const, labelKey: "createBreederPage.orgTypeFoundation" },
   { value: "shelter" as const, labelKey: "createBreederPage.orgTypeShelter" },
+  { value: "transport_company" as const, labelKey: "createBreederPage.orgTypeTransportCompany" },
 ];
 
 const statusCopyKeys: Record<string, string> = {
@@ -36,7 +60,7 @@ const statusCopyKeys: Record<string, string> = {
 };
 
 const schema = z.object({
-  orgType: z.enum(["kennel", "foundation", "shelter"]),
+  orgType: z.enum(orgTypeValues),
   name: z.string().min(1, "Required"),
   city: z.string().min(1, "Required"),
   country: z.string().min(1, "Required"),
@@ -46,22 +70,109 @@ const schema = z.object({
   breeds: z.string().optional(),
   website: z.string().optional(),
   description: z.string().min(1, "Tell us a little about your kennel or organisation"),
+  // Foundation/shelter's KRS-style registration number, or a transport company's operator license
+  // number — same organisations.registration_number column, different label per org type (see
+  // orgTypeFieldConfig below). Not shown for kennel (association_name/membership_number already
+  // cover kennel-club registration there).
+  registrationNumber: z.string().optional(),
+  // Transport-company only. Not passed to create_own_organisation (which has no matching
+  // params) — international_transport_available maps to a real, existing organisations column,
+  // set via a follow-up update right after creation succeeds (see onSubmit). Fleet size / license
+  // number are deliberately NOT collected here, same call as this form already makes for a
+  // kennel's "breeds" field (collected, never persisted) — real per-vehicle licensing belongs on
+  // the Vehicles panel once the company is approved (a company may have several licenses, not one).
+  internationalTransportAvailable: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
+type OrgType = FormValues["orgType"];
 
-// A "kennel" application is verified as a breeder; foundation/shelter applications share the
-// generic "organisation" verification type — see supabase/migrations/*_user_verifications.sql.
-function verificationTypeFor(orgType: FormValues["orgType"]) {
+// A "kennel" application is verified as a breeder; foundation/shelter/transport-company
+// applications share the generic "organisation" verification type — see
+// supabase/migrations/*_user_verifications.sql.
+function verificationTypeFor(orgType: OrgType) {
   return orgType === "kennel" ? ("breeder" as const) : ("organisation" as const);
 }
 
+function dashboardPathForOrgType(orgType: OrgType) {
+  if (orgType === "kennel") return "/dashboard/breeder" as const;
+  if (orgType === "transport_company") return "/dashboard/transport-company" as const;
+  return "/dashboard/foundation" as const;
+}
+
+// Each org type asks for genuinely different information, not just a shared field set with one
+// conditional section bolted on: a kennel's kennel-club association has nothing to do with a
+// foundation's registration number, and neither has anything to do with a transport company's
+// fleet. This map drives which sections/labels the onboarding form renders per type, keeping the
+// JSX as one coherent form rather than a fork of near-duplicate components (three of the four
+// types share most of their shape, so separate route files would mostly duplicate the
+// pending-status/submit plumbing for no benefit).
+const orgTypeFieldConfig: Record<
+  OrgType,
+  {
+    showYearsField: boolean;
+    yearsFieldLabelKey: string;
+    showAssociationSection: boolean;
+    showRegistrationSection: boolean;
+    registrationNumberLabelKey: string;
+    showFleetSection: boolean;
+  }
+> = {
+  kennel: {
+    showYearsField: true,
+    yearsFieldLabelKey: "createBreederPage.fieldYears",
+    showAssociationSection: true,
+    showRegistrationSection: false,
+    registrationNumberLabelKey: "",
+    showFleetSection: false,
+  },
+  foundation: {
+    showYearsField: true,
+    yearsFieldLabelKey: "createBreederPage.fieldYearsOperating",
+    showAssociationSection: false,
+    showRegistrationSection: true,
+    registrationNumberLabelKey: "createBreederPage.fieldRegistrationNumberOrg",
+    showFleetSection: false,
+  },
+  shelter: {
+    showYearsField: true,
+    yearsFieldLabelKey: "createBreederPage.fieldYearsOperating",
+    showAssociationSection: false,
+    showRegistrationSection: true,
+    registrationNumberLabelKey: "createBreederPage.fieldRegistrationNumberOrg",
+    showFleetSection: false,
+  },
+  transport_company: {
+    showYearsField: false,
+    yearsFieldLabelKey: "",
+    showAssociationSection: false,
+    showRegistrationSection: true,
+    registrationNumberLabelKey: "createBreederPage.fieldRegistrationNumberTransport",
+    showFleetSection: true,
+  },
+};
+
 function CreateBreeder() {
   const { userId, isLoading: authLoading } = useAuth();
+  const posthog = usePostHog();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const router = useRouter();
+  const { type: presetOrgType, method } = Route.useSearch();
+
+  // The one-time signup_completed event for OAuth/magic-link signups: the password path already
+  // fires this synchronously in signup.tsx's onSubmit, but a passwordless first-time user only
+  // ever reaches this page via a server-side redirect (auth.callback.tsx / auth.confirm.tsx),
+  // which can't call posthog itself. `method` rides along as a one-shot query param, consumed
+  // here and stripped from the URL so a refresh can't replay it — same guard shape as the Stripe
+  // return-flow param-strip on the buyer reservations page.
+  useEffect(() => {
+    if (!method) return;
+    posthog.capture("signup_completed", { method });
+    void navigate({ to: "/create-breeder", search: { type: presetOrgType }, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method]);
 
   const verificationQuery = useQuery({
     queryKey: ["my-org-verification", userId],
@@ -84,7 +195,7 @@ function CreateBreeder() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      orgType: "kennel",
+      orgType: presetOrgType ?? "kennel",
       name: "",
       city: "",
       country: "",
@@ -94,6 +205,8 @@ function CreateBreeder() {
       breeds: "",
       website: "",
       description: "",
+      registrationNumber: "",
+      internationalTransportAvailable: false,
     },
   });
 
@@ -107,7 +220,7 @@ function CreateBreeder() {
   async function onSubmit(values: FormValues) {
     if (!userId) return;
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.rpc("create_own_organisation", {
+    const { data, error } = await supabase.rpc("create_own_organisation", {
       p_org_type: values.orgType,
       p_name: values.name,
       p_description: values.description,
@@ -117,20 +230,37 @@ function CreateBreeder() {
       p_membership_number: values.membershipNumber || undefined,
       p_years_experience: values.yearsExperience ?? undefined,
       p_website: values.website || undefined,
+      p_registration_number: values.registrationNumber || undefined,
     });
     if (error) {
       toast.error(getFriendlyErrorMessage(error, t("createBreederPage.couldNotSubmit")));
       return;
     }
+    // create_own_organisation() has no transport-specific params — international_transport_
+    // available is a real, existing organisations column, so it's set here via a follow-up
+    // update instead of widening that RPC's signature for one boolean. Safe: the owner already
+    // has UPDATE rights on their own just-created org row (the "owners update their own
+    // organisation" RLS policy). Best-effort — never blocks the signup on failure.
+    const orgId = data?.[0]?.organisation_id;
+    if (orgId && values.orgType === "transport_company" && values.internationalTransportAvailable) {
+      await supabase
+        .from("organisations")
+        .update({ international_transport_available: true })
+        .eq("id", orgId);
+    }
+    posthog.capture("breeder_application_submitted", {
+      org_type: values.orgType,
+      verification_type: verificationTypeFor(values.orgType),
+    });
     toast.success(t("createBreederPage.submittedToast"));
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
     await queryClient.invalidateQueries({ queryKey: ["my-org-verification", userId] });
     // requireRole's dashboard guard reads context.auth, which comes from a router-loader-level
     // getCurrentUser() call — router.invalidate() is required (matches signin.tsx's own
-    // sign-in -> navigate sequence) or the new breeder role from the RPC above wouldn't be seen
-    // until some later, unrelated navigation happened to re-run the loader.
+    // sign-in -> navigate sequence) or the new role from the RPC above wouldn't be seen until
+    // some later, unrelated navigation happened to re-run the loader.
     await router.invalidate();
-    await navigate({ to: values.orgType === "kennel" ? "/dashboard/breeder" : "/dashboard/foundation" });
+    await navigate({ to: dashboardPathForOrgType(values.orgType) });
   }
 
   if (authLoading || (userId && verificationQuery.isLoading)) {
@@ -171,10 +301,10 @@ function CreateBreeder() {
       verification.status !== "rejected" &&
       verification.status !== "suspended" &&
       verification.status !== "expired";
-    const dashboardPath =
-      (verification.submitted_data as { org_type?: string } | null)?.org_type === "kennel"
-        ? "/dashboard/breeder"
-        : "/dashboard/foundation";
+    const dashboardPath = dashboardPathForOrgType(
+      ((verification.submitted_data as { org_type?: string } | null)?.org_type ??
+        "foundation") as OrgType,
+    );
     return (
       <div className="container-page py-14">
         <div className="mx-auto max-w-xl rounded-3xl border border-border/70 bg-card p-8 text-center">
@@ -194,6 +324,89 @@ function CreateBreeder() {
       </div>
     );
   }
+
+  // No verification/organisation yet — this is the real full-screen chooser. `presetOrgType`
+  // (a type-specific CTA elsewhere in the app) skips straight to the org onboarding form;
+  // otherwise the visitor picks "regular client" or "I run an organisation" first.
+  if (!presetOrgType) {
+    return (
+      <AccountChooser
+        onOrganisationChosen={() =>
+          void navigate({ to: "/create-breeder", search: { type: "kennel" } })
+        }
+      />
+    );
+  }
+
+  return <OrganisationOnboardingForm form={form} onSubmit={onSubmit} />;
+}
+
+function AccountChooser({ onOrganisationChosen }: { onOrganisationChosen: () => void }) {
+  const { t } = useTranslation();
+  const posthog = usePostHog();
+
+  return (
+    <div className="container-page grid grid-cols-1 min-h-[70vh] place-items-center py-16">
+      <div className="w-full max-w-3xl text-center">
+        <p className="text-xs font-medium uppercase tracking-wider text-accent">
+          {t("createBreederPage.chooserEyebrow")}
+        </p>
+        <h1 className="mt-1 font-display text-4xl font-medium">
+          {t("createBreederPage.chooserTitle")}
+        </h1>
+        <p className="mt-2 text-muted-foreground">{t("createBreederPage.chooserSubtitle")}</p>
+
+        <div className="mt-8 grid gap-4 grid-cols-1 md:grid-cols-2">
+          <Link
+            to="/dashboard/buyer"
+            onClick={() => posthog.capture("account_type_chosen", { choice: "client" })}
+            className="group flex flex-col items-center rounded-3xl border border-border/70 bg-card p-8 text-center transition-colors hover:border-primary/50 hover:bg-secondary/40"
+          >
+            <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Search className="size-6" />
+            </span>
+            <span className="mt-4 font-display text-xl font-semibold">
+              {t("createBreederPage.chooserClientTitle")}
+            </span>
+            <span className="mt-1 text-sm text-muted-foreground">
+              {t("createBreederPage.chooserClientBody")}
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => {
+              posthog.capture("account_type_chosen", { choice: "organisation" });
+              onOrganisationChosen();
+            }}
+            className="group flex flex-col items-center rounded-3xl border border-border/70 bg-card p-8 text-center transition-colors hover:border-primary/50 hover:bg-secondary/40"
+          >
+            <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Building2 className="size-6" />
+            </span>
+            <span className="mt-4 font-display text-xl font-semibold">
+              {t("createBreederPage.chooserOrgTitle")}
+            </span>
+            <span className="mt-1 text-sm text-muted-foreground">
+              {t("createBreederPage.chooserOrgBody")}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrganisationOnboardingForm({
+  form,
+  onSubmit,
+}: {
+  form: UseFormReturn<FormValues>;
+  onSubmit: (values: FormValues) => void | Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const orgType = form.watch("orgType");
+  const config = orgTypeFieldConfig[orgType];
 
   return (
     <div className="container-page py-14">
@@ -215,7 +428,7 @@ function CreateBreeder() {
                       key={opt.value}
                       onClick={() => form.setValue("orgType", opt.value)}
                       className={`rounded-xl border p-3 text-sm font-medium transition-colors ${
-                        form.watch("orgType") === opt.value
+                        orgType === opt.value
                           ? "border-primary bg-primary/5"
                           : "border-border bg-background hover:bg-secondary/50"
                       }`}
@@ -241,19 +454,21 @@ function CreateBreeder() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="yearsExperience"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("createBreederPage.fieldYears")}</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} value={field.value ?? ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {config.showYearsField && (
+                    <FormField
+                      control={form.control}
+                      name="yearsExperience"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t(config.yearsFieldLabelKey)}</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} value={field.value ?? ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="city"
@@ -281,50 +496,6 @@ function CreateBreeder() {
                     )}
                   />
                 </div>
-              </Section>
-
-              <Section title={t("createBreederPage.sectionAssociation")}>
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="associationName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("createBreederPage.fieldAssociation")}</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ZKwP / FCI" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="membershipNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("createBreederPage.fieldMembership")}</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="breeds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("createBreederPage.fieldBreeds")}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Golden Retriever, Labrador Retriever" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <FormField
                   control={form.control}
                   name="website"
@@ -339,6 +510,96 @@ function CreateBreeder() {
                   )}
                 />
               </Section>
+
+              {config.showAssociationSection && (
+                <Section title={t("createBreederPage.sectionAssociation")}>
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="associationName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("createBreederPage.fieldAssociation")}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ZKwP / FCI" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="membershipNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("createBreederPage.fieldMembership")}</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="breeds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("createBreederPage.fieldBreeds")}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Golden Retriever, Labrador Retriever" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Section>
+              )}
+
+              {config.showRegistrationSection && (
+                <Section title={t("createBreederPage.sectionRegistration")}>
+                  <FormField
+                    control={form.control}
+                    name="registrationNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t(config.registrationNumberLabelKey)}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </Section>
+              )}
+
+              {config.showFleetSection && (
+                <Section title={t("createBreederPage.sectionFleet")}>
+                  <FormField
+                    control={form.control}
+                    name="internationalTransportAvailable"
+                    render={({ field }) => (
+                      <FormItem>
+                        <label className="flex items-center gap-2 text-sm">
+                          <FormControl>
+                            <Checkbox
+                              checked={!!field.value}
+                              onCheckedChange={(checked) => field.onChange(checked === true)}
+                            />
+                          </FormControl>
+                          {t("createBreederPage.fieldInternationalTransport")}
+                        </label>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("createBreederPage.fleetDetailNote")}
+                  </p>
+                </Section>
+              )}
 
               <Section title={t("createBreederPage.sectionAbout")}>
                 <FormField

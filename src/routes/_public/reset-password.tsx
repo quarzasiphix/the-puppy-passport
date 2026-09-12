@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { usePostHog } from "posthog-js/react";
 import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_public/reset-password")({
 
 function ResetPassword() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { token_hash: tokenHash } = Route.useSearch();
   const { t } = useTranslation();
   const form = useForm<FormValues>({
@@ -53,6 +55,7 @@ function ResetPassword() {
       toast.error(result.error);
       return;
     }
+    posthog.capture("password_reset_completed");
     toast.success(t("resetPassword.updatedToast"));
     await navigate({ to: "/dashboard/buyer" });
   }

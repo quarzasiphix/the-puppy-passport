@@ -18,6 +18,7 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
   const actions = [
     {
       to: isBreeder ? "/dashboard/breeder/puppies" : "/create-breeder",
+      search: isBreeder ? undefined : ({ type: "kennel" } as const),
       icon: Dog,
       title: t("actionLauncher.publishAnimalTitle"),
       desc: isBreeder
@@ -26,6 +27,7 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
     },
     {
       to: isFoundation ? "/dashboard/foundation/animals" : "/create-breeder",
+      search: isFoundation ? undefined : ({ type: "foundation" } as const),
       icon: HeartHandshake,
       title: t("actionLauncher.publishAdoptionTitle"),
       desc: isFoundation
@@ -34,18 +36,21 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
     },
     {
       to: "/find-a-dog",
+      search: undefined,
       icon: Search,
       title: t("actionLauncher.findDogTitle"),
       desc: t("actionLauncher.findDogDesc"),
     },
     {
       to: "/breeders",
+      search: undefined,
       icon: Users,
       title: t("actionLauncher.findBreederTitle"),
       desc: t("actionLauncher.findBreederDesc"),
     },
     {
       to: "/rehome",
+      search: undefined,
       icon: Home,
       title: t("actionLauncher.rehomeTitle"),
       desc: t("actionLauncher.rehomeDesc"),
@@ -91,6 +96,7 @@ export function ActionLauncher({ variant = "homepage" }: { variant?: "homepage" 
           <Link
             key={a.title}
             to={a.to}
+            search={a.search}
             className="flex flex-col rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:bg-secondary/40"
           >
             <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">

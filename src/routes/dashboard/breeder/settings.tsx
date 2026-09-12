@@ -26,6 +26,7 @@ import {
   type KennelTheme,
 } from "@/domains/breeders";
 import { Check } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { useTranslation } from "@/shared/i18n";
 
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
@@ -39,6 +40,7 @@ type FormValues = z.infer<typeof schema>;
 function SettingsPage() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const profileQuery = useQuery({
     queryKey: ["my-profile", userId],
     enabled: !!userId,
@@ -53,6 +55,7 @@ function SettingsPage() {
   const mutation = useMutation({
     mutationFn: (values: FormValues) => updateMyPhone(userId!, values.phone || null),
     onSuccess: () => {
+      posthog.capture("account_phone_updated");
       toast.success("Saved.");
       queryClient.invalidateQueries({ queryKey: ["my-profile", userId] });
     },
@@ -99,6 +102,7 @@ function SettingsPage() {
 function KennelPageSettings({ userId }: { userId: string | null }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const kennelQuery = useQuery({
     queryKey: ["my-kennel-id", userId],
     enabled: !!userId,
@@ -115,7 +119,8 @@ function KennelPageSettings({ userId }: { userId: string | null }) {
   const mutation = useMutation({
     mutationFn: (patch: Parameters<typeof updateKennelSiteConfiguration>[1]) =>
       updateKennelSiteConfiguration(kennelId!, patch),
-    onSuccess: () => {
+    onSuccess: (_data, patch) => {
+      posthog.capture("kennel_site_config_updated", { changed_fields: Object.keys(patch) });
       toast.success("Kennel page updated.");
       queryClient.invalidateQueries({ queryKey: ["kennel-site-config", kennelId] });
     },

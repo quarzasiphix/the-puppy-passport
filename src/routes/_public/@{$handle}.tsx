@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trophy, House, PawPrint, Baby, Dog, Heart, Newspaper, Star, Info } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Tabs, TabsContent } from "@/shared/ui/tabs";
 import { TooltipProvider } from "@/shared/ui/tooltip";
@@ -136,6 +137,7 @@ function BreederProfile() {
   const { userId, isSignedIn } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [tab, setTab] = useState("home");
   const isOwner = !!userId && userId === b.ownerId;
 
@@ -156,7 +158,10 @@ function BreederProfile() {
       if (isFollowing) await unfollowOrg(userId, b.id);
       else await followOrg(userId, b.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] }),
+    onSuccess: () => {
+      posthog.capture(isFollowing ? "breeder_unfollowed" : "breeder_followed");
+      queryClient.invalidateQueries({ queryKey: ["followed-org-ids", userId] });
+    },
     onError: (err) => toast.error(getFriendlyErrorMessage(err, t("breederProfile.couldNotUpdate"))),
   });
 
@@ -223,7 +228,10 @@ function BreederProfile() {
             isSignedIn={isSignedIn}
             followPending={followMutation.isPending}
             onFollow={() => followMutation.mutate()}
-            onContact={() => setTab("puppies")}
+            onContact={() => {
+              posthog.capture("breeder_contact_initiated");
+              setTab("puppies");
+            }}
           />
 
           <Tabs value={tab} onValueChange={setTab} className="mt-6">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Award, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -51,6 +52,7 @@ async function listAllAchievements() {
  * UPDATE policy is enough. */
 export function AchievementVerificationPanel() {
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -66,6 +68,7 @@ export function AchievementVerificationPanel() {
       if (error) throw error;
     },
     onSuccess: () => {
+      posthog.capture("achievement_verification_approved");
       toast.success("Approved — now visible on the kennel's public page.");
       queryClient.invalidateQueries({ queryKey: ["admin-achievements"] });
     },
@@ -86,6 +89,7 @@ export function AchievementVerificationPanel() {
       if (error) throw error;
     },
     onSuccess: () => {
+      posthog.capture("achievement_verification_rejected");
       toast.success("Rejected.");
       setRejectingId(null);
       setRejectReason("");

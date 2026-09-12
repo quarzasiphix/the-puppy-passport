@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FileUp, Check } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 
 import { useAuth } from "@/domains/identity";
 import { getMyKennel } from "@/domains/breeders";
@@ -89,6 +90,7 @@ function DogPedigreeRow({
   const [file, setFile] = useState<File | null>(null);
   const [sireId, setSireId] = useState("");
   const [damId, setDamId] = useState("");
+  const posthog = usePostHog();
   const [saved, setSaved] = useState(false);
   const { t } = useTranslation();
 
@@ -110,6 +112,7 @@ function DogPedigreeRow({
       });
     },
     onSuccess: () => {
+      posthog.capture("pedigree_source_attached", { has_document: !!file });
       setSaved(true);
       setOpen(false);
       onSaved();

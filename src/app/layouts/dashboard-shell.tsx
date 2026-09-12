@@ -51,6 +51,12 @@ const workspaces: { to: string; id: string; roles: string[]; icon: LucideIcon }[
     roles: ["foundation_member", "shelter_member"],
     icon: HeartHandshake,
   },
+  {
+    to: "/dashboard/transport-company",
+    id: "transportCompany",
+    roles: ["transport_company_owner"],
+    icon: Truck,
+  },
   { to: "/dashboard/operations", id: "operations", roles: ["operations", "admin"], icon: Truck },
   { to: "/dashboard/driver", id: "driver", roles: ["driver"], icon: Car },
   // Moderator and admin share one dashboard (routes/dashboard/admin.tsx) — a moderator sees the

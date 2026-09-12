@@ -201,7 +201,7 @@ function ForBreedersBanner() {
           <span className="text-muted-foreground"> — {t("home.forBreedersBannerDesc")}</span>
         </p>
         <Button asChild size="sm" variant="outline" className="shrink-0">
-          <Link to="/create-breeder">
+          <Link to="/create-breeder" search={{ type: "kennel" }}>
             {t("home.forBreedersBannerCta")} <ChevronRight className="ml-1 size-3.5" />
           </Link>
         </Button>
@@ -640,7 +640,9 @@ function FinalCTA() {
             <p className="mt-2 text-muted-foreground">{t("home.finalCTA.breederDesc")}</p>
           </div>
           <Button asChild size="lg" variant="outline" className="mt-8 w-fit">
-            <Link to="/create-breeder">{t("home.finalCTA.breederCta")}</Link>
+            <Link to="/create-breeder" search={{ type: "kennel" }}>
+              {t("home.finalCTA.breederCta")}
+            </Link>
           </Button>
         </div>
       </div>

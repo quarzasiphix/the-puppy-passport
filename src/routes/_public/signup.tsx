@@ -5,20 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import {
-  Truck,
-  Dog,
-  HeartHandshake,
-  Search,
-  Headset,
-  Mail,
-  ArrowRight,
-  ArrowLeft,
-} from "lucide-react";
+import { usePostHog } from "posthog-js/react";
+import { Mail, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
-import { signUp, landingPathForIntent, ANEMALO_SIGNUP_INTENT_COOKIE } from "@/domains/identity";
+import { signUp } from "@/domains/identity";
 import { Logo } from "@/app/components/logo";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
@@ -26,7 +18,6 @@ import { useTranslation } from "@/shared/i18n";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 
 const schema = z.object({
-  intent: z.enum(["customer", "buyer", "breeder", "foundation", "operations"]),
   email: z.string().email("Enter a valid email"),
   password: z.string().optional(),
   firstName: z.string().min(1, "Required"),
@@ -43,45 +34,10 @@ export const Route = createFileRoute("/_public/signup")({
   component: SignUp,
 });
 
-// "What do you primarily want to do?" — matches the 5 registration purposes from the product
-// spec. Only "breeder"/"foundation"/"operations" ever create a *pending* (gated) role; the other
-// two are unrestricted and active immediately.
-const intents = [
-  {
-    value: "customer" as const,
-    labelKey: "signUp.intentCustomerLabel",
-    icon: Truck,
-    descKey: "signUp.intentCustomerDesc",
-  },
-  {
-    value: "buyer" as const,
-    labelKey: "signUp.intentBuyerLabel",
-    icon: Search,
-    descKey: "signUp.intentBuyerDesc",
-  },
-  {
-    value: "breeder" as const,
-    labelKey: "signUp.intentBreederLabel",
-    icon: Dog,
-    descKey: "signUp.intentBreederDesc",
-  },
-  {
-    value: "foundation" as const,
-    labelKey: "signUp.intentFoundationLabel",
-    icon: HeartHandshake,
-    descKey: "signUp.intentFoundationDesc",
-  },
-  {
-    value: "operations" as const,
-    labelKey: "signUp.intentOperationsLabel",
-    icon: Headset,
-    descKey: "signUp.intentOperationsDesc",
-  },
-];
-
 function SignUp() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [step, setStep] = useState<0 | 1>(0);
   // Passwordless (Google + magic link) is the primary path; the password field and its extra
   // "just a few more details" step are opt-in. `sentTo` flips the card to the "check your inbox"
@@ -94,7 +50,6 @@ function SignUp() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      intent: "customer",
       email: "",
       password: "",
       firstName: "",
@@ -106,7 +61,7 @@ function SignUp() {
   });
 
   async function goToStepTwo() {
-    const valid = await form.trigger(["intent", "email", "firstName", "lastName"]);
+    const valid = await form.trigger(["email", "firstName", "lastName"]);
     const password = form.getValues("password") ?? "";
     if (password.length < 6) {
       form.setError("password", { message: t("signUp.passwordTooShort") });
@@ -116,13 +71,14 @@ function SignUp() {
   }
 
   async function sendMagicLink() {
-    const valid = await form.trigger(["intent", "email", "firstName", "lastName"]);
+    const valid = await form.trigger(["email", "firstName", "lastName"]);
     if (!valid) return false;
     const values = form.getValues();
     setSendingLink(true);
     const supabase = getSupabaseBrowserClient();
-    // The account and its role are created server-side in auth.callback.tsx when the link is
-    // opened — `intent` rides along in user_metadata and drives role provisioning + landing.
+    // The account and its (single, generic) role are created server-side in auth.callback.tsx
+    // when the link is opened. `method: "magic_link"` rides along purely as a PostHog labeling
+    // hint for the signup_completed event fired once the user lands on /create-breeder.
     const { error } = await supabase.auth.signInWithOtp({
       email: values.email,
       options: {
@@ -131,7 +87,7 @@ function SignUp() {
         data: {
           first_name: values.firstName,
           last_name: values.lastName,
-          intent: values.intent,
+          method: "magic_link",
         },
       },
     });
@@ -147,13 +103,13 @@ function SignUp() {
       return false;
     }
     setSentTo(values.email);
+    posthog.capture("signup_magic_link_sent");
     return true;
   }
 
   async function onSubmit(values: FormValues) {
     const result = await signUp({
       data: {
-        intent: values.intent,
         email: values.email,
         password: values.password ?? "",
         firstName: values.firstName,
@@ -168,30 +124,18 @@ function SignUp() {
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["auth-state"] });
+    posthog.capture("signup_completed", { method: "password" });
     toast.success(t("signUp.accountCreatedToast"));
-    if (values.intent === "operations") toast.info(t("signUp.operationsPendingToast"));
-    await navigate({ to: landingPathForIntent(values.intent) });
+    await navigate({ to: "/create-breeder" });
   }
 
   async function onGoogleSignUp() {
     const supabase = getSupabaseBrowserClient();
-    const intent = form.getValues("intent");
-    // intent can't ride in OAuth user_metadata (Google owns the profile). The `?intent=` query
-    // param on redirectTo is the obvious way to pass it back, but Supabase's redirect-URL
-    // allowlist strips extra query params from OAuth callback URLs in production — it doesn't
-    // reliably survive the Google -> GoTrue -> app round trip (confirmed live 2026-09-11: a
-    // breeder sign-up silently landed as a plain customer). A short-lived first-party cookie
-    // does survive it (SameSite=Lax rides along on the top-level redirect back to our own
-    // origin), so that's the real channel now — completePasswordlessSignIn in actions.ts reads
-    // it. The query param stays too, as a harmless duplicate for environments where it happens
-    // to come through.
-    document.cookie = `${ANEMALO_SIGNUP_INTENT_COOKIE}=${intent}; path=/; max-age=600; SameSite=Lax${
-      window.location.protocol === "https:" ? "; Secure" : ""
-    }`;
+    posthog.capture("signup_google_started");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?intent=${intent}`,
+        redirectTo: `${window.location.origin}/auth/callback?method=google`,
       },
     });
     if (error) toast.error(error.message);
@@ -270,43 +214,6 @@ function SignUp() {
               >
                 {step === 0 ? (
                   <>
-                    <FormField
-                      control={form.control}
-                      name="intent"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                            {t("signUp.iAmHereTo")}
-                          </FormLabel>
-                          <div className="grid grid-cols-1 gap-2">
-                            {intents.map((opt) => (
-                              <button
-                                type="button"
-                                key={opt.value}
-                                onClick={() => field.onChange(opt.value)}
-                                className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
-                                  field.value === opt.value
-                                    ? "border-primary bg-primary/5"
-                                    : "border-border bg-background hover:bg-secondary/50"
-                                }`}
-                              >
-                                <opt.icon className="mt-0.5 size-4 shrink-0 text-primary" />
-                                <span>
-                                  <span className="block text-sm font-medium">
-                                    {t(opt.labelKey)}
-                                  </span>
-                                  <span className="block text-xs text-muted-foreground">
-                                    {t(opt.descKey)}
-                                  </span>
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <Button
                       type="button"
                       variant="outline"

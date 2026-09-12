@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { usePostHog } from "posthog-js/react";
 import { Logo } from "@/app/components/logo";
 import { Button } from "@/shared/ui/button";
-import { completeEmailOtp, signupIntentSchema } from "@/domains/identity";
+import { completeEmailOtp } from "@/domains/identity";
 import { useTranslation } from "@/shared/i18n";
 
 // Where an emailed magic-link lands (see supabase/templates/magic_link.html). Deliberately NOT
@@ -15,7 +16,6 @@ import { useTranslation } from "@/shared/i18n";
 const searchSchema = z.object({
   token_hash: z.string().optional(),
   type: z.string().optional(),
-  intent: signupIntentSchema.optional(),
   next: z.string().optional(),
 });
 
@@ -27,8 +27,9 @@ export const Route = createFileRoute("/auth/confirm")({
 
 function AuthConfirm() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { t } = useTranslation();
-  const { token_hash: tokenHash, type, intent, next } = Route.useSearch();
+  const { token_hash: tokenHash, type, next } = Route.useSearch();
   const [state, setState] = useState<"idle" | "working" | "error">(
     tokenHash && type === "magiclink" ? "idle" : "error",
   );
@@ -37,15 +38,25 @@ function AuthConfirm() {
   async function onContinue() {
     if (!tokenHash) return;
     setState("working");
-    const result = await completeEmailOtp({ data: { tokenHash, intent } });
+    const result = await completeEmailOtp({ data: { tokenHash } });
     if (result.error) {
       setState("error");
       setErrorMessage(result.error);
       return;
     }
-    await navigate({
-      to: next && next.startsWith("/") ? next : (result.redirectTo ?? "/dashboard/buyer"),
-    });
+    posthog.capture("magic_link_confirmed");
+    if (next && next.startsWith("/")) {
+      await navigate({ to: next });
+      return;
+    }
+    if (result.redirectTo === "/create-breeder") {
+      await navigate({
+        to: "/create-breeder",
+        search: result.isNewUser && result.method ? { method: result.method } : undefined,
+      });
+      return;
+    }
+    await navigate({ to: "/dashboard/buyer" });
   }
 
   return (

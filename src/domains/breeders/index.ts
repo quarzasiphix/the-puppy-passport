@@ -9,6 +9,7 @@
 // this pass to avoid a second risky rewrite of every call site in the same migration.
 export * from "../animals/services/breeder";
 export * from "../animals/services/foundation";
+export * from "../animals/services/transport-company";
 export * from "./types";
 export * from "./services/kennel-site";
 export * from "./services/breeder-stats";

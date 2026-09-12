@@ -18,6 +18,7 @@ import {
 import { startApplicationConversation } from "@/domains/messaging";
 import { convertApplicationToReservation } from "@/lib/queries/reservations";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { usePostHog } from "posthog-js/react";
 import {
   CheckCircle2,
   XCircle,
@@ -47,6 +48,7 @@ function ApplicationsPage() {
   const { userId } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [openId, setOpenId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
 
@@ -74,7 +76,8 @@ function ApplicationsPage() {
         animalName: active.animals?.name ?? t("breederPanel.applications.yourListing"),
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, params) => {
+      posthog.capture("application_responded", { status: params.status });
       toast.success(t("breederPanel.applications.buyerNotified"));
       queryClient.invalidateQueries({ queryKey: ["kennel-applications", kennel?.id] });
       setOpenId(null);
@@ -101,6 +104,7 @@ function ApplicationsPage() {
       return convertApplicationToReservation({ applicationId: active.id });
     },
     onSuccess: () => {
+      posthog.capture("application_converted_to_reservation");
       toast.success(t("breederPanel.applications.reservationCreated"));
       queryClient.invalidateQueries({ queryKey: ["kennel-applications", kennel?.id] });
       setOpenId(null);

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Gavel, CheckCircle2, XCircle, Ban, EyeOff, Eye } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -33,6 +34,7 @@ const statusStyles: Record<ModerationCaseRow["status"], string> = {
 export function ModerationPanel() {
   const { userId } = useAuth();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const query = useQuery({ queryKey: ["admin-moderation-cases"], queryFn: listModerationCases });
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [summaryById, setSummaryById] = useState<Record<string, string>>({});
@@ -64,7 +66,8 @@ export function ModerationPanel() {
       const affected = query.data?.find((c) => c.id === id)?.affected_profile_id;
       if (affected) await notifyAffectedUserOfDecision(id, affected);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      posthog.capture("moderation_case_resolved", { status: variables.status });
       toast.success("Case updated.");
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
     },
@@ -107,7 +110,8 @@ export function ModerationPanel() {
           return setOrganisationSuspended(input.targetId, false, input.reason);
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      posthog.capture("moderation_enforcement_applied", { kind: variables.kind });
       toast.success("Action applied.");
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });
     },
@@ -136,7 +140,8 @@ export function ModerationPanel() {
         input.decision,
       );
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      posthog.capture("moderation_appeal_reviewed", { decision: variables.decision });
       toast.success("Appeal reviewed.");
       queryClient.invalidateQueries({ queryKey: ["case-appeals", appealsOpenFor] });
       queryClient.invalidateQueries({ queryKey: ["admin-moderation-cases"] });

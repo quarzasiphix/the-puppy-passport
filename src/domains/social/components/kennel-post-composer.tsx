@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Send, PenSquare } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "@/shared/ui/label";
@@ -49,6 +50,7 @@ export function KennelPostComposer({
   const [linkedLitterId, setLinkedLitterId] = useState<string>("");
   const [linkedAnimalId, setLinkedAnimalId] = useState<string>("");
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -61,6 +63,12 @@ export function KennelPostComposer({
         linkedAnimalId: linkedAnimalId || null,
       }),
     onSuccess: () => {
+      posthog.capture("kennel_post_created", {
+        post_type: postType,
+        visibility,
+        linked_litter: !!linkedLitterId,
+        linked_animal: !!linkedAnimalId,
+      });
       toast.success("Posted to your kennel timeline.");
       setContent("");
       setLinkedLitterId("");
