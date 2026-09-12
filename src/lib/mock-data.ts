@@ -60,6 +60,11 @@ export type Litter = {
   status: "planned" | "born" | "ready";
   image: string;
   registration: string;
+  /** This litter's kennel's brand color (organisation_site_configurations.primary_color), a raw
+   * hex string or null — see domains/breeders/services/brand-color.ts. Optional for the same
+   * reason as Breeder.accentColor above; the real mapping in
+   * domains/marketplace/services/marketplace.ts always sets it. */
+  accentColor?: string | null;
 };
 
 export type Breeder = {

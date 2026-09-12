@@ -299,7 +299,7 @@ function PuppyDetail() {
                   {breeder.verified && (
                     <span
                       aria-hidden
-                      className="absolute -inset-2 -z-10 rounded-full blur-md motion-safe:animate-pulse"
+                      className="absolute -inset-2 -z-10 rounded-full blur-md motion-safe:animate-trust-glow"
                       style={{
                         background: `radial-gradient(circle, ${breeder.accentColor ?? "var(--primary)"}55 0%, transparent 70%)`,
                       }}
@@ -314,11 +314,11 @@ function PuppyDetail() {
                     <>
                       <Star
                         aria-hidden
-                        className="absolute -right-1.5 -top-1.5 size-4 fill-warning text-warning motion-safe:animate-pulse"
+                        className="absolute -right-1.5 -top-1.5 size-4 fill-warning text-warning motion-safe:animate-trust-glow [animation-delay:1100ms]"
                       />
                       <Star
                         aria-hidden
-                        className="absolute -bottom-1 -left-1.5 size-3 fill-warning text-warning opacity-80 motion-safe:animate-pulse [animation-delay:400ms]"
+                        className="absolute -bottom-1 -left-1.5 size-3 fill-warning text-warning opacity-80 motion-safe:animate-trust-glow [animation-delay:2200ms]"
                       />
                     </>
                   )}

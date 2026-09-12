@@ -30,7 +30,7 @@ export function AlumniTab({ alumni, kennelName }: { alumni: Puppies; kennelName:
   return (
     <div>
       <div className="mb-5 flex items-start gap-3 rounded-2xl border border-border/70 bg-secondary/30 p-4 text-sm text-muted-foreground">
-        <Home className="mt-0.5 size-4 shrink-0 text-primary" />
+        <Home className="mt-0.5 size-4 shrink-0 text-accent" />
         <p>
           {alumni.length}{" "}
           {alumni.length === 1
@@ -63,7 +63,7 @@ function AlumniCard({ p }: { p: Puppies[number] }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
         <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur">
-          <Home className="size-3 text-primary" /> {t("breederProfile.foundHome")}
+          <Home className="size-3 text-accent" /> {t("breederProfile.foundHome")}
         </span>
       </div>
       <div className="p-4">

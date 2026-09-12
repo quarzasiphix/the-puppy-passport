@@ -186,7 +186,16 @@ export function PuppyCard({ p }: { p: Puppy }) {
           )}
           {p.kennel}
         </p>
-        <Button asChild className="mt-auto">
+        {/* Inline style, not a bg-accent/text-accent utility: this card also renders on mixed,
+            multi-kennel pages (find-a-dog, planned-litters) where the page never overrides the
+            global --accent variable — a Tailwind accent class would paint every branded kennel's
+            button the same site-default color instead of each kennel's own hex. Safe on the
+            single-kennel profile page too, just redundant with that page's --accent override. */}
+        <Button
+          asChild
+          className="mt-auto hover:opacity-90"
+          style={p.accentColor ? { backgroundColor: p.accentColor, color: "#ffffff" } : undefined}
+        >
           <Link to="/puppies/$id" params={{ id: p.id }}>
             {t("cards.viewPuppy")}
           </Link>
@@ -261,7 +270,16 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
     <article className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card">
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
         <img src={l.image} alt={l.code} loading="lazy" className="size-full object-cover" />
-        <Badge className="absolute left-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground">
+        {/* Inline style when a kennel has its own color, for the same mixed-multi-kennel-page
+            reason as PuppyCard's button above. */}
+        <Badge
+          className={
+            l.accentColor
+              ? "absolute left-3 top-3 text-white"
+              : "absolute left-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground"
+          }
+          style={l.accentColor ? { backgroundColor: l.accentColor, borderColor: `${l.accentColor}4d` } : undefined}
+        >
           {planned ? t("cards.plannedLitter") : t("cards.currentLitter")}
         </Badge>
       </div>
@@ -311,7 +329,14 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
             </Link>
           </Button>
           {planned && (
-            <Button className="w-full sm:flex-1" disabled title={t("cards.joinWaitingListTooltip")}>
+            <Button
+              className="w-full hover:opacity-90 sm:flex-1"
+              style={
+                l.accentColor ? { backgroundColor: l.accentColor, color: "#ffffff" } : undefined
+              }
+              disabled
+              title={t("cards.joinWaitingListTooltip")}
+            >
               {t("cards.joinWaitingList")}
             </Button>
           )}

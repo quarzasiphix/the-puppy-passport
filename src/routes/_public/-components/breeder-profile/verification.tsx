@@ -70,7 +70,7 @@ export function VerificationList({
       {rows.map((r) => (
         <li key={r.label} className="flex items-center gap-2">
           {r.verified ? (
-            <BadgeCheck className="size-4 shrink-0 text-primary" />
+            <BadgeCheck className="size-4 shrink-0 text-accent" />
           ) : (
             <span className="size-4 shrink-0 rounded-full border border-border" />
           )}

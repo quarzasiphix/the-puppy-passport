@@ -225,7 +225,12 @@ type LitterRow = {
   breeds: { name: string } | null;
   mother: { registered_name: string; profile_image_url: string | null } | null;
   father: { registered_name: string } | null;
-  organisations: { id: string; slug: string; name: string } | null;
+  organisations: {
+    id: string;
+    slug: string;
+    name: string;
+    organisation_site_configurations: { primary_color: string | null } | null;
+  } | null;
 };
 
 function toLitterStatus(status: string): Litter["status"] {
@@ -265,6 +270,7 @@ function buildLitter(l: LitterRow, available: number, reserved: number): Litter 
     image: l.mother?.profile_image_url ?? placeholderImg,
     registration:
       [l.association, l.registration_number].filter(Boolean).join(" ") || "Not registered yet",
+    accentColor: l.organisations?.organisation_site_configurations?.primary_color ?? null,
   };
 }
 
@@ -313,7 +319,7 @@ async function mapLitterRows(rows: LitterRow[]): Promise<Litter[]> {
 }
 
 const litterSelect =
-  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, slug, name)";
+  "id, code, birth_date, expected_birth_date, ready_date, puppy_count, status, registration_number, association, breeds(name), mother:parent_dogs!litters_mother_id_fkey(registered_name, profile_image_url), father:parent_dogs!litters_father_id_fkey(registered_name), organisations!litters_kennel_id_fkey(id, slug, name, organisation_site_configurations(primary_color))";
 
 export async function listPublishedLitters(status?: LitterStatus) {
   const supabase = getSupabaseBrowserClient();

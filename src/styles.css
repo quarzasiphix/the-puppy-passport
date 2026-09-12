@@ -156,3 +156,21 @@
     animation: none;
   }
 }
+
+/* A slow, gentle breathe for the verified-kennel glow/stars on puppies.$id.tsx — replaces plain
+   `animate-pulse` (2s, straight to 50% opacity), which read as a cheap synchronized blink when
+   two of the three elements shared the same timing. Longer cycle, shallower opacity dip, and each
+   caller staggers its own start via `[animation-delay:...]` so the halo and both stars visibly
+   drift out of phase instead of flashing together. */
+@utility animate-trust-glow {
+  animation: trust-glow-breathe 3.4s ease-in-out infinite;
+}
+@keyframes trust-glow-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
