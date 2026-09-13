@@ -91,6 +91,19 @@ see the "Module-level docs and the TODO list" section in `CLAUDE.md` for the mai
 
 ## Product decisions still open
 
+- [ ] **Fleet/route-optimization layer (Google Maps API), raised 2026-09-13, not built.** See
+      `docs/TRANSPORT_MARKETPLACE_VISION.md` — the product owner's own "eventually": once trip
+      stops carry real geocoded addresses (not just pasted Maps links), a routing/distance-matrix
+      API could suggest the most efficient stop order for a multi-animal trip. No geocoding exists
+      anywhere in the transport domain today; this is real, separate work, sequenced after the
+      public-trips/join-request flow below has real usage.
+- [x] **Public trip visibility, transport-company directory, join-request flow — built 2026-09-13.**
+      `public_trips` view (opt-in per trip, geography/date/status/stop-count only, mirrors
+      `public_routes`' safety boundary), `/transport-companies` directory (mirrors `/breeders`/
+      `/foundations`), `trip_join_requests` (lightweight pickup/dropoff/contact ask on a published
+      trip, accept-to-real-stop in one action). `/planned-routes` redesigned into "Anemalo routes"/
+      "Company trips" tabs. Deliberately no scored matching engine and no geocoding — see
+      `docs/TRANSPORT_MARKETPLACE_VISION.md` for the full reasoning and what's next.
 - [ ] **Generalize the `@handle` public profile beyond breeders, raised 2026-09-13, not designed.**
       `/@{$handle}` (src/routes/_public/@{$handle}.tsx) is breeder-only today — built around the
       `Breeder` type and kennel-specific tabs (Dogs, Litters, Alumni, Pedigrees). Foundations and
