@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { Network } from "lucide-react";
 import { useTranslation } from "@/shared/i18n";
 import type { Parents } from "./types";
 
@@ -14,6 +16,15 @@ export function ParentDogCard({ p }: { p: Parents[number] }) {
           <h4 className="mt-1 font-display text-lg font-semibold">{p.name}</h4>
           {p.pedigree && <p className="text-xs text-muted-foreground">{p.pedigree}</p>}
           {p.description && <p className="mt-2 text-sm text-muted-foreground">{p.description}</p>}
+          {p.dogSlug && (
+            <Link
+              to="/dogs/$slug"
+              params={{ slug: p.dogSlug }}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+            >
+              <Network className="size-3" /> {t("breederProfile.viewPedigree")}
+            </Link>
+          )}
         </div>
       </div>
     </div>

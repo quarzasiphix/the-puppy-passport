@@ -43,6 +43,7 @@ import {
   formatExperience,
   formatPuppiesAvailable,
   formatDate,
+  formatLocation,
 } from "@/domains/marketplace";
 import { ReportDialog } from "@/domains/trust";
 import { useAuth } from "@/domains/identity";
@@ -62,6 +63,7 @@ const availabilityForStatus: Record<string, string> = {
   "applications-open": "https://schema.org/PreOrder",
   reserved: "https://schema.org/LimitedAvailability",
   sold: "https://schema.org/SoldOut",
+  unavailable: "https://schema.org/OutOfStock",
   draft: "https://schema.org/OutOfStock",
 };
 
@@ -87,7 +89,11 @@ export const Route = createFileRoute("/_public/puppies/$id")({
         {
           name: "description",
           content: puppy
-            ? `${puppy.name}, a ${puppy.breed} puppy from ${puppy.kennel} in ${puppy.city}, ${puppy.country}.`
+            ? `${puppy.name}, a ${puppy.breed} puppy from ${puppy.kennel}${
+                formatLocation(puppy.city, puppy.country)
+                  ? ` in ${formatLocation(puppy.city, puppy.country)}`
+                  : ""
+              }.`
             : "A puppy listing on Anemalo.",
         },
         ...(puppy
@@ -214,6 +220,11 @@ function PuppyDetail() {
     );
   }
 
+  // A buyer's own existing application is always shown regardless of the puppy's current status
+  // (it's their history, not a live "can you apply" decision). A fresh "Apply" CTA is a live
+  // decision, though — it must never appear on a puppy that isn't actually applicable, or a shared/
+  // bookmarked link to a sold or reserved puppy keeps inviting applications for a dog that's gone.
+  const canApply = puppy.status === "available" || puppy.status === "applications-open";
   const applicationCta = existingApplicationQuery.data ? (
     <Button className="w-full" size="lg" variant="outline" asChild>
       <Link to="/dashboard/buyer/applications">
@@ -222,9 +233,17 @@ function PuppyDetail() {
           t("puppyDetail.viewStatus")}
       </Link>
     </Button>
-  ) : (
+  ) : canApply ? (
     <Button className="w-full" size="lg" onClick={() => setOpenApply(true)}>
       {t("puppyDetail.applyForPuppy")}
+    </Button>
+  ) : (
+    <Button className="w-full" size="lg" variant="secondary" disabled>
+      {puppy.status === "sold"
+        ? t("puppyDetail.noLongerAvailableSold")
+        : puppy.status === "reserved"
+          ? t("puppyDetail.noLongerAvailableReserved")
+          : t("puppyDetail.noLongerAvailableGeneric")}
     </Button>
   );
 
@@ -335,7 +354,7 @@ function PuppyDetail() {
                     )}
                   </div>
                   <p className="truncate text-xs text-muted-foreground sm:text-sm">
-                    {breeder.city}, {breeder.country}
+                    {formatLocation(breeder.city, breeder.country)}
                     {breeder.association ? ` · ${breeder.association}` : ""}
                   </p>
                 </div>
@@ -391,7 +410,10 @@ function PuppyDetail() {
                     <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
                       {[
                         [t("puppyDetail.litterCode"), litter.code],
-                        [t("puppyDetail.born"), formatDate(locale, litter.birthDate, {})],
+                        [
+                          t("puppyDetail.born"),
+                          formatDate(locale, litter.birthDate, {}, t("cards.dateNotSet")),
+                        ],
                         [t("puppyDetail.totalPuppies"), `${litter.puppyCount}`],
                         [t("puppyDetail.availableNow"), `${litter.available}`],
                         [t("puppyDetail.reserved"), `${litter.reserved}`],
@@ -472,7 +494,9 @@ function PuppyDetail() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {breeder.name} · {breeder.city}, {breeder.country}
+                          {breeder.name}
+                          {formatLocation(breeder.city, breeder.country) &&
+                            ` · ${formatLocation(breeder.city, breeder.country)}`}
                         </p>
                         <p className="mt-2 text-sm">{breeder.description}</p>
                         <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -481,7 +505,7 @@ function PuppyDetail() {
                               {t("puppyDetail.responsePrefix")}: {breeder.responseTime}
                             </span>
                           )}
-                          {breeder.years > 0 && (
+                          {breeder.years != null && breeder.years > 0 && (
                             <span>{formatExperience(locale, breeder.years)}</span>
                           )}
                           <span>{formatPuppiesAvailable(locale, breeder.availablePuppies)}</span>
@@ -592,17 +616,17 @@ function PuppyDetail() {
                   <Field
                     icon={<Calendar className="size-4" />}
                     label={t("puppyDetail.dateOfBirth")}
-                    value={formatDate(locale, puppy.dob, {})}
+                    value={formatDate(locale, puppy.dob, {}, t("cards.dateNotSet"))}
                   />
                   <Field
                     icon={<Calendar className="size-4" />}
                     label={t("puppyDetail.ready")}
-                    value={formatDate(locale, puppy.readyDate, {})}
+                    value={formatDate(locale, puppy.readyDate, {}, t("cards.dateNotSet"))}
                   />
                   <Field
                     icon={<MapPin className="size-4" />}
                     label={t("puppyDetail.location")}
-                    value={`${puppy.city}, ${puppy.country}`}
+                    value={formatLocation(puppy.city, puppy.country)}
                   />
                   <Field
                     icon={<Truck className="size-4" />}

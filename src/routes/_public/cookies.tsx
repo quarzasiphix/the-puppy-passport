@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LegalDraftNotice } from "@/shared/ui/legal-notice";
+import { LegalDraftNotice, PendingLegalDrafting } from "@/shared/ui/legal-notice";
 import { useTranslation } from "@/shared/i18n";
 
 // i18n scope: only the page chrome (eyebrow, title, "last updated" line and the cookie-table
@@ -38,9 +38,12 @@ function CookiesPage() {
 
       <div className="space-y-6 text-sm leading-relaxed text-foreground">
         <p>
-          Anemalo currently uses only the cookies required to keep you signed in. We don't run
-          analytics, advertising, or third-party tracking scripts on this platform today — if that
-          changes, this page and a consent banner will be added before any such cookie is set.
+          Anemalo uses the cookie required to keep you signed in, plus PostHog, a product analytics
+          tool, to understand how the platform is used and to record anonymised session replays
+          (with every input field masked) so we can find and fix real usability problems. If you're
+          signed in, PostHog also associates your activity with your account (your user ID, email
+          and name) so support and bug reports can be traced to a real account. We don't run
+          third-party advertising trackers, and we don't sell or share this data with advertisers.
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-border/60">
@@ -58,16 +61,28 @@ function CookiesPage() {
                 purpose="Keeps you signed in between visits and identifies your account to the server."
                 type="Strictly necessary — set by our authentication provider (Supabase)"
               />
+              <CookieRow
+                name="ph_*"
+                purpose="PostHog's own identifiers — which anonymous or signed-in visitor a given page view, click and session replay belongs to."
+                type="Product analytics — set by PostHog"
+              />
             </tbody>
           </table>
         </div>
 
         <p>
-          Because this cookie is strictly necessary for signing in — not for analytics or marketing
-          — it's set without a separate consent banner, consistent with standard cookie law
-          exemptions for essential cookies. You can still block or delete it in your browser
-          settings, but you won't be able to stay signed in if you do.
+          The sign-in cookie is strictly necessary — it's set without a separate consent banner,
+          consistent with standard cookie law exemptions for essential cookies. You can still block
+          or delete it in your browser settings, but you won't be able to stay signed in if you do.
         </p>
+
+        <PendingLegalDrafting>
+          <p>
+            Whether PostHog's analytics/session-recording cookies require an opt-in consent banner
+            (rather than the current opt-out-via-browser-settings model) depends on the applicable
+            jurisdiction and needs confirmation by a lawyer before this is published as final.
+          </p>
+        </PendingLegalDrafting>
       </div>
     </div>
   );

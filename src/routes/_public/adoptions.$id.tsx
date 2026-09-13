@@ -6,7 +6,7 @@ import { ChevronLeft, MapPin, Truck, HeartHandshake, MessageCircle } from "lucid
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
-import { getAdoptionById } from "@/domains/marketplace";
+import { getAdoptionById, formatLocation } from "@/domains/marketplace";
 import { useAuth } from "@/domains/identity";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { VerifiedBadge } from "@/domains/breeders";
@@ -31,7 +31,9 @@ export const Route = createFileRoute("/_public/adoptions/$id")({
         {
           name: "description",
           content: a
-            ? `${a.name}, a ${a.breed} looking for a home with ${a.orgName} in ${a.city}, ${a.country}.`
+            ? `${a.name}, a ${a.breed} looking for a home with ${a.orgName}${
+                formatLocation(a.city, a.country) ? ` in ${formatLocation(a.city, a.country)}` : ""
+              }.`
             : "An animal available for adoption on Anemalo.",
         },
         ...(a
@@ -140,7 +142,7 @@ function AdoptionDetail() {
               {a.breed} · {a.sex} · {a.approxAge}
             </p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="size-3.5" /> {a.city}, {a.country}
+              <MapPin className="size-3.5" /> {formatLocation(a.city, a.country)}
             </p>
 
             {a.description && (

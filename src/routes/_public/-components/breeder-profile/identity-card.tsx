@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { useTranslation } from "@/shared/i18n";
+import { formatLocation } from "@/domains/marketplace";
 import { VerificationBadges } from "./verification";
 import type { Breeder, Stats, TrustClaims } from "./types";
 
@@ -62,7 +63,7 @@ export function IdentityCard({
             </div>
             <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="size-3.5 shrink-0" />
-              {b.city}, {b.country}
+              {formatLocation(b.city, b.country)}
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {b.breeds.map((br) => (

@@ -29,9 +29,16 @@ export function HomeTab({
   onSeeAllPosts: () => void;
 }) {
   const { t } = useTranslation();
+  // "Available now" means available — a reserved puppy under this heading directly contradicts
+  // it (listPuppiesForKennel deliberately still includes reserved ones, for the full Puppies tab,
+  // where the Reserved badge on the card itself makes the state honest; this heading doesn't have
+  // per-card room for that nuance, so it filters them out instead).
+  const availableNow = puppies.filter(
+    (p) => p.status === "available" || p.status === "applications-open",
+  );
   return (
     <>
-      {puppies.length > 0 && (
+      {availableNow.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-lg font-semibold">
@@ -42,7 +49,7 @@ export function HomeTab({
             </Button>
           </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {puppies.slice(0, 3).map((p) => (
+            {availableNow.slice(0, 3).map((p) => (
               <PuppyCard key={p.id} p={p} />
             ))}
           </div>

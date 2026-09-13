@@ -23,15 +23,11 @@ function plYearsWord(n: number): string {
   return "lat";
 }
 
-function plPeopleWord(n: number): string {
-  if (n === 1) return "osoba";
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return "osoby";
-  return "osób";
-}
-
-export function formatExperience(locale: Locale, years: number): string {
+// Returns null when the breeder never entered a years-of-experience figure — "0 years" would read
+// as a claim of zero experience, not "not stated", so the caller must skip rendering entirely
+// rather than fall back to 0.
+export function formatExperience(locale: Locale, years: number | null): string | null {
+  if (years == null) return null;
   return locale === "pl"
     ? `${years} ${plYearsWord(years)} doświadczenia`
     : `${years} yrs experience`;
@@ -41,18 +37,33 @@ export function formatPuppiesAvailable(locale: Locale, count: number): string {
   return locale === "pl" ? `Dostępnych szczeniąt: ${count}` : `${count} puppies available`;
 }
 
-export function formatWaitingList(locale: Locale, count: number): string {
-  return locale === "pl"
-    ? `Lista oczekujących: ${count} ${plPeopleWord(count)}`
-    : `Waiting list: ${count} ${count === 1 ? "person" : "people"}`;
-}
-
+// `iso` is empty for a planned litter with no birth/ready date set yet (a perfectly normal state,
+// not an error) — `new Date("").toLocaleDateString()` previously returned the literal string
+// "Invalid Date" straight to the page. `fallback` (translated by the caller, e.g. t("cards.dateNotSet"))
+// covers both that case and any other genuinely malformed date string.
 export function formatDate(
   locale: Locale,
   iso: string,
   options: Intl.DateTimeFormatOptions,
+  fallback = "—",
 ): string {
-  return new Date(iso).toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", options);
+  if (!iso) return fallback;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", options);
+}
+
+// `city`/`country` are independently optional on an organisation/animal row — naive
+// `${city}, ${country}` template literals produced stray punctuation (", Poland" / "Warsaw, ")
+// whenever only one side was set, and an empty string when neither was. This is the one place that
+// joins them, used everywhere a location is rendered.
+export function formatLocation(
+  city: string | null | undefined,
+  country: string | null | undefined,
+) {
+  return [city, country]
+    .filter((part): part is string => !!part && part.trim().length > 0)
+    .join(", ");
 }
 
 // Shared across every card on a page — react-query dedupes identical keys, so this is one query
@@ -109,6 +120,7 @@ export const statusStyles: Record<Puppy["status"], string> = {
   "applications-open": "bg-accent/15 text-accent border-accent/30",
   reserved: "bg-warning/20 text-foreground border-warning/40",
   sold: "bg-muted text-muted-foreground border-border",
+  unavailable: "bg-muted text-muted-foreground border-border",
   draft: "bg-muted text-muted-foreground border-border",
 };
 
@@ -121,6 +133,7 @@ export function statusLabelFor(t: (key: string) => string, status: Puppy["status
     "applications-open": t("cards.statusApplicationsOpen"),
     reserved: t("cards.statusReserved"),
     sold: t("cards.statusSold"),
+    unavailable: t("cards.statusUnavailable"),
     draft: t("cards.statusDraft"),
   };
   return map[status];
@@ -188,11 +201,16 @@ export function PuppyCard({ p }: { p: Puppy }) {
         </div>
         <div className="grid grid-cols-2 gap-1.5 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-3.5" /> {p.city}, {p.country}
+            <MapPin className="size-3.5" /> {formatLocation(p.city, p.country)}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="size-3.5" /> {t("cards.readyPrefix")}{" "}
-            {formatDate(locale, p.readyDate, { day: "numeric", month: "short" })}
+            {formatDate(
+              locale,
+              p.readyDate,
+              { day: "numeric", month: "short" },
+              t("cards.dateNotSet"),
+            )}
           </span>
         </div>
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -279,7 +297,7 @@ export function AdoptionCard({ a }: { a: AdoptionListing }) {
           )}
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="size-3.5" /> {a.city}, {a.country}
+          <MapPin className="size-3.5" /> {formatLocation(a.city, a.country)}
         </span>
         <p className="line-clamp-2 text-sm text-muted-foreground">{a.description}</p>
         <p className="text-sm text-muted-foreground">{a.orgName}</p>
@@ -314,7 +332,11 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
               ? "absolute left-3 top-3 text-white"
               : "absolute left-3 top-3 border-primary/30 bg-primary/90 text-primary-foreground"
           }
-          style={l.accentColor ? { backgroundColor: l.accentColor, borderColor: `${l.accentColor}4d` } : undefined}
+          style={
+            l.accentColor
+              ? { backgroundColor: l.accentColor, borderColor: `${l.accentColor}4d` }
+              : undefined
+          }
         >
           {planned ? t("cards.plannedLitter") : t("cards.currentLitter")}
         </Badge>
@@ -327,19 +349,21 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <Meta
             label={planned ? t("cards.expectedBirth") : t("cards.born")}
-            value={formatDate(locale, l.birthDate, {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
+            value={formatDate(
+              locale,
+              l.birthDate,
+              { day: "numeric", month: "short", year: "numeric" },
+              t("cards.dateNotSet"),
+            )}
           />
           <Meta
             label={t("cards.collectionReady")}
-            value={formatDate(locale, l.readyDate, {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
+            value={formatDate(
+              locale,
+              l.readyDate,
+              { day: "numeric", month: "short", year: "numeric" },
+              t("cards.dateNotSet"),
+            )}
           />
           <Meta label={t("cards.mother")} value={l.mother} />
           <Meta label={t("cards.father")} value={l.father} />
@@ -349,11 +373,6 @@ export function LitterCard({ l, planned = false }: { l: Litter; planned?: boolea
             value={`${l.available} / ${l.puppyCount}`}
           />
         </dl>
-        {planned && (
-          <p className="rounded-lg bg-secondary/70 px-3 py-2 text-xs text-muted-foreground">
-            {formatWaitingList(locale, l.waitingList)}
-          </p>
-        )}
         {/* Same overflow bug as the profile header's Contact/Follow pair (see identity-card.tsx):
             two flex-1 buttons can't shrink below their own text, and "Dołącz do listy
             oczekujących" (Join waiting list) alone is wider than a phone screen's card. Stack
@@ -427,7 +446,8 @@ export function BreederCard({ b }: { b: Breeder }) {
               {b.kennel}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {b.name} · {b.city}, {b.country}
+              {b.name}
+              {formatLocation(b.city, b.country) && ` · ${formatLocation(b.city, b.country)}`}
             </p>
           </div>
           {b.responseTime && (
@@ -446,7 +466,7 @@ export function BreederCard({ b }: { b: Breeder }) {
         </div>
         <p className="line-clamp-3 text-sm text-muted-foreground">{b.description}</p>
         <div className="flex items-center justify-between border-t border-border/60 pt-3 text-xs text-muted-foreground">
-          <span>{formatExperience(locale, b.years)}</span>
+          <span>{formatExperience(locale, b.years) ?? ""}</span>
           <span>{formatPuppiesAvailable(locale, b.availablePuppies)}</span>
         </div>
         <Button asChild variant="outline" className="relative mt-1">

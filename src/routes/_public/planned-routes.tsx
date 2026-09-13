@@ -24,9 +24,15 @@ export const Route = createFileRoute("/_public/planned-routes")({
   head: () => ({ meta: [{ title: "Planned routes — Anemalo" }] }),
   loader: async () => {
     const supabase = getSupabaseBrowserClient();
+    // A route whose departure_date has already passed is not "planned" or "upcoming" by any
+    // reading of this page's heading — nothing previously excluded it, so a confirmed August
+    // route was still showing here in September. A route with no date set yet (still being
+    // planned) legitimately belongs here, so null stays included.
+    const today = new Date().toISOString().slice(0, 10);
     const { data } = await supabase
       .from("public_routes")
       .select("*")
+      .or(`departure_date.gte.${today},departure_date.is.null`)
       .order("departure_date", { ascending: true, nullsFirst: false });
     return { routes: data ?? [] };
   },
@@ -44,9 +50,7 @@ function PlannedRoutesPage() {
           <p className="text-xs font-medium uppercase tracking-wider text-accent">
             {t("plannedRoutesPage.eyebrow")}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-medium">
-            {t("plannedRoutesPage.title")}
-          </h1>
+          <h1 className="mt-1 font-display text-4xl font-medium">{t("plannedRoutesPage.title")}</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">{t("plannedRoutesPage.subtitle")}</p>
         </div>
         <WaitlistDialog />
@@ -55,9 +59,7 @@ function PlannedRoutesPage() {
       {routes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
           <RouteIcon className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            {t("plannedRoutesPage.emptyText")}
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("plannedRoutesPage.emptyText")}</p>
           <Button asChild className="mt-4">
             <Link to="/transport/request">{t("plannedRoutesPage.requestTransport")}</Link>
           </Button>

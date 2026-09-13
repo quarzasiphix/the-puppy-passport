@@ -10,7 +10,8 @@ import litter1 from "@/assets/litter-1.jpg";
 import parentMother from "@/assets/parent-mother.jpg";
 import parentFather from "@/assets/parent-father.jpg";
 
-export type PuppyStatus = "available" | "reserved" | "applications-open" | "sold" | "draft";
+export type PuppyStatus =
+  "available" | "reserved" | "applications-open" | "sold" | "unavailable" | "draft";
 
 export type Puppy = {
   id: string;
@@ -39,6 +40,11 @@ export type Puppy = {
    * hex string or null — see domains/breeders/services/brand-color.ts. Optional because the demo
    * data below predates it; every real mapping (mapAnimalToPuppy) always sets it. */
   accentColor?: string | null;
+  /** Only meaningful in the Alumni context (listAlumniForKennel) — whether a real, completed
+   * `reservations` row backs this placement. `undefined` everywhere else. A bulk-imported
+   * historical record (e.g. a breeder's pre-Anemalo sales, imported as already-`sold`) has no such
+   * reservation and must never be described as placed "through Anemalo" — see AlumniTab. */
+  placedThroughAnemalo?: boolean;
 };
 
 export type Litter = {
@@ -79,7 +85,9 @@ export type Breeder = {
   region: string;
   city: string;
   country: string;
-  years: number;
+  /** Null when the kennel never entered a years-of-experience figure — must never be displayed as
+   * "0 years", which reads as a (false) claim of zero experience rather than "not stated". */
+  years: number | null;
   rating: number;
   reviewCount: number;
   verified: boolean;

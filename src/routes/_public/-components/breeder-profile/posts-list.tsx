@@ -28,7 +28,7 @@ export function PostsList({ posts }: { posts: Posts }) {
   if (posts.length === 0) {
     return (
       <EmptyState icon={Newspaper} title={t("communityPage.noPostsTitle")}>
-        {t("postsListEmptyDesc")}
+        {t("communityPage.noPostsDesc")}
       </EmptyState>
     );
   }

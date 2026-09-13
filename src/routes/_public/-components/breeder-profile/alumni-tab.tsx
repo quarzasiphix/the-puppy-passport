@@ -71,6 +71,14 @@ function AlumniCard({ p }: { p: Puppies[number] }) {
         <p className="text-sm text-muted-foreground">
           {p.breed} · {p.sex}
         </p>
+        {/* Silence here means "placed through Anemalo" (the normal, expected case going
+            forward) — only a genuinely imported historical record gets an explicit correcting
+            note, rather than every future real placement needing its own badge. */}
+        {p.placedThroughAnemalo === false && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t("breederProfile.historicalRecord")}
+          </p>
+        )}
       </div>
     </article>
   );

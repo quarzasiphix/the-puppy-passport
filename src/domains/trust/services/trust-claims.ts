@@ -16,7 +16,11 @@ export type OrganisationTrustClaim = {
   verifiedAt: string | null;
 };
 
-const ALL_CLAIM_TYPES: OrganisationTrustClaimType[] = ["association", "pedigrees", "health_documents"];
+const ALL_CLAIM_TYPES: OrganisationTrustClaimType[] = [
+  "association",
+  "pedigrees",
+  "health_documents",
+];
 
 // Translated via the i18n `t()` function rather than a static Record, since the label is shown on
 // a public breeder profile page — see src/shared/i18n/index.tsx. Pass `useTranslation().t`.
@@ -28,6 +32,26 @@ export function trustClaimLabel(
     association: t("trustClaims.association"),
     pedigrees: t("trustClaims.pedigrees"),
     health_documents: t("trustClaims.healthDocuments"),
+  };
+  return map[type];
+}
+
+// Used by the public verification checklist (VerificationList) — unlike trustClaimLabel above
+// (always the "verified" phrasing, correct for VerificationBadges which only ever renders a claim
+// once it's actually true), a checklist row must say what's actually true right now: an unverified
+// claim previously kept the "X verified" wording with only an empty-circle icon changing, which
+// reads as a claim of verification that isn't true.
+export function trustClaimStatusLabel(
+  t: (key: string) => string,
+  type: OrganisationTrustClaimType,
+  verified: boolean,
+): string {
+  const map: Record<OrganisationTrustClaimType, string> = {
+    association: t(verified ? "trustClaims.association" : "trustClaims.associationNotVerified"),
+    pedigrees: t(verified ? "trustClaims.pedigrees" : "trustClaims.pedigreesNotVerified"),
+    health_documents: t(
+      verified ? "trustClaims.healthDocuments" : "trustClaims.healthDocumentsNotVerified",
+    ),
   };
   return map[type];
 }

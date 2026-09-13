@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   SlidersHorizontal,
@@ -18,12 +19,23 @@ import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Separator } from "@/shared/ui/separator";
 import { Badge } from "@/shared/ui/badge";
-import { listPublishedPuppies } from "@/domains/marketplace";
+import {
+  listPublishedPuppies,
+  countPublishedPuppies,
+  listPuppyBreedNames,
+  formatLocation,
+  type PuppySearchFilters,
+} from "@/domains/marketplace";
 import { PuppyCard } from "@/domains/marketplace";
 import { useTranslation } from "@/shared/i18n";
 
+const PAGE_SIZE = 24;
+
 export const Route = createFileRoute("/_public/find-a-dog")({
-  loader: () => listPublishedPuppies(),
+  // Only the very first, unfiltered page is server-rendered — every filter/page change afterward
+  // is a client-side refetch (see FindADog below). Real, server-side filtering across the full
+  // dataset either way; this just controls what's in the initial HTML response.
+  loader: () => listPublishedPuppies({ pageSize: PAGE_SIZE }),
   head: () => ({
     meta: [
       { title: "Find a dog — Anemalo" },
@@ -32,20 +44,6 @@ export const Route = createFileRoute("/_public/find-a-dog")({
   }),
   component: FindADog,
 });
-
-// Breed/country filter values stay the raw English strings stored on the animal row (the DB isn't
-// localized) — only the displayed label is translated, via getBreedOptions/getCountryOptions below.
-function getBreedOptions(t: (key: string) => string) {
-  return [
-    ["all", t("findADog.breedAll")],
-    ["Golden Retriever", t("findADog.breeds.goldenRetriever")],
-    ["Border Collie", t("findADog.breeds.borderCollie")],
-    ["Labrador Retriever", t("findADog.breeds.labradorRetriever")],
-    ["German Shepherd", t("findADog.breeds.germanShepherd")],
-    ["Bernese Mountain Dog", t("findADog.breeds.bernese")],
-    ["French Bulldog", t("findADog.breeds.frenchBulldog")],
-  ] as const;
-}
 
 function getCountryOptions(t: (key: string) => string) {
   return [
@@ -61,7 +59,11 @@ const defaultFilters = {
   search: "",
   breed: "all",
   country: "all",
+  // [1000, 20000] is only the slider's starting handle positions, not an applied filter — see
+  // `priceTouched` below. A puppy priced outside that range used to be silently excluded from
+  // every visit's very first, unfiltered-looking results.
   price: [1000, 20000] as [number, number],
+  priceTouched: false,
   availableOnly: false,
   applicationsOpenOnly: false,
   male: false,
@@ -69,33 +71,87 @@ const defaultFilters = {
   transportOnly: false,
   verifiedOnly: false,
   readyFrom: "",
-  sort: "newest",
+  sort: "newest" as "newest" | "price" | "ready",
 };
 
+// Everything except `readyFrom` and `sort: "ready"` now maps onto a real server-side
+// PuppySearchFilters — see the comments on those two exceptions below for why they stay client-
+// side. `availableOnly`/`applicationsOpenOnly` no longer need special handling here at all:
+// listPublishedPuppies() itself now never returns anything but available/applications_open
+// puppies (Sold/reserved/draft dogs contradicting an "available" heading was a real, separate bug
+// — see marketplace.ts's PUBLICLY_APPLICABLE_STATUSES), so these two checkboxes just additionally
+// narrow within that already-applicable set.
+function toServerFilters(f: typeof defaultFilters): PuppySearchFilters {
+  return {
+    breed: f.breed !== "all" ? f.breed : undefined,
+    country: f.country !== "all" ? f.country : undefined,
+    sex: f.male && !f.female ? "male" : f.female && !f.male ? "female" : undefined,
+    // Not applied until the visitor actually moves the slider (2026-09-13 review finding: the
+    // [1000, 20000] default was silently hiding cheaper/pricier real listings before anyone had
+    // touched a filter at all).
+    priceMin: f.priceTouched ? f.price[0] : undefined,
+    priceMax: f.priceTouched ? f.price[1] : undefined,
+    search: f.search.trim() || undefined,
+  };
+}
+
 function FindADog() {
-  const puppies = Route.useLoaderData();
+  const initialPuppies = Route.useLoaderData();
   const { t, locale } = useTranslation();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [f, setF] = useState(defaultFilters);
-  const breedOptions = getBreedOptions(t);
+  const [page, setPage] = useState(0);
+  const breedOptions = useMemo(() => [["all", t("findADog.breedAll")] as const], [t]);
   const countryOptions = getCountryOptions(t);
 
+  const serverFilters = useMemo(() => toServerFilters(f), [f]);
+
+  // The breed list is real inventory, not a hand-maintained guess — see listPuppyBreedNames's own
+  // comment. Breed names are proper nouns and aren't translated per-value elsewhere in this app
+  // either (the DB itself only ever stores the English name), so this renders the raw name
+  // directly rather than needing an i18n entry per possible breed.
+  const breedsQuery = useQuery({ queryKey: ["puppy-breed-names"], queryFn: listPuppyBreedNames });
+
+  // Resets to page 0 whenever a filter actually changes (not on every page-size bump) — a stale
+  // page 3 while everyone else's search narrows to two results would just show "no results" with
+  // no obvious way back.
+  useEffect(() => {
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(serverFilters)]);
+
+  const puppiesQuery = useQuery({
+    queryKey: ["find-a-dog-puppies", serverFilters, page],
+    queryFn: () => listPublishedPuppies({ ...serverFilters, page, pageSize: PAGE_SIZE }),
+    // The loader already fetched page 0 of the unfiltered set server-side — reuse it as the very
+    // first paint instead of a redundant duplicate request, but only while filters are still at
+    // their defaults (any change invalidates this immediately via the query key above).
+    initialData:
+      page === 0 &&
+      JSON.stringify(serverFilters) === JSON.stringify(toServerFilters(defaultFilters))
+        ? initialPuppies
+        : undefined,
+  });
+  const countQuery = useQuery({
+    queryKey: ["find-a-dog-count", serverFilters],
+    queryFn: () => countPublishedPuppies(serverFilters),
+  });
+
+  const [accumulated, setAccumulated] = useState(initialPuppies);
+  useEffect(() => {
+    if (!puppiesQuery.data) return;
+    setAccumulated((prev) => (page === 0 ? puppiesQuery.data : [...prev, ...puppiesQuery.data]));
+  }, [puppiesQuery.data, page]);
+
+  // `readyFrom` and the "ready date" sort stay client-side, applied over whatever pages have been
+  // loaded so far: ready_date lives on the joined `litters` row, and PostgREST can't filter/order
+  // a parent query by a nested relation's column without a dedicated view. A real, disclosed
+  // narrower scope for these two specifically — not the same "silently only searches page one"
+  // bug as before, since every other filter (breed/country/price/sex/search) and the pagination
+  // itself are genuinely server-side now, across the full dataset.
   const filtered = useMemo(() => {
-    const rows = puppies.filter((p) => {
-      if (f.search.trim()) {
-        const q = f.search.trim().toLowerCase();
-        const haystack = `${p.name} ${p.breed} ${p.kennel} ${p.city} ${p.country}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      if (f.breed !== "all" && p.breed !== f.breed) return false;
-      if (f.country !== "all" && p.country !== f.country) return false;
-      if (p.pricePLN < f.price[0] || p.pricePLN > f.price[1]) return false;
-      if (f.male || f.female) {
-        const wantsMale = f.male && p.sex === "Male";
-        const wantsFemale = f.female && p.sex === "Female";
-        if (!wantsMale && !wantsFemale) return false;
-      }
+    const rows = accumulated.filter((p) => {
       if (f.availableOnly || f.applicationsOpenOnly) {
         const matches =
           (f.availableOnly && p.status === "available") ||
@@ -107,15 +163,17 @@ function FindADog() {
       if (f.readyFrom && new Date(p.readyDate) < new Date(f.readyFrom)) return false;
       return true;
     });
-
-    const sorted = [...rows];
-    if (f.sort === "price") sorted.sort((a, b) => a.pricePLN - b.pricePLN);
-    else if (f.sort === "ready") {
-      sorted.sort((a, b) => new Date(a.readyDate).getTime() - new Date(b.readyDate).getTime());
+    if (f.sort === "ready") {
+      return [...rows].sort(
+        (a, b) => new Date(a.readyDate).getTime() - new Date(b.readyDate).getTime(),
+      );
     }
-    // "newest" keeps the loader's own order (already created_at desc from the query).
-    return sorted;
-  }, [puppies, f]);
+    if (f.sort === "price") return [...rows].sort((a, b) => a.pricePLN - b.pricePLN);
+    return rows;
+  }, [accumulated, f]);
+
+  const totalCount = countQuery.data ?? filtered.length;
+  const hasMore = accumulated.length < totalCount;
 
   function update<K extends keyof typeof f>(key: K, value: (typeof f)[K]) {
     setF((prev) => ({ ...prev, [key]: value }));
@@ -128,7 +186,7 @@ function FindADog() {
           <h1 className="font-display text-3xl font-medium">{t("findADog.title")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("findADog.showingPrefix")} {filtered.length} {t("findADog.showingMiddle")}{" "}
-            {puppies.length} {t("findADog.showingSuffix")} ·{" "}
+            {totalCount} {t("findADog.showingSuffix")} ·{" "}
             <Link to="/find-your-dog" className="text-primary hover:underline">
               {t("findADog.guidedSearchLink")}
             </Link>
@@ -187,6 +245,11 @@ function FindADog() {
                     {l}
                   </SelectItem>
                 ))}
+                {(breedsQuery.data ?? []).map((breed) => (
+                  <SelectItem key={breed} value={breed}>
+                    {breed}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </FilterGroup>
@@ -239,11 +302,18 @@ function FindADog() {
           </FilterGroup>
 
           <FilterGroup
-            title={`${t("findADog.priceLabel")} — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`}
+            title={
+              f.priceTouched
+                ? `${t("findADog.priceLabel")} — ${f.price[0].toLocaleString()} – ${f.price[1].toLocaleString()}`
+                : `${t("findADog.priceLabel")} — ${t("findADog.priceAny")}`
+            }
           >
             <Slider
               value={f.price}
-              onValueChange={(v) => update("price", v as [number, number])}
+              onValueChange={(v) => {
+                update("price", v as [number, number]);
+                update("priceTouched", true);
+              }}
               min={1000}
               max={20000}
               step={100}
@@ -284,7 +354,7 @@ function FindADog() {
               <strong className="text-foreground">{filtered.length}</strong> {t("findADog.results")}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Select value={f.sort} onValueChange={(v) => update("sort", v)}>
+              <Select value={f.sort} onValueChange={(v) => update("sort", v as typeof f.sort)}>
                 <SelectTrigger className="h-9 w-[140px] sm:w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -320,7 +390,7 @@ function FindADog() {
           {filtered.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-10 text-center">
               <p className="text-sm text-muted-foreground">{t("findADog.noResults")}</p>
-              {puppies.length > 0 && (
+              {accumulated.length > 0 && (
                 <Button variant="outline" className="mt-4" onClick={() => setF(defaultFilters)}>
                   {t("findADog.clearFilters")}
                 </Button>
@@ -357,7 +427,7 @@ function FindADog() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{p.about}</p>
                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
-                        <MapPin className="size-3" /> {p.city}, {p.country}
+                        <MapPin className="size-3" /> {formatLocation(p.city, p.country)}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="size-3" /> {t("cards.readyPrefix")}{" "}
@@ -381,6 +451,18 @@ function FindADog() {
                   </div>
                 </Link>
               ))}
+            </div>
+          )}
+
+          {hasMore && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="outline"
+                disabled={puppiesQuery.isFetching}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                {puppiesQuery.isFetching ? t("findADog.loading") : t("findADog.loadMore")}
+              </Button>
             </div>
           )}
         </div>

@@ -87,6 +87,11 @@ function PrivacyPage() {
                   examples="A record of status changes on your requests, and administrative actions taken on your account"
                   why="Accountability and traceability for important changes — e.g. who reviewed or changed a transport request's status."
                 />
+                <DataRow
+                  category="Product analytics"
+                  examples="Pages visited, features used, and anonymised (input-masked) session recordings, via PostHog; linked to your account (user ID, name, email) once you're signed in"
+                  why="To understand how the platform is actually used and find real usability problems — see the Cookie Policy for detail."
+                />
               </tbody>
             </table>
           </div>
@@ -113,8 +118,10 @@ function PrivacyPage() {
             <Link to="/cookies" className="text-primary hover:underline">
               Cookie Policy
             </Link>{" "}
-            — in short, we currently only use the cookie our sign-in system needs to keep you logged
-            in. We don't run analytics or advertising trackers.
+            — in short, we use the cookie our sign-in system needs to keep you logged in, plus
+            PostHog for product analytics and anonymised (input-masked) session recordings, which
+            also identifies your account when you're signed in. We don't run advertising trackers or
+            sell this data to third parties.
           </p>
         </section>
 

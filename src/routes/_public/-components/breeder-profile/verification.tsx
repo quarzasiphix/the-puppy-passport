@@ -1,6 +1,6 @@
 import { BadgeCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { trustClaimLabel, trustClaimExplanation } from "@/domains/trust";
+import { trustClaimLabel, trustClaimStatusLabel, trustClaimExplanation } from "@/domains/trust";
 import { VerifiedBadge } from "@/domains/breeders";
 import { useTranslation } from "@/shared/i18n";
 import type { Breeder, Stats, TrustClaims } from "./types";
@@ -52,18 +52,32 @@ export function VerificationList({
 }) {
   const { t } = useTranslation();
   const rows = [
-    { label: t("breederProfile.identityVerified"), verified: stats.identityVerified },
-    { label: t("breederProfile.kennelVerified"), verified: b.verified },
     {
-      label: trustClaimLabel(t, "association"),
+      label: stats.identityVerified
+        ? t("breederProfile.identityVerified")
+        : t("breederProfile.identityNotVerified"),
+      verified: stats.identityVerified,
+    },
+    {
+      label: b.verified
+        ? t("breederProfile.kennelVerified")
+        : t("breederProfile.kennelNotVerified"),
+      verified: b.verified,
+    },
+    {
+      label: trustClaimStatusLabel(t, "association", trustClaims.association.status === "verified"),
       verified: trustClaims.association.status === "verified",
     },
     {
-      label: trustClaimLabel(t, "pedigrees"),
+      label: trustClaimStatusLabel(t, "pedigrees", trustClaims.pedigrees.status === "verified"),
       verified: trustClaims.pedigrees.status === "verified",
     },
     {
-      label: trustClaimLabel(t, "health_documents"),
+      label: trustClaimStatusLabel(
+        t,
+        "health_documents",
+        trustClaims.health_documents.status === "verified",
+      ),
       verified: trustClaims.health_documents.status === "verified",
     },
   ];

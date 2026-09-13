@@ -10,6 +10,12 @@ import placeholderImg from "@/assets/puppy-1.jpg";
 
 const PLN_PER_EUR = 4.3;
 
+// Every real animal_availability_status DB value maps to its own PuppyStatus — a status that
+// falls through to the `default` here is what previously showed as "Draft" on a public page for
+// an animal whose actual state was `unavailable` (a real, distinct status — not a private draft
+// that leaked). `withdrawn` still falls through to "draft": a withdrawn listing should never be
+// `is_published`, so a public page rendering one at all is already a different, upstream bug —
+// "draft" is a safe, honest label for a truly unexpected status, not a claim about anything.
 function toPuppyStatus(status: string): PuppyStatus {
   switch (status) {
     case "available":
@@ -21,6 +27,8 @@ function toPuppyStatus(status: string): PuppyStatus {
     case "sold":
     case "adopted":
       return "sold";
+    case "unavailable":
+      return "unavailable";
     default:
       return "draft";
   }
@@ -122,9 +130,25 @@ export type PuppySearchFilters = {
   sex?: "male" | "female";
   priceMin?: number;
   priceMax?: number;
+  /** Case-insensitive substring match on the animal's own name only (server-side `ilike`) — does
+   * not reach into the joined breed/kennel/city text a caller may also want to match; a caller
+   * combining this with a client-side check across those joined fields is a real, disclosed
+   * limitation, not silently pretending to be a full-text search. */
+  search?: string;
   page?: number;
   pageSize?: number;
 };
+
+// This function backs every public "browse puppies" surface (homepage featured puppies, the main
+// find-a-dog search) — none of them should ever show a puppy that isn't actually gettable, no
+// matter what filters a caller passes. Previously there was no availability_status filter at all,
+// so a sold or reserved puppy stayed mixed into "Featured puppies" / search results indefinitely,
+// contradicting every heading above it and still offering a live "Apply" button on its detail
+// page. Reserved is deliberately excluded here too (not just sold/draft/unavailable/withdrawn) —
+// unlike a kennel's own "Puppies" tab (listPuppiesForKennel), which can afford a Reserved badge on
+// each card, the public search grid has no room for that nuance, so "shown here" simply means
+// "you can act on this today".
+const PUBLICLY_APPLICABLE_STATUSES = ["available", "applications_open"] as const;
 
 // Both breeds and organisations are nullable FKs on animals (a listing can genuinely have no
 // breed set, or -- in principle -- no organisation). PostgREST only excludes a parent row whose
@@ -164,12 +188,14 @@ export async function listPublishedPuppies(filters?: PuppySearchFilters) {
     .from("animals")
     .select(animalSelectFor(filters))
     .eq("listing_category", "breeder_puppy")
-    .eq("is_published", true);
+    .eq("is_published", true)
+    .in("availability_status", PUBLICLY_APPLICABLE_STATUSES);
   if (filters?.breed) query = query.eq("breeds.name", filters.breed);
   if (filters?.country) query = query.eq("organisations.country", filters.country);
   if (filters?.sex) query = query.eq("sex", filters.sex);
   if (filters?.priceMin !== undefined) query = query.gte("price", filters.priceMin);
   if (filters?.priceMax !== undefined) query = query.lte("price", filters.priceMax);
+  if (filters?.search) query = query.ilike("name", `%${filters.search}%`);
   // Stage XR-17 (cursor stability): `created_at` alone is not a stable sort key -- rows inserted
   // in the same statement (e.g. several puppies from one litter added at once) share the exact
   // same `now()` value, since Postgres evaluates it once per statement, not once per row. Without
@@ -188,18 +214,39 @@ export async function listPublishedPuppies(filters?: PuppySearchFilters) {
   return rows.map(mapAnimalToPuppy);
 }
 
+// The breed filter previously offered a hardcoded 6-breed list with no relationship to what's
+// actually published — a real, sizeable slice of live inventory (e.g. every Gryfin York puppy,
+// all Yorkshire Terriers) had no matching filter option at all. Queries the breed of every
+// currently-applicable published puppy directly, so the filter always reflects real inventory —
+// a breed with zero live puppies simply isn't offered, rather than needing to be hand-maintained.
+export async function listPuppyBreedNames(): Promise<string[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("animals")
+    .select("breeds!inner(name)")
+    .eq("listing_category", "breeder_puppy")
+    .eq("is_published", true)
+    .in("availability_status", PUBLICLY_APPLICABLE_STATUSES);
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as { breeds: { name: string } | null }[];
+  const names = new Set(rows.map((r) => r.breeds?.name).filter((n): n is string => !!n));
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
+}
+
 export async function countPublishedPuppies(filters?: PuppySearchFilters): Promise<number> {
   const supabase = getSupabaseBrowserClient();
   let query = supabase
     .from("animals")
     .select(animalSelectFor(filters), { count: "exact", head: true })
     .eq("listing_category", "breeder_puppy")
-    .eq("is_published", true);
+    .eq("is_published", true)
+    .in("availability_status", PUBLICLY_APPLICABLE_STATUSES);
   if (filters?.breed) query = query.eq("breeds.name", filters.breed);
   if (filters?.country) query = query.eq("organisations.country", filters.country);
   if (filters?.sex) query = query.eq("sex", filters.sex);
   if (filters?.priceMin !== undefined) query = query.gte("price", filters.priceMin);
   if (filters?.priceMax !== undefined) query = query.lte("price", filters.priceMax);
+  if (filters?.search) query = query.ilike("name", `%${filters.search}%`);
   const { count, error } = await query;
   if (error) throw error;
   return count ?? 0;
@@ -380,7 +427,10 @@ function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Br
     region: o.city ?? "",
     city: o.city ?? "",
     country: o.country ?? "",
-    years: o.years_experience ?? 0,
+    // null (not 0) when never entered — see mock-data.ts's Breeder.years comment. formatExperience
+    // in cards.tsx already treats null as "omit the line"; this used to coalesce to 0 here first,
+    // which meant every kennel with no years_experience set publicly read as "0 yrs experience".
+    years: o.years_experience,
     rating: 0,
     reviewCount: 0,
     verified: o.verification_status === "approved",
@@ -472,6 +522,25 @@ export async function listApprovedKennels() {
   return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
 }
 
+// Reuses the exact same mapping as listApprovedKennels() — buildBreeder()'s "Breeder" shape is
+// really just "public organisation profile"; a foundation/shelter's `breeds` list is simply empty
+// (they have no parent_dogs rows) and `availablePuppies` counts any published, available/
+// applications_open animal on the org regardless of listing_category, so it already reads as
+// "adoptable animals" for one of these without any foundation-specific query logic needed. Backs
+// /foundations, which was a hardcoded placeholder ("coming in a later build phase") despite real
+// foundation/shelter/rescue orgs already existing in the same table.
+export async function listApprovedFoundations() {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisations")
+    .select(orgSelect)
+    .in("org_type", ["foundation", "shelter", "rescue"])
+    .eq("verification_status", "approved")
+    .eq("is_public", true);
+  if (error) throw error;
+  return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
+}
+
 export async function getKennelBySlug(slug: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -504,6 +573,22 @@ export async function listPuppiesForKennel(kennelId: string) {
 // A breeder's placed puppies — permanent "alumni" history, not a temporary listing. Same
 // underlying `animals` row as when it was for sale, just a different availability_status; nothing
 // is ever deleted or hidden on sale. Ordered newest-placed first.
+// Which of these alumni animals actually have a real, completed reservation behind them — a
+// bulk-imported historical placement (e.g. a breeder's pre-Anemalo sales, imported already `sold`
+// with no reservation at all — see docs/GRYFIN_IMPORT.md) has none, and must never be described as
+// placed "through Anemalo" on the profile (see AlumniTab). One batched query, not N.
+async function completedReservationAnimalIds(animalIds: string[]): Promise<Set<string>> {
+  if (animalIds.length === 0) return new Set();
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("animal_id")
+    .in("animal_id", animalIds)
+    .eq("status", "completed");
+  if (error) throw error;
+  return new Set((data ?? []).map((r) => r.animal_id));
+}
+
 export async function listAlumniForKennel(kennelId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
@@ -515,7 +600,12 @@ export async function listAlumniForKennel(kennelId: string) {
     .in("availability_status", ["sold", "adopted"])
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as unknown as AnimalRow[]).map(mapAnimalToPuppy);
+  const rows = (data ?? []) as unknown as AnimalRow[];
+  const completed = await completedReservationAnimalIds(rows.map((r) => r.id));
+  return rows.map((row) => ({
+    ...mapAnimalToPuppy(row),
+    placedThroughAnemalo: completed.has(row.id),
+  }));
 }
 
 // Every puppy from one litter, any status (available/reserved/sold) — the litter detail page
@@ -558,6 +648,10 @@ export type ParentDogInfo = {
   tests: string[];
   titles: string;
   description: string;
+  /** Slug into the permanent public pedigree registry (/dogs/$slug) — set only when this
+   * parent_dogs row is linked to a `dogs` record (parent_dogs.dog_id). Undefined for a parent dog
+   * never attached to the pedigree graph, in which case no link should be shown at all. */
+  dogSlug?: string;
 };
 
 function mapParentDog(
@@ -568,6 +662,7 @@ function mapParentDog(
     health_tests: unknown;
     titles: string | null;
     description: string | null;
+    dogs?: { slug: string } | null;
   } | null,
 ): ParentDogInfo | null {
   if (!row) return null;
@@ -581,6 +676,7 @@ function mapParentDog(
     tests,
     titles: row.titles ?? "",
     description: row.description ?? "",
+    dogSlug: row.dogs?.slug,
   };
 }
 
@@ -610,7 +706,7 @@ export async function listParentDogsForKennel(
   const { data, error } = await supabase
     .from("parent_dogs")
     .select(
-      "sex, registered_name, pedigree_number, profile_image_url, health_tests, titles, description",
+      "sex, registered_name, pedigree_number, profile_image_url, health_tests, titles, description, dogs(slug)",
     )
     .eq("kennel_id", kennelId)
     .eq("is_active", true);
@@ -757,4 +853,57 @@ export async function listVerifiedChampionsForKennel(kennelId: string): Promise<
     byDog.set(name, entry);
   }
   return Array.from(byDog.values());
+}
+
+export type ReviewEntry = {
+  id: string;
+  reviewerDisplayName: string | null;
+  rating: number;
+  content: string;
+  photoUrl: string | null;
+  breederResponse: string | null;
+  breederResponseAt: string | null;
+  publishedAt: string | null;
+  animalName: string | null;
+};
+
+// RLS ("public reads visible reviews of public approved kennels") already restricts an anonymous
+// caller to moderation_status='visible' rows on an approved+public org — the explicit filter here
+// is defense-in-depth, not the real gate. See docs/REVIEWS.md — this was previously never called
+// at all from the public profile page, which hardcoded its Reviews tab to always show the empty
+// state regardless of what this table actually held.
+export async function listPublishedReviewsForOrg(orgId: string): Promise<ReviewEntry[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisation_reviews")
+    .select(
+      "id, reviewer_display_name, rating, content, photo_url, breeder_response, breeder_response_at, published_at, animals(name)",
+    )
+    .eq("organisation_id", orgId)
+    .eq("moderation_status", "visible")
+    .order("published_at", { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  return (
+    (data ?? []) as unknown as {
+      id: string;
+      reviewer_display_name: string | null;
+      rating: number;
+      content: string;
+      photo_url: string | null;
+      breeder_response: string | null;
+      breeder_response_at: string | null;
+      published_at: string | null;
+      animals: { name: string } | null;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    reviewerDisplayName: r.reviewer_display_name,
+    rating: r.rating,
+    content: r.content,
+    photoUrl: r.photo_url,
+    breederResponse: r.breeder_response,
+    breederResponseAt: r.breeder_response_at,
+    publishedAt: r.published_at,
+    animalName: r.animals?.name ?? null,
+  }));
 }

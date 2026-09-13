@@ -19,6 +19,9 @@ import {
   followOrg,
   listFollowedOrgIds,
   unfollowOrg,
+  formatLocation,
+  listPublishedReviewsForOrg,
+  type ReviewEntry,
 } from "@/domains/marketplace";
 import { ReportDialog, getTrustClaimMap } from "@/domains/trust";
 import { getBreederStats } from "@/domains/breeders";
@@ -33,6 +36,7 @@ import { IdentityCard } from "./-components/breeder-profile/identity-card";
 import { ProfileTabsNav, type ProfileTab } from "./-components/breeder-profile/profile-tabs-nav";
 import { HomeTab } from "./-components/breeder-profile/home-tab";
 import { AlumniTab } from "./-components/breeder-profile/alumni-tab";
+import { ReviewsTab } from "./-components/breeder-profile/reviews-tab";
 import { PostsList } from "./-components/breeder-profile/posts-list";
 import { ParentDogCard } from "./-components/breeder-profile/parent-dog-card";
 import { VerificationList } from "./-components/breeder-profile/verification";
@@ -58,6 +62,7 @@ type LoaderData = {
   posts: Posts;
   stats: Stats;
   trustClaims: TrustClaims;
+  reviews: ReviewEntry[];
 };
 
 // Canonical public breeder identity URL: anemalo.com/@handle — a permanent profile a breeder can
@@ -71,7 +76,7 @@ export const Route = createFileRoute("/_public/@{$handle}")({
   loader: async ({ params }): Promise<LoaderData> => {
     const b = await getKennelBySlug(params.handle).catch(() => null);
     if (!b) throw notFound();
-    const [puppies, alumni, litters, parents, champions, posts, stats, trustClaims] =
+    const [puppies, alumni, litters, parents, champions, posts, stats, trustClaims, reviews] =
       await Promise.all([
         listPuppiesForKennel(b.id),
         listAlumniForKennel(b.id),
@@ -81,8 +86,9 @@ export const Route = createFileRoute("/_public/@{$handle}")({
         listKennelPosts(b.id).catch(() => [] as PostSummary[]),
         getBreederStats(b.id, b.verified),
         getTrustClaimMap(b.id),
+        listPublishedReviewsForOrg(b.id),
       ]);
-    return { b, puppies, alumni, litters, parents, champions, posts, stats, trustClaims };
+    return { b, puppies, alumni, litters, parents, champions, posts, stats, trustClaims, reviews };
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -94,7 +100,11 @@ export const Route = createFileRoute("/_public/@{$handle}")({
       {
         name: "description",
         content: loaderData
-          ? `${loaderData.b.kennel} — ${loaderData.b.breeds.join(", ") || "dog breeder"} in ${loaderData.b.city}, ${loaderData.b.country}. Follow their litters, dogs and history on Anemalo.`
+          ? `${loaderData.b.kennel} — ${loaderData.b.breeds.join(", ") || "dog breeder"}${
+              formatLocation(loaderData.b.city, loaderData.b.country)
+                ? ` in ${formatLocation(loaderData.b.city, loaderData.b.country)}`
+                : ""
+            }. Follow their litters, dogs and history on Anemalo.`
           : "A breeder profile on Anemalo.",
       },
       ...(loaderData
@@ -132,7 +142,7 @@ export const Route = createFileRoute("/_public/@{$handle}")({
 const plannedLitterStatuses = new Set(["planned", "born", "applications_open"]);
 
 function BreederProfile() {
-  const { b, puppies, alumni, litters, parents, champions, posts, stats, trustClaims } =
+  const { b, puppies, alumni, litters, parents, champions, posts, stats, trustClaims, reviews } =
     Route.useLoaderData();
   const { userId, isSignedIn } = useAuth();
   const { t } = useTranslation();
@@ -339,9 +349,7 @@ function BreederProfile() {
             </TabsContent>
 
             <TabsContent value="reviews" className="mt-6">
-              <EmptyState icon={Star} title={t("breederProfile.noReviewsTitle")}>
-                {t("breederProfile.noReviewsDesc")}
-              </EmptyState>
+              <ReviewsTab reviews={reviews} />
             </TabsContent>
 
             <TabsContent value="about" className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-3">
