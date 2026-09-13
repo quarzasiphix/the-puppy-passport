@@ -20,6 +20,7 @@ import { Route as DashboardBreederRouteImport } from './routes/dashboard/breeder
 import { Route as DashboardAdminRouteImport } from './routes/dashboard/admin'
 import { Route as AuthConfirmRouteImport } from './routes/auth.confirm'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as PublicTransportCompaniesRouteImport } from './routes/_public/transport-companies'
 import { Route as PublicTransportRouteImport } from './routes/_public/transport'
 import { Route as PublicTermsRouteImport } from './routes/_public/terms'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
@@ -205,6 +206,12 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PublicTransportCompaniesRoute =
+  PublicTransportCompaniesRouteImport.update({
+    id: '/transport-companies',
+    path: '/transport-companies',
+    getParentRoute: () => PublicRoute,
+  } as any)
 const PublicTransportRoute = PublicTransportRouteImport.update({
   id: '/transport',
   path: '/transport',
@@ -946,6 +953,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof PublicSignupRoute
   '/terms': typeof PublicTermsRoute
   '/transport': typeof PublicTransportRouteWithChildren
+  '/transport-companies': typeof PublicTransportCompaniesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -1081,6 +1089,7 @@ export interface FileRoutesByTo {
   '/signin': typeof PublicSigninRoute
   '/signup': typeof PublicSignupRoute
   '/terms': typeof PublicTermsRoute
+  '/transport-companies': typeof PublicTransportCompaniesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/': typeof PublicIndexRoute
@@ -1212,6 +1221,7 @@ export interface FileRoutesById {
   '/_public/signup': typeof PublicSignupRoute
   '/_public/terms': typeof PublicTermsRoute
   '/_public/transport': typeof PublicTransportRouteWithChildren
+  '/_public/transport-companies': typeof PublicTransportCompaniesRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
@@ -1356,6 +1366,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/transport'
+    | '/transport-companies'
     | '/auth/callback'
     | '/auth/confirm'
     | '/dashboard/admin'
@@ -1491,6 +1502,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/terms'
+    | '/transport-companies'
     | '/auth/callback'
     | '/auth/confirm'
     | '/'
@@ -1621,6 +1633,7 @@ export interface FileRouteTypes {
     | '/_public/signup'
     | '/_public/terms'
     | '/_public/transport'
+    | '/_public/transport-companies'
     | '/auth/callback'
     | '/auth/confirm'
     | '/dashboard/admin'
@@ -1829,6 +1842,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_public/transport-companies': {
+      id: '/_public/transport-companies'
+      path: '/transport-companies'
+      fullPath: '/transport-companies'
+      preLoaderRoute: typeof PublicTransportCompaniesRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_public/transport': {
       id: '/_public/transport'
@@ -2857,6 +2877,7 @@ interface PublicRouteChildren {
   PublicSignupRoute: typeof PublicSignupRoute
   PublicTermsRoute: typeof PublicTermsRoute
   PublicTransportRoute: typeof PublicTransportRouteWithChildren
+  PublicTransportCompaniesRoute: typeof PublicTransportCompaniesRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicDogsSlugRoute: typeof PublicDogsSlugRoute
   PublicInvitationsTokenRoute: typeof PublicInvitationsTokenRoute
@@ -2891,6 +2912,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicSignupRoute: PublicSignupRoute,
   PublicTermsRoute: PublicTermsRoute,
   PublicTransportRoute: PublicTransportRouteWithChildren,
+  PublicTransportCompaniesRoute: PublicTransportCompaniesRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicDogsSlugRoute: PublicDogsSlugRoute,
   PublicInvitationsTokenRoute: PublicInvitationsTokenRoute,

@@ -51,6 +51,7 @@ const nav = [
 const moreNav = [
   { to: "/breeder-map", labelKey: "nav.breederMap", icon: MapPin },
   { to: "/planned-routes", labelKey: "nav.plannedRoutes", icon: Route },
+  { to: "/transport-companies", labelKey: "nav.transportCompanies", icon: Truck },
   { to: "/pedigrees", labelKey: "nav.pedigrees", icon: Network },
   { to: "/how-it-works", labelKey: "nav.howItWorks", icon: HelpCircle },
 ] as const;
@@ -347,6 +348,7 @@ export function SiteFooter() {
             [t("footer.linkRequestTransport"), "/transport/request"],
             [t("footer.linkServiceCategories"), "/transport"],
             [t("footer.linkPlannedRoutes"), "/planned-routes"],
+            [t("footer.linkTransportCompanies"), "/transport-companies"],
           ]}
         />
         <FooterCol

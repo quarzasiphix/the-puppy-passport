@@ -125,3 +125,114 @@ export async function markStopPickedUp(stopId: string): Promise<void> {
 export async function markStopDelivered(stopId: string): Promise<void> {
   await updateTripStop(stopId, { status: "delivered", delivered_at: new Date().toISOString() });
 }
+
+// --- Public visibility + join requests -------------------------------------------------------
+// See 20260916000000_public_trips_and_join_requests.sql's own header for why this is deliberately
+// narrow (browsable + a lightweight ask, no scored matching engine, no geocoding).
+
+export type PublicTripRow = Database["public"]["Views"]["public_trips"]["Row"];
+export type TripJoinRequestRow = Database["public"]["Tables"]["trip_join_requests"]["Row"];
+export type TripJoinRequestInsert = Database["public"]["Tables"]["trip_join_requests"]["Insert"];
+export type TripJoinRequestStatus = TripJoinRequestRow["status"];
+
+export async function listPublicTrips(filters?: {
+  originCountry?: string;
+  destinationCountry?: string;
+}): Promise<PublicTripRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  let query = supabase
+    .from("public_trips")
+    .select("*")
+    .order("departure_date", { ascending: true, nullsFirst: false });
+  if (filters?.originCountry) query = query.eq("origin_country", filters.originCountry);
+  if (filters?.destinationCountry) {
+    query = query.eq("destination_country", filters.destinationCountry);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return data as PublicTripRow[];
+}
+
+export async function submitTripJoinRequest(
+  payload: Omit<TripJoinRequestInsert, "requester_profile_id" | "status"> & {
+    requesterProfileId: string;
+  },
+): Promise<TripJoinRequestRow> {
+  const supabase = getSupabaseBrowserClient();
+  const { requesterProfileId, ...rest } = payload;
+  const { data, error } = await supabase
+    .from("trip_join_requests")
+    .insert({ ...rest, requester_profile_id: requesterProfileId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TripJoinRequestRow;
+}
+
+// For the owning company's trip detail page.
+export async function listJoinRequestsForTrip(tripId: string): Promise<TripJoinRequestRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_join_requests")
+    .select("*")
+    .eq("trip_id", tripId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as TripJoinRequestRow[];
+}
+
+// For the requester's own "my requests" view.
+export async function listMyJoinRequests(): Promise<TripJoinRequestRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_join_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data as TripJoinRequestRow[];
+}
+
+export async function respondToJoinRequest(
+  requestId: string,
+  status: Extract<TripJoinRequestStatus, "accepted" | "declined">,
+  decidedBy: string,
+): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("trip_join_requests")
+    .update({ status, decided_at: new Date().toISOString(), decided_by: decidedBy })
+    .eq("id", requestId);
+  if (error) throw error;
+}
+
+export async function withdrawJoinRequest(requestId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("trip_join_requests")
+    .update({ status: "withdrawn" })
+    .eq("id", requestId);
+  if (error) throw error;
+}
+
+// Accepting a join request means turning it into a real stop on the trip, using the requester's
+// own pickup/dropoff/contact details — two plain client calls (create the stop, then mark the
+// request accepted), not a new RPC: same reasoning trips.ts already uses for every other same-
+// owner, non-financial write here (an org acting on its own trip's data doesn't cross a trust
+// boundary the way assignOwnDriverToJob's cross-org reassignment does).
+export async function acceptJoinRequestAsStop(
+  request: TripJoinRequestRow,
+  decidedBy: string,
+): Promise<TripStopRow> {
+  const stop = await addTripStop(request.trip_id, {
+    animal_label: request.animal_label,
+    pickup_maps_url: request.pickup_maps_url,
+    pickup_contact_name: request.pickup_contact_name,
+    pickup_contact_phone: request.pickup_contact_phone,
+    dropoff_maps_url: request.dropoff_maps_url,
+    dropoff_contact_name: request.dropoff_contact_name,
+    dropoff_contact_phone: request.dropoff_contact_phone,
+    dropoff_notes: request.notes,
+  });
+  await respondToJoinRequest(request.id, "accepted", decidedBy);
+  return stop;
+}

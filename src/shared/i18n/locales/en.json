@@ -7,6 +7,7 @@
     "community": "Community",
     "transport": "Transport",
     "plannedRoutes": "Planned routes",
+    "transportCompanies": "Transport companies",
     "howItWorks": "How it works",
     "pedigrees": "Pedigree registry",
     "more": "More",
@@ -167,6 +168,7 @@
     "linkRequestTransport": "Request transport",
     "linkServiceCategories": "Service categories",
     "linkPlannedRoutes": "Planned routes",
+    "linkTransportCompanies": "Transport companies",
     "linkHowItWorks": "How it works",
     "linkCreateAccount": "Create an account",
     "linkApplyBreeder": "Apply as breeder / foundation",
@@ -392,6 +394,18 @@
     "noneYet": "No verified foundations yet.",
     "noMatch": "No foundations match your filters.",
     "animalsAvailable": "animals available for adoption"
+  },
+  "transportCompaniesPage": {
+    "eyebrow": "Verified transport",
+    "title": "Verified transport companies",
+    "subtitle": "Approved animal transport companies on Anemalo.",
+    "searchPlaceholder": "Search by name or city…",
+    "filter": "Filter",
+    "countryPlaceholder": "Country",
+    "allCountries": "All countries",
+    "clearFilters": "Clear filters",
+    "noneYet": "No verified transport companies yet.",
+    "noMatch": "No transport companies match your filters."
   },
   "plannedLittersPage": {
     "eyebrow": "Planned litters",
@@ -840,7 +854,15 @@
     "to": "To",
     "earliestNeeded": "Earliest you'd need it (optional)",
     "joinWaitlist": "Join waitlist",
-    "couldNotJoin": "Could not join waitlist."
+    "couldNotJoin": "Could not join waitlist.",
+    "tabAnemaloRoutes": "Anemalo routes",
+    "tabCompanyTrips": "Company trips",
+    "companyTripsEmpty": "No public company trips right now.",
+    "companyTripStopsSuffix": "stops",
+    "requestToJoin": "Request to join",
+    "couldNotSubmitJoin": "Could not submit your request.",
+    "joinSubmittedTitle": "Request sent",
+    "joinSubmittedBody": "The transport company will review your request and get back to you."
   },
   "rehomePage": {
     "eyebrow": "Private rehoming",
@@ -2159,7 +2181,15 @@
         "pending": "Pending",
         "picked_up": "Picked up",
         "delivered": "Delivered"
-      }
+      },
+      "publicToggleLabel": "Make this trip public",
+      "publicToggleHelp": "Lets customers browse this trip on the Planned routes page and request to join. Pickup, drop-off and contact details always stay private.",
+      "fieldOriginCountry": "Origin country",
+      "fieldDestinationCountry": "Destination country",
+      "joinRequestsTitle": "Requests to join this trip",
+      "acceptJoinRequest": "Accept",
+      "declineJoinRequest": "Decline",
+      "joinRequestAcceptedToast": "Added to this trip's stops."
     },
     "overview": {
       "welcomeBackPrefix": "Welcome back,",

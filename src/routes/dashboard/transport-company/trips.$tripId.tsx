@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Badge } from "@/shared/ui/badge";
+import { Switch } from "@/shared/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -36,8 +37,14 @@ import {
   markStopPickedUp,
   markStopDelivered,
   setTripStatus,
+  updateTrip,
+  listJoinRequestsForTrip,
+  acceptJoinRequestAsStop,
+  respondToJoinRequest,
   type TripStopRow,
+  type TripJoinRequestRow,
 } from "@/domains/transport";
+import { useAuth } from "@/domains/identity";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { useTranslation } from "@/shared/i18n";
 
@@ -72,13 +79,20 @@ const EMPTY_STOP_FORM: StopFormValues = {
 function TripDetailPage() {
   const { tripId } = Route.useParams();
   const { t, locale } = useTranslation();
+  const { userId } = useAuth();
   const queryClient = useQueryClient();
   const [addStopOpen, setAddStopOpen] = useState(false);
+  const [originCountry, setOriginCountry] = useState("");
+  const [destinationCountry, setDestinationCountry] = useState("");
 
   const tripQuery = useQuery({ queryKey: ["trip", tripId], queryFn: () => getTrip(tripId) });
   const stopsQuery = useQuery({
     queryKey: ["trip-stops", tripId],
     queryFn: () => listTripStops(tripId),
+  });
+  const joinRequestsQuery = useQuery({
+    queryKey: ["trip-join-requests", tripId],
+    queryFn: () => listJoinRequestsForTrip(tripId),
   });
   // Only fetched to resolve the trip's own vehicle_id/driver_id into a display name — same
   // RLS-scoped queries as the Vehicles/Drivers pages, no extra org filter needed.
@@ -141,7 +155,46 @@ function TripDetailPage() {
       toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.tripUpdateFailed"))),
   });
 
+  const visibilityMutation = useMutation({
+    mutationFn: (patch: {
+      is_public?: boolean;
+      origin_country?: string | null;
+      destination_country?: string | null;
+    }) => updateTrip(tripId, patch),
+    onSuccess: invalidateTrip,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.tripUpdateFailed"))),
+  });
+
+  const invalidateJoinRequests = () =>
+    queryClient.invalidateQueries({ queryKey: ["trip-join-requests", tripId] });
+
+  const acceptJoinRequestMutation = useMutation({
+    mutationFn: (request: TripJoinRequestRow) => acceptJoinRequestAsStop(request, userId!),
+    onSuccess: () => {
+      toast.success(t("transportCompanyPanel.trips.joinRequestAcceptedToast"));
+      invalidateJoinRequests();
+      invalidateStops();
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+  const declineJoinRequestMutation = useMutation({
+    mutationFn: (requestId: string) => respondToJoinRequest(requestId, "declined", userId!),
+    onSuccess: invalidateJoinRequests,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+
   const trip = tripQuery.data;
+
+  useEffect(() => {
+    if (!trip) return;
+    setOriginCountry(trip.origin_country ?? "");
+    setDestinationCountry(trip.destination_country ?? "");
+  }, [trip]);
+
+  const pendingJoinRequests = (joinRequestsQuery.data ?? []).filter((r) => r.status === "pending");
   const stops = stopsQuery.data ?? [];
   const vehicleName = vehiclesQuery.data?.find((v) => v.id === trip?.vehicle_id)?.name;
   const driverName = driversQuery.data?.find((d) => d.id === trip?.driver_id)?.name;
@@ -218,6 +271,99 @@ function TripDetailPage() {
           )}
         </div>
       </header>
+
+      <div className="mb-6 rounded-2xl border border-border/70 bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">
+              {t("transportCompanyPanel.trips.publicToggleLabel")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("transportCompanyPanel.trips.publicToggleHelp")}
+            </p>
+          </div>
+          <Switch
+            checked={trip.is_public}
+            disabled={visibilityMutation.isPending}
+            onCheckedChange={(checked) => visibilityMutation.mutate({ is_public: checked })}
+          />
+        </div>
+        {trip.is_public && (
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldOriginCountry")}</Label>
+              <Input
+                value={originCountry}
+                onChange={(e) => setOriginCountry(e.target.value)}
+                onBlur={() => visibilityMutation.mutate({ origin_country: originCountry || null })}
+                placeholder="e.g. Poland"
+              />
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldDestinationCountry")}</Label>
+              <Input
+                value={destinationCountry}
+                onChange={(e) => setDestinationCountry(e.target.value)}
+                onBlur={() =>
+                  visibilityMutation.mutate({ destination_country: destinationCountry || null })
+                }
+                placeholder="e.g. Netherlands"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {pendingJoinRequests.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 font-display text-lg font-semibold">
+            {t("transportCompanyPanel.trips.joinRequestsTitle")}
+          </h2>
+          <div className="space-y-3">
+            {pendingJoinRequests.map((request) => (
+              <div key={request.id} className="rounded-2xl border border-border/70 bg-card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-display text-base font-semibold">{request.animal_label}</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={acceptJoinRequestMutation.isPending}
+                      onClick={() => acceptJoinRequestMutation.mutate(request)}
+                    >
+                      {t("transportCompanyPanel.trips.acceptJoinRequest")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      disabled={declineJoinRequestMutation.isPending}
+                      onClick={() => declineJoinRequestMutation.mutate(request.id)}
+                    >
+                      {t("transportCompanyPanel.trips.declineJoinRequest")}
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <ContactBlock
+                    title={t("transportCompanyPanel.trips.pickupSectionTitle")}
+                    mapsUrl={request.pickup_maps_url}
+                    contactName={request.pickup_contact_name}
+                    contactPhone={request.pickup_contact_phone}
+                    notes={null}
+                  />
+                  <ContactBlock
+                    title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
+                    mapsUrl={request.dropoff_maps_url}
+                    contactName={request.dropoff_contact_name}
+                    contactPhone={request.dropoff_contact_phone}
+                    notes={request.notes}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {stops.length > 0 && (
         <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">

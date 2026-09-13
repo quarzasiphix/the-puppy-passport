@@ -542,6 +542,21 @@ export async function listApprovedFoundations() {
   return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
 }
 
+// Same reuse of buildBreeder() as listApprovedFoundations() — a transport company's "breeds"/
+// "availablePuppies" fields simply read as empty/0 here, which is fine: the directory card only
+// ever renders name/location/description/verified for this org_type (see transport-companies.tsx).
+export async function listApprovedTransportCompanies() {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("organisations")
+    .select(orgSelect)
+    .eq("org_type", "transport_company")
+    .eq("verification_status", "approved")
+    .eq("is_public", true);
+  if (error) throw error;
+  return mapOrgsToBreeders((data ?? []) as unknown as OrgRow[]);
+}
+
 export async function getKennelBySlug(slug: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase

@@ -7,6 +7,7 @@
     "community": "Społeczność",
     "transport": "Transport",
     "plannedRoutes": "Planowane trasy",
+    "transportCompanies": "Firmy transportowe",
     "howItWorks": "Jak to działa",
     "pedigrees": "Rejestr rodowodów",
     "more": "Więcej",
@@ -167,6 +168,7 @@
     "linkRequestTransport": "Zamów transport",
     "linkServiceCategories": "Kategorie usług",
     "linkPlannedRoutes": "Planowane trasy",
+    "linkTransportCompanies": "Firmy transportowe",
     "linkHowItWorks": "Jak to działa",
     "linkCreateAccount": "Załóż konto",
     "linkApplyBreeder": "Złóż wniosek jako hodowca / fundacja",
@@ -392,6 +394,18 @@
     "noneYet": "Brak jeszcze zweryfikowanych fundacji.",
     "noMatch": "Brak fundacji pasujących do filtrów.",
     "animalsAvailable": "zwierząt dostępnych do adopcji"
+  },
+  "transportCompaniesPage": {
+    "eyebrow": "Zweryfikowany transport",
+    "title": "Zweryfikowane firmy transportowe",
+    "subtitle": "Zatwierdzone firmy zajmujące się transportem zwierząt na Anemalo.",
+    "searchPlaceholder": "Szukaj po nazwie lub mieście…",
+    "filter": "Filtruj",
+    "countryPlaceholder": "Kraj",
+    "allCountries": "Wszystkie kraje",
+    "clearFilters": "Wyczyść filtry",
+    "noneYet": "Brak jeszcze zweryfikowanych firm transportowych.",
+    "noMatch": "Brak firm transportowych pasujących do filtrów."
   },
   "plannedLittersPage": {
     "eyebrow": "Planowane mioty",
@@ -840,7 +854,15 @@
     "to": "Dokąd",
     "earliestNeeded": "Najwcześniejszy potrzebny termin (opcjonalnie)",
     "joinWaitlist": "Zapisz się na listę",
-    "couldNotJoin": "Nie udało się zapisać na listę oczekujących."
+    "couldNotJoin": "Nie udało się zapisać na listę oczekujących.",
+    "tabAnemaloRoutes": "Trasy Anemalo",
+    "tabCompanyTrips": "Wyjazdy firm",
+    "companyTripsEmpty": "Obecnie brak publicznych wyjazdów firm.",
+    "companyTripStopsSuffix": "przystanków",
+    "requestToJoin": "Zapytaj o dołączenie",
+    "couldNotSubmitJoin": "Nie udało się wysłać zapytania.",
+    "joinSubmittedTitle": "Zapytanie wysłane",
+    "joinSubmittedBody": "Firma transportowa rozpatrzy Twoje zapytanie i skontaktuje się z Tobą."
   },
   "rehomePage": {
     "eyebrow": "Prywatne oddanie do adopcji",
@@ -2159,7 +2181,15 @@
         "pending": "Oczekujący",
         "picked_up": "Odebrany",
         "delivered": "Dostarczony"
-      }
+      },
+      "publicToggleLabel": "Upublicznij ten wyjazd",
+      "publicToggleHelp": "Pozwala klientom przeglądać ten wyjazd na stronie Planowanych tras i zapytać o dołączenie. Adresy odbioru, dostawy i dane kontaktowe zawsze pozostają prywatne.",
+      "fieldOriginCountry": "Kraj wyjazdu",
+      "fieldDestinationCountry": "Kraj docelowy",
+      "joinRequestsTitle": "Zapytania o dołączenie do tego wyjazdu",
+      "acceptJoinRequest": "Akceptuj",
+      "declineJoinRequest": "Odrzuć",
+      "joinRequestAcceptedToast": "Dodano do przystanków tego wyjazdu."
     },
     "overview": {
       "welcomeBackPrefix": "Witaj ponownie,",

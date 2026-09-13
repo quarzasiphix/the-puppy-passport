@@ -5696,6 +5696,92 @@ export type Database = {
           },
         ]
       }
+      trip_join_requests: {
+        Row: {
+          animal_label: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          dropoff_contact_name: string | null
+          dropoff_contact_phone: string | null
+          dropoff_maps_url: string | null
+          id: string
+          notes: string | null
+          pickup_contact_name: string | null
+          pickup_contact_phone: string | null
+          pickup_maps_url: string | null
+          requester_profile_id: string
+          status: Database["public"]["Enums"]["trip_join_request_status"]
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          animal_label: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          id?: string
+          notes?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          requester_profile_id: string
+          status?: Database["public"]["Enums"]["trip_join_request_status"]
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          animal_label?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          id?: string
+          notes?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          requester_profile_id?: string
+          status?: Database["public"]["Enums"]["trip_join_request_status"]
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_join_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_join_requests_requester_profile_id_fkey"
+            columns: ["requester_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_join_requests_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "public_trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_join_requests_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_stops: {
         Row: {
           animal_label: string
@@ -5783,6 +5869,13 @@ export type Database = {
             foreignKeyName: "trip_stops_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
+            referencedRelation: "public_trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
             referencedRelation: "trips"
             referencedColumns: ["id"]
           },
@@ -5793,11 +5886,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           departure_date: string | null
+          destination_country: string | null
           driver_id: string | null
           id: string
+          is_public: boolean
           name: string
           notes: string | null
           organization_id: string
+          origin_country: string | null
           route_maps_url: string | null
           status: Database["public"]["Enums"]["trip_status"]
           updated_at: string
@@ -5807,11 +5903,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           departure_date?: string | null
+          destination_country?: string | null
           driver_id?: string | null
           id?: string
+          is_public?: boolean
           name: string
           notes?: string | null
           organization_id: string
+          origin_country?: string | null
           route_maps_url?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
           updated_at?: string
@@ -5821,11 +5920,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           departure_date?: string | null
+          destination_country?: string | null
           driver_id?: string | null
           id?: string
+          is_public?: boolean
           name?: string
           notes?: string | null
           organization_id?: string
+          origin_country?: string | null
           route_maps_url?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
           updated_at?: string
@@ -6834,6 +6936,20 @@ export type Database = {
             | null
           size_category?: Database["public"]["Enums"]["size_category"] | null
           status?: Database["public"]["Enums"]["transport_status"] | null
+        }
+        Relationships: []
+      }
+      public_trips: {
+        Row: {
+          company_name: string | null
+          company_slug: string | null
+          departure_date: string | null
+          destination_country: string | null
+          id: string | null
+          name: string | null
+          origin_country: string | null
+          status: Database["public"]["Enums"]["trip_status"] | null
+          stop_count: number | null
         }
         Relationships: []
       }
@@ -7885,6 +8001,11 @@ export type Database = {
         | "compliance_hold"
         | "route_postponed"
       transport_visibility: "private" | "community_visible"
+      trip_join_request_status:
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "withdrawn"
       trip_status: "planning" | "in_progress" | "completed" | "cancelled"
       trip_stop_status: "pending" | "picked_up" | "delivered"
       verification_status:
@@ -8546,6 +8667,12 @@ export const Constants = {
         "route_postponed",
       ],
       transport_visibility: ["private", "community_visible"],
+      trip_join_request_status: [
+        "pending",
+        "accepted",
+        "declined",
+        "withdrawn",
+      ],
       trip_status: ["planning", "in_progress", "completed", "cancelled"],
       trip_stop_status: ["pending", "picked_up", "delivered"],
       verification_status: [
