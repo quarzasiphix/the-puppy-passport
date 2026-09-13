@@ -2143,8 +2143,12 @@
       "fieldAnimalLabel": "Zwierzę",
       "fieldAnimalLabelPlaceholder": "np. Bella (Golden Retriever)",
       "fieldMapsUrl": "Adres (link Google Maps)",
+      "fieldAddressText": "Adres (tekst, opcjonalnie)",
+      "fieldAddressTextPlaceholder": "np. ul. Przykładowa 12, Warszawa",
       "fieldContactName": "Imię kontaktu",
       "fieldContactPhone": "Telefon kontaktowy",
+      "fieldRoleLabel": "Rola (np. Hodowca)",
+      "fieldMessengerName": "Messenger / WhatsApp",
       "addedToast": "Wyjazd utworzony.",
       "saveFailed": "Nie udało się utworzyć wyjazdu.",
       "status": {
@@ -2189,7 +2193,11 @@
       "joinRequestsTitle": "Zapytania o dołączenie do tego wyjazdu",
       "acceptJoinRequest": "Akceptuj",
       "declineJoinRequest": "Odrzuć",
-      "joinRequestAcceptedToast": "Dodano do przystanków tego wyjazdu."
+      "joinRequestAcceptedToast": "Dodano do przystanków tego wyjazdu.",
+      "viewDetails": "Szczegóły",
+      "extraContactsTitle": "Dodatkowe kontakty",
+      "noExtraContacts": "Brak jeszcze dodatkowych kontaktów — dodaj, jeśli trzeba skontaktować się z więcej niż jedną osobą.",
+      "addContact": "Dodaj kontakt"
     },
     "overview": {
       "welcomeBackPrefix": "Witaj ponownie,",

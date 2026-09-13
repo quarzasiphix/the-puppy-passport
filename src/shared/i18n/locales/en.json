@@ -2143,8 +2143,12 @@
       "fieldAnimalLabel": "Animal",
       "fieldAnimalLabelPlaceholder": "e.g. Bella (Golden Retriever)",
       "fieldMapsUrl": "Address (Google Maps link)",
+      "fieldAddressText": "Address (text, optional)",
+      "fieldAddressTextPlaceholder": "e.g. ul. Przykładowa 12, Warsaw",
       "fieldContactName": "Contact name",
       "fieldContactPhone": "Contact phone",
+      "fieldRoleLabel": "Role (e.g. Breeder)",
+      "fieldMessengerName": "Messenger / WhatsApp name",
       "addedToast": "Trip created.",
       "saveFailed": "Could not create the trip.",
       "status": {
@@ -2189,7 +2193,11 @@
       "joinRequestsTitle": "Requests to join this trip",
       "acceptJoinRequest": "Accept",
       "declineJoinRequest": "Decline",
-      "joinRequestAcceptedToast": "Added to this trip's stops."
+      "joinRequestAcceptedToast": "Added to this trip's stops.",
+      "viewDetails": "Details",
+      "extraContactsTitle": "Extra contacts",
+      "noExtraContacts": "No extra contacts yet — add one if more than one person needs to be reached.",
+      "addContact": "Add contact"
     },
     "overview": {
       "welcomeBackPrefix": "Welcome back,",

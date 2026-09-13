@@ -5782,17 +5782,63 @@ export type Database = {
           },
         ]
       }
+      trip_stop_contacts: {
+        Row: {
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          messenger_name: string | null
+          notes: string | null
+          role_label: string | null
+          trip_stop_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          messenger_name?: string | null
+          notes?: string | null
+          role_label?: string | null
+          trip_stop_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          messenger_name?: string | null
+          notes?: string | null
+          role_label?: string | null
+          trip_stop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stop_contacts_trip_stop_id_fkey"
+            columns: ["trip_stop_id"]
+            isOneToOne: false
+            referencedRelation: "trip_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_stops: {
         Row: {
           animal_label: string
           created_at: string
           delivered_at: string | null
+          dropoff_address_text: string | null
           dropoff_contact_name: string | null
           dropoff_contact_phone: string | null
           dropoff_maps_url: string | null
           dropoff_notes: string | null
           id: string
           picked_up_at: string | null
+          pickup_address_text: string | null
           pickup_contact_name: string | null
           pickup_contact_phone: string | null
           pickup_maps_url: string | null
@@ -5807,12 +5853,14 @@ export type Database = {
           animal_label: string
           created_at?: string
           delivered_at?: string | null
+          dropoff_address_text?: string | null
           dropoff_contact_name?: string | null
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
           picked_up_at?: string | null
+          pickup_address_text?: string | null
           pickup_contact_name?: string | null
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null
@@ -5827,12 +5875,14 @@ export type Database = {
           animal_label?: string
           created_at?: string
           delivered_at?: string | null
+          dropoff_address_text?: string | null
           dropoff_contact_name?: string | null
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
           picked_up_at?: string | null
+          pickup_address_text?: string | null
           pickup_contact_name?: string | null
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null

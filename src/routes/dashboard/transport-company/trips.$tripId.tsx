@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,9 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
+  Info,
+  MessageCircle,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -33,6 +36,7 @@ import {
   getTrip,
   listTripStops,
   addTripStop,
+  updateTripStop,
   removeTripStop,
   markStopPickedUp,
   markStopDelivered,
@@ -41,8 +45,12 @@ import {
   listJoinRequestsForTrip,
   acceptJoinRequestAsStop,
   respondToJoinRequest,
+  listStopContacts,
+  addStopContact,
+  removeStopContact,
   type TripStopRow,
   type TripJoinRequestRow,
+  type TripStopContactRow,
 } from "@/domains/transport";
 import { useAuth } from "@/domains/identity";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
@@ -55,10 +63,12 @@ export const Route = createFileRoute("/dashboard/transport-company/trips/$tripId
 type StopFormValues = {
   animalLabel: string;
   pickupMapsUrl: string;
+  pickupAddressText: string;
   pickupContactName: string;
   pickupContactPhone: string;
   pickupNotes: string;
   dropoffMapsUrl: string;
+  dropoffAddressText: string;
   dropoffContactName: string;
   dropoffContactPhone: string;
   dropoffNotes: string;
@@ -67,10 +77,12 @@ type StopFormValues = {
 const EMPTY_STOP_FORM: StopFormValues = {
   animalLabel: "",
   pickupMapsUrl: "",
+  pickupAddressText: "",
   pickupContactName: "",
   pickupContactPhone: "",
   pickupNotes: "",
   dropoffMapsUrl: "",
+  dropoffAddressText: "",
   dropoffContactName: "",
   dropoffContactPhone: "",
   dropoffNotes: "",
@@ -84,6 +96,7 @@ function TripDetailPage() {
   const [addStopOpen, setAddStopOpen] = useState(false);
   const [originCountry, setOriginCountry] = useState("");
   const [destinationCountry, setDestinationCountry] = useState("");
+  const [detailStopId, setDetailStopId] = useState<string | null>(null);
 
   const tripQuery = useQuery({ queryKey: ["trip", tripId], queryFn: () => getTrip(tripId) });
   const stopsQuery = useQuery({
@@ -109,10 +122,12 @@ function TripDetailPage() {
       addTripStop(tripId, {
         animal_label: values.animalLabel,
         pickup_maps_url: values.pickupMapsUrl || null,
+        pickup_address_text: values.pickupAddressText || null,
         pickup_contact_name: values.pickupContactName || null,
         pickup_contact_phone: values.pickupContactPhone || null,
         pickup_notes: values.pickupNotes || null,
         dropoff_maps_url: values.dropoffMapsUrl || null,
+        dropoff_address_text: values.dropoffAddressText || null,
         dropoff_contact_name: values.dropoffContactName || null,
         dropoff_contact_phone: values.dropoffContactPhone || null,
         dropoff_notes: values.dropoffNotes || null,
@@ -196,6 +211,7 @@ function TripDetailPage() {
 
   const pendingJoinRequests = (joinRequestsQuery.data ?? []).filter((r) => r.status === "pending");
   const stops = stopsQuery.data ?? [];
+  const detailStop = stops.find((s) => s.id === detailStopId) ?? null;
   const vehicleName = vehiclesQuery.data?.find((v) => v.id === trip?.vehicle_id)?.name;
   const driverName = driversQuery.data?.find((d) => d.id === trip?.driver_id)?.name;
 
@@ -437,6 +453,13 @@ function TripDetailPage() {
                     {...stopForm.register("pickupMapsUrl")}
                   />
                 </div>
+                <div>
+                  <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+                  <Input
+                    placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                    {...stopForm.register("pickupAddressText")}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
@@ -462,6 +485,13 @@ function TripDetailPage() {
                   <Input
                     placeholder="https://maps.google.com/…"
                     {...stopForm.register("dropoffMapsUrl")}
+                  />
+                </div>
+                <div>
+                  <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+                  <Input
+                    placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                    {...stopForm.register("dropoffAddressText")}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -502,6 +532,7 @@ function TripDetailPage() {
             <StopCard
               key={stop.id}
               stop={stop}
+              onOpenDetails={() => setDetailStopId(stop.id)}
               onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
               onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
               onRemove={() => removeMutation.mutate(stop.id)}
@@ -512,6 +543,18 @@ function TripDetailPage() {
           ))}
         </div>
       )}
+
+      {detailStop && (
+        <StopDetailDialog
+          stop={detailStop}
+          open={!!detailStopId}
+          onOpenChange={(open) => setDetailStopId(open ? detailStop.id : null)}
+          onMarkPickedUp={() => pickedUpMutation.mutate(detailStop.id)}
+          onMarkDelivered={() => deliveredMutation.mutate(detailStop.id)}
+          markingPickedUp={pickedUpMutation.isPending}
+          markingDelivered={deliveredMutation.isPending}
+        />
+      )}
     </div>
   );
 }
@@ -519,12 +562,14 @@ function TripDetailPage() {
 function ContactBlock({
   title,
   mapsUrl,
+  addressText,
   contactName,
   contactPhone,
   notes,
 }: {
   title: string;
   mapsUrl: string | null;
+  addressText?: string | null;
   contactName: string | null;
   contactPhone: string | null;
   notes: string | null;
@@ -533,6 +578,11 @@ function ContactBlock({
   return (
     <div className="flex-1 rounded-xl bg-secondary/40 p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      {addressText && (
+        <p className="mt-1 flex items-start gap-1 text-sm text-foreground">
+          <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /> {addressText}
+        </p>
+      )}
       <div className="mt-2 flex flex-wrap gap-2">
         {mapsUrl ? (
           <Button asChild size="sm" variant="outline">
@@ -563,6 +613,7 @@ function ContactBlock({
 
 function StopCard({
   stop,
+  onOpenDetails,
   onMarkPickedUp,
   onMarkDelivered,
   onRemove,
@@ -571,6 +622,7 @@ function StopCard({
   removing,
 }: {
   stop: TripStopRow;
+  onOpenDetails: () => void;
   onMarkPickedUp: () => void;
   onMarkDelivered: () => void;
   onRemove: () => void;
@@ -582,7 +634,11 @@ function StopCard({
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenDetails}
+          className="flex items-center gap-2 text-left hover:underline"
+        >
           <h3 className="font-display text-base font-semibold">{stop.animal_label}</h3>
           <Badge
             variant={stop.status === "delivered" ? "secondary" : "outline"}
@@ -590,22 +646,28 @@ function StopCard({
           >
             {t(`transportCompanyPanel.trips.stopStatus.${stop.status}`)}
           </Badge>
+        </button>
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" onClick={onOpenDetails}>
+            <Info className="mr-1 size-4" /> {t("transportCompanyPanel.trips.viewDetails")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive"
+            disabled={removing}
+            onClick={onRemove}
+          >
+            <Trash2 className="size-4" />
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive"
-          disabled={removing}
-          onClick={onRemove}
-        >
-          <Trash2 className="size-4" />
-        </Button>
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row">
         <ContactBlock
           title={t("transportCompanyPanel.trips.pickupSectionTitle")}
           mapsUrl={stop.pickup_maps_url}
+          addressText={stop.pickup_address_text}
           contactName={stop.pickup_contact_name}
           contactPhone={stop.pickup_contact_phone}
           notes={stop.pickup_notes}
@@ -613,6 +675,7 @@ function StopCard({
         <ContactBlock
           title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
           mapsUrl={stop.dropoff_maps_url}
+          addressText={stop.dropoff_address_text}
           contactName={stop.dropoff_contact_name}
           contactPhone={stop.dropoff_contact_phone}
           notes={stop.dropoff_notes}
@@ -637,6 +700,320 @@ function StopCard({
           <PackageCheck className="mr-1 size-4" /> {t("transportCompanyPanel.trips.markDelivered")}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// The "click into a stop and see everything" view: editable pickup/dropoff address+contact detail
+// (autosaved on blur, same convention as the trip visibility fields above) plus the stop's extra
+// contacts (trip_stop_contacts) — real handovers often need more than the two primary contacts
+// already on the stop itself (e.g. a breeder AND whoever meets the van).
+function StopDetailDialog({
+  stop,
+  open,
+  onOpenChange,
+  onMarkPickedUp,
+  onMarkDelivered,
+  markingPickedUp,
+  markingDelivered,
+}: {
+  stop: TripStopRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onMarkPickedUp: () => void;
+  onMarkDelivered: () => void;
+  markingPickedUp: boolean;
+  markingDelivered: boolean;
+}) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const [fields, setFields] = useState({
+    pickup_maps_url: stop.pickup_maps_url ?? "",
+    pickup_address_text: stop.pickup_address_text ?? "",
+    pickup_contact_name: stop.pickup_contact_name ?? "",
+    pickup_contact_phone: stop.pickup_contact_phone ?? "",
+    pickup_notes: stop.pickup_notes ?? "",
+    dropoff_maps_url: stop.dropoff_maps_url ?? "",
+    dropoff_address_text: stop.dropoff_address_text ?? "",
+    dropoff_contact_name: stop.dropoff_contact_name ?? "",
+    dropoff_contact_phone: stop.dropoff_contact_phone ?? "",
+    dropoff_notes: stop.dropoff_notes ?? "",
+  });
+
+  useEffect(() => {
+    setFields({
+      pickup_maps_url: stop.pickup_maps_url ?? "",
+      pickup_address_text: stop.pickup_address_text ?? "",
+      pickup_contact_name: stop.pickup_contact_name ?? "",
+      pickup_contact_phone: stop.pickup_contact_phone ?? "",
+      pickup_notes: stop.pickup_notes ?? "",
+      dropoff_maps_url: stop.dropoff_maps_url ?? "",
+      dropoff_address_text: stop.dropoff_address_text ?? "",
+      dropoff_contact_name: stop.dropoff_contact_name ?? "",
+      dropoff_contact_phone: stop.dropoff_contact_phone ?? "",
+      dropoff_notes: stop.dropoff_notes ?? "",
+    });
+  }, [stop]);
+
+  const invalidateStops = () =>
+    queryClient.invalidateQueries({ queryKey: ["trip-stops", stop.trip_id] });
+
+  const saveMutation = useMutation({
+    mutationFn: (patch: Partial<typeof fields>) => updateTripStop(stop.id, patch),
+    onSuccess: invalidateStops,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+
+  const contactsQuery = useQuery({
+    queryKey: ["trip-stop-contacts", stop.id],
+    queryFn: () => listStopContacts(stop.id),
+  });
+  const invalidateContacts = () =>
+    queryClient.invalidateQueries({ queryKey: ["trip-stop-contacts", stop.id] });
+
+  const [contactForm, setContactForm] = useState({
+    role_label: "",
+    contact_name: "",
+    contact_phone: "",
+    messenger_name: "",
+  });
+  const addContactMutation = useMutation({
+    mutationFn: () =>
+      addStopContact(stop.id, {
+        role_label: contactForm.role_label || null,
+        contact_name: contactForm.contact_name,
+        contact_phone: contactForm.contact_phone || null,
+        messenger_name: contactForm.messenger_name || null,
+      }),
+    onSuccess: () => {
+      setContactForm({ role_label: "", contact_name: "", contact_phone: "", messenger_name: "" });
+      invalidateContacts();
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopSaveFailed"))),
+  });
+  const removeContactMutation = useMutation({
+    mutationFn: removeStopContact,
+    onSuccess: invalidateContacts,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+
+  const field = (key: keyof typeof fields) => ({
+    value: fields[key],
+    onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setFields((f) => ({ ...f, [key]: e.target.value })),
+    onBlur: () => {
+      if (fields[key] !== (stop[key] ?? "")) saveMutation.mutate({ [key]: fields[key] || null });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {stop.animal_label}
+            <Badge
+              variant={stop.status === "delivered" ? "secondary" : "outline"}
+              className="capitalize"
+            >
+              {t(`transportCompanyPanel.trips.stopStatus.${stop.status}`)}
+            </Badge>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border/60 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("transportCompanyPanel.trips.pickupSectionTitle")}
+            </p>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
+              <Input placeholder="https://maps.google.com/…" {...field("pickup_maps_url")} />
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                {...field("pickup_address_text")}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
+                <Input {...field("pickup_contact_name")} />
+              </div>
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
+                <Input {...field("pickup_contact_phone")} />
+              </div>
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
+              <Textarea rows={2} {...field("pickup_notes")} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("transportCompanyPanel.trips.dropoffSectionTitle")}
+            </p>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
+              <Input placeholder="https://maps.google.com/…" {...field("dropoff_maps_url")} />
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                {...field("dropoff_address_text")}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
+                <Input {...field("dropoff_contact_name")} />
+              </div>
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
+                <Input {...field("dropoff_contact_phone")} />
+              </div>
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
+              <Textarea rows={2} {...field("dropoff_notes")} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("transportCompanyPanel.trips.extraContactsTitle")}
+            </p>
+            {(contactsQuery.data ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {t("transportCompanyPanel.trips.noExtraContacts")}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {(contactsQuery.data ?? []).map((c) => (
+                  <ExtraContactRow
+                    key={c.id}
+                    contact={c}
+                    onRemove={() => removeContactMutation.mutate(c.id)}
+                    removing={removeContactMutation.isPending}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-3">
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldRoleLabel")}
+                value={contactForm.role_label}
+                onChange={(e) => setContactForm((f) => ({ ...f, role_label: e.target.value }))}
+              />
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldContactName")}
+                value={contactForm.contact_name}
+                onChange={(e) => setContactForm((f) => ({ ...f, contact_name: e.target.value }))}
+              />
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldContactPhone")}
+                value={contactForm.contact_phone}
+                onChange={(e) => setContactForm((f) => ({ ...f, contact_phone: e.target.value }))}
+              />
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldMessengerName")}
+                value={contactForm.messenger_name}
+                onChange={(e) => setContactForm((f) => ({ ...f, messenger_name: e.target.value }))}
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              disabled={!contactForm.contact_name.trim() || addContactMutation.isPending}
+              onClick={() => addContactMutation.mutate()}
+            >
+              <UserPlus className="mr-1 size-4" /> {t("transportCompanyPanel.trips.addContact")}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={stop.status === "pending" ? "default" : "outline"}
+              disabled={stop.status !== "pending" || markingPickedUp}
+              onClick={onMarkPickedUp}
+            >
+              <PackageOpen className="mr-1 size-4" />{" "}
+              {t("transportCompanyPanel.trips.markPickedUp")}
+            </Button>
+            <Button
+              size="sm"
+              variant={stop.status === "picked_up" ? "default" : "outline"}
+              disabled={stop.status !== "picked_up" || markingDelivered}
+              onClick={onMarkDelivered}
+            >
+              <PackageCheck className="mr-1 size-4" />{" "}
+              {t("transportCompanyPanel.trips.markDelivered")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ExtraContactRow({
+  contact,
+  onRemove,
+  removing,
+}: {
+  contact: TripStopContactRow;
+  onRemove: () => void;
+  removing: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start justify-between gap-2 rounded-lg bg-secondary/40 p-2">
+      <div className="text-sm">
+        <div className="font-medium">
+          {contact.contact_name}
+          {contact.role_label && (
+            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              ({contact.role_label})
+            </span>
+          )}
+        </div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {contact.contact_phone && (
+            <a
+              href={`tel:${contact.contact_phone}`}
+              className="inline-flex items-center gap-1 hover:underline"
+            >
+              <Phone className="size-3" /> {contact.contact_phone}
+            </a>
+          )}
+          {contact.messenger_name && (
+            <span className="inline-flex items-center gap-1">
+              <MessageCircle className="size-3" /> {contact.messenger_name}
+            </span>
+          )}
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="text-destructive"
+        disabled={removing}
+        onClick={onRemove}
+      >
+        <Trash2 className="size-3.5" />
+      </Button>
     </div>
   );
 }

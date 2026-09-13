@@ -126,6 +126,57 @@ export async function markStopDelivered(stopId: string): Promise<void> {
   await updateTripStop(stopId, { status: "delivered", delivered_at: new Date().toISOString() });
 }
 
+// --- Per-stop extra contacts -------------------------------------------------------------------
+// A stop's pickup_contact_*/dropoff_contact_* columns cover the common case (one contact per
+// leg). Real handovers often involve more people (a breeder AND whoever meets the van, sometimes
+// a third) — trip_stop_contacts holds any additional ones, each with a free-text role label and
+// an optional messenger handle for reference. See
+// 20260917000000_trip_stop_contacts_and_addresses.sql's own header for the reasoning.
+
+export type TripStopContactRow = Database["public"]["Tables"]["trip_stop_contacts"]["Row"];
+export type TripStopContactInsert = Database["public"]["Tables"]["trip_stop_contacts"]["Insert"];
+export type TripStopContactUpdate = Database["public"]["Tables"]["trip_stop_contacts"]["Update"];
+
+export async function listStopContacts(stopId: string): Promise<TripStopContactRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_stop_contacts")
+    .select("*")
+    .eq("trip_stop_id", stopId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data as TripStopContactRow[];
+}
+
+export async function addStopContact(
+  stopId: string,
+  payload: Omit<TripStopContactInsert, "trip_stop_id">,
+): Promise<TripStopContactRow> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_stop_contacts")
+    .insert({ ...payload, trip_stop_id: stopId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TripStopContactRow;
+}
+
+export async function updateStopContact(
+  contactId: string,
+  patch: TripStopContactUpdate,
+): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("trip_stop_contacts").update(patch).eq("id", contactId);
+  if (error) throw error;
+}
+
+export async function removeStopContact(contactId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("trip_stop_contacts").delete().eq("id", contactId);
+  if (error) throw error;
+}
+
 // --- Public visibility + join requests -------------------------------------------------------
 // See 20260916000000_public_trips_and_join_requests.sql's own header for why this is deliberately
 // narrow (browsable + a lightweight ask, no scored matching engine, no geocoding).
