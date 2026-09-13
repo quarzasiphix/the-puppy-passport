@@ -4,7 +4,7 @@ import { Badge } from "@/shared/ui/badge";
 import { useAuth, requireRole } from "@/domains/identity";
 import { getMyTransportCompanyProfile } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
-import { transportCompanyNav } from "@/app/config/navigation";
+import { transportCompanyNav, transportCompanyBottomNav } from "@/app/config/navigation";
 
 export const Route = createFileRoute("/dashboard/transport-company")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["transport_company_owner"]),
@@ -37,6 +37,7 @@ function TransportCompanyDashboardLayout() {
         </>
       }
       settingsTo="/dashboard/transport-company/settings"
+      bottomNavItems={transportCompanyBottomNav}
     >
       <Outlet />
     </DashboardShell>

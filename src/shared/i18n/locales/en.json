@@ -1336,6 +1336,8 @@
   "dashboardShell": {
     "notImplemented": "Not implemented in this phase",
     "openMenu": "Open menu",
+    "bottomNavLabel": "Dashboard navigation",
+    "moreLabel": "More",
     "backToAnemalo": "← Back to Anemalo",
     "settings": "Settings",
     "profileMenuLabel": "Account menu",

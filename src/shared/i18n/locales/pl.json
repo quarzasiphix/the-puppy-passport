@@ -1336,6 +1336,8 @@
   "dashboardShell": {
     "notImplemented": "Niedostępne na tym etapie",
     "openMenu": "Otwórz menu",
+    "bottomNavLabel": "Nawigacja panelu",
+    "moreLabel": "Więcej",
     "backToAnemalo": "← Wróć do Anemalo",
     "settings": "Ustawienia",
     "profileMenuLabel": "Menu konta",

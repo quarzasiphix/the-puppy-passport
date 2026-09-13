@@ -5,7 +5,7 @@ import { useAuth } from "@/domains/identity";
 import { requireRole } from "@/domains/identity";
 import { getMyKennelProfile, getKennelSiteConfiguration, WelcomeModal } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
-import { breederNav } from "@/app/config/navigation";
+import { breederNav, breederBottomNav } from "@/app/config/navigation";
 
 export const Route = createFileRoute("/dashboard/breeder")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["breeder"]),
@@ -44,6 +44,7 @@ function BreederDashboardLayout() {
         </>
       }
       settingsTo="/dashboard/breeder/settings"
+      bottomNavItems={breederBottomNav}
     >
       <Outlet />
       {kennelQuery.isSuccess && kennelQuery.data && (

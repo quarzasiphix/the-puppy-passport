@@ -5,7 +5,7 @@ import { useAuth } from "@/domains/identity";
 import { requireRole } from "@/domains/identity";
 import { getMyFoundationProfile } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
-import { foundationNav } from "@/app/config/navigation";
+import { foundationNav, foundationBottomNav } from "@/app/config/navigation";
 
 export const Route = createFileRoute("/dashboard/foundation")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["foundation_member", "shelter_member"]),
@@ -35,6 +35,7 @@ function FoundationDashboardLayout() {
         </>
       }
       settingsTo="/dashboard/foundation/settings"
+      bottomNavItems={foundationBottomNav}
     >
       <Outlet />
     </DashboardShell>

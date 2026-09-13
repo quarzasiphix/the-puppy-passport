@@ -3,7 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { requireRole } from "@/domains/identity";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
-import { buyerNav } from "@/app/config/navigation";
+import { buyerNav, buyerBottomNav } from "@/app/config/navigation";
 
 export const Route = createFileRoute("/dashboard/buyer")({
   beforeLoad: ({ context }) => requireRole(context.auth, []),
@@ -24,6 +24,7 @@ function BuyerDashboardLayout() {
         </>
       }
       settingsTo="/dashboard/buyer/profile"
+      bottomNavItems={buyerBottomNav}
       headerExtra={
         <Button asChild variant="outline" size="sm">
           <Link to="/find-a-dog">Continue searching</Link>

@@ -76,6 +76,11 @@ export const dashboardWorkspaces: { to: string; id: string; roles: string[]; ico
 
 export const buyerNav: DashboardNavItem[] = [
   { to: "/dashboard/buyer", label: "Overview", icon: LayoutDashboard, exact: true },
+  // A real route/page (dashboard/buyer/reservations.tsx, BuyerReservationsPage) that was never
+  // actually listed here — reachable only by a direct link from elsewhere, not from this sidebar
+  // at all. Found while adding the mobile bottom nav (2026-09-13), which needed a real path for
+  // "Reservations" as one of a buyer's primary destinations.
+  { to: "/dashboard/buyer/reservations", label: "Reservations", icon: CalendarCheck },
   { to: "/dashboard/buyer/transport", label: "Transport requests", icon: Truck },
   { to: "/dashboard/buyer/quotations", label: "Quotations", icon: Receipt },
   { to: "/dashboard/buyer/scheduled", label: "Scheduled transports", icon: CalendarCheck },
@@ -295,3 +300,72 @@ const sharedAdminNavItems: DashboardNavItem[] = [
 export function adminNavFor(isAdmin: boolean): DashboardNavItem[] {
   return isAdmin ? [...sharedAdminNavItems, ...adminOnlyNavItems] : sharedAdminNavItems;
 }
+
+// Mobile bottom navigation bars, one per dashboard — the same pattern as the public site's own
+// bottom bar (site-chrome.tsx's `bottomNav`): a handful of real, already-existing pages (never a
+// destination invented just for this bar), rendered as a fixed row at the very bottom of the
+// screen below `lg`, where the full sidebar is hidden. Each array is deliberately a curated
+// subset, not `navItems.slice(0, n)` — a dashboard's full sidebar order isn't necessarily its most
+// important 3-4 destinations on a phone (e.g. buyerNav lists Overview first for the sidebar, but
+// Reservations/Messages matter more for a five-button mobile bar). DashboardShell always appends
+// one more "More" button after these that opens the exact same nav Sheet the hamburger does, so
+// nothing on the full sidebar becomes unreachable on mobile — this bar is a shortcut, not a
+// replacement. Kept to 3-4 entries each (site-chrome's own comment: a bar past ~5 columns stops
+// being legible at the 400px-wide floor this app supports; the trailing "More" button is the +1).
+export const buyerBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/buyer", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/buyer/reservations", label: "Reservations", icon: CalendarCheck },
+  { to: "/dashboard/buyer/messages", label: "Messages", icon: MessageSquare },
+  { to: "/dashboard/buyer/profile", label: "Account", icon: User },
+];
+
+export const breederBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/breeder/applications", label: "Applications", icon: Inbox },
+  { to: "/dashboard/breeder/reservations", label: "Reservations", icon: CalendarCheck },
+  { to: "/dashboard/breeder/messages", label: "Messages", icon: MessageSquare },
+];
+
+export const foundationBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/foundation", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/foundation/applications", label: "Applications", icon: Inbox },
+  { to: "/dashboard/foundation/transport", label: "Transport", icon: Truck },
+  { to: "/dashboard/foundation/messages", label: "Messages", icon: MessageSquare },
+];
+
+// Deliberately built from this dashboard's own real pages (Overview/Vehicles/Drivers/Jobs/Team/
+// Profile/Settings — see dashboard/transport-company/), not from the internal operations
+// dashboard's "Requests/Calendar/Dispatch" below, which is a different, ops-staff-only dashboard
+// with different real pages. A company-scoped calendar and a real dispatch (assign-our-own-driver-
+// to-a-job) flow don't exist here yet — today's "Jobs" tab is read-only (see fleet.ts's own
+// comment on listMyFleetJobs) — that's real, un-built follow-up work extending self-service fleet
+// management toward what operations staff already have, not something this nav bar can shortcut to
+// yet.
+export const transportCompanyBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/transport-company", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/transport-company/jobs", label: "Jobs", icon: Truck },
+  { to: "/dashboard/transport-company/vehicles", label: "Vehicles", icon: Car },
+  { to: "/dashboard/transport-company/team", label: "Team", icon: Users },
+];
+
+// The one dashboard where "requests, calendar, dispatch" are already real, existing pages today —
+// this is Anemalo's own internal transport-operations dashboard (ops staff), not a breeder/
+// transport-company's self-service panel. If "the transport dashboard" meant this one, it's
+// already fully covered; if it meant a company's own panel, see transportCompanyBottomNav above.
+export const operationsBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/operations", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/operations/new-requests", label: "Requests", icon: Inbox },
+  { to: "/dashboard/operations/dispatch", label: "Dispatch", icon: Users },
+  { to: "/dashboard/operations/calendar", label: "Calendar", icon: Calendar },
+];
+
+export const adminBottomNav: DashboardNavItem[] = [
+  { to: "/dashboard/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/admin/reports", label: "Reports", icon: Flag },
+  { to: "/dashboard/admin/moderation", label: "Moderation", icon: ShieldAlert },
+  { to: "/dashboard/admin/organisations", label: "Organisations", icon: Building2 },
+];
+
+// driverNav has exactly one real page today ("My route") — a bottom bar with one destination plus
+// a redundant "More" button isn't a real shortcut, so the driver dashboard intentionally has no
+// bottomNavItems at all (DashboardShell just doesn't render the bar when it's omitted).

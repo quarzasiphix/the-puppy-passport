@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { requireRole, useAuth } from "@/domains/identity";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
-import { adminNavFor } from "@/app/config/navigation";
+import { adminNavFor, adminBottomNav } from "@/app/config/navigation";
 
 // One shared dashboard for both roles rather than a parallel /dashboard/moderator tree — a
 // moderator and an admin see the same shell, the nav just shows fewer items for a moderator
@@ -23,6 +23,7 @@ function AdminDashboardLayout() {
     <DashboardShell
       navItems={adminNavFor(isAdmin)}
       settingsTo={isAdmin ? "/dashboard/admin/settings" : undefined}
+      bottomNavItems={adminBottomNav}
     >
       <Outlet />
     </DashboardShell>

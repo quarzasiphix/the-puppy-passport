@@ -148,6 +148,7 @@ export function DashboardShell({
   statusLine,
   settingsTo,
   headerExtra,
+  bottomNavItems,
   children,
   accentColor,
 }: {
@@ -163,6 +164,14 @@ export function DashboardShell({
    * "Continue searching" shortcut). Desktop only — dropped on mobile, where space is tight and
    * every one of these is also reachable from the page content itself or the nav sheet. */
   headerExtra?: React.ReactNode;
+  /** 3-4 curated destinations (see e.g. buyerBottomNav in navigation.ts) shown as a fixed bar at
+   * the bottom of the screen below `lg`, mirroring the public site's own MobileBottomNav — a
+   * shortcut to a dashboard's most-used pages on a phone, not a replacement for the full sidebar
+   * (still reachable via the "More" button this renders after them, which opens the same nav
+   * Sheet as the header's hamburger). Omit entirely for a dashboard with too few real pages for a
+   * bar to be worth it (e.g. dashboard/driver.tsx) — no bar renders at all, matching today's
+   * behaviour exactly. */
+  bottomNavItems?: DashboardNavItem[];
   children: React.ReactNode;
   /** A kennel's chosen brand color (organisation_site_configurations.primary_color), as a raw hex
    * string — overrides the `--accent`/`--accent-foreground` CSS variables for this whole shell, so
@@ -294,7 +303,39 @@ export function DashboardShell({
             </SheetContent>
           </Sheet>
 
-          <main className="p-4 sm:p-6">{children}</main>
+          <main className={`p-4 sm:p-6 ${bottomNavItems?.length ? "pb-20 lg:pb-6" : ""}`}>
+            {children}
+          </main>
+
+          {!!bottomNavItems?.length && (
+            <nav
+              aria-label={t("dashboardShell.bottomNavLabel")}
+              className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border/60 bg-background/95 backdrop-blur-md lg:hidden"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              {bottomNavItems.map((it) => (
+                <Link
+                  key={it.to}
+                  to={it.to}
+                  activeOptions={it.exact ? { exact: true } : undefined}
+                  className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground transition-colors"
+                  activeProps={{ className: "text-primary" }}
+                >
+                  <it.icon className="size-5" />
+                  {t(it.label)}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                aria-label={t("dashboardShell.openMenu")}
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground transition-colors"
+              >
+                <Menu className="size-5" />
+                {t("dashboardShell.moreLabel")}
+              </button>
+            </nav>
+          )}
         </div>
       </div>
     </div>
