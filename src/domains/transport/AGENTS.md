@@ -60,11 +60,18 @@ app. Backs "the center of the platform" per `docs/DOMAIN_MODEL.md`'s description
 
 ## File structure
 
-- `index.ts` — re-exports all 9 service files and all 5 components (`ops-request-table`,
+- `index.ts` — re-exports all 10 service files and all 5 components (`ops-request-table`,
   `report-incident-dialog`, `review-transport-dialog`, `transport-document-checklist`,
   `transport-timeline`).
 - Services: `calendar.ts`, `dispatch.ts`, `driver.ts`, `fleet.ts`, `matching.ts`, `pricing.ts`,
-  `routes.ts`, `transport.ts`, `welfare.ts` — described above.
+  `routes.ts`, `transport.ts`, `trips.ts`, `welfare.ts` — described above. `trips.ts` (added
+  2026-09-13) is the company-owned Trips feature (`trips`/`trip_stops`/`trip_stop_contacts`,
+  plus public visibility via `public_trips` and `trip_join_requests`) — deliberately separate from
+  `transport.ts`'s customer-facing `transport_requests` model, see the migration headers
+  (`supabase/migrations/2026091{5,6,7}*.sql`) for why.
+- `docs/` — domain-local design docs, not part of the top-level `docs/` tree:
+  `TRANSPORT_MARKETPLACE_VISION.md` (product direction for the Trips → public-visibility →
+  matching → fleet-routing roadmap).
 - Components: `ops-request-table.tsx` (the ops dashboard's request list/filter UI),
   `report-incident-dialog.tsx`, `review-transport-dialog.tsx` (post-delivery customer review),
   `transport-document-checklist.tsx`, `transport-timeline.tsx` (customer-facing milestone display,
