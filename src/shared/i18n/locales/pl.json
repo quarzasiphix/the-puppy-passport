@@ -945,9 +945,19 @@
     "title": "Złóż wniosek jako hodowca, fundacja lub firma transportowa",
     "subtitle": "Publikuj mioty, szczenięta, ogłoszenia adopcyjne lub swoje usługi transportowe po zweryfikowaniu Twojej hodowli lub organizacji. Weryfikacja trwa zwykle 2–5 dni roboczych.",
     "orgTypeKennel": "Hodowla",
+    "orgTypeKennelDesc": "Hoduję i wychowuję szczenięta, które trafiają do nowych rodzin.",
     "orgTypeFoundation": "Fundacja / organizacja ratująca zwierzęta",
+    "orgTypeFoundationDesc": "Prowadzę fundację lub organizację, która znajduje zwierzętom nowe domy.",
     "orgTypeShelter": "Schronisko",
+    "orgTypeShelterDesc": "Prowadzę schronisko, które na co dzień opiekuje się zwierzętami.",
     "orgTypeTransportCompany": "Firma transportu zwierząt",
+    "orgTypeTransportCompanyDesc": "Prowadzę firmę zajmującą się transportem zwierząt między krajami.",
+    "orgTypeChooserBack": "Wstecz",
+    "orgTypeChooserEyebrow": "Jeszcze jeden krok",
+    "orgTypeChooserTitle": "Jaki rodzaj organizacji prowadzisz?",
+    "orgTypeChooserSubtitle": "Wybierz opcję, która najlepiej pasuje — szczegóły możesz uzupełnić później, ale ten wybór decyduje, o co zapyta formularz zgłoszenia.",
+    "registeringAsLabel": "Rejestrujesz się jako",
+    "changeTypeLink": "Zmień typ",
     "sectionType": "Rodzaj wniosku",
     "sectionOrganisation": "Organizacja",
     "sectionAssociation": "Związek i rasy",
@@ -1553,6 +1563,14 @@
       "fieldDescription": "Opis",
       "fieldCoverImageUrl": "URL obrazu w tle",
       "fieldLogoUrl": "URL logo",
+      "fieldLogo": "Logo",
+      "fieldCover": "Zdjęcie w tle",
+      "uploadButton": "Prześlij",
+      "changeButton": "Zmień",
+      "uploading": "Przesyłanie…",
+      "logoUpdatedToast": "Logo zaktualizowane.",
+      "coverUpdatedToast": "Zdjęcie w tle zaktualizowane.",
+      "uploadFailed": "Nie udało się przesłać obrazu.",
       "fieldCity": "Miasto",
       "fieldCountry": "Kraj",
       "fieldAssociation": "Związek kynologiczny",
@@ -1830,9 +1848,27 @@
       "body": "Wyloguj się z konta Anemalo na tym urządzeniu.",
       "signOutButton": "Wyloguj się",
       "signingOut": "Wylogowywanie…"
+    },
+    "verificationDocs": {
+      "title": "Dokumenty weryfikacyjne",
+      "explain": "Dołącz dokument potwierdzający rejestrację w związku kynologicznym lub numer weterynaryjny (WNI) — jest on sprawdzany prywatnie przez zespół Anemalo i nigdy nie jest publicznie widoczny.",
+      "noVerification": "Nie znaleziono jeszcze wniosku weryfikacyjnego dla Twojego konta.",
+      "uploadButton": "Prześlij dokument",
+      "changeButton": "Zmień dokument",
+      "viewButton": "Zobacz obecny dokument",
+      "uploading": "Przesyłanie…",
+      "uploadedToast": "Dokument przesłany — zostanie sprawdzony razem z Twoim wnioskiem.",
+      "uploadFailed": "Nie udało się przesłać dokumentu.",
+      "closedNote": "Ta weryfikacja jest już zamknięta, więc nie można tu dodać nowego dokumentu."
     }
   },
   "buyerPanel": {
+    "nav": {
+      "overview": "Przegląd",
+      "reservations": "Rezerwacje",
+      "messages": "Wiadomości",
+      "account": "Konto"
+    },
     "index": {
       "welcomeBack": "Witaj ponownie",
       "subtitle": "Oto, jak wygląda dziś Twoja droga na Anemalo.",
@@ -2206,6 +2242,12 @@
     }
   },
   "foundationPanel": {
+    "nav": {
+      "overview": "Przegląd",
+      "applications": "Wnioski",
+      "transport": "Transport",
+      "messages": "Wiadomości"
+    },
     "documents": {
       "title": "Dokumenty",
       "purpose": "Rejestracja organizacji i dokumenty poszczególnych zwierząt będą zarządzane tutaj."
@@ -2450,6 +2492,22 @@
       "transportStartedToast": "Rozpoczęto szkic zlecenia transportowego dla tej adopcji. Znajdziesz go w sekcji Zlecenia transportowe.",
       "transportStartFailed": "Nie udało się rozpocząć szkicu zlecenia transportowego.",
       "conversationFailed": "Nie udało się otworzyć konwersacji."
+    }
+  },
+  "operationsPanel": {
+    "nav": {
+      "overview": "Przegląd",
+      "requests": "Zlecenia",
+      "dispatch": "Dyspozycja",
+      "calendar": "Kalendarz"
+    }
+  },
+  "adminPanel": {
+    "nav": {
+      "overview": "Przegląd",
+      "reports": "Zgłoszenia",
+      "moderation": "Moderacja",
+      "organisations": "Organizacje"
     }
   },
   "reservationStatus": {

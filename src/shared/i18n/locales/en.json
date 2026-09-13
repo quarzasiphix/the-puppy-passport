@@ -945,9 +945,19 @@
     "title": "Apply as a breeder, foundation or transport company",
     "subtitle": "Publish litters, puppies, adoption listings or your transport services once your kennel or organisation is verified. Verification typically takes 2–5 working days.",
     "orgTypeKennel": "Breeder kennel",
+    "orgTypeKennelDesc": "I breed and raise puppies to sell to new families.",
     "orgTypeFoundation": "Foundation / rescue",
+    "orgTypeFoundationDesc": "I run a foundation or rescue that finds animals new homes.",
     "orgTypeShelter": "Shelter",
+    "orgTypeShelterDesc": "I run a physical shelter caring for animals day to day.",
     "orgTypeTransportCompany": "Animal transport company",
+    "orgTypeTransportCompanyDesc": "I run a business that transports animals between countries.",
+    "orgTypeChooserBack": "Back",
+    "orgTypeChooserEyebrow": "One more step",
+    "orgTypeChooserTitle": "What kind of organisation do you run?",
+    "orgTypeChooserSubtitle": "Pick the one that fits best — you can update details later, but this choice decides what your application form asks for.",
+    "registeringAsLabel": "You're registering as",
+    "changeTypeLink": "Change type",
     "sectionType": "Type of application",
     "sectionOrganisation": "Organisation",
     "sectionAssociation": "Association & breeds",
@@ -1553,6 +1563,14 @@
       "fieldDescription": "Description",
       "fieldCoverImageUrl": "Cover image URL",
       "fieldLogoUrl": "Logo URL",
+      "fieldLogo": "Logo",
+      "fieldCover": "Cover photo",
+      "uploadButton": "Upload",
+      "changeButton": "Change",
+      "uploading": "Uploading…",
+      "logoUpdatedToast": "Logo updated.",
+      "coverUpdatedToast": "Cover photo updated.",
+      "uploadFailed": "Could not upload the image.",
       "fieldCity": "City",
       "fieldCountry": "Country",
       "fieldAssociation": "Association",
@@ -1830,9 +1848,27 @@
       "body": "Sign out of your Anemalo account on this device.",
       "signOutButton": "Sign out",
       "signingOut": "Signing out…"
+    },
+    "verificationDocs": {
+      "title": "Verification documents",
+      "explain": "Attach a document supporting your kennel-club registration or veterinary registration (WNI) — this is reviewed privately by Anemalo staff, never shown publicly.",
+      "noVerification": "No verification application found for your account yet.",
+      "uploadButton": "Upload document",
+      "changeButton": "Replace document",
+      "viewButton": "View current document",
+      "uploading": "Uploading…",
+      "uploadedToast": "Document uploaded — it will be reviewed along with your application.",
+      "uploadFailed": "Could not upload the document.",
+      "closedNote": "This verification is already closed, so a new document can no longer be attached here."
     }
   },
   "buyerPanel": {
+    "nav": {
+      "overview": "Overview",
+      "reservations": "Reservations",
+      "messages": "Messages",
+      "account": "Account"
+    },
     "index": {
       "welcomeBack": "Welcome back",
       "subtitle": "Here's where your journey stands today.",
@@ -2206,6 +2242,12 @@
     }
   },
   "foundationPanel": {
+    "nav": {
+      "overview": "Overview",
+      "applications": "Applications",
+      "transport": "Transport",
+      "messages": "Messages"
+    },
     "documents": {
       "title": "Documents",
       "purpose": "Organisation registration and per-animal documents will be managed here."
@@ -2450,6 +2492,22 @@
       "transportStartedToast": "A transport draft has been started for this adoption. Find it under Transport requests.",
       "transportStartFailed": "Could not start a transport draft.",
       "conversationFailed": "Could not open conversation."
+    }
+  },
+  "operationsPanel": {
+    "nav": {
+      "overview": "Overview",
+      "requests": "Requests",
+      "dispatch": "Dispatch",
+      "calendar": "Calendar"
+    }
+  },
+  "adminPanel": {
+    "nav": {
+      "overview": "Overview",
+      "reports": "Reports",
+      "moderation": "Moderation",
+      "organisations": "Organisations"
     }
   },
   "reservationStatus": {
