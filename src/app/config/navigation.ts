@@ -223,6 +223,11 @@ export const transportCompanyNav: DashboardNavItem[] = [
   },
   { to: "/dashboard/transport-company/jobs", label: "transportCompanyPanel.nav.jobs", icon: Truck },
   {
+    to: "/dashboard/transport-company/trips",
+    label: "transportCompanyPanel.nav.trips",
+    icon: RouteIcon,
+  },
+  {
     to: "/dashboard/transport-company/dispatch",
     label: "transportCompanyPanel.nav.dispatch",
     icon: Shuffle,

@@ -5696,6 +5696,179 @@ export type Database = {
           },
         ]
       }
+      trip_stops: {
+        Row: {
+          animal_label: string
+          created_at: string
+          delivered_at: string | null
+          dropoff_contact_name: string | null
+          dropoff_contact_phone: string | null
+          dropoff_maps_url: string | null
+          dropoff_notes: string | null
+          id: string
+          picked_up_at: string | null
+          pickup_contact_name: string | null
+          pickup_contact_phone: string | null
+          pickup_maps_url: string | null
+          pickup_notes: string | null
+          status: Database["public"]["Enums"]["trip_stop_status"]
+          stop_order: number
+          transport_request_id: string | null
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          animal_label: string
+          created_at?: string
+          delivered_at?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          dropoff_notes?: string | null
+          id?: string
+          picked_up_at?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          pickup_notes?: string | null
+          status?: Database["public"]["Enums"]["trip_stop_status"]
+          stop_order: number
+          transport_request_id?: string | null
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          animal_label?: string
+          created_at?: string
+          delivered_at?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          dropoff_notes?: string | null
+          id?: string
+          picked_up_at?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          pickup_notes?: string | null
+          status?: Database["public"]["Enums"]["trip_stop_status"]
+          stop_order?: number
+          transport_request_id?: string | null
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "driver_transport_job_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "public_transport_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "transport_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stops_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          departure_date: string | null
+          driver_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          route_maps_url: string | null
+          status: Database["public"]["Enums"]["trip_status"]
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          departure_date?: string | null
+          driver_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          route_maps_url?: string | null
+          status?: Database["public"]["Enums"]["trip_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          departure_date?: string | null
+          driver_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          route_maps_url?: string | null
+          status?: Database["public"]["Enums"]["trip_status"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
+            foreignKeyName: "trips_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_consents: {
         Row: {
           consented_at: string
@@ -7712,6 +7885,8 @@ export type Database = {
         | "compliance_hold"
         | "route_postponed"
       transport_visibility: "private" | "community_visible"
+      trip_status: "planning" | "in_progress" | "completed" | "cancelled"
+      trip_stop_status: "pending" | "picked_up" | "delivered"
       verification_status:
         | "not_started"
         | "pending"
@@ -8371,6 +8546,8 @@ export const Constants = {
         "route_postponed",
       ],
       transport_visibility: ["private", "community_visible"],
+      trip_status: ["planning", "in_progress", "completed", "cancelled"],
+      trip_stop_status: ["pending", "picked_up", "delivered"],
       verification_status: [
         "not_started",
         "pending",

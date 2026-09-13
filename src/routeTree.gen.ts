@@ -57,6 +57,7 @@ import { Route as PublicCommunityIndexRouteImport } from './routes/_public/commu
 import { Route as PublicBreedersIndexRouteImport } from './routes/_public/breeders.index'
 import { Route as PublicAdoptionsIndexRouteImport } from './routes/_public/adoptions.index'
 import { Route as DashboardTransportCompanyVehiclesRouteImport } from './routes/dashboard/transport-company/vehicles'
+import { Route as DashboardTransportCompanyTripsRouteImport } from './routes/dashboard/transport-company/trips'
 import { Route as DashboardTransportCompanyTeamRouteImport } from './routes/dashboard/transport-company/team'
 import { Route as DashboardTransportCompanySettingsRouteImport } from './routes/dashboard/transport-company/settings'
 import { Route as DashboardTransportCompanyProfileRouteImport } from './routes/dashboard/transport-company/profile'
@@ -137,10 +138,12 @@ import { Route as PublicDogsSlugRouteImport } from './routes/_public/dogs.$slug'
 import { Route as PublicCommunityGroupsRouteImport } from './routes/_public/community.groups'
 import { Route as PublicBreedersSlugRouteImport } from './routes/_public/breeders.$slug'
 import { Route as PublicAdoptionsIdRouteImport } from './routes/_public/adoptions.$id'
+import { Route as DashboardTransportCompanyTripsIndexRouteImport } from './routes/dashboard/transport-company/trips.index'
 import { Route as DashboardOperationsRoutesIndexRouteImport } from './routes/dashboard/operations/routes.index'
 import { Route as DashboardFoundationFundraisingIndexRouteImport } from './routes/dashboard/foundation/fundraising.index'
 import { Route as DashboardBreederLittersIndexRouteImport } from './routes/dashboard/breeder/litters.index'
 import { Route as PublicCommunityGroupsIndexRouteImport } from './routes/_public/community.groups.index'
+import { Route as DashboardTransportCompanyTripsTripIdRouteImport } from './routes/dashboard/transport-company/trips.$tripId'
 import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard/operations/routes.$id'
 import { Route as DashboardOperationsRequestsIdRouteImport } from './routes/dashboard/operations/requests.$id'
 import { Route as DashboardFoundationFundraisingIdRouteImport } from './routes/dashboard/foundation/fundraising.$id'
@@ -390,6 +393,12 @@ const DashboardTransportCompanyVehiclesRoute =
   DashboardTransportCompanyVehiclesRouteImport.update({
     id: '/vehicles',
     path: '/vehicles',
+    getParentRoute: () => DashboardTransportCompanyRoute,
+  } as any)
+const DashboardTransportCompanyTripsRoute =
+  DashboardTransportCompanyTripsRouteImport.update({
+    id: '/trips',
+    path: '/trips',
     getParentRoute: () => DashboardTransportCompanyRoute,
   } as any)
 const DashboardTransportCompanyTeamRoute =
@@ -844,6 +853,12 @@ const PublicAdoptionsIdRoute = PublicAdoptionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => PublicAdoptionsRoute,
 } as any)
+const DashboardTransportCompanyTripsIndexRoute =
+  DashboardTransportCompanyTripsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardTransportCompanyTripsRoute,
+  } as any)
 const DashboardOperationsRoutesIndexRoute =
   DashboardOperationsRoutesIndexRouteImport.update({
     id: '/',
@@ -867,6 +882,12 @@ const PublicCommunityGroupsIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => PublicCommunityGroupsRoute,
+  } as any)
+const DashboardTransportCompanyTripsTripIdRoute =
+  DashboardTransportCompanyTripsTripIdRouteImport.update({
+    id: '/$tripId',
+    path: '/$tripId',
+    getParentRoute: () => DashboardTransportCompanyTripsRoute,
   } as any)
 const DashboardOperationsRoutesIdRoute =
   DashboardOperationsRoutesIdRouteImport.update({
@@ -1014,6 +1035,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
   '/dashboard/transport-company/settings': typeof DashboardTransportCompanySettingsRoute
   '/dashboard/transport-company/team': typeof DashboardTransportCompanyTeamRoute
+  '/dashboard/transport-company/trips': typeof DashboardTransportCompanyTripsRouteWithChildren
   '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRoute
   '/adoptions/': typeof PublicAdoptionsIndexRoute
   '/breeders/': typeof PublicBreedersIndexRoute
@@ -1032,10 +1054,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
   '/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
+  '/dashboard/transport-company/trips/': typeof DashboardTransportCompanyTripsIndexRoute
 }
 export interface FileRoutesByTo {
   '/@{$handle}': typeof PublicAtChar123handleChar125Route
@@ -1154,10 +1178,12 @@ export interface FileRoutesByTo {
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
   '/community/groups': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesIndexRoute
+  '/dashboard/transport-company/trips': typeof DashboardTransportCompanyTripsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1276,6 +1302,7 @@ export interface FileRoutesById {
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
   '/dashboard/transport-company/settings': typeof DashboardTransportCompanySettingsRoute
   '/dashboard/transport-company/team': typeof DashboardTransportCompanyTeamRoute
+  '/dashboard/transport-company/trips': typeof DashboardTransportCompanyTripsRouteWithChildren
   '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRoute
   '/_public/adoptions/': typeof PublicAdoptionsIndexRoute
   '/_public/breeders/': typeof PublicBreedersIndexRoute
@@ -1294,10 +1321,12 @@ export interface FileRoutesById {
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
   '/_public/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
   '/dashboard/operations/routes/': typeof DashboardOperationsRoutesIndexRoute
+  '/dashboard/transport-company/trips/': typeof DashboardTransportCompanyTripsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1416,6 +1445,7 @@ export interface FileRouteTypes {
     | '/dashboard/transport-company/profile'
     | '/dashboard/transport-company/settings'
     | '/dashboard/transport-company/team'
+    | '/dashboard/transport-company/trips'
     | '/dashboard/transport-company/vehicles'
     | '/adoptions/'
     | '/breeders/'
@@ -1434,10 +1464,12 @@ export interface FileRouteTypes {
     | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/transport-company/trips/$tripId'
     | '/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/foundation/fundraising/'
     | '/dashboard/operations/routes/'
+    | '/dashboard/transport-company/trips/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/@{$handle}'
@@ -1556,10 +1588,12 @@ export interface FileRouteTypes {
     | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/transport-company/trips/$tripId'
     | '/community/groups'
     | '/dashboard/breeder/litters'
     | '/dashboard/foundation/fundraising'
     | '/dashboard/operations/routes'
+    | '/dashboard/transport-company/trips'
   id:
     | '__root__'
     | '/_public'
@@ -1677,6 +1711,7 @@ export interface FileRouteTypes {
     | '/dashboard/transport-company/profile'
     | '/dashboard/transport-company/settings'
     | '/dashboard/transport-company/team'
+    | '/dashboard/transport-company/trips'
     | '/dashboard/transport-company/vehicles'
     | '/_public/adoptions/'
     | '/_public/breeders/'
@@ -1695,10 +1730,12 @@ export interface FileRouteTypes {
     | '/dashboard/foundation/fundraising/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/transport-company/trips/$tripId'
     | '/_public/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/foundation/fundraising/'
     | '/dashboard/operations/routes/'
+    | '/dashboard/transport-company/trips/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2050,6 +2087,13 @@ declare module '@tanstack/react-router' {
       path: '/vehicles'
       fullPath: '/dashboard/transport-company/vehicles'
       preLoaderRoute: typeof DashboardTransportCompanyVehiclesRouteImport
+      parentRoute: typeof DashboardTransportCompanyRoute
+    }
+    '/dashboard/transport-company/trips': {
+      id: '/dashboard/transport-company/trips'
+      path: '/trips'
+      fullPath: '/dashboard/transport-company/trips'
+      preLoaderRoute: typeof DashboardTransportCompanyTripsRouteImport
       parentRoute: typeof DashboardTransportCompanyRoute
     }
     '/dashboard/transport-company/team': {
@@ -2612,6 +2656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAdoptionsIdRouteImport
       parentRoute: typeof PublicAdoptionsRoute
     }
+    '/dashboard/transport-company/trips/': {
+      id: '/dashboard/transport-company/trips/'
+      path: '/'
+      fullPath: '/dashboard/transport-company/trips/'
+      preLoaderRoute: typeof DashboardTransportCompanyTripsIndexRouteImport
+      parentRoute: typeof DashboardTransportCompanyTripsRoute
+    }
     '/dashboard/operations/routes/': {
       id: '/dashboard/operations/routes/'
       path: '/'
@@ -2639,6 +2690,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/community/groups/'
       preLoaderRoute: typeof PublicCommunityGroupsIndexRouteImport
       parentRoute: typeof PublicCommunityGroupsRoute
+    }
+    '/dashboard/transport-company/trips/$tripId': {
+      id: '/dashboard/transport-company/trips/$tripId'
+      path: '/$tripId'
+      fullPath: '/dashboard/transport-company/trips/$tripId'
+      preLoaderRoute: typeof DashboardTransportCompanyTripsTripIdRouteImport
+      parentRoute: typeof DashboardTransportCompanyTripsRoute
     }
     '/dashboard/operations/routes/$id': {
       id: '/dashboard/operations/routes/$id'
@@ -3093,6 +3151,24 @@ const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
 const DashboardOperationsRouteWithChildren =
   DashboardOperationsRoute._addFileChildren(DashboardOperationsRouteChildren)
 
+interface DashboardTransportCompanyTripsRouteChildren {
+  DashboardTransportCompanyTripsTripIdRoute: typeof DashboardTransportCompanyTripsTripIdRoute
+  DashboardTransportCompanyTripsIndexRoute: typeof DashboardTransportCompanyTripsIndexRoute
+}
+
+const DashboardTransportCompanyTripsRouteChildren: DashboardTransportCompanyTripsRouteChildren =
+  {
+    DashboardTransportCompanyTripsTripIdRoute:
+      DashboardTransportCompanyTripsTripIdRoute,
+    DashboardTransportCompanyTripsIndexRoute:
+      DashboardTransportCompanyTripsIndexRoute,
+  }
+
+const DashboardTransportCompanyTripsRouteWithChildren =
+  DashboardTransportCompanyTripsRoute._addFileChildren(
+    DashboardTransportCompanyTripsRouteChildren,
+  )
+
 interface DashboardTransportCompanyRouteChildren {
   DashboardTransportCompanyCalendarRoute: typeof DashboardTransportCompanyCalendarRoute
   DashboardTransportCompanyDispatchRoute: typeof DashboardTransportCompanyDispatchRoute
@@ -3101,6 +3177,7 @@ interface DashboardTransportCompanyRouteChildren {
   DashboardTransportCompanyProfileRoute: typeof DashboardTransportCompanyProfileRoute
   DashboardTransportCompanySettingsRoute: typeof DashboardTransportCompanySettingsRoute
   DashboardTransportCompanyTeamRoute: typeof DashboardTransportCompanyTeamRoute
+  DashboardTransportCompanyTripsRoute: typeof DashboardTransportCompanyTripsRouteWithChildren
   DashboardTransportCompanyVehiclesRoute: typeof DashboardTransportCompanyVehiclesRoute
   DashboardTransportCompanyIndexRoute: typeof DashboardTransportCompanyIndexRoute
 }
@@ -3119,6 +3196,8 @@ const DashboardTransportCompanyRouteChildren: DashboardTransportCompanyRouteChil
     DashboardTransportCompanySettingsRoute:
       DashboardTransportCompanySettingsRoute,
     DashboardTransportCompanyTeamRoute: DashboardTransportCompanyTeamRoute,
+    DashboardTransportCompanyTripsRoute:
+      DashboardTransportCompanyTripsRouteWithChildren,
     DashboardTransportCompanyVehiclesRoute:
       DashboardTransportCompanyVehiclesRoute,
     DashboardTransportCompanyIndexRoute: DashboardTransportCompanyIndexRoute,

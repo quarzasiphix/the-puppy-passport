@@ -9,6 +9,7 @@ export * from "./services/matching";
 export * from "./services/pricing";
 export * from "./services/routes";
 export * from "./services/transport";
+export * from "./services/trips";
 export * from "./services/welfare";
 export * from "./components/ops-request-table";
 export * from "./components/report-incident-dialog";
