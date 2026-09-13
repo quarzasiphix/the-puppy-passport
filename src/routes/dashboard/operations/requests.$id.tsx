@@ -404,7 +404,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 function Grid({ children }: { children: React.ReactNode }) {
-  return <dl className="grid grid-cols-2 gap-3 text-sm">{children}</dl>;
+  return <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">{children}</dl>;
 }
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (

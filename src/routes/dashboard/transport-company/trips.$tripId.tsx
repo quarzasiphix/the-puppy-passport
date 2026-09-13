@@ -16,6 +16,9 @@ import {
   Info,
   MessageCircle,
   UserPlus,
+  Car,
+  Users,
+  Milestone,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -23,6 +26,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Badge } from "@/shared/ui/badge";
 import { Switch } from "@/shared/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -212,8 +216,10 @@ function TripDetailPage() {
   const pendingJoinRequests = (joinRequestsQuery.data ?? []).filter((r) => r.status === "pending");
   const stops = stopsQuery.data ?? [];
   const detailStop = stops.find((s) => s.id === detailStopId) ?? null;
-  const vehicleName = vehiclesQuery.data?.find((v) => v.id === trip?.vehicle_id)?.name;
-  const driverName = driversQuery.data?.find((d) => d.id === trip?.driver_id)?.name;
+  const assignedVehicle = vehiclesQuery.data?.find((v) => v.id === trip?.vehicle_id);
+  const assignedDriver = driversQuery.data?.find((d) => d.id === trip?.driver_id);
+  const vehicleName = assignedVehicle?.name;
+  const driverName = assignedDriver?.name;
 
   const pickedUpCount = stops.filter((s) => s.status !== "pending").length;
   const deliveredCount = stops.filter((s) => s.status === "delivered").length;
@@ -221,6 +227,38 @@ function TripDetailPage() {
   // "what dog are we doing / what's next to drop off" from a glance at the top of the page instead
   // of scanning the whole list.
   const nextStop = stops.find((s) => s.status !== "delivered");
+
+  // Every phone number reachable from this trip, flattened into one callable list for the
+  // Contacts tab — pickup/dropoff contacts already on each stop only (trip_stop_contacts, the
+  // per-stop "extra contacts" added inside StopDetailDialog, stay inside that stop's own dialog
+  // rather than being fetched per-stop here, to avoid an N+1 query for a list view).
+  const tripContacts: {
+    name: string | null;
+    phone: string | null;
+    role: string;
+    stopLabel: string;
+  }[] = stops.flatMap((s) => [
+    ...(s.pickup_contact_name || s.pickup_contact_phone
+      ? [
+          {
+            name: s.pickup_contact_name,
+            phone: s.pickup_contact_phone,
+            role: t("transportCompanyPanel.trips.pickupSectionTitle"),
+            stopLabel: s.animal_label,
+          },
+        ]
+      : []),
+    ...(s.dropoff_contact_name || s.dropoff_contact_phone
+      ? [
+          {
+            name: s.dropoff_contact_name,
+            phone: s.dropoff_contact_phone,
+            role: t("transportCompanyPanel.trips.dropoffSectionTitle"),
+            stopLabel: s.animal_label,
+          },
+        ]
+      : []),
+  ]);
 
   if (tripQuery.isLoading || !trip) {
     return (
@@ -330,219 +368,313 @@ function TripDetailPage() {
         )}
       </div>
 
-      {pendingJoinRequests.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-3 font-display text-lg font-semibold">
-            {t("transportCompanyPanel.trips.joinRequestsTitle")}
-          </h2>
-          <div className="space-y-3">
-            {pendingJoinRequests.map((request) => (
-              <div key={request.id} className="rounded-2xl border border-border/70 bg-card p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-display text-base font-semibold">{request.animal_label}</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={acceptJoinRequestMutation.isPending}
-                      onClick={() => acceptJoinRequestMutation.mutate(request)}
-                    >
-                      {t("transportCompanyPanel.trips.acceptJoinRequest")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      disabled={declineJoinRequestMutation.isPending}
-                      onClick={() => declineJoinRequestMutation.mutate(request.id)}
-                    >
-                      {t("transportCompanyPanel.trips.declineJoinRequest")}
-                    </Button>
+      <Tabs defaultValue="stops">
+        <TabsList className="mb-4 grid h-auto w-full grid-cols-3 gap-1 p-1 sm:inline-flex sm:w-auto">
+          <TabsTrigger
+            value="stops"
+            className="flex-col gap-1 whitespace-normal px-1 py-2 text-center text-[11px] leading-tight sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
+          >
+            <Milestone className="size-4 shrink-0" /> {t("transportCompanyPanel.trips.tabStops")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="fleet"
+            className="flex-col gap-1 whitespace-normal px-1 py-2 text-center text-[11px] leading-tight sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
+          >
+            <Car className="size-4 shrink-0" /> {t("transportCompanyPanel.trips.tabFleet")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="contacts"
+            className="flex-col gap-1 whitespace-normal px-1 py-2 text-center text-[11px] leading-tight sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm"
+          >
+            <Users className="size-4 shrink-0" /> {t("transportCompanyPanel.trips.tabContacts")}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="stops">
+          {pendingJoinRequests.length > 0 && (
+            <div className="mb-6">
+              <h2 className="mb-3 font-display text-lg font-semibold">
+                {t("transportCompanyPanel.trips.joinRequestsTitle")}
+              </h2>
+              <div className="space-y-3">
+                {pendingJoinRequests.map((request) => (
+                  <div key={request.id} className="rounded-2xl border border-border/70 bg-card p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-display text-base font-semibold">
+                        {request.animal_label}
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          disabled={acceptJoinRequestMutation.isPending}
+                          onClick={() => acceptJoinRequestMutation.mutate(request)}
+                        >
+                          {t("transportCompanyPanel.trips.acceptJoinRequest")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                          disabled={declineJoinRequestMutation.isPending}
+                          onClick={() => declineJoinRequestMutation.mutate(request.id)}
+                        >
+                          {t("transportCompanyPanel.trips.declineJoinRequest")}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                      <ContactBlock
+                        title={t("transportCompanyPanel.trips.pickupSectionTitle")}
+                        mapsUrl={request.pickup_maps_url}
+                        contactName={request.pickup_contact_name}
+                        contactPhone={request.pickup_contact_phone}
+                        notes={null}
+                      />
+                      <ContactBlock
+                        title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
+                        mapsUrl={request.dropoff_maps_url}
+                        contactName={request.dropoff_contact_name}
+                        contactPhone={request.dropoff_contact_phone}
+                        notes={request.notes}
+                      />
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stops.length > 0 && (
+            <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/70 bg-card p-4">
+                <div className="text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.trips.progressPickedUp")}
                 </div>
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                  <ContactBlock
-                    title={t("transportCompanyPanel.trips.pickupSectionTitle")}
-                    mapsUrl={request.pickup_maps_url}
-                    contactName={request.pickup_contact_name}
-                    contactPhone={request.pickup_contact_phone}
-                    notes={null}
-                  />
-                  <ContactBlock
-                    title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
-                    mapsUrl={request.dropoff_maps_url}
-                    contactName={request.dropoff_contact_name}
-                    contactPhone={request.dropoff_contact_phone}
-                    notes={request.notes}
-                  />
+                <div className="mt-1 font-display text-2xl font-semibold">
+                  {pickedUpCount} / {stops.length}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <div className="rounded-2xl border border-border/70 bg-card p-4">
+                <div className="text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.trips.progressDelivered")}
+                </div>
+                <div className="mt-1 font-display text-2xl font-semibold">
+                  {deliveredCount} / {stops.length}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                <div className="text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.trips.nextUp")}
+                </div>
+                <div className="mt-1 font-display text-lg font-semibold">
+                  {nextStop
+                    ? `${nextStop.animal_label} — ${
+                        nextStop.status === "pending"
+                          ? t("transportCompanyPanel.trips.nextActionPickup")
+                          : t("transportCompanyPanel.trips.nextActionDropoff")
+                      }`
+                    : t("transportCompanyPanel.trips.nextUpDone")}
+                </div>
+              </div>
+            </div>
+          )}
 
-      {stops.length > 0 && (
-        <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
-          <div className="rounded-2xl border border-border/70 bg-card p-4">
-            <div className="text-xs text-muted-foreground">
-              {t("transportCompanyPanel.trips.progressPickedUp")}
-            </div>
-            <div className="mt-1 font-display text-2xl font-semibold">
-              {pickedUpCount} / {stops.length}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-card p-4">
-            <div className="text-xs text-muted-foreground">
-              {t("transportCompanyPanel.trips.progressDelivered")}
-            </div>
-            <div className="mt-1 font-display text-2xl font-semibold">
-              {deliveredCount} / {stops.length}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-            <div className="text-xs text-muted-foreground">
-              {t("transportCompanyPanel.trips.nextUp")}
-            </div>
-            <div className="mt-1 font-display text-lg font-semibold">
-              {nextStop
-                ? `${nextStop.animal_label} — ${
-                    nextStop.status === "pending"
-                      ? t("transportCompanyPanel.trips.nextActionPickup")
-                      : t("transportCompanyPanel.trips.nextActionDropoff")
-                  }`
-                : t("transportCompanyPanel.trips.nextUpDone")}
-            </div>
-          </div>
-        </div>
-      )}
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">
+              {t("transportCompanyPanel.trips.stopsTitle")}
+            </h2>
+            <Dialog open={addStopOpen} onOpenChange={setAddStopOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-1 size-4" /> {t("transportCompanyPanel.trips.addStopButton")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{t("transportCompanyPanel.trips.addStopButton")}</DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={stopForm.handleSubmit((v) => addStopMutation.mutate(v))}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Label>{t("transportCompanyPanel.trips.fieldAnimalLabel")}</Label>
+                    <Input
+                      placeholder={t("transportCompanyPanel.trips.fieldAnimalLabelPlaceholder")}
+                      {...stopForm.register("animalLabel", { required: true })}
+                    />
+                  </div>
 
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold">
-          {t("transportCompanyPanel.trips.stopsTitle")}
-        </h2>
-        <Dialog open={addStopOpen} onOpenChange={setAddStopOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="mr-1 size-4" /> {t("transportCompanyPanel.trips.addStopButton")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{t("transportCompanyPanel.trips.addStopButton")}</DialogTitle>
-            </DialogHeader>
-            <form
-              onSubmit={stopForm.handleSubmit((v) => addStopMutation.mutate(v))}
-              className="space-y-4"
-            >
-              <div>
-                <Label>{t("transportCompanyPanel.trips.fieldAnimalLabel")}</Label>
-                <Input
-                  placeholder={t("transportCompanyPanel.trips.fieldAnimalLabelPlaceholder")}
-                  {...stopForm.register("animalLabel", { required: true })}
+                  <div className="rounded-xl border border-border/60 p-3 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("transportCompanyPanel.trips.pickupSectionTitle")}
+                    </p>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
+                      <Input
+                        placeholder="https://maps.google.com/…"
+                        {...stopForm.register("pickupMapsUrl")}
+                      />
+                    </div>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+                      <Input
+                        placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                        {...stopForm.register("pickupAddressText")}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
+                        <Input {...stopForm.register("pickupContactName")} />
+                      </div>
+                      <div>
+                        <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
+                        <Input {...stopForm.register("pickupContactPhone")} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
+                      <Textarea rows={2} {...stopForm.register("pickupNotes")} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 p-3 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("transportCompanyPanel.trips.dropoffSectionTitle")}
+                    </p>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
+                      <Input
+                        placeholder="https://maps.google.com/…"
+                        {...stopForm.register("dropoffMapsUrl")}
+                      />
+                    </div>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
+                      <Input
+                        placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
+                        {...stopForm.register("dropoffAddressText")}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
+                        <Input {...stopForm.register("dropoffContactName")} />
+                      </div>
+                      <div>
+                        <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
+                        <Input {...stopForm.register("dropoffContactPhone")} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
+                      <Textarea rows={2} {...stopForm.register("dropoffNotes")} />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={addStopMutation.isPending}>
+                    {t("transportCompanyPanel.trips.addStopButton")}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {stopsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">
+              {t("transportCompanyPanel.trips.loading")}
+            </p>
+          ) : !stops.length ? (
+            <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("transportCompanyPanel.trips.noStopsYet")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {stops.map((stop) => (
+                <StopCard
+                  key={stop.id}
+                  stop={stop}
+                  onOpenDetails={() => setDetailStopId(stop.id)}
+                  onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
+                  onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
+                  onRemove={() => removeMutation.mutate(stop.id)}
+                  markingPickedUp={pickedUpMutation.isPending}
+                  markingDelivered={deliveredMutation.isPending}
+                  removing={removeMutation.isPending}
                 />
-              </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-              <div className="rounded-xl border border-border/60 p-3 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("transportCompanyPanel.trips.pickupSectionTitle")}
+        <TabsContent value="fleet">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border/70 bg-card p-5">
+              <div className="text-xs text-muted-foreground">
+                {t("transportCompanyPanel.trips.fieldDriver")}
+              </div>
+              <div className="mt-1 font-display text-lg font-semibold">
+                {driverName ?? t("transportCompanyPanel.trips.fieldNone")}
+              </div>
+              {assignedDriver?.contact && (
+                <Button asChild size="sm" variant="outline" className="mt-3">
+                  <a href={`tel:${assignedDriver.contact}`}>
+                    <Phone className="mr-1 size-3.5" />{" "}
+                    {t("transportCompanyPanel.trips.callButton")}
+                  </a>
+                </Button>
+              )}
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-card p-5">
+              <div className="text-xs text-muted-foreground">
+                {t("transportCompanyPanel.trips.fieldVehicle")}
+              </div>
+              <div className="mt-1 font-display text-lg font-semibold">
+                {vehicleName ?? t("transportCompanyPanel.trips.fieldNone")}
+              </div>
+              {assignedVehicle?.registration_number && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {assignedVehicle.registration_number}
                 </p>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
-                  <Input
-                    placeholder="https://maps.google.com/…"
-                    {...stopForm.register("pickupMapsUrl")}
-                  />
-                </div>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
-                  <Input
-                    placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
-                    {...stopForm.register("pickupAddressText")}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                    <Input {...stopForm.register("pickupContactName")} />
-                  </div>
-                  <div>
-                    <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                    <Input {...stopForm.register("pickupContactPhone")} />
-                  </div>
-                </div>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
-                  <Textarea rows={2} {...stopForm.register("pickupNotes")} />
-                </div>
-              </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
 
-              <div className="rounded-xl border border-border/60 p-3 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("transportCompanyPanel.trips.dropoffSectionTitle")}
-                </p>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
-                  <Input
-                    placeholder="https://maps.google.com/…"
-                    {...stopForm.register("dropoffMapsUrl")}
-                  />
-                </div>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
-                  <Input
-                    placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
-                    {...stopForm.register("dropoffAddressText")}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                    <Input {...stopForm.register("dropoffContactName")} />
+        <TabsContent value="contacts">
+          {tripContacts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("transportCompanyPanel.trips.noContactsYet")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {tripContacts.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-3"
+                >
+                  <div className="text-sm">
+                    <div className="font-medium">{c.name || c.role}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {c.role} · {c.stopLabel}
+                    </div>
                   </div>
-                  <div>
-                    <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                    <Input {...stopForm.register("dropoffContactPhone")} />
-                  </div>
+                  {c.phone && (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={`tel:${c.phone}`}>
+                        <Phone className="mr-1 size-3.5" /> {c.phone}
+                      </a>
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
-                  <Textarea rows={2} {...stopForm.register("dropoffNotes")} />
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={addStopMutation.isPending}>
-                {t("transportCompanyPanel.trips.addStopButton")}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {stopsQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("transportCompanyPanel.trips.loading")}</p>
-      ) : !stops.length ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("transportCompanyPanel.trips.noStopsYet")}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {stops.map((stop) => (
-            <StopCard
-              key={stop.id}
-              stop={stop}
-              onOpenDetails={() => setDetailStopId(stop.id)}
-              onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
-              onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
-              onRemove={() => removeMutation.mutate(stop.id)}
-              markingPickedUp={pickedUpMutation.isPending}
-              markingDelivered={deliveredMutation.isPending}
-              removing={removeMutation.isPending}
-            />
-          ))}
-        </div>
-      )}
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {detailStop && (
         <StopDetailDialog

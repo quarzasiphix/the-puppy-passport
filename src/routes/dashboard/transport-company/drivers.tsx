@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus, UserCheck } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -17,7 +17,7 @@ import {
 } from "@/shared/ui/dialog";
 import { useAuth } from "@/domains/identity";
 import { getMyTransportCompany } from "@/domains/breeders";
-import { createDriver, listDrivers } from "@/domains/transport";
+import { createDriver, listDrivers, resolveProfileIdByEmail } from "@/domains/transport";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { useTranslation } from "@/shared/i18n";
 
@@ -25,11 +25,12 @@ export const Route = createFileRoute("/dashboard/transport-company/drivers")({
   component: DriversPage,
 });
 
-type FormValues = { name: string; contact: string };
+type FormValues = { name: string; contact: string; loginEmail: string };
 
 function DriversPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -43,14 +44,16 @@ function DriversPage() {
   // driver records, distinct from an org_members "driver"-role staff invite on the Team page.
   const query = useQuery({ queryKey: ["drivers"], queryFn: listDrivers });
 
-  const form = useForm<FormValues>({ defaultValues: { name: "", contact: "" } });
+  const form = useForm<FormValues>({ defaultValues: { name: "", contact: "", loginEmail: "" } });
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: async (values: FormValues) =>
       createDriver({
         organization_id: companyQuery.data!.id,
         name: values.name,
         contact: values.contact || null,
+        login_email: values.loginEmail || null,
+        profile_id: await resolveProfileIdByEmail(values.loginEmail),
       }),
     onSuccess: () => {
       toast.success(t("transportCompanyPanel.drivers.addedToast"));
@@ -79,7 +82,7 @@ function DriversPage() {
               <Plus className="mr-1 size-4" /> {t("transportCompanyPanel.drivers.addButton")}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("transportCompanyPanel.drivers.addButton")}</DialogTitle>
             </DialogHeader>
@@ -91,6 +94,17 @@ function DriversPage() {
               <div>
                 <Label>Contact</Label>
                 <Input {...form.register("contact")} placeholder="Phone or email" />
+              </div>
+              <div>
+                <Label>{t("transportCompanyPanel.drivers.fieldLoginEmail")}</Label>
+                <Input
+                  type="email"
+                  {...form.register("loginEmail")}
+                  placeholder="driver@example.com"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.drivers.fieldLoginEmailHelp")}
+                </p>
               </div>
               <Button type="submit" className="w-full" disabled={mutation.isPending}>
                 {t("transportCompanyPanel.drivers.addButton")}
@@ -112,28 +126,58 @@ function DriversPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-4">{t("transportCompanyPanel.drivers.colName")}</th>
-                <th className="p-4">{t("transportCompanyPanel.drivers.colStatus")}</th>
-                <th className="p-4">{t("transportCompanyPanel.drivers.colQualification")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {query.data.map((d) => (
-                <tr key={d.id}>
-                  <td className="p-4 font-medium">{d.name}</td>
-                  <td className="p-4">
-                    <Badge variant="secondary" className="capitalize">
-                      {d.availability_status ?? "—"}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-muted-foreground capitalize">{d.qualification_status}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-4">{t("transportCompanyPanel.drivers.colName")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.drivers.colStatus")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.drivers.colQualification")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.drivers.colAccount")}</th>
+                  <th className="p-4" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {query.data.map((d) => (
+                  <tr
+                    key={d.id}
+                    className="cursor-pointer hover:bg-secondary/40"
+                    onClick={() =>
+                      navigate({
+                        to: "/dashboard/transport-company/drivers/$id",
+                        params: { id: d.id },
+                      })
+                    }
+                  >
+                    <td className="p-4 font-medium">{d.name}</td>
+                    <td className="p-4">
+                      <Badge variant="secondary" className="capitalize">
+                        {d.availability_status ?? "—"}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-muted-foreground capitalize">
+                      {d.qualification_status}
+                    </td>
+                    <td className="p-4">
+                      {d.profile_id ? (
+                        <span className="flex items-center gap-1 text-xs text-success">
+                          <UserCheck className="size-3.5" />{" "}
+                          {t("transportCompanyPanel.drivers.linkedBadge")}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {t("transportCompanyPanel.drivers.unlinkedBadge")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

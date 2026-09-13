@@ -32,6 +32,22 @@ export async function createVehicle(payload: Database["public"]["Tables"]["vehic
   if (error) throw error;
 }
 
+export async function getVehicle(id: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.from("vehicles").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as VehicleRow;
+}
+
+export async function updateVehicle(
+  id: string,
+  patch: Database["public"]["Tables"]["vehicles"]["Update"],
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("vehicles").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 export async function listDrivers() {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.from("drivers").select("*").order("name");
@@ -42,6 +58,40 @@ export async function listDrivers() {
 export async function createDriver(payload: Database["public"]["Tables"]["drivers"]["Insert"]) {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("drivers").insert(payload);
+  if (error) throw error;
+}
+
+// Resolves an email a caller typed on a driver record to a real Anemalo account, so
+// drivers.profile_id can be kept in sync with drivers.login_email on every save (see
+// 20260918000000_driver_login_email_link.sql). Returns null both for an empty email and for one
+// that doesn't match any account yet — the caller stores login_email either way so the record
+// re-links automatically once that person signs up.
+export async function resolveProfileIdByEmail(email: string): Promise<string | null> {
+  const trimmed = email.trim();
+  if (!trimmed) return null;
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("email", trimmed)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
+export async function getDriver(id: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.from("drivers").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as DriverRow;
+}
+
+export async function updateDriver(
+  id: string,
+  patch: Database["public"]["Tables"]["drivers"]["Update"],
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("drivers").update(patch).eq("id", id);
   if (error) throw error;
 }
 
@@ -60,6 +110,22 @@ export async function listMyFleetJobs() {
     .order("earliest_date", { ascending: true, nullsFirst: false });
   if (error) throw error;
   return data as FleetJobRow[];
+}
+
+// Single-row companion to listMyFleetJobs() for the job detail page — same RLS policy scopes this
+// to jobs assigned to the caller's own fleet, so an unrelated job id simply returns no row rather
+// than another company's data.
+export async function getMyFleetJobDetail(requestId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("transport_requests")
+    .select(
+      "id, request_number, status, animal_name, pickup_city, pickup_country, destination_city, destination_country, earliest_date, latest_date, assigned_driver_id, assigned_vehicle_id",
+    )
+    .eq("id", requestId)
+    .single();
+  if (error) throw error;
+  return data as FleetJobRow;
 }
 
 // The one write path a transport company has onto transport_requests (added 2026-09-14, alongside

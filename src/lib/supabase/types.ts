@@ -1274,6 +1274,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           internal_verification_status: Database["public"]["Enums"]["driver_verification_status"]
+          login_email: string | null
           name: string
           organization_id: string | null
           profile_id: string | null
@@ -1290,6 +1291,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           internal_verification_status?: Database["public"]["Enums"]["driver_verification_status"]
+          login_email?: string | null
           name: string
           organization_id?: string | null
           profile_id?: string | null
@@ -1306,6 +1308,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           internal_verification_status?: Database["public"]["Enums"]["driver_verification_status"]
+          login_email?: string | null
           name?: string
           organization_id?: string | null
           profile_id?: string | null

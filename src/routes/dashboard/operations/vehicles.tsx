@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -201,7 +201,12 @@ function VehiclesPage() {
             ...expiryWarnings(v.next_service_date, "Service"),
           ];
           return (
-            <div key={v.id} className="rounded-2xl border border-border/70 bg-card p-5">
+            <Link
+              key={v.id}
+              to="/dashboard/operations/vehicles/$id"
+              params={{ id: v.id }}
+              className="block rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-display text-lg font-semibold">{v.name}</div>
@@ -226,7 +231,7 @@ function VehiclesPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </Link>
           );
         })}
         {query.data?.length === 0 && (

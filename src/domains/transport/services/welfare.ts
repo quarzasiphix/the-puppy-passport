@@ -89,9 +89,13 @@ export async function listMyOrgWelfareCases(organisationId: string) {
 
 export async function getWelfareCase(id: string) {
   const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase.from("welfare_cases").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("welfare_cases")
+    .select("*, organisations(name)")
+    .eq("id", id)
+    .single();
   if (error) throw error;
-  return data as WelfareCaseRow;
+  return data as unknown as WelfareCaseRow & { organisations: { name: string } | null };
 }
 
 export async function convertWelfareCaseToTransportDraft(caseId: string): Promise<string> {

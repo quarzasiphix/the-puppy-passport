@@ -1,0 +1,12 @@
+-- Lets a driver record be linked to a real Anemalo login, so that person can open
+-- /dashboard/driver and see the jobs assigned to them (getMyDriverRecord() matches on
+-- drivers.profile_id, added in the original 20260101001700_routes_and_fleet.sql but never
+-- actually settable from any UI until now).
+--
+-- login_email is a plain input/display field for that linking action only — distinct from
+-- drivers.contact, which stays the separate "how ops reaches this driver" free-text note (may be
+-- a phone number, not necessarily this driver's login email). On every save, the app looks up
+-- whether a profile with this email exists and sets/clears profile_id accordingly — login_email
+-- itself is remembered even when no match is found yet, so ops/company staff can see who they're
+-- waiting on to sign up, and re-linking happens automatically the next time that record is saved.
+alter table public.drivers add column login_email text;

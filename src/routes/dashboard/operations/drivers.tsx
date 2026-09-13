@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, Plus, UserCheck } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
@@ -15,7 +15,12 @@ import {
   DialogTrigger,
 } from "@/shared/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/form";
-import { createDriver, expiryWarnings, listDrivers } from "@/domains/transport";
+import {
+  createDriver,
+  expiryWarnings,
+  listDrivers,
+  resolveProfileIdByEmail,
+} from "@/domains/transport";
 
 export const Route = createFileRoute("/dashboard/operations/drivers")({
   component: DriversPage,
@@ -26,6 +31,7 @@ type FormValues = {
   contact: string;
   homeRegion: string;
   documentExpiryDate: string;
+  loginEmail: string;
 };
 
 function DriversPage() {
@@ -33,16 +39,24 @@ function DriversPage() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["drivers"], queryFn: listDrivers });
   const form = useForm<FormValues>({
-    defaultValues: { name: "", contact: "", homeRegion: "", documentExpiryDate: "" },
+    defaultValues: {
+      name: "",
+      contact: "",
+      homeRegion: "",
+      documentExpiryDate: "",
+      loginEmail: "",
+    },
   });
 
   const mutation = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: async (values: FormValues) =>
       createDriver({
         name: values.name,
         contact: values.contact || null,
         home_region: values.homeRegion || null,
         document_expiry_date: values.documentExpiryDate || null,
+        login_email: values.loginEmail || null,
+        profile_id: await resolveProfileIdByEmail(values.loginEmail),
       }),
     onSuccess: () => {
       toast.success("Driver added.");
@@ -117,6 +131,22 @@ function DriversPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="loginEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anemalo account email (optional)</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="driver@example.com" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        If they already have an Anemalo account, this links it so they can see their
+                        own jobs at /dashboard/driver.
+                      </p>
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" disabled={mutation.isPending}>
                   Add driver
                 </Button>
@@ -130,7 +160,12 @@ function DriversPage() {
         {query.data?.map((d) => {
           const warnings = expiryWarnings(d.document_expiry_date, "Qualification document");
           return (
-            <div key={d.id} className="rounded-2xl border border-border/70 bg-card p-5">
+            <Link
+              key={d.id}
+              to="/dashboard/operations/drivers/$id"
+              params={{ id: d.id }}
+              className="block rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-display text-lg font-semibold">{d.name}</div>
@@ -145,6 +180,19 @@ function DriversPage() {
               <div className="mt-2 text-xs text-muted-foreground capitalize">
                 Availability: {d.availability_status ?? "unknown"}
               </div>
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {d.profile_id ? (
+                  <span className="flex items-center gap-1 text-success">
+                    <UserCheck className="size-3.5" /> Linked to an account
+                  </span>
+                ) : d.login_email ? (
+                  <span className="text-muted-foreground">
+                    Waiting for {d.login_email} to sign up
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">No account linked</span>
+                )}
+              </div>
               {warnings.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {warnings.map((w) => (
@@ -157,7 +205,7 @@ function DriversPage() {
                   ))}
                 </div>
               )}
-            </div>
+            </Link>
           );
         })}
         {query.data?.length === 0 && (

@@ -2197,7 +2197,12 @@
       "viewDetails": "Details",
       "extraContactsTitle": "Extra contacts",
       "noExtraContacts": "No extra contacts yet — add one if more than one person needs to be reached.",
-      "addContact": "Add contact"
+      "addContact": "Add contact",
+      "tabStops": "Stops",
+      "tabFleet": "Driver & vehicle",
+      "tabContacts": "Contacts",
+      "noContactsYet": "No contacts on this trip yet.",
+      "callButton": "Call"
     },
     "overview": {
       "welcomeBackPrefix": "Welcome back,",
@@ -2256,7 +2261,15 @@
       "editButton": "Edit",
       "addedToast": "Vehicle added.",
       "updatedToast": "Vehicle updated.",
-      "saveFailed": "Could not save this vehicle."
+      "saveFailed": "Could not save this vehicle.",
+      "detailBack": "All vehicles",
+      "fieldMake": "Make",
+      "fieldModel": "Model",
+      "fieldYear": "Year",
+      "fieldInsuranceExpiry": "Insurance expiry",
+      "fieldNextService": "Next service due",
+      "fieldNotes": "Notes",
+      "saveButton": "Save changes"
     },
     "drivers": {
       "title": "Drivers",
@@ -2270,7 +2283,22 @@
       "editButton": "Edit",
       "addedToast": "Driver added.",
       "updatedToast": "Driver updated.",
-      "saveFailed": "Could not save this driver."
+      "saveFailed": "Could not save this driver.",
+      "detailBack": "All drivers",
+      "fieldContact": "Contact",
+      "fieldHomeRegion": "Home region",
+      "fieldDocumentExpiry": "Document expiry",
+      "fieldEmergencyContact": "Emergency contact",
+      "fieldNotes": "Notes",
+      "saveButton": "Save changes",
+      "fieldLoginEmail": "Anemalo account email (optional)",
+      "fieldLoginEmailHelp": "If they already have an Anemalo account, this links it so they can see their own jobs on their phone.",
+      "colAccount": "Account",
+      "linkedBadge": "Linked",
+      "unlinkedBadge": "No account",
+      "linkedNote": "Linked to an Anemalo account — can sign in and see their own jobs.",
+      "waitingForSignupNotePrefix": "Waiting for this person to sign up with",
+      "unlinkedNote": "No account linked — add their email to give them their own sign-in."
     },
     "jobs": {
       "title": "Jobs",
@@ -2279,7 +2307,12 @@
       "emptyBody": "No jobs assigned to your fleet yet.",
       "colRequest": "Request",
       "colRoute": "Route",
-      "colStatus": "Status"
+      "colStatus": "Status",
+      "detailTitle": "Job",
+      "detailBack": "All jobs",
+      "fieldDriver": "Driver",
+      "fieldVehicle": "Vehicle",
+      "unassigned": "Not yet assigned"
     },
     "team": {
       "title": "Team",

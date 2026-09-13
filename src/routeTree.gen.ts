@@ -144,9 +144,15 @@ import { Route as DashboardOperationsRoutesIndexRouteImport } from './routes/das
 import { Route as DashboardFoundationFundraisingIndexRouteImport } from './routes/dashboard/foundation/fundraising.index'
 import { Route as DashboardBreederLittersIndexRouteImport } from './routes/dashboard/breeder/litters.index'
 import { Route as PublicCommunityGroupsIndexRouteImport } from './routes/_public/community.groups.index'
+import { Route as DashboardTransportCompanyVehiclesIdRouteImport } from './routes/dashboard/transport-company/vehicles.$id'
 import { Route as DashboardTransportCompanyTripsTripIdRouteImport } from './routes/dashboard/transport-company/trips.$tripId'
+import { Route as DashboardTransportCompanyJobsIdRouteImport } from './routes/dashboard/transport-company/jobs.$id'
+import { Route as DashboardTransportCompanyDriversIdRouteImport } from './routes/dashboard/transport-company/drivers.$id'
+import { Route as DashboardOperationsWelfareCasesIdRouteImport } from './routes/dashboard/operations/welfare-cases.$id'
+import { Route as DashboardOperationsVehiclesIdRouteImport } from './routes/dashboard/operations/vehicles.$id'
 import { Route as DashboardOperationsRoutesIdRouteImport } from './routes/dashboard/operations/routes.$id'
 import { Route as DashboardOperationsRequestsIdRouteImport } from './routes/dashboard/operations/requests.$id'
+import { Route as DashboardOperationsDriversIdRouteImport } from './routes/dashboard/operations/drivers.$id'
 import { Route as DashboardFoundationFundraisingIdRouteImport } from './routes/dashboard/foundation/fundraising.$id'
 import { Route as DashboardBreederLittersIdRouteImport } from './routes/dashboard/breeder/litters.$id'
 import { Route as PublicCommunityGroupsSlugRouteImport } from './routes/_public/community.groups.$slug'
@@ -890,11 +896,41 @@ const PublicCommunityGroupsIndexRoute =
     path: '/',
     getParentRoute: () => PublicCommunityGroupsRoute,
   } as any)
+const DashboardTransportCompanyVehiclesIdRoute =
+  DashboardTransportCompanyVehiclesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardTransportCompanyVehiclesRoute,
+  } as any)
 const DashboardTransportCompanyTripsTripIdRoute =
   DashboardTransportCompanyTripsTripIdRouteImport.update({
     id: '/$tripId',
     path: '/$tripId',
     getParentRoute: () => DashboardTransportCompanyTripsRoute,
+  } as any)
+const DashboardTransportCompanyJobsIdRoute =
+  DashboardTransportCompanyJobsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardTransportCompanyJobsRoute,
+  } as any)
+const DashboardTransportCompanyDriversIdRoute =
+  DashboardTransportCompanyDriversIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardTransportCompanyDriversRoute,
+  } as any)
+const DashboardOperationsWelfareCasesIdRoute =
+  DashboardOperationsWelfareCasesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardOperationsWelfareCasesRoute,
+  } as any)
+const DashboardOperationsVehiclesIdRoute =
+  DashboardOperationsVehiclesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardOperationsVehiclesRoute,
   } as any)
 const DashboardOperationsRoutesIdRoute =
   DashboardOperationsRoutesIdRouteImport.update({
@@ -907,6 +943,12 @@ const DashboardOperationsRequestsIdRoute =
     id: '/requests/$id',
     path: '/requests/$id',
     getParentRoute: () => DashboardOperationsRoute,
+  } as any)
+const DashboardOperationsDriversIdRoute =
+  DashboardOperationsDriversIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => DashboardOperationsDriversRoute,
   } as any)
 const DashboardFoundationFundraisingIdRoute =
   DashboardFoundationFundraisingIdRouteImport.update({
@@ -1025,7 +1067,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
   '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
   '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
-  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRouteWithChildren
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
@@ -1034,17 +1076,17 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
-  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
-  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRouteWithChildren
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRouteWithChildren
   '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
   '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
-  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
-  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
+  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRouteWithChildren
+  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRouteWithChildren
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
   '/dashboard/transport-company/settings': typeof DashboardTransportCompanySettingsRoute
   '/dashboard/transport-company/team': typeof DashboardTransportCompanyTeamRoute
   '/dashboard/transport-company/trips': typeof DashboardTransportCompanyTripsRouteWithChildren
-  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRoute
+  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRouteWithChildren
   '/adoptions/': typeof PublicAdoptionsIndexRoute
   '/breeders/': typeof PublicBreedersIndexRoute
   '/community/': typeof PublicCommunityIndexRoute
@@ -1060,9 +1102,15 @@ export interface FileRoutesByFullPath {
   '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
+  '/dashboard/operations/drivers/$id': typeof DashboardOperationsDriversIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/operations/vehicles/$id': typeof DashboardOperationsVehiclesIdRoute
+  '/dashboard/operations/welfare-cases/$id': typeof DashboardOperationsWelfareCasesIdRoute
+  '/dashboard/transport-company/drivers/$id': typeof DashboardTransportCompanyDriversIdRoute
+  '/dashboard/transport-company/jobs/$id': typeof DashboardTransportCompanyJobsIdRoute
   '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
+  '/dashboard/transport-company/vehicles/$id': typeof DashboardTransportCompanyVehiclesIdRoute
   '/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
@@ -1152,7 +1200,7 @@ export interface FileRoutesByTo {
   '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
   '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
   '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
-  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRouteWithChildren
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
@@ -1160,16 +1208,16 @@ export interface FileRoutesByTo {
   '/dashboard/operations/profitability': typeof DashboardOperationsProfitabilityRoute
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
-  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
-  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRouteWithChildren
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRouteWithChildren
   '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
   '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
-  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
-  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
+  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRouteWithChildren
+  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRouteWithChildren
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
   '/dashboard/transport-company/settings': typeof DashboardTransportCompanySettingsRoute
   '/dashboard/transport-company/team': typeof DashboardTransportCompanyTeamRoute
-  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRoute
+  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRouteWithChildren
   '/adoptions': typeof PublicAdoptionsIndexRoute
   '/breeders': typeof PublicBreedersIndexRoute
   '/community': typeof PublicCommunityIndexRoute
@@ -1185,9 +1233,15 @@ export interface FileRoutesByTo {
   '/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
+  '/dashboard/operations/drivers/$id': typeof DashboardOperationsDriversIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/operations/vehicles/$id': typeof DashboardOperationsVehiclesIdRoute
+  '/dashboard/operations/welfare-cases/$id': typeof DashboardOperationsWelfareCasesIdRoute
+  '/dashboard/transport-company/drivers/$id': typeof DashboardTransportCompanyDriversIdRoute
+  '/dashboard/transport-company/jobs/$id': typeof DashboardTransportCompanyJobsIdRoute
   '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
+  '/dashboard/transport-company/vehicles/$id': typeof DashboardTransportCompanyVehiclesIdRoute
   '/community/groups': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising': typeof DashboardFoundationFundraisingIndexRoute
@@ -1294,7 +1348,7 @@ export interface FileRoutesById {
   '/dashboard/operations/compliance-holds': typeof DashboardOperationsComplianceHoldsRoute
   '/dashboard/operations/dispatch': typeof DashboardOperationsDispatchRoute
   '/dashboard/operations/documents': typeof DashboardOperationsDocumentsRoute
-  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRoute
+  '/dashboard/operations/drivers': typeof DashboardOperationsDriversRouteWithChildren
   '/dashboard/operations/incidents': typeof DashboardOperationsIncidentsRoute
   '/dashboard/operations/matching': typeof DashboardOperationsMatchingRoute
   '/dashboard/operations/new-requests': typeof DashboardOperationsNewRequestsRoute
@@ -1303,17 +1357,17 @@ export interface FileRoutesById {
   '/dashboard/operations/quotations': typeof DashboardOperationsQuotationsRoute
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
-  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
-  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRouteWithChildren
+  '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRouteWithChildren
   '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
   '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
-  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
-  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
+  '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRouteWithChildren
+  '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRouteWithChildren
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
   '/dashboard/transport-company/settings': typeof DashboardTransportCompanySettingsRoute
   '/dashboard/transport-company/team': typeof DashboardTransportCompanyTeamRoute
   '/dashboard/transport-company/trips': typeof DashboardTransportCompanyTripsRouteWithChildren
-  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRoute
+  '/dashboard/transport-company/vehicles': typeof DashboardTransportCompanyVehiclesRouteWithChildren
   '/_public/adoptions/': typeof PublicAdoptionsIndexRoute
   '/_public/breeders/': typeof PublicBreedersIndexRoute
   '/_public/community/': typeof PublicCommunityIndexRoute
@@ -1329,9 +1383,15 @@ export interface FileRoutesById {
   '/_public/community/groups/$slug': typeof PublicCommunityGroupsSlugRoute
   '/dashboard/breeder/litters/$id': typeof DashboardBreederLittersIdRoute
   '/dashboard/foundation/fundraising/$id': typeof DashboardFoundationFundraisingIdRoute
+  '/dashboard/operations/drivers/$id': typeof DashboardOperationsDriversIdRoute
   '/dashboard/operations/requests/$id': typeof DashboardOperationsRequestsIdRoute
   '/dashboard/operations/routes/$id': typeof DashboardOperationsRoutesIdRoute
+  '/dashboard/operations/vehicles/$id': typeof DashboardOperationsVehiclesIdRoute
+  '/dashboard/operations/welfare-cases/$id': typeof DashboardOperationsWelfareCasesIdRoute
+  '/dashboard/transport-company/drivers/$id': typeof DashboardTransportCompanyDriversIdRoute
+  '/dashboard/transport-company/jobs/$id': typeof DashboardTransportCompanyJobsIdRoute
   '/dashboard/transport-company/trips/$tripId': typeof DashboardTransportCompanyTripsTripIdRoute
+  '/dashboard/transport-company/vehicles/$id': typeof DashboardTransportCompanyVehiclesIdRoute
   '/_public/community/groups/': typeof PublicCommunityGroupsIndexRoute
   '/dashboard/breeder/litters/': typeof DashboardBreederLittersIndexRoute
   '/dashboard/foundation/fundraising/': typeof DashboardFoundationFundraisingIndexRoute
@@ -1473,9 +1533,15 @@ export interface FileRouteTypes {
     | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/foundation/fundraising/$id'
+    | '/dashboard/operations/drivers/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/operations/vehicles/$id'
+    | '/dashboard/operations/welfare-cases/$id'
+    | '/dashboard/transport-company/drivers/$id'
+    | '/dashboard/transport-company/jobs/$id'
     | '/dashboard/transport-company/trips/$tripId'
+    | '/dashboard/transport-company/vehicles/$id'
     | '/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/foundation/fundraising/'
@@ -1598,9 +1664,15 @@ export interface FileRouteTypes {
     | '/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/foundation/fundraising/$id'
+    | '/dashboard/operations/drivers/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/operations/vehicles/$id'
+    | '/dashboard/operations/welfare-cases/$id'
+    | '/dashboard/transport-company/drivers/$id'
+    | '/dashboard/transport-company/jobs/$id'
     | '/dashboard/transport-company/trips/$tripId'
+    | '/dashboard/transport-company/vehicles/$id'
     | '/community/groups'
     | '/dashboard/breeder/litters'
     | '/dashboard/foundation/fundraising'
@@ -1741,9 +1813,15 @@ export interface FileRouteTypes {
     | '/_public/community/groups/$slug'
     | '/dashboard/breeder/litters/$id'
     | '/dashboard/foundation/fundraising/$id'
+    | '/dashboard/operations/drivers/$id'
     | '/dashboard/operations/requests/$id'
     | '/dashboard/operations/routes/$id'
+    | '/dashboard/operations/vehicles/$id'
+    | '/dashboard/operations/welfare-cases/$id'
+    | '/dashboard/transport-company/drivers/$id'
+    | '/dashboard/transport-company/jobs/$id'
     | '/dashboard/transport-company/trips/$tripId'
+    | '/dashboard/transport-company/vehicles/$id'
     | '/_public/community/groups/'
     | '/dashboard/breeder/litters/'
     | '/dashboard/foundation/fundraising/'
@@ -2711,12 +2789,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicCommunityGroupsIndexRouteImport
       parentRoute: typeof PublicCommunityGroupsRoute
     }
+    '/dashboard/transport-company/vehicles/$id': {
+      id: '/dashboard/transport-company/vehicles/$id'
+      path: '/$id'
+      fullPath: '/dashboard/transport-company/vehicles/$id'
+      preLoaderRoute: typeof DashboardTransportCompanyVehiclesIdRouteImport
+      parentRoute: typeof DashboardTransportCompanyVehiclesRoute
+    }
     '/dashboard/transport-company/trips/$tripId': {
       id: '/dashboard/transport-company/trips/$tripId'
       path: '/$tripId'
       fullPath: '/dashboard/transport-company/trips/$tripId'
       preLoaderRoute: typeof DashboardTransportCompanyTripsTripIdRouteImport
       parentRoute: typeof DashboardTransportCompanyTripsRoute
+    }
+    '/dashboard/transport-company/jobs/$id': {
+      id: '/dashboard/transport-company/jobs/$id'
+      path: '/$id'
+      fullPath: '/dashboard/transport-company/jobs/$id'
+      preLoaderRoute: typeof DashboardTransportCompanyJobsIdRouteImport
+      parentRoute: typeof DashboardTransportCompanyJobsRoute
+    }
+    '/dashboard/transport-company/drivers/$id': {
+      id: '/dashboard/transport-company/drivers/$id'
+      path: '/$id'
+      fullPath: '/dashboard/transport-company/drivers/$id'
+      preLoaderRoute: typeof DashboardTransportCompanyDriversIdRouteImport
+      parentRoute: typeof DashboardTransportCompanyDriversRoute
+    }
+    '/dashboard/operations/welfare-cases/$id': {
+      id: '/dashboard/operations/welfare-cases/$id'
+      path: '/$id'
+      fullPath: '/dashboard/operations/welfare-cases/$id'
+      preLoaderRoute: typeof DashboardOperationsWelfareCasesIdRouteImport
+      parentRoute: typeof DashboardOperationsWelfareCasesRoute
+    }
+    '/dashboard/operations/vehicles/$id': {
+      id: '/dashboard/operations/vehicles/$id'
+      path: '/$id'
+      fullPath: '/dashboard/operations/vehicles/$id'
+      preLoaderRoute: typeof DashboardOperationsVehiclesIdRouteImport
+      parentRoute: typeof DashboardOperationsVehiclesRoute
     }
     '/dashboard/operations/routes/$id': {
       id: '/dashboard/operations/routes/$id'
@@ -2731,6 +2844,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/operations/requests/$id'
       preLoaderRoute: typeof DashboardOperationsRequestsIdRouteImport
       parentRoute: typeof DashboardOperationsRoute
+    }
+    '/dashboard/operations/drivers/$id': {
+      id: '/dashboard/operations/drivers/$id'
+      path: '/$id'
+      fullPath: '/dashboard/operations/drivers/$id'
+      preLoaderRoute: typeof DashboardOperationsDriversIdRouteImport
+      parentRoute: typeof DashboardOperationsDriversRoute
     }
     '/dashboard/foundation/fundraising/$id': {
       id: '/dashboard/foundation/fundraising/$id'
@@ -3109,6 +3229,20 @@ const DashboardFoundationRouteChildren: DashboardFoundationRouteChildren = {
 const DashboardFoundationRouteWithChildren =
   DashboardFoundationRoute._addFileChildren(DashboardFoundationRouteChildren)
 
+interface DashboardOperationsDriversRouteChildren {
+  DashboardOperationsDriversIdRoute: typeof DashboardOperationsDriversIdRoute
+}
+
+const DashboardOperationsDriversRouteChildren: DashboardOperationsDriversRouteChildren =
+  {
+    DashboardOperationsDriversIdRoute: DashboardOperationsDriversIdRoute,
+  }
+
+const DashboardOperationsDriversRouteWithChildren =
+  DashboardOperationsDriversRoute._addFileChildren(
+    DashboardOperationsDriversRouteChildren,
+  )
+
 interface DashboardOperationsRoutesRouteChildren {
   DashboardOperationsRoutesIdRoute: typeof DashboardOperationsRoutesIdRoute
   DashboardOperationsRoutesIndexRoute: typeof DashboardOperationsRoutesIndexRoute
@@ -3125,6 +3259,35 @@ const DashboardOperationsRoutesRouteWithChildren =
     DashboardOperationsRoutesRouteChildren,
   )
 
+interface DashboardOperationsVehiclesRouteChildren {
+  DashboardOperationsVehiclesIdRoute: typeof DashboardOperationsVehiclesIdRoute
+}
+
+const DashboardOperationsVehiclesRouteChildren: DashboardOperationsVehiclesRouteChildren =
+  {
+    DashboardOperationsVehiclesIdRoute: DashboardOperationsVehiclesIdRoute,
+  }
+
+const DashboardOperationsVehiclesRouteWithChildren =
+  DashboardOperationsVehiclesRoute._addFileChildren(
+    DashboardOperationsVehiclesRouteChildren,
+  )
+
+interface DashboardOperationsWelfareCasesRouteChildren {
+  DashboardOperationsWelfareCasesIdRoute: typeof DashboardOperationsWelfareCasesIdRoute
+}
+
+const DashboardOperationsWelfareCasesRouteChildren: DashboardOperationsWelfareCasesRouteChildren =
+  {
+    DashboardOperationsWelfareCasesIdRoute:
+      DashboardOperationsWelfareCasesIdRoute,
+  }
+
+const DashboardOperationsWelfareCasesRouteWithChildren =
+  DashboardOperationsWelfareCasesRoute._addFileChildren(
+    DashboardOperationsWelfareCasesRouteChildren,
+  )
+
 interface DashboardOperationsRouteChildren {
   DashboardOperationsActiveRoute: typeof DashboardOperationsActiveRoute
   DashboardOperationsCalendarRoute: typeof DashboardOperationsCalendarRoute
@@ -3132,7 +3295,7 @@ interface DashboardOperationsRouteChildren {
   DashboardOperationsComplianceHoldsRoute: typeof DashboardOperationsComplianceHoldsRoute
   DashboardOperationsDispatchRoute: typeof DashboardOperationsDispatchRoute
   DashboardOperationsDocumentsRoute: typeof DashboardOperationsDocumentsRoute
-  DashboardOperationsDriversRoute: typeof DashboardOperationsDriversRoute
+  DashboardOperationsDriversRoute: typeof DashboardOperationsDriversRouteWithChildren
   DashboardOperationsIncidentsRoute: typeof DashboardOperationsIncidentsRoute
   DashboardOperationsMatchingRoute: typeof DashboardOperationsMatchingRoute
   DashboardOperationsNewRequestsRoute: typeof DashboardOperationsNewRequestsRoute
@@ -3141,8 +3304,8 @@ interface DashboardOperationsRouteChildren {
   DashboardOperationsQuotationsRoute: typeof DashboardOperationsQuotationsRoute
   DashboardOperationsReviewQueueRoute: typeof DashboardOperationsReviewQueueRoute
   DashboardOperationsRoutesRoute: typeof DashboardOperationsRoutesRouteWithChildren
-  DashboardOperationsVehiclesRoute: typeof DashboardOperationsVehiclesRoute
-  DashboardOperationsWelfareCasesRoute: typeof DashboardOperationsWelfareCasesRoute
+  DashboardOperationsVehiclesRoute: typeof DashboardOperationsVehiclesRouteWithChildren
+  DashboardOperationsWelfareCasesRoute: typeof DashboardOperationsWelfareCasesRouteWithChildren
   DashboardOperationsIndexRoute: typeof DashboardOperationsIndexRoute
   DashboardOperationsRequestsIdRoute: typeof DashboardOperationsRequestsIdRoute
 }
@@ -3155,7 +3318,7 @@ const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
     DashboardOperationsComplianceHoldsRoute,
   DashboardOperationsDispatchRoute: DashboardOperationsDispatchRoute,
   DashboardOperationsDocumentsRoute: DashboardOperationsDocumentsRoute,
-  DashboardOperationsDriversRoute: DashboardOperationsDriversRoute,
+  DashboardOperationsDriversRoute: DashboardOperationsDriversRouteWithChildren,
   DashboardOperationsIncidentsRoute: DashboardOperationsIncidentsRoute,
   DashboardOperationsMatchingRoute: DashboardOperationsMatchingRoute,
   DashboardOperationsNewRequestsRoute: DashboardOperationsNewRequestsRoute,
@@ -3164,14 +3327,45 @@ const DashboardOperationsRouteChildren: DashboardOperationsRouteChildren = {
   DashboardOperationsQuotationsRoute: DashboardOperationsQuotationsRoute,
   DashboardOperationsReviewQueueRoute: DashboardOperationsReviewQueueRoute,
   DashboardOperationsRoutesRoute: DashboardOperationsRoutesRouteWithChildren,
-  DashboardOperationsVehiclesRoute: DashboardOperationsVehiclesRoute,
-  DashboardOperationsWelfareCasesRoute: DashboardOperationsWelfareCasesRoute,
+  DashboardOperationsVehiclesRoute:
+    DashboardOperationsVehiclesRouteWithChildren,
+  DashboardOperationsWelfareCasesRoute:
+    DashboardOperationsWelfareCasesRouteWithChildren,
   DashboardOperationsIndexRoute: DashboardOperationsIndexRoute,
   DashboardOperationsRequestsIdRoute: DashboardOperationsRequestsIdRoute,
 }
 
 const DashboardOperationsRouteWithChildren =
   DashboardOperationsRoute._addFileChildren(DashboardOperationsRouteChildren)
+
+interface DashboardTransportCompanyDriversRouteChildren {
+  DashboardTransportCompanyDriversIdRoute: typeof DashboardTransportCompanyDriversIdRoute
+}
+
+const DashboardTransportCompanyDriversRouteChildren: DashboardTransportCompanyDriversRouteChildren =
+  {
+    DashboardTransportCompanyDriversIdRoute:
+      DashboardTransportCompanyDriversIdRoute,
+  }
+
+const DashboardTransportCompanyDriversRouteWithChildren =
+  DashboardTransportCompanyDriversRoute._addFileChildren(
+    DashboardTransportCompanyDriversRouteChildren,
+  )
+
+interface DashboardTransportCompanyJobsRouteChildren {
+  DashboardTransportCompanyJobsIdRoute: typeof DashboardTransportCompanyJobsIdRoute
+}
+
+const DashboardTransportCompanyJobsRouteChildren: DashboardTransportCompanyJobsRouteChildren =
+  {
+    DashboardTransportCompanyJobsIdRoute: DashboardTransportCompanyJobsIdRoute,
+  }
+
+const DashboardTransportCompanyJobsRouteWithChildren =
+  DashboardTransportCompanyJobsRoute._addFileChildren(
+    DashboardTransportCompanyJobsRouteChildren,
+  )
 
 interface DashboardTransportCompanyTripsRouteChildren {
   DashboardTransportCompanyTripsTripIdRoute: typeof DashboardTransportCompanyTripsTripIdRoute
@@ -3191,16 +3385,31 @@ const DashboardTransportCompanyTripsRouteWithChildren =
     DashboardTransportCompanyTripsRouteChildren,
   )
 
+interface DashboardTransportCompanyVehiclesRouteChildren {
+  DashboardTransportCompanyVehiclesIdRoute: typeof DashboardTransportCompanyVehiclesIdRoute
+}
+
+const DashboardTransportCompanyVehiclesRouteChildren: DashboardTransportCompanyVehiclesRouteChildren =
+  {
+    DashboardTransportCompanyVehiclesIdRoute:
+      DashboardTransportCompanyVehiclesIdRoute,
+  }
+
+const DashboardTransportCompanyVehiclesRouteWithChildren =
+  DashboardTransportCompanyVehiclesRoute._addFileChildren(
+    DashboardTransportCompanyVehiclesRouteChildren,
+  )
+
 interface DashboardTransportCompanyRouteChildren {
   DashboardTransportCompanyCalendarRoute: typeof DashboardTransportCompanyCalendarRoute
   DashboardTransportCompanyDispatchRoute: typeof DashboardTransportCompanyDispatchRoute
-  DashboardTransportCompanyDriversRoute: typeof DashboardTransportCompanyDriversRoute
-  DashboardTransportCompanyJobsRoute: typeof DashboardTransportCompanyJobsRoute
+  DashboardTransportCompanyDriversRoute: typeof DashboardTransportCompanyDriversRouteWithChildren
+  DashboardTransportCompanyJobsRoute: typeof DashboardTransportCompanyJobsRouteWithChildren
   DashboardTransportCompanyProfileRoute: typeof DashboardTransportCompanyProfileRoute
   DashboardTransportCompanySettingsRoute: typeof DashboardTransportCompanySettingsRoute
   DashboardTransportCompanyTeamRoute: typeof DashboardTransportCompanyTeamRoute
   DashboardTransportCompanyTripsRoute: typeof DashboardTransportCompanyTripsRouteWithChildren
-  DashboardTransportCompanyVehiclesRoute: typeof DashboardTransportCompanyVehiclesRoute
+  DashboardTransportCompanyVehiclesRoute: typeof DashboardTransportCompanyVehiclesRouteWithChildren
   DashboardTransportCompanyIndexRoute: typeof DashboardTransportCompanyIndexRoute
 }
 
@@ -3211,8 +3420,9 @@ const DashboardTransportCompanyRouteChildren: DashboardTransportCompanyRouteChil
     DashboardTransportCompanyDispatchRoute:
       DashboardTransportCompanyDispatchRoute,
     DashboardTransportCompanyDriversRoute:
-      DashboardTransportCompanyDriversRoute,
-    DashboardTransportCompanyJobsRoute: DashboardTransportCompanyJobsRoute,
+      DashboardTransportCompanyDriversRouteWithChildren,
+    DashboardTransportCompanyJobsRoute:
+      DashboardTransportCompanyJobsRouteWithChildren,
     DashboardTransportCompanyProfileRoute:
       DashboardTransportCompanyProfileRoute,
     DashboardTransportCompanySettingsRoute:
@@ -3221,7 +3431,7 @@ const DashboardTransportCompanyRouteChildren: DashboardTransportCompanyRouteChil
     DashboardTransportCompanyTripsRoute:
       DashboardTransportCompanyTripsRouteWithChildren,
     DashboardTransportCompanyVehiclesRoute:
-      DashboardTransportCompanyVehiclesRoute,
+      DashboardTransportCompanyVehiclesRouteWithChildren,
     DashboardTransportCompanyIndexRoute: DashboardTransportCompanyIndexRoute,
   }
 

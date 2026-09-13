@@ -1,16 +1,12 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Textarea } from "@/shared/ui/textarea";
 import {
   acknowledgeWelfareCase,
   listOpsWelfareCases,
-  reviewWelfareCase,
   welfareCaseStatusLabels,
 } from "@/domains/transport";
 
@@ -26,8 +22,6 @@ const urgencyStyles: Record<string, string> = {
 
 function OpsWelfareCasesPage() {
   const queryClient = useQueryClient();
-  const posthog = usePostHog();
-  const [notesByCase, setNotesByCase] = useState<Record<string, string>>({});
 
   const casesQuery = useQuery({ queryKey: ["ops-welfare-cases"], queryFn: listOpsWelfareCases });
 
@@ -37,24 +31,6 @@ function OpsWelfareCasesPage() {
       queryClient.invalidateQueries({ queryKey: ["ops-welfare-cases"] });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not acknowledge."),
-  });
-
-  const reviewMutation = useMutation({
-    mutationFn: (input: {
-      caseId: string;
-      decision: "accepted_for_assessment" | "declined" | "information_required";
-    }) =>
-      reviewWelfareCase({
-        caseId: input.caseId,
-        decision: input.decision,
-        reviewNotes: notesByCase[input.caseId],
-      }),
-    onSuccess: (_data, input) => {
-      posthog.capture("welfare_case_reviewed", { decision: input.decision });
-      toast.success("Case reviewed.");
-      queryClient.invalidateQueries({ queryKey: ["ops-welfare-cases"] });
-    },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not review."),
   });
 
   return (
@@ -70,8 +46,15 @@ function OpsWelfareCasesPage() {
 
       <div className="space-y-3">
         {casesQuery.data?.map((c) => (
-          <div key={c.id} className="rounded-2xl border border-border/70 bg-card p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+          <div
+            key={c.id}
+            className="rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40"
+          >
+            <Link
+              to="/dashboard/operations/welfare-cases/$id"
+              params={{ id: c.id }}
+              className="flex flex-wrap items-start justify-between gap-3"
+            >
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-display text-lg font-semibold">
@@ -92,8 +75,11 @@ function OpsWelfareCasesPage() {
                   {c.deadline && ` · Deadline ${new Date(c.deadline).toLocaleDateString("en-GB")}`}
                 </p>
               </div>
-              <Badge variant="secondary">{welfareCaseStatusLabels[c.status]}</Badge>
-            </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">{welfareCaseStatusLabels[c.status]}</Badge>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </div>
+            </Link>
 
             {!c.ops_acknowledged && (
               <div className="mt-3">
@@ -105,48 +91,6 @@ function OpsWelfareCasesPage() {
                 >
                   Acknowledge
                 </Button>
-              </div>
-            )}
-
-            {(c.status === "submitted" ||
-              c.status === "under_review" ||
-              c.status === "information_required") && (
-              <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
-                <Textarea
-                  rows={2}
-                  placeholder="Internal review notes (never shown to the organisation)"
-                  value={notesByCase[c.id] ?? ""}
-                  onChange={(e) => setNotesByCase({ ...notesByCase, [c.id]: e.target.value })}
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    disabled={reviewMutation.isPending}
-                    onClick={() =>
-                      reviewMutation.mutate({ caseId: c.id, decision: "accepted_for_assessment" })
-                    }
-                  >
-                    Accept for assessment
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={reviewMutation.isPending}
-                    onClick={() =>
-                      reviewMutation.mutate({ caseId: c.id, decision: "information_required" })
-                    }
-                  >
-                    Request more information
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={reviewMutation.isPending}
-                    onClick={() => reviewMutation.mutate({ caseId: c.id, decision: "declined" })}
-                  >
-                    Decline
-                  </Button>
-                </div>
               </div>
             )}
           </div>

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -34,6 +34,7 @@ type FormValues = {
 function VehiclesPage() {
   const { t } = useTranslation();
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -122,32 +123,47 @@ function VehiclesPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="p-4">{t("transportCompanyPanel.vehicles.colName")}</th>
-                <th className="p-4">{t("transportCompanyPanel.vehicles.colType")}</th>
-                <th className="p-4">{t("transportCompanyPanel.vehicles.colRegistration")}</th>
-                <th className="p-4">{t("transportCompanyPanel.vehicles.colStatus")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {query.data.map((v) => (
-                <tr key={v.id}>
-                  <td className="p-4 font-medium">{v.name}</td>
-                  <td className="p-4 text-muted-foreground">{v.vehicle_type ?? "—"}</td>
-                  <td className="p-4 text-muted-foreground">{v.registration_number ?? "—"}</td>
-                  <td className="p-4">
-                    <Badge variant={v.active ? "secondary" : "destructive"}>
-                      {v.active
-                        ? t("transportCompanyPanel.vehicles.activeBadge")
-                        : t("transportCompanyPanel.vehicles.inactiveBadge")}
-                    </Badge>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-sm">
+              <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="p-4">{t("transportCompanyPanel.vehicles.colName")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.vehicles.colType")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.vehicles.colRegistration")}</th>
+                  <th className="p-4">{t("transportCompanyPanel.vehicles.colStatus")}</th>
+                  <th className="p-4" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {query.data.map((v) => (
+                  <tr
+                    key={v.id}
+                    className="cursor-pointer hover:bg-secondary/40"
+                    onClick={() =>
+                      navigate({
+                        to: "/dashboard/transport-company/vehicles/$id",
+                        params: { id: v.id },
+                      })
+                    }
+                  >
+                    <td className="p-4 font-medium">{v.name}</td>
+                    <td className="p-4 text-muted-foreground">{v.vehicle_type ?? "—"}</td>
+                    <td className="p-4 text-muted-foreground">{v.registration_number ?? "—"}</td>
+                    <td className="p-4">
+                      <Badge variant={v.active ? "secondary" : "destructive"}>
+                        {v.active
+                          ? t("transportCompanyPanel.vehicles.activeBadge")
+                          : t("transportCompanyPanel.vehicles.inactiveBadge")}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-right">
+                      <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

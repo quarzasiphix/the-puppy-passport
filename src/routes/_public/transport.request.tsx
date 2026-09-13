@@ -620,8 +620,8 @@ function TransportRequestPage() {
         </p>
         <h1 className="mt-1 font-display text-4xl font-medium">{t("transportRequest.title")}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          {t("transportRequest.stepPrefix")} {step + 1} {t("transportRequest.stepOf")}{" "}
-          {STEP_COUNT}: {t(`transportRequest.step${step}`)}
+          {t("transportRequest.stepPrefix")} {step + 1} {t("transportRequest.stepOf")} {STEP_COUNT}:{" "}
+          {t(`transportRequest.step${step}`)}
         </p>
         <Progress value={((step + 1) / STEP_COUNT) * 100} className="mt-4 max-w-2xl" />
 
@@ -1020,11 +1020,7 @@ function Step3({ form }: { form: UseFormReturn<FormValues> }) {
   return (
     <Section title={t("transportRequest.step3Section")}>
       <p className="text-sm text-muted-foreground">{t("transportRequest.step3Intro")}</p>
-      <YesNo
-        control={control}
-        name="isCurrentOwner"
-        label={t("transportRequest.isCurrentOwner")}
-      />
+      <YesNo control={control} name="isCurrentOwner" label={t("transportRequest.isCurrentOwner")} />
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <F label={t("transportRequest.fReleaseAuthorizedBy")}>
           <Input {...register("releaseAuthorizedBy")} />
@@ -1085,11 +1081,7 @@ function Step4({ form }: { form: UseFormReturn<FormValues> }) {
           <Input type="number" min={1} {...register("numberOfAnimals")} />
         </F>
       </div>
-      <YesNo
-        control={control}
-        name="flexibleDates"
-        label={t("transportRequest.flexibleDates")}
-      />
+      <YesNo control={control} name="flexibleDates" label={t("transportRequest.flexibleDates")} />
       <F label={t("transportRequest.fDeliveryPreference")}>
         <Controller
           control={control}
@@ -1250,7 +1242,7 @@ function Step7({ form }: { form: UseFormReturn<FormValues> }) {
         />
       </Section>
       <Section title={t("transportRequest.summarySection")}>
-        <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 md:grid-cols-3">
           <SummaryItem label={t("transportRequest.summaryAnimal")} value={v.animalName} />
           <SummaryItem label={t("transportRequest.summaryBreed")} value={v.breedFreeText} />
           <SummaryItem

@@ -2197,7 +2197,12 @@
       "viewDetails": "Szczegóły",
       "extraContactsTitle": "Dodatkowe kontakty",
       "noExtraContacts": "Brak jeszcze dodatkowych kontaktów — dodaj, jeśli trzeba skontaktować się z więcej niż jedną osobą.",
-      "addContact": "Dodaj kontakt"
+      "addContact": "Dodaj kontakt",
+      "tabStops": "Postoje",
+      "tabFleet": "Kierowca i pojazd",
+      "tabContacts": "Kontakty",
+      "noContactsYet": "Brak kontaktów w tej trasie.",
+      "callButton": "Zadzwoń"
     },
     "overview": {
       "welcomeBackPrefix": "Witaj ponownie,",
@@ -2256,7 +2261,15 @@
       "editButton": "Edytuj",
       "addedToast": "Pojazd dodany.",
       "updatedToast": "Pojazd zaktualizowany.",
-      "saveFailed": "Nie udało się zapisać tego pojazdu."
+      "saveFailed": "Nie udało się zapisać tego pojazdu.",
+      "detailBack": "Wszystkie pojazdy",
+      "fieldMake": "Marka",
+      "fieldModel": "Model",
+      "fieldYear": "Rok",
+      "fieldInsuranceExpiry": "Termin ważności ubezpieczenia",
+      "fieldNextService": "Następny serwis",
+      "fieldNotes": "Notatki",
+      "saveButton": "Zapisz zmiany"
     },
     "drivers": {
       "title": "Kierowcy",
@@ -2270,7 +2283,22 @@
       "editButton": "Edytuj",
       "addedToast": "Kierowca dodany.",
       "updatedToast": "Kierowca zaktualizowany.",
-      "saveFailed": "Nie udało się zapisać tego kierowcy."
+      "saveFailed": "Nie udało się zapisać tego kierowcy.",
+      "detailBack": "Wszyscy kierowcy",
+      "fieldContact": "Kontakt",
+      "fieldHomeRegion": "Region",
+      "fieldDocumentExpiry": "Termin ważności dokumentu",
+      "fieldEmergencyContact": "Kontakt alarmowy",
+      "fieldNotes": "Notatki",
+      "saveButton": "Zapisz zmiany",
+      "fieldLoginEmail": "Email konta Anemalo (opcjonalnie)",
+      "fieldLoginEmailHelp": "Jeśli ma już konto Anemalo, to je połączy, aby widział własne zlecenia na telefonie.",
+      "colAccount": "Konto",
+      "linkedBadge": "Połączono",
+      "unlinkedBadge": "Brak konta",
+      "linkedNote": "Połączono z kontem Anemalo — może się zalogować i zobaczyć własne zlecenia.",
+      "waitingForSignupNotePrefix": "Czeka na rejestrację tej osoby na adres",
+      "unlinkedNote": "Brak połączonego konta — dodaj email, aby umożliwić logowanie."
     },
     "jobs": {
       "title": "Zlecenia",
@@ -2279,7 +2307,12 @@
       "emptyBody": "Brak zleceń przypisanych do Twojej floty.",
       "colRequest": "Zlecenie",
       "colRoute": "Trasa",
-      "colStatus": "Status"
+      "colStatus": "Status",
+      "detailTitle": "Zlecenie",
+      "detailBack": "Wszystkie zlecenia",
+      "fieldDriver": "Kierowca",
+      "fieldVehicle": "Pojazd",
+      "unassigned": "Jeszcze nieprzypisany"
     },
     "team": {
       "title": "Zespół",
