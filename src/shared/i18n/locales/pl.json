@@ -2029,6 +2029,7 @@
     "requestDepositExplain": "Kupujący będzie mógł zapłacić online. Płatność zbiera Anemalo — wypłata dla Ciebie nastąpi osobno.",
     "fieldAmount": "Kwota",
     "fieldCurrency": "Waluta",
+    "suggestedDepositHint": "Sugerowana kwota — 35% uzgodnionej ceny. Zmień powyższą kwotę, jeśli chcesz podać inną.",
     "requestedToast": "Zażądano zadatku — kupujący może go teraz opłacić.",
     "requestFailed": "Nie udało się zażądać zadatku.",
     "nonRefundableNotice": "Po opłaceniu ten zadatek jest bezzwrotny — nie jest zwracany, jeśli rezerwacja zostanie później anulowana. Trafia do hodowcy."

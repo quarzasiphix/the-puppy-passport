@@ -17,16 +17,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { requestReservationDeposit } from "../services/reservations";
 import { useTranslation } from "@/shared/i18n";
 
+// 35% is a starting point for testing/demoing the deposit flow on real listings that don't have a
+// deliberately-set deposit policy yet — not a fixed business rule. The breeder can always edit the
+// prefilled amount before requesting it; nothing is charged until they submit.
+const DEFAULT_DEPOSIT_RATE = 0.35;
+
 // Breeder-side action: sets the deposit amount and moves deposit_status to 'pending', which makes
 // the buyer's "Pay deposit" button appear. All real authorization/state-machine rules live
 // server-side in request_reservation_deposit() — this dialog is just the entry point to it.
-export function RequestDepositDialog({ reservationId }: { reservationId: string }) {
+export function RequestDepositDialog({
+  reservationId,
+  dogPrice,
+  currency: reservationCurrency,
+}: {
+  reservationId: string;
+  /** The dog's price — the reservation's agreed price if one was set, otherwise the listing's own
+   * price (see breeder-reservations-page.tsx). Used only to prefill a suggested deposit amount
+   * (35%); has no effect once the breeder edits the field. */
+  dogPrice?: number | null;
+  currency?: string | null;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState<"PLN" | "EUR">("PLN");
+  const [currency, setCurrency] = useState<"PLN" | "EUR">(
+    reservationCurrency === "EUR" ? "EUR" : "PLN",
+  );
   const queryClient = useQueryClient();
   const posthog = usePostHog();
+
+  const suggestedAmount =
+    dogPrice && dogPrice > 0 ? Math.round(dogPrice * DEFAULT_DEPOSIT_RATE * 100) / 100 : null;
+
+  // Prefill only once, the first time the dialog opens with nothing typed yet — never overwrite an
+  // amount the breeder is actively editing.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next && amount.trim() === "" && suggestedAmount) {
+      setAmount(String(suggestedAmount));
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: () => requestReservationDeposit(reservationId, Number.parseFloat(amount), currency),
@@ -47,7 +77,7 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
   const isValid = amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Wallet className="mr-1 size-4" /> {t("payments.requestDepositButton")}
@@ -59,6 +89,9 @@ export function RequestDepositDialog({ reservationId }: { reservationId: string 
         </DialogHeader>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">{t("payments.requestDepositExplain")}</p>
+          {suggestedAmount && (
+            <p className="text-xs text-muted-foreground">{t("payments.suggestedDepositHint")}</p>
+          )}
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
               <Label>{t("payments.fieldAmount")}</Label>

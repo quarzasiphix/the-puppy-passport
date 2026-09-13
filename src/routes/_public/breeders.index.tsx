@@ -10,7 +10,25 @@ import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/_public/breeders/")({
   loader: () => listApprovedKennels(),
-  head: () => ({ meta: [{ title: "Verified breeders — Anemalo" }] }),
+  // The root layout's default og:title/og:description ("...Professional animal transport across
+  // Europe") is transport-first — overriding only `title` here (as this used to) still left a
+  // shared /breeders link's social-card title/description reading as a transport page, since
+  // TanStack Start merges route heads by meta identity (a `title` override doesn't also override
+  // a separate `og:title` entry). Explicit per-page description/og tags here instead.
+  head: () => ({
+    meta: [
+      { title: "Verified breeders — Anemalo" },
+      {
+        name: "description",
+        content: "Browse verified dog breeders across Europe — kennels, litters and puppies.",
+      },
+      { property: "og:title", content: "Verified breeders — Anemalo" },
+      {
+        property: "og:description",
+        content: "Browse verified dog breeders across Europe — kennels, litters and puppies.",
+      },
+    ],
+  }),
   component: BreedersList,
 });
 

@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
   const { data: reservation, error: reservationError } = await userClient
     .from("reservations")
     .select(
-      "id, buyer_id, currency, deposit_amount, deposit_status, animal_id, animals(name)",
+      "id, buyer_id, currency, deposit_amount, deposit_status, animal_id, stripe_checkout_session_id, animals(name)",
     )
     .eq("id", reservationId)
     .maybeSingle();
@@ -116,6 +116,25 @@ Deno.serve(async (req: Request) => {
     apiVersion: "2024-06-20",
     httpClient: Stripe.createFetchHttpClient(),
   });
+
+  // Close out a prior unfinished attempt before opening a new one. Without this, an abandoned
+  // first session stays "open" at Stripe indefinitely (until Stripe's own ~24h auto-expiry) while
+  // stripe_checkout_session_id below gets overwritten to point at the new one — two live, payable
+  // checkout pages for the same deposit at once. stripe-webhook's session-id-scoped guards (see its
+  // 2026-09-13 comment) stop that from corrupting deposit_status even if this expire call is
+  // skipped/fails, but doing it here closes the actual stale page rather than just tolerating it.
+  if (reservation.stripe_checkout_session_id) {
+    try {
+      const prior = await stripe.checkout.sessions.retrieve(reservation.stripe_checkout_session_id);
+      if (prior.status === "open") {
+        await stripe.checkout.sessions.expire(reservation.stripe_checkout_session_id);
+      }
+    } catch (err) {
+      // Non-fatal: most likely the prior session was already expired/completed/invalid. Log and
+      // proceed — the new session created below is still correct and safe either way.
+      console.error("Could not expire prior checkout session (continuing)", err);
+    }
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -150,6 +169,20 @@ Deno.serve(async (req: Request) => {
     .eq("id", reservation.id);
   if (updateError) {
     console.error("Failed to record checkout session id on reservation", updateError);
+  }
+
+  // One row per session ever created, not just the latest — stripe-webhook reconciles against
+  // this specific attempt (its own amount/currency/session id), not only against whichever session
+  // happens to still be `reservations.stripe_checkout_session_id` at the time the event arrives.
+  // See supabase/migrations/20260913100000_reservation_checkout_attempts.sql.
+  const { error: attemptError } = await serviceClient.from("reservation_checkout_attempts").insert({
+    reservation_id: reservation.id,
+    stripe_checkout_session_id: session.id,
+    amount: reservation.deposit_amount,
+    currency,
+  });
+  if (attemptError) {
+    console.error("Failed to record checkout attempt ledger row", attemptError);
   }
 
   return jsonResponse({

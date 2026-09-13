@@ -16,7 +16,7 @@ export type ReservationRow = {
   created_at: string;
   animal_id: string;
   buyer_id: string;
-  animals: { name: string; breeds: { name: string } | null } | null;
+  animals: { name: string; price: number | null; breeds: { name: string } | null } | null;
   profiles: {
     first_name: string | null;
     last_name: string | null;
@@ -35,6 +35,9 @@ export type ReservationSummary = {
   breed: string;
   status: ReservationStatus;
   agreedPrice: number | null;
+  /** The animal listing's own price — used as a fallback "dog's price" wherever agreedPrice is
+   * null (a reservation isn't required to have an agreed price set at conversion time). */
+  animalPrice: number | null;
   currency: string;
   depositAmount: number | null;
   depositStatus: string;

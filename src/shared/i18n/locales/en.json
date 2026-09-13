@@ -2029,6 +2029,7 @@
     "requestDepositExplain": "The buyer will be able to pay this online. It's collected by Anemalo — you'll be paid out separately.",
     "fieldAmount": "Amount",
     "fieldCurrency": "Currency",
+    "suggestedDepositHint": "Suggested deposit — 35% of the agreed price. Edit the amount above if you'd like a different figure.",
     "requestedToast": "Deposit requested — the buyer can now pay it.",
     "requestFailed": "Could not request deposit.",
     "nonRefundableNotice": "Once paid, this deposit is non-refundable — it is not returned if the reservation is later cancelled. It goes to the breeder."

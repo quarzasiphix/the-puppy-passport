@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type {
   ConvertApplicationToReservationInput,
@@ -6,7 +7,7 @@ import type {
 } from "../types";
 
 const reservationSelect =
-  "id, status, agreed_price, currency, deposit_amount, deposit_status, deposit_requested_at, deposit_paid_at, agreement_status, planned_collection_date, created_at, animal_id, buyer_id, animals(name, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
+  "id, status, agreed_price, currency, deposit_amount, deposit_status, deposit_requested_at, deposit_paid_at, agreement_status, planned_collection_date, created_at, animal_id, buyer_id, animals(name, price, breeds(name)), profiles!reservations_buyer_id_fkey(first_name, last_name, city, country), organisations!reservations_organization_id_fkey(name)";
 
 function mapReservation(r: ReservationRow): ReservationSummary {
   return {
@@ -17,6 +18,10 @@ function mapReservation(r: ReservationRow): ReservationSummary {
     breed: r.animals?.breeds?.name ?? "Mixed breed",
     status: r.status,
     agreedPrice: r.agreed_price,
+    // A reservation's agreed_price is deliberately optional at conversion time (see
+    // convert_application_to_reservation's p_agreed_price) — animalPrice is the listing's own
+    // price, used as a fallback wherever "the dog's price" is needed but no price was agreed.
+    animalPrice: r.animals?.price ?? null,
     currency: r.currency ?? "PLN",
     depositAmount: r.deposit_amount,
     depositStatus: r.deposit_status,
@@ -97,11 +102,32 @@ export async function requestReservationDeposit(
 // already means the money is effectively the breeder's once paid; only a merely-requested,
 // still-unpaid deposit reverts to not_required. The RPC also frees the animal back to
 // 'available' when this reservation is the reason it was marked reserved.
+//
+// Routed through the cancel-reservation edge function (not a direct .rpc() call) since 2026-09-13
+// — a plain RPC can flip deposit_status but can never reach Stripe to close a still-open checkout
+// session, which let a buyer keep paying a cancelled reservation's stale checkout link. The edge
+// function calls the same RPC (so authorization/state-machine rules are unchanged) and then
+// expires that session at Stripe if one was open. See supabase/functions/cancel-reservation.
 export async function cancelReservation(reservationId: string, reason?: string): Promise<void> {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.rpc("cancel_reservation", {
-    p_reservation_id: reservationId,
-    p_reason: reason?.trim() || undefined,
+  const { error } = await supabase.functions.invoke("cancel-reservation", {
+    body: { reservationId, reason: reason?.trim() || undefined },
   });
-  if (error) throw error;
+  if (error) {
+    // The edge function returns cancel_reservation()'s real, plain-language message as JSON
+    // (`{ error: "..." }`) — without unwrapping it here, callers would only ever see supabase-js's
+    // generic "Edge Function returned a non-2xx status code" instead (e.g. CancelReservationDialog
+    // showing `err.message` directly to the user).
+    if (error instanceof FunctionsHttpError) {
+      let message: string | undefined;
+      try {
+        message = ((await error.context.json()) as { error?: string })?.error;
+      } catch {
+        // Response body wasn't JSON (e.g. a network-level failure) — fall through to the generic
+        // FunctionsHttpError below instead.
+      }
+      if (message) throw new Error(message);
+    }
+    throw error;
+  }
 }

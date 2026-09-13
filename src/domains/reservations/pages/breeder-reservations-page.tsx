@@ -108,7 +108,13 @@ export function BreederReservationsPage() {
                     <div className="flex flex-wrap justify-end gap-2">
                       {r.depositStatus === "not_required" &&
                         r.status !== "cancelled" &&
-                        r.status !== "completed" && <RequestDepositDialog reservationId={r.id} />}
+                        r.status !== "completed" && (
+                          <RequestDepositDialog
+                            reservationId={r.id}
+                            dogPrice={r.agreedPrice ?? r.animalPrice}
+                            currency={r.currency}
+                          />
+                        )}
                       {r.status === "confirmed" && (
                         <Button size="sm" variant="outline" asChild>
                           <Link to="/transport/request" search={{ animalId: r.animalId }}>
