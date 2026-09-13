@@ -34,6 +34,7 @@ import {
   ScrollText,
   Network,
   ShieldCheck,
+  Shuffle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { DashboardNavItem } from "@/app/layouts/dashboard-shell";
@@ -227,6 +228,16 @@ export const transportCompanyNav: DashboardNavItem[] = [
     icon: UserRound,
   },
   { to: "/dashboard/transport-company/jobs", label: "transportCompanyPanel.nav.jobs", icon: Truck },
+  {
+    to: "/dashboard/transport-company/dispatch",
+    label: "transportCompanyPanel.nav.dispatch",
+    icon: Shuffle,
+  },
+  {
+    to: "/dashboard/transport-company/calendar",
+    label: "transportCompanyPanel.nav.calendar",
+    icon: Calendar,
+  },
   { to: "/dashboard/transport-company/team", label: "transportCompanyPanel.nav.team", icon: Users },
   {
     to: "/dashboard/transport-company/profile",
@@ -333,19 +344,16 @@ export const foundationBottomNav: DashboardNavItem[] = [
   { to: "/dashboard/foundation/messages", label: "Messages", icon: MessageSquare },
 ];
 
-// Deliberately built from this dashboard's own real pages (Overview/Vehicles/Drivers/Jobs/Team/
-// Profile/Settings — see dashboard/transport-company/), not from the internal operations
-// dashboard's "Requests/Calendar/Dispatch" below, which is a different, ops-staff-only dashboard
-// with different real pages. A company-scoped calendar and a real dispatch (assign-our-own-driver-
-// to-a-job) flow don't exist here yet — today's "Jobs" tab is read-only (see fleet.ts's own
-// comment on listMyFleetJobs) — that's real, un-built follow-up work extending self-service fleet
-// management toward what operations staff already have, not something this nav bar can shortcut to
-// yet.
+// Updated 2026-09-14: Calendar and Dispatch are now real, company-scoped pages too (an agenda view
+// over the fleet's own jobs, and a real "assign my own driver/vehicle to this job" flow backed by
+// assign_own_driver_to_job()/assign_own_vehicle_to_job() — see fleet.ts) — this bar now matches
+// what was originally asked for ("requests, calendar, dispatch") on the company's own dashboard,
+// not just on the internal operations one below. Vehicles/Team stay one tap away via "More".
 export const transportCompanyBottomNav: DashboardNavItem[] = [
   { to: "/dashboard/transport-company", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/dashboard/transport-company/jobs", label: "Jobs", icon: Truck },
-  { to: "/dashboard/transport-company/vehicles", label: "Vehicles", icon: Car },
-  { to: "/dashboard/transport-company/team", label: "Team", icon: Users },
+  { to: "/dashboard/transport-company/dispatch", label: "Dispatch", icon: Shuffle },
+  { to: "/dashboard/transport-company/calendar", label: "Calendar", icon: Calendar },
 ];
 
 // The one dashboard where "requests, calendar, dispatch" are already real, existing pages today —

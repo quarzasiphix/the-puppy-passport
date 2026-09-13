@@ -3986,6 +3986,47 @@ export type Database = {
           },
         ]
       }
+      reservation_checkout_attempts: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          id: string
+          reservation_id: string
+          status: string
+          stripe_checkout_session_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          reservation_id: string
+          status?: string
+          stripe_checkout_session_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          reservation_id?: string
+          status?: string
+          stripe_checkout_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_checkout_attempts_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_payment_events: {
         Row: {
           created_at: string
@@ -6655,6 +6696,14 @@ export type Database = {
         Args: { p_driver_id: string; p_transport_request_id: string }
         Returns: undefined
       }
+      assign_own_driver_to_job: {
+        Args: { p_driver_id: string; p_request_id: string }
+        Returns: undefined
+      }
+      assign_own_vehicle_to_job: {
+        Args: { p_request_id: string; p_vehicle_id: string }
+        Returns: undefined
+      }
       assign_request_to_route: {
         Args: {
           p_compatibility_notes?: string
@@ -7181,6 +7230,10 @@ export type Database = {
           request_number: string
           status: Database["public"]["Enums"]["transport_status"]
         }[]
+      }
+      submit_verification_evidence: {
+        Args: { p_evidence_path: string; p_verification_id: string }
+        Returns: undefined
       }
       sync_animal_parent_relationships: {
         Args: { p_animal_id: string }

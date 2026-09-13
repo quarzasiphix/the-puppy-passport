@@ -1,9 +1,25 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Car, UserRound, Inbox, ShieldAlert } from "lucide-react";
+import {
+  Car,
+  UserRound,
+  Inbox,
+  ShieldAlert,
+  CalendarDays,
+  Shuffle,
+  Users,
+  ArrowRight,
+} from "lucide-react";
+import { Badge } from "@/shared/ui/badge";
 import { useAuth } from "@/domains/identity";
 import { getMyTransportCompanyProfile } from "@/domains/breeders";
-import { listVehicles, listDrivers, listMyFleetJobs, isClosed } from "@/domains/transport";
+import {
+  listVehicles,
+  listDrivers,
+  listMyFleetJobs,
+  isClosed,
+  isOnHold,
+} from "@/domains/transport";
 import { useTranslation } from "@/shared/i18n";
 
 export const Route = createFileRoute("/dashboard/transport-company/")({
@@ -27,7 +43,8 @@ function TransportCompanyOverview() {
 
   const activeDrivers =
     driversQuery.data?.filter((d) => d.availability_status === "available").length ?? 0;
-  const openJobs = jobsQuery.data?.filter((j) => !isClosed(j.status)).length;
+  const openJobs = jobsQuery.data?.filter((j) => !isClosed(j.status)) ?? [];
+  const upcomingJobs = openJobs.slice(0, 5);
 
   return (
     <div>
@@ -74,10 +91,84 @@ function TransportCompanyOverview() {
         />
         <Card
           title={t("transportCompanyPanel.overview.kpiOpenJobs")}
-          value={openJobs ?? "—"}
+          value={openJobs.length}
           icon={<Inbox className="size-5" />}
         />
       </div>
+
+      <div className="mt-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <QuickLink
+          to="/dashboard/transport-company/dispatch"
+          label={t("transportCompanyPanel.nav.dispatch")}
+          icon={<Shuffle className="size-5" />}
+        />
+        <QuickLink
+          to="/dashboard/transport-company/calendar"
+          label={t("transportCompanyPanel.nav.calendar")}
+          icon={<CalendarDays className="size-5" />}
+        />
+        <QuickLink
+          to="/dashboard/transport-company/vehicles"
+          label={t("transportCompanyPanel.nav.vehicles")}
+          icon={<Car className="size-5" />}
+        />
+        <QuickLink
+          to="/dashboard/transport-company/team"
+          label={t("transportCompanyPanel.nav.team")}
+          icon={<Users className="size-5" />}
+        />
+      </div>
+
+      <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold">
+            {t("transportCompanyPanel.overview.upcomingJobsTitle")}
+          </h2>
+          <Link
+            to="/dashboard/transport-company/dispatch"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {t("transportCompanyPanel.overview.seeAllJobs")}
+          </Link>
+        </div>
+        {jobsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">
+            {t("transportCompanyPanel.overview.loadingJobs")}
+          </p>
+        ) : upcomingJobs.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t("transportCompanyPanel.overview.noUpcomingJobs")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {upcomingJobs.map((j) => (
+              <Link
+                key={j.id}
+                to="/dashboard/transport-company/dispatch"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium">{j.request_number}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {j.pickup_city ?? j.pickup_country} →{" "}
+                    {j.destination_city ?? j.destination_country}
+                    {j.earliest_date &&
+                      ` · ${new Date(j.earliest_date).toLocaleDateString("en-GB")}`}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={isOnHold(j.status) ? "destructive" : "secondary"}>
+                    {j.status.replace(/_/g, " ")}
+                  </Badge>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -99,5 +190,19 @@ function Card({
       </div>
       <div className="mt-3 font-display text-2xl font-semibold">{value}</div>
     </div>
+  );
+}
+
+function QuickLink({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span className="text-sm font-semibold">{label}</span>
+    </Link>
   );
 }

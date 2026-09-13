@@ -1824,6 +1824,12 @@
       "settingLocked": "Dostępne w planie Breeder Pro i wyższych.",
       "none": "Domyślny Anemalo",
       "saved": "Kolor marki zaktualizowany."
+    },
+    "settingsDangerZone": {
+      "title": "Sesja",
+      "body": "Wyloguj się z konta Anemalo na tym urządzeniu.",
+      "signOutButton": "Wyloguj się",
+      "signingOut": "Wylogowywanie…"
     }
   },
   "buyerPanel": {
@@ -2055,6 +2061,8 @@
       "vehicles": "Pojazdy",
       "drivers": "Kierowcy",
       "jobs": "Zlecenia",
+      "dispatch": "Dyspozycja",
+      "calendar": "Kalendarz",
       "team": "Zespół",
       "publicProfile": "Profil publiczny",
       "settings": "Ustawienia"
@@ -2068,7 +2076,38 @@
       "kpiVehicles": "Pojazdy",
       "kpiDrivers": "Kierowcy",
       "kpiOpenJobs": "Otwarte zlecenia",
-      "kpiActiveDrivers": "Aktywni kierowcy"
+      "kpiActiveDrivers": "Aktywni kierowcy",
+      "upcomingJobsTitle": "Nadchodzące zlecenia",
+      "seeAllJobs": "Otwórz dyspozycję",
+      "loadingJobs": "Ładowanie…",
+      "noUpcomingJobs": "Brak otwartych zleceń."
+    },
+    "dispatch": {
+      "title": "Dyspozycja",
+      "subtitle": "Przypisz własnego kierowcę lub pojazd do zlecenia już skierowanego do Twojej floty.",
+      "loading": "Ładowanie…",
+      "emptyBody": "Brak jeszcze zleceń przypisanych do Twojej floty.",
+      "colRequest": "Zlecenie",
+      "colRoute": "Trasa",
+      "colStatus": "Status",
+      "colDriver": "Kierowca",
+      "colVehicle": "Pojazd",
+      "unassigned": "Nieprzypisany",
+      "assignDriverPlaceholder": "Przypisz kierowcę",
+      "assignVehiclePlaceholder": "Przypisz pojazd",
+      "driverAssignedToast": "Kierowca przypisany.",
+      "driverAssignFailed": "Nie udało się przypisać tego kierowcy.",
+      "vehicleAssignedToast": "Pojazd przypisany.",
+      "vehicleAssignFailed": "Nie udało się przypisać tego pojazdu.",
+      "noOwnDrivers": "Najpierw dodaj kierowcę",
+      "noOwnVehicles": "Najpierw dodaj pojazd"
+    },
+    "calendar": {
+      "title": "Kalendarz",
+      "subtitle": "Wszystkie zlecenia przypisane do Twojej floty, pogrupowane według daty.",
+      "loading": "Ładowanie…",
+      "emptyBody": "Brak jeszcze zleceń w kalendarzu.",
+      "noDateGroup": "Data jeszcze nieustalona"
     },
     "vehicles": {
       "title": "Pojazdy",

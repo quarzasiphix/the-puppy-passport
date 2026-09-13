@@ -1824,6 +1824,12 @@
       "settingLocked": "Available on Breeder Pro and above.",
       "none": "Anemalo default",
       "saved": "Brand color updated."
+    },
+    "settingsDangerZone": {
+      "title": "Session",
+      "body": "Sign out of your Anemalo account on this device.",
+      "signOutButton": "Sign out",
+      "signingOut": "Signing out…"
     }
   },
   "buyerPanel": {
@@ -2055,6 +2061,8 @@
       "vehicles": "Vehicles",
       "drivers": "Drivers",
       "jobs": "Jobs",
+      "dispatch": "Dispatch",
+      "calendar": "Calendar",
       "team": "Team",
       "publicProfile": "Public profile",
       "settings": "Settings"
@@ -2068,7 +2076,38 @@
       "kpiVehicles": "Vehicles",
       "kpiDrivers": "Drivers",
       "kpiOpenJobs": "Open jobs",
-      "kpiActiveDrivers": "Active drivers"
+      "kpiActiveDrivers": "Active drivers",
+      "upcomingJobsTitle": "Upcoming jobs",
+      "seeAllJobs": "Open dispatch",
+      "loadingJobs": "Loading…",
+      "noUpcomingJobs": "No open jobs right now."
+    },
+    "dispatch": {
+      "title": "Dispatch",
+      "subtitle": "Assign one of your own drivers or vehicles to a job already routed to your fleet.",
+      "loading": "Loading…",
+      "emptyBody": "No jobs assigned to your fleet yet.",
+      "colRequest": "Request",
+      "colRoute": "Route",
+      "colStatus": "Status",
+      "colDriver": "Driver",
+      "colVehicle": "Vehicle",
+      "unassigned": "Unassigned",
+      "assignDriverPlaceholder": "Assign a driver",
+      "assignVehiclePlaceholder": "Assign a vehicle",
+      "driverAssignedToast": "Driver assigned.",
+      "driverAssignFailed": "Could not assign that driver.",
+      "vehicleAssignedToast": "Vehicle assigned.",
+      "vehicleAssignFailed": "Could not assign that vehicle.",
+      "noOwnDrivers": "Add a driver first",
+      "noOwnVehicles": "Add a vehicle first"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "subtitle": "Every job assigned to your fleet, grouped by date.",
+      "loading": "Loading…",
+      "emptyBody": "No jobs on the calendar yet.",
+      "noDateGroup": "No date set yet"
     },
     "vehicles": {
       "title": "Vehicles",
