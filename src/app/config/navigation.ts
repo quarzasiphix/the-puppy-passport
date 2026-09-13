@@ -159,12 +159,6 @@ export const breederNav: DashboardNavItem[] = [
     section: "breederPanel.nav.sectionSales",
   },
   {
-    to: "/dashboard/breeder/profile",
-    label: "breederPanel.nav.publicProfile",
-    icon: User,
-    section: "breederPanel.nav.sectionMyKennel",
-  },
-  {
     to: "/dashboard/breeder/achievements",
     label: "breederPanel.nav.achievements",
     icon: Award,
@@ -323,25 +317,61 @@ export function adminNavFor(isAdmin: boolean): DashboardNavItem[] {
 // nothing on the full sidebar becomes unreachable on mobile — this bar is a shortcut, not a
 // replacement. Kept to 3-4 entries each (site-chrome's own comment: a bar past ~5 columns stops
 // being legible at the 400px-wide floor this app supports; the trailing "More" button is the +1).
+// Bottom-nav labels are i18n keys, not literal text (fixed 2026-09-13 — these previously passed
+// plain English strings straight through, which t() silently returns unchanged for any locale
+// since there's no matching key, so the bar never actually translated regardless of the selected
+// language). Reuses the matching sidebar key where one already exists (breederNav,
+// transportCompanyNav are already i18n'd); the rest point at new, matching `nav` keys added to
+// each panel's own locale namespace.
 export const buyerBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/buyer", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/buyer/reservations", label: "Reservations", icon: CalendarCheck },
-  { to: "/dashboard/buyer/messages", label: "Messages", icon: MessageSquare },
-  { to: "/dashboard/buyer/profile", label: "Account", icon: User },
+  { to: "/dashboard/buyer", label: "buyerPanel.nav.overview", icon: LayoutDashboard, exact: true },
+  {
+    to: "/dashboard/buyer/reservations",
+    label: "buyerPanel.nav.reservations",
+    icon: CalendarCheck,
+  },
+  { to: "/dashboard/buyer/messages", label: "buyerPanel.nav.messages", icon: MessageSquare },
+  { to: "/dashboard/buyer/profile", label: "buyerPanel.nav.account", icon: User },
 ];
 
 export const breederBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/breeder", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/breeder/applications", label: "Applications", icon: Inbox },
-  { to: "/dashboard/breeder/reservations", label: "Reservations", icon: CalendarCheck },
-  { to: "/dashboard/breeder/messages", label: "Messages", icon: MessageSquare },
+  {
+    to: "/dashboard/breeder",
+    label: "breederPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    to: "/dashboard/breeder/applications",
+    label: "breederPanel.nav.buyerApplications",
+    icon: Inbox,
+  },
+  {
+    to: "/dashboard/breeder/reservations",
+    label: "breederPanel.nav.reservations",
+    icon: CalendarCheck,
+  },
+  { to: "/dashboard/breeder/messages", label: "breederPanel.nav.messages", icon: MessageSquare },
 ];
 
 export const foundationBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/foundation", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/foundation/applications", label: "Applications", icon: Inbox },
-  { to: "/dashboard/foundation/transport", label: "Transport", icon: Truck },
-  { to: "/dashboard/foundation/messages", label: "Messages", icon: MessageSquare },
+  {
+    to: "/dashboard/foundation",
+    label: "foundationPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    to: "/dashboard/foundation/applications",
+    label: "foundationPanel.nav.applications",
+    icon: Inbox,
+  },
+  { to: "/dashboard/foundation/transport", label: "foundationPanel.nav.transport", icon: Truck },
+  {
+    to: "/dashboard/foundation/messages",
+    label: "foundationPanel.nav.messages",
+    icon: MessageSquare,
+  },
 ];
 
 // Updated 2026-09-14: Calendar and Dispatch are now real, company-scoped pages too (an agenda view
@@ -350,10 +380,23 @@ export const foundationBottomNav: DashboardNavItem[] = [
 // what was originally asked for ("requests, calendar, dispatch") on the company's own dashboard,
 // not just on the internal operations one below. Vehicles/Team stay one tap away via "More".
 export const transportCompanyBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/transport-company", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/transport-company/jobs", label: "Jobs", icon: Truck },
-  { to: "/dashboard/transport-company/dispatch", label: "Dispatch", icon: Shuffle },
-  { to: "/dashboard/transport-company/calendar", label: "Calendar", icon: Calendar },
+  {
+    to: "/dashboard/transport-company",
+    label: "transportCompanyPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  { to: "/dashboard/transport-company/jobs", label: "transportCompanyPanel.nav.jobs", icon: Truck },
+  {
+    to: "/dashboard/transport-company/dispatch",
+    label: "transportCompanyPanel.nav.dispatch",
+    icon: Shuffle,
+  },
+  {
+    to: "/dashboard/transport-company/calendar",
+    label: "transportCompanyPanel.nav.calendar",
+    icon: Calendar,
+  },
 ];
 
 // The one dashboard where "requests, calendar, dispatch" are already real, existing pages today —
@@ -361,17 +404,26 @@ export const transportCompanyBottomNav: DashboardNavItem[] = [
 // transport-company's self-service panel. If "the transport dashboard" meant this one, it's
 // already fully covered; if it meant a company's own panel, see transportCompanyBottomNav above.
 export const operationsBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/operations", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/operations/new-requests", label: "Requests", icon: Inbox },
-  { to: "/dashboard/operations/dispatch", label: "Dispatch", icon: Users },
-  { to: "/dashboard/operations/calendar", label: "Calendar", icon: Calendar },
+  {
+    to: "/dashboard/operations",
+    label: "operationsPanel.nav.overview",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  { to: "/dashboard/operations/new-requests", label: "operationsPanel.nav.requests", icon: Inbox },
+  { to: "/dashboard/operations/dispatch", label: "operationsPanel.nav.dispatch", icon: Users },
+  { to: "/dashboard/operations/calendar", label: "operationsPanel.nav.calendar", icon: Calendar },
 ];
 
 export const adminBottomNav: DashboardNavItem[] = [
-  { to: "/dashboard/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/admin/reports", label: "Reports", icon: Flag },
-  { to: "/dashboard/admin/moderation", label: "Moderation", icon: ShieldAlert },
-  { to: "/dashboard/admin/organisations", label: "Organisations", icon: Building2 },
+  { to: "/dashboard/admin", label: "adminPanel.nav.overview", icon: LayoutDashboard, exact: true },
+  { to: "/dashboard/admin/reports", label: "adminPanel.nav.reports", icon: Flag },
+  { to: "/dashboard/admin/moderation", label: "adminPanel.nav.moderation", icon: ShieldAlert },
+  {
+    to: "/dashboard/admin/organisations",
+    label: "adminPanel.nav.organisations",
+    icon: Building2,
+  },
 ];
 
 // driverNav has exactly one real page today ("My route") — a bottom bar with one destination plus

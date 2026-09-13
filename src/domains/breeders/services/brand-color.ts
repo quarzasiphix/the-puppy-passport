@@ -75,3 +75,21 @@ export function accentGlowStyle(hex: string | null | undefined): CSSProperties |
     boxShadow: `0 1px 2px 0 rgb(0 0 0 / 0.04), 0 12px 28px -10px ${hex}59, 0 4px 10px -6px ${hex}40`,
   };
 }
+
+/** A slow-breathing version of the glow above — pairs with the `animate-brand-glow` utility
+ * (src/styles.css) for a "premium" identity card (a breeder card on a shared listing page, a
+ * kennel's own profile header) rather than the flat static glow every other accent-colored surface
+ * uses. Deliberately a SEPARATE function rather than adding an `animated` flag to accentGlowStyle
+ * above — that one is also used by PuppyCard, and this session's product owner asked specifically
+ * for the animated treatment on breeder identity, not to change every accent-glowing surface at
+ * once. The two custom properties carry the color (with the two different alpha levels the
+ * keyframe alternates between) since a CSS keyframe can't itself take a per-instance runtime color
+ * — only the element's own inline style can. */
+export function accentGlowAnimatedStyle(hex: string | null | undefined): CSSProperties | undefined {
+  if (!hex) return undefined;
+  return {
+    boxShadow: `0 1px 2px 0 rgb(0 0 0 / 0.04), 0 12px 28px -10px ${hex}59, 0 4px 10px -6px ${hex}40`,
+    ["--brand-glow-low" as string]: `0 1px 2px 0 rgb(0 0 0 / 0.04), 0 12px 26px -10px ${hex}40, 0 4px 8px -6px ${hex}26`,
+    ["--brand-glow-high" as string]: `0 2px 4px 0 rgb(0 0 0 / 0.06), 0 22px 46px -8px ${hex}80, 0 8px 20px -4px ${hex}59`,
+  } as CSSProperties;
+}

@@ -85,6 +85,17 @@ built; `animals.listing_category` is the existing seam (a new category value + a
 and stud-service listings (offering a male at stud without selling him) are a related later idea in
 the same market.
 
+**Bidding/sealed-offer idea (raised 2026-09-13, not designed or built)**: for genuinely rare or
+older pedigree breeding stock, a breeder might want to list a dog for **sealed bids with a reserve
+price and a closing date** rather than a fixed price — other approved kennels submit one offer
+each, highest bid at close wins, no live/real-time bidding war. This belongs to the
+breeder-to-breeder market above, not the puppy marketplace. Deliberately not a live-auction
+mechanic (avoids real-time infra and the "auction house" tone this product should not have).
+Sequencing note: this is a new transaction type on top of the deposit/checkout path
+(`docs/RESERVATION_PAYMENT_DESIGN.md`), which itself was only just hardened
+(`reservation_checkout_attempts`, 2026-09-13) — design it as its own flow once that market itself
+is actually being built, not stacked onto the current puppy-reservation flow.
+
 ### 2. Professional breeder profiles
 
 Breeders present kennel history, breeds, parent dogs, litters, puppies, champion dogs, titles,

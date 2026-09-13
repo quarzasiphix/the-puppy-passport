@@ -91,6 +91,26 @@ see the "Module-level docs and the TODO list" section in `CLAUDE.md` for the mai
 
 ## Product decisions still open
 
+- [ ] **Generalize the `@handle` public profile beyond breeders, raised 2026-09-13, not designed.**
+      `/@{$handle}` (src/routes/_public/@{$handle}.tsx) is breeder-only today — built around the
+      `Breeder` type and kennel-specific tabs (Dogs, Litters, Alumni, Pedigrees). Foundations and
+      transport companies each have an internal dashboard profile editor
+      (`dashboard/foundation/profile.tsx`, `dashboard/transport-company/profile.tsx`) but no public
+      page at all — their branding/logo/site config (`organisation_site_configurations`) has
+      nowhere to actually render publicly. Generalizing means: an org-type-aware version of that
+      route (or a shared shell with per-type tab sets), not a copy-paste per type. Real work, not
+      started — needs its own design pass before touching the route.
+- [ ] **"Account hopping" is deliberately not restricted yet (product owner, 2026-09-13)** — signing
+      into a second account in the same browser/session isn't blocked, on purpose, to allow private
+      testing. Revisit once there's a local dev environment to test the restriction against before
+      shipping it — no design or code exists for this yet, just the decision not to block it now.
 - [ ] Confirm the exact repro for the "breeder locked out during review" complaint that started the
       2026-09-12 verification rework — the code path couldn't be found as described; either it was
       already fixed by this pass or there's a specific dead-end screen still worth checking.
+- [ ] **Sealed-bid breeding-stock idea, raised 2026-09-13, not designed or built.** For rare/older
+      pedigree adult dogs on the (also not-yet-built) breeder-to-breeder market
+      (`docs/PRODUCT_VISION.md` pillar 1): sealed bids with a reserve price and a closing date,
+      highest offer at close wins — not a live/real-time auction. Sequence after the
+      breeder-to-breeder market itself exists and after the deposit/checkout path has had time to
+      prove out (`reservation_checkout_attempts`, 2026-09-13) rather than layering a new
+      transaction type onto the just-hardened puppy-reservation flow.

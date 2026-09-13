@@ -147,6 +147,8 @@ export function DashboardShell({
   navItems,
   statusLine,
   settingsTo,
+  logoUrl,
+  hideSignOutInMenu,
   headerExtra,
   bottomNavItems,
   children,
@@ -160,6 +162,12 @@ export function DashboardShell({
    * built its own header bar, and 4 of the 7 — foundation/operations/driver/admin — didn't build
    * one at all, meaning those had no reachable sign-out or settings anywhere). */
   settingsTo?: string;
+  /** The current organisation's logo — passed straight through to UserMenu, shown in the header
+   * button instead of the user's initials. Only ever set for an org-owning dashboard. */
+  logoUrl?: string | null;
+  /** Passed straight through to UserMenu — set when this dashboard's own settings page has its
+   * own, more deliberate sign-out control instead. */
+  hideSignOutInMenu?: boolean;
   /** Optional bespoke content shown at the start of the desktop header bar (e.g. buyer's
    * "Continue searching" shortcut). Desktop only — dropped on mobile, where space is tight and
    * every one of these is also reachable from the page content itself or the nav sheet. */
@@ -278,7 +286,7 @@ export function DashboardShell({
             </div>
             <div className="hidden min-w-0 flex-1 lg:block">{headerExtra}</div>
             <NotificationBell />
-            <UserMenu settingsTo={settingsTo} />
+            <UserMenu settingsTo={settingsTo} logoUrl={logoUrl} hideSignOut={hideSignOutInMenu} />
           </div>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

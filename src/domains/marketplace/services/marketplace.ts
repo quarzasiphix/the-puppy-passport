@@ -439,6 +439,7 @@ function buildBreeder(o: OrgRow, breeds: string[], availablePuppies: number): Br
     description: o.description ?? "",
     cover: o.cover_image_url ?? placeholderImg,
     logo: o.logo_url ?? placeholderImg,
+    logoUrl: o.logo_url ?? null,
     handovers: 0,
     responseTime: o.response_time ?? "",
     accentColor: o.organisation_site_configurations?.primary_color ?? null,

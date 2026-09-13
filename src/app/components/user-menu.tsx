@@ -22,6 +22,8 @@ import { useTranslation } from "@/shared/i18n";
 export function UserMenu({
   settingsTo,
   showDashboardLink = false,
+  logoUrl,
+  hideSignOut = false,
 }: {
   /** Route to this workspace's own settings/account page, e.g. "/dashboard/breeder/settings".
    * Omitted entirely (no "Settings" item) when a dashboard has no such page yet. */
@@ -29,6 +31,15 @@ export function UserMenu({
   /** Show a "Dashboard" item — only on the public site header, where that's the most useful
    * shortcut; redundant (and omitted) inside a dashboard the user is already in. */
   showDashboardLink?: boolean;
+  /** The current organisation's own logo (e.g. organisations.logo_url) — shown in the trigger
+   * button instead of the user's initials when set, so the button reads as "this kennel" rather
+   * than a generic account avatar. Only ever passed by an org-owning dashboard (breeder today). */
+  logoUrl?: string | null;
+  /** Hides the "Sign out" item — set by a dashboard that puts its own sign-out control somewhere
+   * more deliberate (e.g. the bottom of its settings page) so it isn't one accidental tap away
+   * from every other menu item here. Defaults to false so every dashboard without its own
+   * sign-out control keeps working exactly as before. */
+  hideSignOut?: boolean;
 }) {
   const { firstName, lastName, roles } = useAuth();
   const { t } = useTranslation();
@@ -71,9 +82,17 @@ export function UserMenu({
           aria-label={t("dashboardShell.profileMenuLabel")}
           className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 py-1 pl-1 pr-2.5 outline-none hover:bg-secondary"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-            {initials}
-          </span>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className="size-7 shrink-0 rounded-full border border-border object-cover"
+            />
+          ) : (
+            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+              {initials}
+            </span>
+          )}
           <span className="text-sm">{firstName ?? t("nav.dashboard")}</span>
           <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </button>
@@ -117,9 +136,11 @@ export function UserMenu({
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive">
-          <LogOut className="size-4" /> {t("nav.signOut")}
-        </DropdownMenuItem>
+        {!hideSignOut && (
+          <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive">
+            <LogOut className="size-4" /> {t("nav.signOut")}
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

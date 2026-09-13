@@ -10,7 +10,7 @@ import { useAuth } from "@/domains/identity";
 import { useTranslation, type Locale } from "@/shared/i18n";
 import { usePostHog } from "posthog-js/react";
 import { listSavedAnimalIds, saveAnimal, unsaveAnimal } from "../services/buyer-activity";
-import { accentGlowStyle, VerifiedBadge } from "@/domains/breeders";
+import { accentGlowStyle, accentGlowAnimatedStyle, VerifiedBadge } from "@/domains/breeders";
 
 // Polish plural forms don't map to a single dot-path key (they depend on the count), so these
 // small formatting helpers build the final string around t() for the parts that are static —
@@ -414,8 +414,10 @@ export function BreederCard({ b }: { b: Breeder }) {
   const { t, locale } = useTranslation();
   return (
     <article
-      style={accentGlowStyle(b.accentColor)}
-      className="relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
+      style={accentGlowAnimatedStyle(b.accentColor)}
+      className={`relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card ${
+        b.accentColor ? "animate-brand-glow" : ""
+      }`}
     >
       <Link
         to="/@{$handle}"
@@ -434,21 +436,29 @@ export function BreederCard({ b }: { b: Breeder }) {
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold">
-              {b.accentColor && (
+          <div className="flex items-start gap-2.5">
+            {b.logoUrl ? (
+              <img
+                src={b.logoUrl}
+                alt=""
+                className="mt-0.5 size-9 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              b.accentColor && (
                 <span
-                  className="size-2 shrink-0 rounded-full"
+                  className="mt-2.5 size-2 shrink-0 rounded-full"
                   style={{ backgroundColor: b.accentColor }}
                   aria-hidden
                 />
-              )}
-              {b.kennel}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {b.name}
-              {formatLocation(b.city, b.country) && ` · ${formatLocation(b.city, b.country)}`}
-            </p>
+              )
+            )}
+            <div>
+              <h3 className="font-display text-lg font-semibold">{b.kennel}</h3>
+              <p className="text-sm text-muted-foreground">
+                {b.name}
+                {formatLocation(b.city, b.country) && ` · ${formatLocation(b.city, b.country)}`}
+              </p>
+            </div>
           </div>
           {b.responseTime && (
             <div className="text-right text-sm">

@@ -15,8 +15,14 @@ export const Route = createFileRoute("/dashboard/breeder")({
 function BreederDashboardLayout() {
   const { userId } = useAuth();
 
+  // Deliberately NOT the "my-kennel" key that ~10 other breeder sub-pages use for getMyKennel()
+  // (a narrower select) — that collision was the actual bug behind the welcome modal reopening on
+  // every visit: whichever query won the race to populate the shared cache entry for a key decides
+  // its shape, so a child page's narrower result could silently strip onboarding_completed_at from
+  // this data (undefined == null is true), reopening the modal regardless of the real DB value.
+  // Found and fixed 2026-09-13.
   const kennelQuery = useQuery({
-    queryKey: ["my-kennel", userId],
+    queryKey: ["my-kennel-profile", userId],
     enabled: !!userId,
     queryFn: () => getMyKennelProfile(userId!),
   });
@@ -30,6 +36,8 @@ function BreederDashboardLayout() {
     <DashboardShell
       navItems={breederNav}
       accentColor={siteConfigQuery.data?.primaryColor}
+      logoUrl={kennelQuery.data?.logo_url}
+      hideSignOutInMenu
       statusLine={
         <>
           <div className="mt-2 text-xs text-muted-foreground">Kennel</div>

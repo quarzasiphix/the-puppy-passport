@@ -306,6 +306,26 @@ export async function uploadAnimalCoverPhoto(
   return url;
 }
 
+/** Uploads the kennel's own logo (shown on its card everywhere, its public profile, and the
+ * account menu — see UserMenu's logoUrl prop) to the public `kennel-media` bucket and returns the
+ * new public URL — the caller still has to save it onto `organisations.logo_url` via
+ * updateKennel(). Replaces logo_url having been a bare paste-a-URL text field (see
+ * src/lib/storage/media.ts's header comment on that being a known, not-yet-built gap) with a real
+ * upload, same shape as uploadAnimalCoverPhoto's. No old file is deleted — logo_url just moves on
+ * to point at the new object; the previous one is orphaned in storage, same posture as every other
+ * "replace this image" flow in this file (2026-09-13). */
+export async function uploadKennelLogo(kennelId: string, file: File): Promise<string> {
+  const path = `${kennelId}/logo/${Date.now()}-${sanitizeFilenameForStoragePath(file.name)}`;
+  return uploadPublicFile(KENNEL_MEDIA_BUCKET, path, file);
+}
+
+/** Uploads the kennel's cover/banner photo (shown on its public profile and the /breeders list
+ * card) to the public `kennel-media` bucket — same shape as uploadKennelLogo. */
+export async function uploadKennelCoverPhoto(kennelId: string, file: File): Promise<string> {
+  const path = `${kennelId}/cover/${Date.now()}-${sanitizeFilenameForStoragePath(file.name)}`;
+  return uploadPublicFile(KENNEL_MEDIA_BUCKET, path, file);
+}
+
 export async function listBreeds() {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.from("breeds").select("id, name").order("name");

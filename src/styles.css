@@ -174,3 +174,22 @@
     opacity: 0.72;
   }
 }
+
+/* Slow-breathing "premium" shadow glow for a breeder's own branded identity card (BreederCard on
+   a shared listing page, a kennel's profile header) — pairs with accentGlowAnimatedStyle's
+   --brand-glow-low/--brand-glow-high custom properties (src/domains/breeders/services/
+   brand-color.ts), which carry the actual per-kennel color; this utility only owns the timing.
+   Deliberately not applied to every accent-glowing surface (e.g. PuppyCard keeps the flat static
+   glow) — requested specifically for breeder identity, 2026-09-13. */
+@utility animate-brand-glow {
+  animation: brand-glow-breathe 3.6s ease-in-out infinite;
+}
+@keyframes brand-glow-breathe {
+  0%,
+  100% {
+    box-shadow: var(--brand-glow-low);
+  }
+  50% {
+    box-shadow: var(--brand-glow-high);
+  }
+}

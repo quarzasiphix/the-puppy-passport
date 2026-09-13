@@ -96,6 +96,12 @@ export type Breeder = {
   description: string;
   cover: string;
   logo: string;
+  /** The real, undecorated organisations.logo_url — null when the kennel never set one. `logo`
+   * above always falls back to a generic placeholder puppy photo for places that unconditionally
+   * render an image; this field exists so a card can instead show nothing/a neutral fallback
+   * rather than a random stock photo pretending to be this kennel's logo. Optional for the same
+   * reason as ownerId above; buildBreeder always sets it. */
+  logoUrl?: string | null;
   handovers: number;
   responseTime: string;
   /** This kennel's brand color (organisation_site_configurations.primary_color), a raw hex string

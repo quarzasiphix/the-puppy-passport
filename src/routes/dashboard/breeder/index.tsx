@@ -122,7 +122,7 @@ function BreederOverview() {
           tone="success"
         />
         <QuickActionTile
-          to="/dashboard/breeder/profile"
+          to="/dashboard/breeder/settings"
           label={t("breederPanel.home.actionMyProfile")}
           icon={User}
           tone="warning"

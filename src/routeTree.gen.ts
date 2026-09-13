@@ -62,6 +62,8 @@ import { Route as DashboardTransportCompanySettingsRouteImport } from './routes/
 import { Route as DashboardTransportCompanyProfileRouteImport } from './routes/dashboard/transport-company/profile'
 import { Route as DashboardTransportCompanyJobsRouteImport } from './routes/dashboard/transport-company/jobs'
 import { Route as DashboardTransportCompanyDriversRouteImport } from './routes/dashboard/transport-company/drivers'
+import { Route as DashboardTransportCompanyDispatchRouteImport } from './routes/dashboard/transport-company/dispatch'
+import { Route as DashboardTransportCompanyCalendarRouteImport } from './routes/dashboard/transport-company/calendar'
 import { Route as DashboardOperationsWelfareCasesRouteImport } from './routes/dashboard/operations/welfare-cases'
 import { Route as DashboardOperationsVehiclesRouteImport } from './routes/dashboard/operations/vehicles'
 import { Route as DashboardOperationsRoutesRouteImport } from './routes/dashboard/operations/routes'
@@ -103,7 +105,6 @@ import { Route as DashboardBreederTransportRouteImport } from './routes/dashboar
 import { Route as DashboardBreederSettingsRouteImport } from './routes/dashboard/breeder/settings'
 import { Route as DashboardBreederReservationsRouteImport } from './routes/dashboard/breeder/reservations'
 import { Route as DashboardBreederPuppiesRouteImport } from './routes/dashboard/breeder/puppies'
-import { Route as DashboardBreederProfileRouteImport } from './routes/dashboard/breeder/profile'
 import { Route as DashboardBreederPedigreesRouteImport } from './routes/dashboard/breeder/pedigrees'
 import { Route as DashboardBreederPayoutsRouteImport } from './routes/dashboard/breeder/payouts'
 import { Route as DashboardBreederParentDogsRouteImport } from './routes/dashboard/breeder/parent-dogs'
@@ -421,6 +422,18 @@ const DashboardTransportCompanyDriversRoute =
     path: '/drivers',
     getParentRoute: () => DashboardTransportCompanyRoute,
   } as any)
+const DashboardTransportCompanyDispatchRoute =
+  DashboardTransportCompanyDispatchRouteImport.update({
+    id: '/dispatch',
+    path: '/dispatch',
+    getParentRoute: () => DashboardTransportCompanyRoute,
+  } as any)
+const DashboardTransportCompanyCalendarRoute =
+  DashboardTransportCompanyCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => DashboardTransportCompanyRoute,
+  } as any)
 const DashboardOperationsWelfareCasesRoute =
   DashboardOperationsWelfareCasesRouteImport.update({
     id: '/welfare-cases',
@@ -656,11 +669,6 @@ const DashboardBreederReservationsRoute =
 const DashboardBreederPuppiesRoute = DashboardBreederPuppiesRouteImport.update({
   id: '/puppies',
   path: '/puppies',
-  getParentRoute: () => DashboardBreederRoute,
-} as any)
-const DashboardBreederProfileRoute = DashboardBreederProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
   getParentRoute: () => DashboardBreederRoute,
 } as any)
 const DashboardBreederPedigreesRoute =
@@ -958,7 +966,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
-  '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
@@ -1000,6 +1007,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
   '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
+  '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
   '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
   '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
@@ -1081,7 +1090,6 @@ export interface FileRoutesByTo {
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
-  '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
@@ -1121,6 +1129,8 @@ export interface FileRoutesByTo {
   '/dashboard/operations/review-queue': typeof DashboardOperationsReviewQueueRoute
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
   '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
+  '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
   '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
   '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
@@ -1218,7 +1228,6 @@ export interface FileRoutesById {
   '/dashboard/breeder/parent-dogs': typeof DashboardBreederParentDogsRoute
   '/dashboard/breeder/payouts': typeof DashboardBreederPayoutsRoute
   '/dashboard/breeder/pedigrees': typeof DashboardBreederPedigreesRoute
-  '/dashboard/breeder/profile': typeof DashboardBreederProfileRoute
   '/dashboard/breeder/puppies': typeof DashboardBreederPuppiesRoute
   '/dashboard/breeder/reservations': typeof DashboardBreederReservationsRoute
   '/dashboard/breeder/settings': typeof DashboardBreederSettingsRoute
@@ -1260,6 +1269,8 @@ export interface FileRoutesById {
   '/dashboard/operations/routes': typeof DashboardOperationsRoutesRouteWithChildren
   '/dashboard/operations/vehicles': typeof DashboardOperationsVehiclesRoute
   '/dashboard/operations/welfare-cases': typeof DashboardOperationsWelfareCasesRoute
+  '/dashboard/transport-company/calendar': typeof DashboardTransportCompanyCalendarRoute
+  '/dashboard/transport-company/dispatch': typeof DashboardTransportCompanyDispatchRoute
   '/dashboard/transport-company/drivers': typeof DashboardTransportCompanyDriversRoute
   '/dashboard/transport-company/jobs': typeof DashboardTransportCompanyJobsRoute
   '/dashboard/transport-company/profile': typeof DashboardTransportCompanyProfileRoute
@@ -1357,7 +1368,6 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
-    | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
@@ -1399,6 +1409,8 @@ export interface FileRouteTypes {
     | '/dashboard/operations/routes'
     | '/dashboard/operations/vehicles'
     | '/dashboard/operations/welfare-cases'
+    | '/dashboard/transport-company/calendar'
+    | '/dashboard/transport-company/dispatch'
     | '/dashboard/transport-company/drivers'
     | '/dashboard/transport-company/jobs'
     | '/dashboard/transport-company/profile'
@@ -1480,7 +1492,6 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
-    | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
@@ -1520,6 +1531,8 @@ export interface FileRouteTypes {
     | '/dashboard/operations/review-queue'
     | '/dashboard/operations/vehicles'
     | '/dashboard/operations/welfare-cases'
+    | '/dashboard/transport-company/calendar'
+    | '/dashboard/transport-company/dispatch'
     | '/dashboard/transport-company/drivers'
     | '/dashboard/transport-company/jobs'
     | '/dashboard/transport-company/profile'
@@ -1616,7 +1629,6 @@ export interface FileRouteTypes {
     | '/dashboard/breeder/parent-dogs'
     | '/dashboard/breeder/payouts'
     | '/dashboard/breeder/pedigrees'
-    | '/dashboard/breeder/profile'
     | '/dashboard/breeder/puppies'
     | '/dashboard/breeder/reservations'
     | '/dashboard/breeder/settings'
@@ -1658,6 +1670,8 @@ export interface FileRouteTypes {
     | '/dashboard/operations/routes'
     | '/dashboard/operations/vehicles'
     | '/dashboard/operations/welfare-cases'
+    | '/dashboard/transport-company/calendar'
+    | '/dashboard/transport-company/dispatch'
     | '/dashboard/transport-company/drivers'
     | '/dashboard/transport-company/jobs'
     | '/dashboard/transport-company/profile'
@@ -2073,6 +2087,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTransportCompanyDriversRouteImport
       parentRoute: typeof DashboardTransportCompanyRoute
     }
+    '/dashboard/transport-company/dispatch': {
+      id: '/dashboard/transport-company/dispatch'
+      path: '/dispatch'
+      fullPath: '/dashboard/transport-company/dispatch'
+      preLoaderRoute: typeof DashboardTransportCompanyDispatchRouteImport
+      parentRoute: typeof DashboardTransportCompanyRoute
+    }
+    '/dashboard/transport-company/calendar': {
+      id: '/dashboard/transport-company/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/transport-company/calendar'
+      preLoaderRoute: typeof DashboardTransportCompanyCalendarRouteImport
+      parentRoute: typeof DashboardTransportCompanyRoute
+    }
     '/dashboard/operations/welfare-cases': {
       id: '/dashboard/operations/welfare-cases'
       path: '/welfare-cases'
@@ -2358,13 +2386,6 @@ declare module '@tanstack/react-router' {
       path: '/puppies'
       fullPath: '/dashboard/breeder/puppies'
       preLoaderRoute: typeof DashboardBreederPuppiesRouteImport
-      parentRoute: typeof DashboardBreederRoute
-    }
-    '/dashboard/breeder/profile': {
-      id: '/dashboard/breeder/profile'
-      path: '/profile'
-      fullPath: '/dashboard/breeder/profile'
-      preLoaderRoute: typeof DashboardBreederProfileRouteImport
       parentRoute: typeof DashboardBreederRoute
     }
     '/dashboard/breeder/pedigrees': {
@@ -2887,7 +2908,6 @@ interface DashboardBreederRouteChildren {
   DashboardBreederParentDogsRoute: typeof DashboardBreederParentDogsRoute
   DashboardBreederPayoutsRoute: typeof DashboardBreederPayoutsRoute
   DashboardBreederPedigreesRoute: typeof DashboardBreederPedigreesRoute
-  DashboardBreederProfileRoute: typeof DashboardBreederProfileRoute
   DashboardBreederPuppiesRoute: typeof DashboardBreederPuppiesRoute
   DashboardBreederReservationsRoute: typeof DashboardBreederReservationsRoute
   DashboardBreederSettingsRoute: typeof DashboardBreederSettingsRoute
@@ -2905,7 +2925,6 @@ const DashboardBreederRouteChildren: DashboardBreederRouteChildren = {
   DashboardBreederParentDogsRoute: DashboardBreederParentDogsRoute,
   DashboardBreederPayoutsRoute: DashboardBreederPayoutsRoute,
   DashboardBreederPedigreesRoute: DashboardBreederPedigreesRoute,
-  DashboardBreederProfileRoute: DashboardBreederProfileRoute,
   DashboardBreederPuppiesRoute: DashboardBreederPuppiesRoute,
   DashboardBreederReservationsRoute: DashboardBreederReservationsRoute,
   DashboardBreederSettingsRoute: DashboardBreederSettingsRoute,
@@ -3075,6 +3094,8 @@ const DashboardOperationsRouteWithChildren =
   DashboardOperationsRoute._addFileChildren(DashboardOperationsRouteChildren)
 
 interface DashboardTransportCompanyRouteChildren {
+  DashboardTransportCompanyCalendarRoute: typeof DashboardTransportCompanyCalendarRoute
+  DashboardTransportCompanyDispatchRoute: typeof DashboardTransportCompanyDispatchRoute
   DashboardTransportCompanyDriversRoute: typeof DashboardTransportCompanyDriversRoute
   DashboardTransportCompanyJobsRoute: typeof DashboardTransportCompanyJobsRoute
   DashboardTransportCompanyProfileRoute: typeof DashboardTransportCompanyProfileRoute
@@ -3086,6 +3107,10 @@ interface DashboardTransportCompanyRouteChildren {
 
 const DashboardTransportCompanyRouteChildren: DashboardTransportCompanyRouteChildren =
   {
+    DashboardTransportCompanyCalendarRoute:
+      DashboardTransportCompanyCalendarRoute,
+    DashboardTransportCompanyDispatchRoute:
+      DashboardTransportCompanyDispatchRoute,
     DashboardTransportCompanyDriversRoute:
       DashboardTransportCompanyDriversRoute,
     DashboardTransportCompanyJobsRoute: DashboardTransportCompanyJobsRoute,

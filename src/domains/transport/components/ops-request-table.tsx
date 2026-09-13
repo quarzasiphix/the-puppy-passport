@@ -116,64 +116,131 @@ export function OpsRequestTable({
       )}
 
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-border/70 bg-card">
-          <table className="w-full text-xs">
-            <thead className="bg-secondary/60 text-left uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="p-3">Request</th>
-                <th className="p-3">Animal</th>
-                <th className="p-3">Size</th>
-                <th className="p-3">Route</th>
-                <th className="p-3">Dates</th>
-                <th className="p-3">Flex</th>
-                <th className="p-3">Service</th>
-                <th className="p-3">Compliance</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {rows.map((r) => (
-                <tr key={r.id} className="hover:bg-secondary/40">
-                  <td className="p-3 font-medium">
-                    <Link
-                      to="/dashboard/operations/requests/$id"
-                      params={{ id: r.id }}
-                      className="text-primary hover:underline"
-                    >
-                      {r.request_number}
-                    </Link>
-                  </td>
-                  <td className="p-3">{r.animal_name ?? "—"}</td>
-                  <td className="p-3 capitalize">{r.size_category ?? "—"}</td>
-                  <td className="p-3 text-muted-foreground">
-                    {r.pickup_city ?? r.pickup_country ?? "?"} →{" "}
-                    {r.destination_city ?? r.destination_country ?? "?"}
-                  </td>
-                  <td className="p-3 text-muted-foreground">{r.earliest_date ?? "—"}</td>
-                  <td className="p-3">{r.flexible_dates ? "Yes" : "No"}</td>
-                  <td className="p-3 capitalize">{r.requested_service_type.replace("_", " ")}</td>
-                  <td className="p-3">
-                    <Badge variant="secondary" className="whitespace-nowrap capitalize">
-                      {r.compliance_review_result.replace(/_/g, " ")}
-                    </Badge>
-                  </td>
-                  <td className="p-3">
-                    <Badge
-                      variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
-                      className="whitespace-nowrap capitalize"
-                    >
-                      {r.status.replace(/_/g, " ")}
-                    </Badge>
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {new Date(r.created_at).toLocaleDateString("en-GB")}
-                  </td>
+        <>
+          {/* Desktop/tablet: dense table. Hidden below md — at phone width this many columns can
+              only ever fit by horizontal-scrolling the whole page, which is exactly the layout bug
+              this app has otherwise been fixed for everywhere else (see the mobile-scroll pass
+              elsewhere this session) — this ops table was the one place it was never applied. */}
+          <div className="hidden overflow-x-auto rounded-xl border border-border/70 bg-card md:block">
+            <table className="w-full text-xs">
+              <thead className="bg-secondary/60 text-left uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="p-3">Request</th>
+                  <th className="p-3">Animal</th>
+                  <th className="p-3">Size</th>
+                  <th className="p-3">Route</th>
+                  <th className="p-3">Dates</th>
+                  <th className="p-3">Flex</th>
+                  <th className="p-3">Service</th>
+                  <th className="p-3">Compliance</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Created</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {rows.map((r) => (
+                  <tr key={r.id} className="hover:bg-secondary/40">
+                    <td className="p-3 font-medium">
+                      <Link
+                        to="/dashboard/operations/requests/$id"
+                        params={{ id: r.id }}
+                        className="text-primary hover:underline"
+                      >
+                        {r.request_number}
+                      </Link>
+                    </td>
+                    <td className="p-3">{r.animal_name ?? "—"}</td>
+                    <td className="p-3 capitalize">{r.size_category ?? "—"}</td>
+                    <td className="p-3 text-muted-foreground">
+                      {r.pickup_city ?? r.pickup_country ?? "?"} →{" "}
+                      {r.destination_city ?? r.destination_country ?? "?"}
+                    </td>
+                    <td className="p-3 text-muted-foreground">{r.earliest_date ?? "—"}</td>
+                    <td className="p-3">{r.flexible_dates ? "Yes" : "No"}</td>
+                    <td className="p-3 capitalize">{r.requested_service_type.replace("_", " ")}</td>
+                    <td className="p-3">
+                      <Badge variant="secondary" className="whitespace-nowrap capitalize">
+                        {r.compliance_review_result.replace(/_/g, " ")}
+                      </Badge>
+                    </td>
+                    <td className="p-3">
+                      <Badge
+                        variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
+                        className="whitespace-nowrap capitalize"
+                      >
+                        {r.status.replace(/_/g, " ")}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString("en-GB")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Phone/narrow: one card per request, every field stacked instead of packed into
+              columns — shows the same data with zero horizontal scrolling. The whole card is the
+              link (no separate button needed, nothing else inside it is independently
+              interactive). */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {rows.map((r) => (
+              <Link
+                key={r.id}
+                to="/dashboard/operations/requests/$id"
+                params={{ id: r.id }}
+                className="block rounded-xl border border-border/70 bg-card p-4 text-sm active:bg-secondary/40"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-medium text-primary">{r.request_number}</span>
+                  <Badge
+                    variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
+                    className="whitespace-nowrap capitalize"
+                  >
+                    {r.status.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+
+                <div className="mt-1 text-muted-foreground">
+                  {r.animal_name ?? "—"}
+                  {r.size_category ? ` · ${r.size_category}` : ""}
+                </div>
+
+                <div className="mt-2 font-medium">
+                  {r.pickup_city ?? r.pickup_country ?? "?"} →{" "}
+                  {r.destination_city ?? r.destination_country ?? "?"}
+                </div>
+
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                  <div>
+                    <dt className="text-muted-foreground">Dates</dt>
+                    <dd>
+                      {r.earliest_date ?? "—"}
+                      {r.flexible_dates ? " (flexible)" : ""}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Service</dt>
+                    <dd className="capitalize">{r.requested_service_type.replace("_", " ")}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Compliance</dt>
+                    <dd>
+                      <Badge variant="secondary" className="whitespace-nowrap capitalize">
+                        {r.compliance_review_result.replace(/_/g, " ")}
+                      </Badge>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Created</dt>
+                    <dd>{new Date(r.created_at).toLocaleDateString("en-GB")}</dd>
+                  </div>
+                </dl>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
