@@ -5,8 +5,6 @@ import { useAuth, requireRole } from "@/domains/identity";
 import { getMyTransportCompanyProfile } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { transportCompanyNav } from "@/app/config/navigation";
-import { NotificationBell } from "@/domains/messaging";
-import { UserMenu } from "@/app/components/user-menu";
 
 export const Route = createFileRoute("/dashboard/transport-company")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["transport_company_owner"]),
@@ -38,12 +36,7 @@ function TransportCompanyDashboardLayout() {
           )}
         </>
       }
-      header={
-        <header className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border/60 bg-background/85 px-6 py-3 backdrop-blur">
-          <NotificationBell />
-          <UserMenu settingsTo="/dashboard/transport-company/settings" />
-        </header>
-      }
+      settingsTo="/dashboard/transport-company/settings"
     >
       <Outlet />
     </DashboardShell>

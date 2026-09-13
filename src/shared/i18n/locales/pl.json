@@ -1312,6 +1312,8 @@
     "backToAnemalo": "← Wróć do Anemalo",
     "settings": "Ustawienia",
     "profileMenuLabel": "Menu konta",
+    "switchWorkspaceLabel": "Przełącz panel",
+    "addNewOrganisation": "Dodaj nową organizację",
     "workspaces": {
       "customer": "Klient",
       "breeder": "Hodowca",

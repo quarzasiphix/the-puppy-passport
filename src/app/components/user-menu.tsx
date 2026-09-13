@@ -1,14 +1,17 @@
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { Check, ChevronDown, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { useAuth, signOut } from "@/domains/identity";
+import { dashboardWorkspaces } from "@/app/config/navigation";
 import { useTranslation } from "@/shared/i18n";
 
 // One shared "click my name/avatar" menu for every "top right" spot that shows the signed-in
@@ -27,11 +30,23 @@ export function UserMenu({
    * shortcut; redundant (and omitted) inside a dashboard the user is already in. */
   showDashboardLink?: boolean;
 }) {
-  const { firstName, lastName } = useAuth();
+  const { firstName, lastName, roles } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const current = "/" + pathname.split("/").slice(1, 3).join("/");
+
+  // Same source as the sidebar's WorkspaceSwitcher (dashboard-shell.tsx) — this menu is the one
+  // control that's reliably reachable on every screen size (the sidebar switcher is hidden below
+  // `lg`), so it doubles as the mobile org/workspace switcher rather than needing its own separate
+  // control. "Add new organisation" always shows, regardless of how many workspaces the user
+  // already has — a breeder can run more than one kennel.
+  const activeRoleNames = new Set(roles.filter((r) => r.status === "active").map((r) => r.role));
+  const availableWorkspaces = dashboardWorkspaces.filter(
+    (w) => w.roles.length === 0 || w.roles.some((r) => activeRoleNames.has(r)),
+  );
 
   const initials =
     [firstName, lastName]
@@ -63,7 +78,7 @@ export function UserMenu({
           <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-56">
         {showDashboardLink && (
           <DropdownMenuItem asChild className="gap-2">
             <Link to="/dashboard/buyer">
@@ -71,6 +86,30 @@ export function UserMenu({
             </Link>
           </DropdownMenuItem>
         )}
+
+        <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("dashboardShell.switchWorkspaceLabel")}
+        </DropdownMenuLabel>
+        {availableWorkspaces.map((w) => {
+          const active = w.to === current;
+          return (
+            <DropdownMenuItem key={w.to} asChild className="gap-2">
+              <Link to={w.to}>
+                <w.icon className="size-4" />
+                <span className="flex-1">{t(`dashboardShell.workspaces.${w.id}`)}</span>
+                {active && <Check className="size-4 shrink-0 text-primary" />}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
+        <DropdownMenuItem asChild className="gap-2">
+          <Link to="/create-breeder">
+            <Plus className="size-4" /> {t("dashboardShell.addNewOrganisation")}
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
         {settingsTo && (
           <DropdownMenuItem asChild className="gap-2">
             <Link to={settingsTo}>

@@ -1,18 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import {
-  ChevronsUpDown,
-  Menu,
-  Check,
-  ArrowRight,
-  User,
-  Dog,
-  HeartHandshake,
-  Truck,
-  Car,
-  ShieldCheck,
-} from "lucide-react";
+import { ChevronsUpDown, Menu, Check, ArrowRight, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +11,9 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
 import { Logo } from "@/app/components/logo";
 import { useAuth } from "@/domains/identity";
+import { UserMenu } from "@/app/components/user-menu";
+import { NotificationBell } from "@/domains/messaging";
+import { dashboardWorkspaces } from "@/app/config/navigation";
 import { useTranslation } from "@/shared/i18n";
 import { LocaleSuggestionBanner } from "@/shared/i18n/locale-suggestion-banner";
 import { LanguageSwitcher } from "@/shared/i18n/language-switcher";
@@ -37,33 +29,6 @@ export type DashboardNavItem = {
   section?: string;
 };
 
-// Every role that has a dashboard, in switcher order. Kept in one place so a new workspace only
-// needs an entry here (not one in every layout file) to show up in the switcher. `id` keys the
-// three translated-phrase maps below (dashboardShell.workspaces/panelLabel/switchTo in the locale
-// files) — kept separate from composing a sentence out of parts because Polish word order for
-// "Breeder panel" ("Panel hodowcy") isn't just the English order with a translated noun swapped in.
-const workspaces: { to: string; id: string; roles: string[]; icon: LucideIcon }[] = [
-  { to: "/dashboard/buyer", id: "customer", roles: [], icon: User }, // every signed-in user has this one
-  { to: "/dashboard/breeder", id: "breeder", roles: ["breeder"], icon: Dog },
-  {
-    to: "/dashboard/foundation",
-    id: "foundation",
-    roles: ["foundation_member", "shelter_member"],
-    icon: HeartHandshake,
-  },
-  {
-    to: "/dashboard/transport-company",
-    id: "transportCompany",
-    roles: ["transport_company_owner"],
-    icon: Truck,
-  },
-  { to: "/dashboard/operations", id: "operations", roles: ["operations", "admin"], icon: Truck },
-  { to: "/dashboard/driver", id: "driver", roles: ["driver"], icon: Car },
-  // Moderator and admin share one dashboard (routes/dashboard/admin.tsx) — a moderator sees the
-  // same "Admin" workspace entry, just fewer items once inside (adminNavFor in navigation.ts).
-  { to: "/dashboard/admin", id: "admin", roles: ["moderator", "admin"], icon: ShieldCheck },
-];
-
 // Lets a user with several roles switch workspace without a separate account per role — driven by
 // their real (server-verified) roles, not a value the frontend could fabricate; the underlying
 // pages are still independently guarded by RLS and each layout's own beforeLoad role check.
@@ -77,10 +42,10 @@ function WorkspaceSwitcher({ current }: { current: string }) {
   const { roles } = useAuth();
   const { t } = useTranslation();
   const activeRoleNames = new Set(roles.filter((r) => r.status === "active").map((r) => r.role));
-  const available = workspaces.filter(
+  const available = dashboardWorkspaces.filter(
     (w) => w.roles.length === 0 || w.roles.some((r) => activeRoleNames.has(r)),
   );
-  const currentWorkspace = workspaces.find((w) => w.to === current);
+  const currentWorkspace = dashboardWorkspaces.find((w) => w.to === current);
   const CurrentIcon = currentWorkspace?.icon ?? User;
   const currentLabel = currentWorkspace
     ? t(`dashboardShell.workspaces.${currentWorkspace.id}`)
@@ -159,18 +124,45 @@ function WorkspaceSwitcher({ current }: { current: string }) {
   );
 }
 
+// A compact, non-interactive "you are here" readout for the single mobile header row — actual
+// switching now happens via the nav sheet's own WorkspaceSwitcher (roomy, opened by the hamburger)
+// or UserMenu's "Switch workspace" section, so this doesn't need to be a second dropdown crammed
+// into an already-tight row.
+function CurrentWorkspaceBadge({ current }: { current: string }) {
+  const { t } = useTranslation();
+  const workspace = dashboardWorkspaces.find((w) => w.to === current);
+  const Icon = workspace?.icon ?? User;
+  const label = workspace
+    ? t(`dashboardShell.workspaces.${workspace.id}`)
+    : t("dashboardShell.workspaces.customer");
+  return (
+    <span className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+      <Icon className="size-4 shrink-0 text-primary" />
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
 export function DashboardShell({
   navItems,
   statusLine,
-  header,
+  settingsTo,
+  headerExtra,
   children,
   accentColor,
 }: {
   navItems: DashboardNavItem[];
   /** Small text under the workspace switcher, e.g. kennel name + verification badge. */
   statusLine?: React.ReactNode;
-  /** Optional sticky top bar rendered above the page content (search, notifications, user chip). */
-  header?: React.ReactNode;
+  /** Route to this workspace's own settings/account page — passed straight through to UserMenu.
+   * Every dashboard now gets a NotificationBell + UserMenu for free (previously each layout file
+   * built its own header bar, and 4 of the 7 — foundation/operations/driver/admin — didn't build
+   * one at all, meaning those had no reachable sign-out or settings anywhere). */
+  settingsTo?: string;
+  /** Optional bespoke content shown at the start of the desktop header bar (e.g. buyer's
+   * "Continue searching" shortcut). Desktop only — dropped on mobile, where space is tight and
+   * every one of these is also reachable from the page content itself or the nav sheet. */
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
   /** A kennel's chosen brand color (organisation_site_configurations.primary_color), as a raw hex
    * string — overrides the `--accent`/`--accent-foreground` CSS variables for this whole shell, so
@@ -257,24 +249,27 @@ export function DashboardShell({
         </aside>
 
         <div className="min-w-0 flex-1">
-          {/* Mobile / tablet nav — the desktop sidebar is hidden below lg, so without this there is
-              no way to move between dashboard pages on a phone. */}
-          <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+          {/* Single header row for every screen size — replaces what used to be two stacked
+              sticky bars on mobile (this row's mobile variant, plus each dashboard layout's own
+              bespoke header) and the complete absence of one on 4 of the 7 dashboards. Mobile gets
+              a compact "you are here" readout (switching lives in the nav sheet/UserMenu, not
+              here); desktop gets `headerExtra` plus the same NotificationBell/UserMenu every
+              workspace now shares. */}
+          <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur lg:px-6">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
               aria-label={t("dashboardShell.openMenu")}
-              className="grid size-9 shrink-0 place-items-center rounded-lg border border-border/70 hover:bg-secondary"
+              className="grid size-9 shrink-0 place-items-center rounded-lg border border-border/70 hover:bg-secondary lg:hidden"
             >
               <Menu className="size-5" />
             </button>
-            <div className="min-w-0 flex-1">
-              <WorkspaceSwitcher current={current} />
+            <div className="min-w-0 flex-1 lg:hidden">
+              <CurrentWorkspaceBadge current={current} />
             </div>
-            <LanguageSwitcher />
-            <Link to="/" className="flex shrink-0 items-center gap-1.5 text-primary">
-              <Logo className="size-8" />
-            </Link>
+            <div className="hidden min-w-0 flex-1 lg:block">{headerExtra}</div>
+            <NotificationBell />
+            <UserMenu settingsTo={settingsTo} />
           </div>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -299,7 +294,6 @@ export function DashboardShell({
             </SheetContent>
           </Sheet>
 
-          {header}
           <main className="p-4 sm:p-6">{children}</main>
         </div>
       </div>

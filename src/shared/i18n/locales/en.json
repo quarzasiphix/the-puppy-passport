@@ -1312,6 +1312,8 @@
     "backToAnemalo": "← Back to Anemalo",
     "settings": "Settings",
     "profileMenuLabel": "Account menu",
+    "switchWorkspaceLabel": "Switch workspace",
+    "addNewOrganisation": "Add new organisation",
     "workspaces": {
       "customer": "Customer",
       "breeder": "Breeder",

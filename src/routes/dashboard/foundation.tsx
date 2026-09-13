@@ -34,6 +34,7 @@ function FoundationDashboardLayout() {
           )}
         </>
       }
+      settingsTo="/dashboard/foundation/settings"
     >
       <Outlet />
     </DashboardShell>

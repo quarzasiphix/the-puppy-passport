@@ -20,7 +20,10 @@ function AdminDashboardLayout() {
   const { roles } = useAuth();
   const isAdmin = roles.some((r) => r.role === "admin" && r.status === "active");
   return (
-    <DashboardShell navItems={adminNavFor(isAdmin)}>
+    <DashboardShell
+      navItems={adminNavFor(isAdmin)}
+      settingsTo={isAdmin ? "/dashboard/admin/settings" : undefined}
+    >
       <Outlet />
     </DashboardShell>
   );

@@ -33,8 +33,42 @@ import {
   Coins,
   ScrollText,
   Network,
+  ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { DashboardNavItem } from "@/app/layouts/dashboard-shell";
+
+// Every role that has a dashboard, in switcher order — consumed by both the sidebar's
+// WorkspaceSwitcher and UserMenu's mobile workspace-switch section (dashboard-shell.tsx /
+// user-menu.tsx). Lives here rather than in dashboard-shell.tsx itself so user-menu.tsx can import
+// it without a circular dependency (dashboard-shell.tsx doesn't import from user-menu.tsx, but
+// would need to once it renders UserMenu directly — see the mobile-header consolidation below).
+// `id` keys the three translated-phrase maps (dashboardShell.workspaces/panelLabel/switchTo in the
+// locale files) — kept separate from composing a sentence out of parts because Polish word order
+// for "Breeder panel" ("Panel hodowcy") isn't just the English order with a translated noun swapped
+// in.
+export const dashboardWorkspaces: { to: string; id: string; roles: string[]; icon: LucideIcon }[] =
+  [
+    { to: "/dashboard/buyer", id: "customer", roles: [], icon: User }, // every signed-in user has this one
+    { to: "/dashboard/breeder", id: "breeder", roles: ["breeder"], icon: Dog },
+    {
+      to: "/dashboard/foundation",
+      id: "foundation",
+      roles: ["foundation_member", "shelter_member"],
+      icon: HeartHandshake,
+    },
+    {
+      to: "/dashboard/transport-company",
+      id: "transportCompany",
+      roles: ["transport_company_owner"],
+      icon: Truck,
+    },
+    { to: "/dashboard/operations", id: "operations", roles: ["operations", "admin"], icon: Truck },
+    { to: "/dashboard/driver", id: "driver", roles: ["driver"], icon: Car },
+    // Moderator and admin share one dashboard (routes/dashboard/admin.tsx) — a moderator sees the
+    // same "Admin" workspace entry, just fewer items once inside (adminNavFor in navigation.ts).
+    { to: "/dashboard/admin", id: "admin", roles: ["moderator", "admin"], icon: ShieldCheck },
+  ];
 
 // Centralised dashboard navigation. One array per workspace so a new destination is a single
 // entry here, not an edit in a route module. Route URLs are frozen during the frontend
@@ -177,8 +211,16 @@ export const transportCompanyNav: DashboardNavItem[] = [
     icon: LayoutDashboard,
     exact: true,
   },
-  { to: "/dashboard/transport-company/vehicles", label: "transportCompanyPanel.nav.vehicles", icon: Car },
-  { to: "/dashboard/transport-company/drivers", label: "transportCompanyPanel.nav.drivers", icon: UserRound },
+  {
+    to: "/dashboard/transport-company/vehicles",
+    label: "transportCompanyPanel.nav.vehicles",
+    icon: Car,
+  },
+  {
+    to: "/dashboard/transport-company/drivers",
+    label: "transportCompanyPanel.nav.drivers",
+    icon: UserRound,
+  },
   { to: "/dashboard/transport-company/jobs", label: "transportCompanyPanel.nav.jobs", icon: Truck },
   { to: "/dashboard/transport-company/team", label: "transportCompanyPanel.nav.team", icon: Users },
   {

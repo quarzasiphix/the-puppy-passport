@@ -6,8 +6,6 @@ import { requireRole } from "@/domains/identity";
 import { getMyKennelProfile, getKennelSiteConfiguration, WelcomeModal } from "@/domains/breeders";
 import { DashboardShell } from "@/app/layouts/dashboard-shell";
 import { breederNav } from "@/app/config/navigation";
-import { NotificationBell } from "@/domains/messaging";
-import { UserMenu } from "@/app/components/user-menu";
 
 export const Route = createFileRoute("/dashboard/breeder")({
   beforeLoad: ({ context }) => requireRole(context.auth, ["breeder"]),
@@ -45,12 +43,7 @@ function BreederDashboardLayout() {
           )}
         </>
       }
-      header={
-        <header className="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-border/60 bg-background/85 px-6 py-3 backdrop-blur">
-          <NotificationBell />
-          <UserMenu settingsTo="/dashboard/breeder/settings" />
-        </header>
-      }
+      settingsTo="/dashboard/breeder/settings"
     >
       <Outlet />
       {kennelQuery.isSuccess && kennelQuery.data && (
