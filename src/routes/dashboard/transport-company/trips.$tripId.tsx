@@ -498,6 +498,7 @@ function TripDetailPage() {
                       />
                       <ContactBlock
                         title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
+                        kind="dropoff"
                         mapsUrl={request.dropoff_maps_url}
                         contactName={request.dropoff_contact_name}
                         contactPhone={request.dropoff_contact_phone}
@@ -941,6 +942,7 @@ function TripDetailPage() {
 
 function ContactBlock({
   title,
+  kind = "pickup",
   mapsUrl,
   addressText,
   contactName,
@@ -948,6 +950,7 @@ function ContactBlock({
   notes,
 }: {
   title: string;
+  kind?: "pickup" | "dropoff";
   mapsUrl: string | null;
   addressText?: string | null;
   contactName: string | null;
@@ -955,13 +958,37 @@ function ContactBlock({
   notes: string | null;
 }) {
   const { t } = useTranslation();
+
+  const copyAddress = async () => {
+    if (!addressText) return;
+    try {
+      await navigator.clipboard.writeText(addressText);
+      toast.success(t("transportCompanyPanel.trips.addressCopiedToast"));
+    } catch {
+      toast.error(t("transportCompanyPanel.trips.addressCopyFailed"));
+    }
+  };
+
+  // Pickup vs drop-off is easy to miss scrolling a long stop list when both legs look identical —
+  // a colored left edge + tint makes it scannable at a glance instead of reading the small label.
   return (
-    <div className="flex-1 rounded-xl bg-secondary/40 p-3">
+    <div
+      className={
+        kind === "pickup"
+          ? "flex-1 rounded-xl border-l-4 border-l-primary bg-primary/5 p-3"
+          : "flex-1 rounded-xl border-l-4 border-l-warning bg-warning/10 p-3"
+      }
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
       {addressText && (
-        <p className="mt-1 flex items-start gap-1 text-sm text-foreground">
+        <button
+          type="button"
+          onClick={copyAddress}
+          className="mt-1 flex items-start gap-1 text-left text-sm text-foreground hover:underline"
+          title={t("transportCompanyPanel.trips.clickToCopy")}
+        >
           <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /> {addressText}
-        </p>
+        </button>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
         {mapsUrl || addressText ? (
@@ -1086,6 +1113,7 @@ function StopCard({
         />
         <ContactBlock
           title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
+          kind="dropoff"
           mapsUrl={stop.dropoff_maps_url}
           addressText={stop.dropoff_address_text}
           contactName={stop.dropoff_contact_name}

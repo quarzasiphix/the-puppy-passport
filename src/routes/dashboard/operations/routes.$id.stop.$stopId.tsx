@@ -257,6 +257,7 @@ function StopDetail({
 
       <StopLegCard
         title="Pickup"
+        kind="pickup"
         mapsUrl={stop.pickup_maps_url}
         addressText={stop.pickup_address_text}
         contactName={stop.pickup_contact_name}
@@ -293,6 +294,7 @@ function StopDetail({
 
       <StopLegCard
         title="Drop-off"
+        kind="dropoff"
         mapsUrl={stop.dropoff_maps_url}
         addressText={stop.dropoff_address_text}
         contactName={stop.dropoff_contact_name}
@@ -475,6 +477,7 @@ function StopDetail({
 
 function StopLegCard({
   title,
+  kind,
   mapsUrl,
   addressText,
   contactName,
@@ -485,6 +488,7 @@ function StopLegCard({
   children,
 }: {
   title: string;
+  kind: "pickup" | "dropoff";
   mapsUrl: string | null;
   addressText: string | null;
   contactName: string | null;
@@ -494,8 +498,26 @@ function StopLegCard({
   onToggleEdit: () => void;
   children: React.ReactNode;
 }) {
+  const copyAddress = async () => {
+    if (!addressText) return;
+    try {
+      await navigator.clipboard.writeText(addressText);
+      toast.success("Address copied.");
+    } catch {
+      toast.error("Could not copy the address.");
+    }
+  };
+
+  // Pickup vs drop-off is easy to miss scanning a long stop list when both legs look identical —
+  // a colored left edge + tint makes it scannable at a glance instead of reading the small label.
   return (
-    <div className="mb-6 rounded-2xl border border-border/70 bg-card p-5">
+    <div
+      className={
+        kind === "pickup"
+          ? "mb-6 rounded-2xl border border-border/70 border-l-4 border-l-primary bg-primary/5 p-5"
+          : "mb-6 rounded-2xl border border-border/70 border-l-4 border-l-warning bg-warning/10 p-5"
+      }
+    >
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
@@ -509,7 +531,16 @@ function StopLegCard({
         children
       ) : (
         <div className="space-y-2">
-          {addressText && <p className="text-sm">{addressText}</p>}
+          {addressText && (
+            <button
+              type="button"
+              onClick={copyAddress}
+              className="text-left text-sm hover:underline"
+              title="Click to copy"
+            >
+              {addressText}
+            </button>
+          )}
           <div className="flex flex-wrap gap-2">
             {mapsUrl || addressText ? (
               <Button asChild size="sm" variant="outline">

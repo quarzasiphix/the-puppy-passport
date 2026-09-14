@@ -999,12 +999,14 @@ function RouteDetail() {
 // it rather than silently showing nothing.
 function StopLegSummary({
   title,
+  kind,
   mapsUrl,
   addressText,
   contactName,
   contactPhone,
 }: {
   title: string;
+  kind: "pickup" | "dropoff";
   mapsUrl: string | null;
   addressText: string | null;
   contactName: string | null;
@@ -1012,12 +1014,40 @@ function StopLegSummary({
 }) {
   const resolvedMapsUrl = mapsUrl || (addressText ? buildMapsSearchUrl(addressText) : null);
   if (!addressText && !contactPhone && !contactName) return null;
+
+  const copyAddress = async () => {
+    if (!addressText) return;
+    try {
+      await navigator.clipboard.writeText(addressText);
+      toast.success("Address copied.");
+    } catch {
+      toast.error("Could not copy the address.");
+    }
+  };
+
+  // Pickup vs drop-off is easy to miss scrolling a long stop list when both legs look identical —
+  // a colored left edge + tint makes it scannable at a glance instead of reading the small label.
   return (
-    <div className="flex-1 rounded-lg bg-secondary/40 p-2.5">
+    <div
+      className={
+        kind === "pickup"
+          ? "flex-1 rounded-lg border-l-4 border-l-primary bg-primary/5 p-2.5"
+          : "flex-1 rounded-lg border-l-4 border-l-warning bg-warning/10 p-2.5"
+      }
+    >
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </p>
-      {addressText && <p className="mt-1 text-xs">{addressText}</p>}
+      {addressText && (
+        <button
+          type="button"
+          onClick={copyAddress}
+          className="mt-1 flex items-start gap-1 text-left text-xs hover:underline"
+          title="Click to copy"
+        >
+          {addressText}
+        </button>
+      )}
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         {resolvedMapsUrl && (
           <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs">
@@ -1111,6 +1141,7 @@ function RouteStopCard({
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <StopLegSummary
             title="Pickup"
+            kind="pickup"
             mapsUrl={stop.pickup_maps_url}
             addressText={stop.pickup_address_text}
             contactName={stop.pickup_contact_name}
@@ -1118,6 +1149,7 @@ function RouteStopCard({
           />
           <StopLegSummary
             title="Drop-off"
+            kind="dropoff"
             mapsUrl={stop.dropoff_maps_url}
             addressText={stop.dropoff_address_text}
             contactName={stop.dropoff_contact_name}
