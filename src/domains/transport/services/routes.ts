@@ -1,5 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import {
+  uploadPrivateFile,
+  removeFile,
+  getSignedFileUrl,
+  sanitizeFilenameForStoragePath,
+} from "@/lib/storage/media";
 
 export type RouteRow = Database["public"]["Tables"]["routes"]["Row"];
 
@@ -52,6 +58,14 @@ export async function listOpsRouteStops(routeId: string) {
   return (data ?? []) as RouteStopRow[];
 }
 
+// Single-row read for the stop detail page — mirrors trips.ts's getTrip() exactly.
+export async function getRouteStop(id: string): Promise<RouteStopRow> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.from("route_stops").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as RouteStopRow;
+}
+
 export async function addRouteStop(
   routeId: string,
   payload: Omit<Database["public"]["Tables"]["route_stops"]["Insert"], "route_id" | "stop_order">,
@@ -89,8 +103,7 @@ export async function removeRouteStop(id: string) {
 // contact per leg); route_stop_contacts holds any additional ones — exact mirror of
 // trips.ts's listStopContacts/addStopContact/removeStopContact for trip_stops.
 export type RouteStopContactRow = Database["public"]["Tables"]["route_stop_contacts"]["Row"];
-export type RouteStopContactInsert =
-  Database["public"]["Tables"]["route_stop_contacts"]["Insert"];
+export type RouteStopContactInsert = Database["public"]["Tables"]["route_stop_contacts"]["Insert"];
 
 export async function listRouteStopContacts(routeStopId: string): Promise<RouteStopContactRow[]> {
   const supabase = getSupabaseBrowserClient();
@@ -121,6 +134,55 @@ export async function removeRouteStopContact(contactId: string): Promise<void> {
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("route_stop_contacts").delete().eq("id", contactId);
   if (error) throw error;
+}
+
+// Direct copy of trips.ts's trip_stop_photos functions — see
+// 20260927000000_route_stop_microchip_and_photos.sql's own header for why route_stop_photos is a
+// separate, ops-only bucket rather than reusing trip-stop-photos.
+const ROUTE_STOP_PHOTOS_BUCKET = "route-stop-photos";
+
+export type RouteStopPhotoRow = Database["public"]["Tables"]["route_stop_photos"]["Row"];
+
+export async function listRouteStopPhotos(routeStopId: string): Promise<RouteStopPhotoRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("route_stop_photos")
+    .select("*")
+    .eq("route_stop_id", routeStopId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data as RouteStopPhotoRow[];
+}
+
+export async function getRouteStopPhotoUrl(storagePath: string): Promise<string> {
+  return getSignedFileUrl(ROUTE_STOP_PHOTOS_BUCKET, storagePath);
+}
+
+export async function uploadRouteStopPhoto(
+  routeStopId: string,
+  file: File,
+  createdBy: string,
+): Promise<RouteStopPhotoRow> {
+  const objectPath = `${routeStopId}/${Date.now()}-${sanitizeFilenameForStoragePath(file.name)}`;
+  await uploadPrivateFile(ROUTE_STOP_PHOTOS_BUCKET, objectPath, file);
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("route_stop_photos")
+    .insert({ route_stop_id: routeStopId, storage_path: objectPath, created_by: createdBy })
+    .select()
+    .single();
+  if (error) {
+    await removeFile(ROUTE_STOP_PHOTOS_BUCKET, objectPath);
+    throw error;
+  }
+  return data as RouteStopPhotoRow;
+}
+
+export async function removeRouteStopPhoto(photoId: string, storagePath: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("route_stop_photos").delete().eq("id", photoId);
+  if (error) throw error;
+  await removeFile(ROUTE_STOP_PHOTOS_BUCKET, storagePath);
 }
 
 // Swaps this stop's position with its immediate neighbor in the given direction — the same

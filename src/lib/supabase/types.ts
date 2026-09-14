@@ -4527,6 +4527,45 @@ export type Database = {
           },
         ]
       }
+      route_stop_photos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          route_stop_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          route_stop_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          route_stop_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_stop_photos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stop_photos_route_stop_id_fkey"
+            columns: ["route_stop_id"]
+            isOneToOne: false
+            referencedRelation: "route_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       route_stops: {
         Row: {
           animal_label: string | null
@@ -4538,6 +4577,7 @@ export type Database = {
           dropoff_maps_url: string | null
           dropoff_notes: string | null
           id: string
+          microchip_number: string | null
           pickup_address_text: string | null
           pickup_contact_name: string | null
           pickup_contact_phone: string | null
@@ -4559,6 +4599,7 @@ export type Database = {
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
+          microchip_number?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
           pickup_contact_phone?: string | null
@@ -4580,6 +4621,7 @@ export type Database = {
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
+          microchip_number?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
           pickup_contact_phone?: string | null
