@@ -19,6 +19,8 @@ import {
   Car,
   Users,
   Milestone,
+  ScanLine,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -52,11 +54,20 @@ import {
   listStopContacts,
   addStopContact,
   removeStopContact,
+  ContactPicker,
+  recognizeTransportedMicrochip,
+  listStopPhotos,
+  getStopPhotoUrl,
+  uploadStopPhoto,
+  removeStopPhoto,
   type TripStopRow,
   type TripJoinRequestRow,
   type TripStopContactRow,
+  type TripStopPhotoRow,
+  type RecognizeMicrochipResult,
 } from "@/domains/transport";
 import { useAuth } from "@/domains/identity";
+import { getMyTransportCompany } from "@/domains/breeders";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { useTranslation } from "@/shared/i18n";
 
@@ -66,6 +77,7 @@ export const Route = createFileRoute("/dashboard/transport-company/trips/$tripId
 
 type StopFormValues = {
   animalLabel: string;
+  microchipNumber: string;
   pickupMapsUrl: string;
   pickupAddressText: string;
   pickupContactName: string;
@@ -80,6 +92,7 @@ type StopFormValues = {
 
 const EMPTY_STOP_FORM: StopFormValues = {
   animalLabel: "",
+  microchipNumber: "",
   pickupMapsUrl: "",
   pickupAddressText: "",
   pickupContactName: "",
@@ -101,6 +114,13 @@ function TripDetailPage() {
   const [originCountry, setOriginCountry] = useState("");
   const [destinationCountry, setDestinationCountry] = useState("");
   const [detailStopId, setDetailStopId] = useState<string | null>(null);
+
+  const companyQuery = useQuery({
+    queryKey: ["my-transport-company", userId],
+    enabled: !!userId,
+    queryFn: () => getMyTransportCompany(userId!),
+  });
+  const companyId = companyQuery.data?.id ?? null;
 
   const tripQuery = useQuery({ queryKey: ["trip", tripId], queryFn: () => getTrip(tripId) });
   const stopsQuery = useQuery({
@@ -125,6 +145,7 @@ function TripDetailPage() {
     mutationFn: (values: StopFormValues) =>
       addTripStop(tripId, {
         animal_label: values.animalLabel,
+        microchip_number: values.microchipNumber || null,
         pickup_maps_url: values.pickupMapsUrl || null,
         pickup_address_text: values.pickupAddressText || null,
         pickup_contact_name: values.pickupContactName || null,
@@ -505,6 +526,14 @@ function TripDetailPage() {
                     />
                   </div>
 
+                  <div>
+                    <Label>{t("transportCompanyPanel.trips.fieldMicrochip")}</Label>
+                    <Input
+                      placeholder={t("transportCompanyPanel.trips.fieldMicrochipPlaceholder")}
+                      {...stopForm.register("microchipNumber")}
+                    />
+                  </div>
+
                   <div className="rounded-xl border border-border/60 p-3 space-y-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t("transportCompanyPanel.trips.pickupSectionTitle")}
@@ -681,6 +710,7 @@ function TripDetailPage() {
       {detailStop && (
         <StopDetailDialog
           stop={detailStop}
+          companyId={companyId}
           open={!!detailStopId}
           onOpenChange={(open) => setDetailStopId(open ? detailStop.id : null)}
           onMarkPickedUp={() => pickedUpMutation.mutate(detailStop.id)}
@@ -844,6 +874,7 @@ function StopCard({
 // already on the stop itself (e.g. a breeder AND whoever meets the van).
 function StopDetailDialog({
   stop,
+  companyId,
   open,
   onOpenChange,
   onMarkPickedUp,
@@ -852,6 +883,7 @@ function StopDetailDialog({
   markingDelivered,
 }: {
   stop: TripStopRow;
+  companyId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMarkPickedUp: () => void;
@@ -860,6 +892,7 @@ function StopDetailDialog({
   markingDelivered: boolean;
 }) {
   const { t } = useTranslation();
+  const { userId } = useAuth();
   const queryClient = useQueryClient();
 
   const [fields, setFields] = useState({
@@ -873,6 +906,7 @@ function StopDetailDialog({
     dropoff_contact_name: stop.dropoff_contact_name ?? "",
     dropoff_contact_phone: stop.dropoff_contact_phone ?? "",
     dropoff_notes: stop.dropoff_notes ?? "",
+    microchip_number: stop.microchip_number ?? "",
   });
 
   useEffect(() => {
@@ -887,8 +921,48 @@ function StopDetailDialog({
       dropoff_contact_name: stop.dropoff_contact_name ?? "",
       dropoff_contact_phone: stop.dropoff_contact_phone ?? "",
       dropoff_notes: stop.dropoff_notes ?? "",
+      microchip_number: stop.microchip_number ?? "",
     });
   }, [stop]);
+
+  // Debounced "instant recognition" — fires a moment after the microchip field stops changing,
+  // not on every keystroke. Silent on no-match (the common case); never an error state for "not
+  // found." See recognize_transported_microchip()'s own header for the privacy boundary (counts/
+  // dates/company names only, never another company's raw trip data).
+  const [recognition, setRecognition] = useState<RecognizeMicrochipResult | null>(null);
+  const recognizeMutation = useMutation({
+    mutationFn: recognizeTransportedMicrochip,
+    onSuccess: (result) => setRecognition(result && result.times_transported > 0 ? result : null),
+  });
+  useEffect(() => {
+    const trimmed = fields.microchip_number.trim();
+    if (!trimmed) {
+      setRecognition(null);
+      return;
+    }
+    const timeout = setTimeout(() => recognizeMutation.mutate(trimmed), 500);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires on the field value only
+  }, [fields.microchip_number]);
+
+  const photosQuery = useQuery({
+    queryKey: ["trip-stop-photos", stop.id],
+    queryFn: () => listStopPhotos(stop.id),
+  });
+  const invalidatePhotos = () =>
+    queryClient.invalidateQueries({ queryKey: ["trip-stop-photos", stop.id] });
+  const uploadPhotoMutation = useMutation({
+    mutationFn: (file: File) => uploadStopPhoto(stop.id, file, userId!),
+    onSuccess: invalidatePhotos,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopSaveFailed"))),
+  });
+  const removePhotoMutation = useMutation({
+    mutationFn: (photo: TripStopPhotoRow) => removeStopPhoto(photo.id, photo.storage_path),
+    onSuccess: invalidatePhotos,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
 
   const invalidateStops = () =>
     queryClient.invalidateQueries({ queryKey: ["trip-stops", stop.trip_id] });
@@ -975,16 +1049,24 @@ function StopDetailDialog({
                 {...field("pickup_address_text")}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                <Input {...field("pickup_contact_name")} />
-              </div>
-              <div>
-                <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                <Input {...field("pickup_contact_phone")} />
-              </div>
-            </div>
+            <ContactPicker
+              organizationId={companyId}
+              name={fields.pickup_contact_name}
+              phone={fields.pickup_contact_phone}
+              onChange={({ name, phone }) =>
+                setFields((f) => ({ ...f, pickup_contact_name: name, pickup_contact_phone: phone }))
+              }
+              onBlur={({ name, phone }) => {
+                const patch: Record<string, string | null> = {};
+                if (name !== (stop.pickup_contact_name ?? ""))
+                  patch.pickup_contact_name = name || null;
+                if (phone !== (stop.pickup_contact_phone ?? ""))
+                  patch.pickup_contact_phone = phone || null;
+                if (Object.keys(patch).length) saveMutation.mutate(patch);
+              }}
+              nameLabel={t("transportCompanyPanel.trips.fieldContactName")}
+              phoneLabel={t("transportCompanyPanel.trips.fieldContactPhone")}
+            />
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
               <Textarea rows={2} {...field("pickup_notes")} />
@@ -1006,16 +1088,28 @@ function StopDetailDialog({
                 {...field("dropoff_address_text")}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                <Input {...field("dropoff_contact_name")} />
-              </div>
-              <div>
-                <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                <Input {...field("dropoff_contact_phone")} />
-              </div>
-            </div>
+            <ContactPicker
+              organizationId={companyId}
+              name={fields.dropoff_contact_name}
+              phone={fields.dropoff_contact_phone}
+              onChange={({ name, phone }) =>
+                setFields((f) => ({
+                  ...f,
+                  dropoff_contact_name: name,
+                  dropoff_contact_phone: phone,
+                }))
+              }
+              onBlur={({ name, phone }) => {
+                const patch: Record<string, string | null> = {};
+                if (name !== (stop.dropoff_contact_name ?? ""))
+                  patch.dropoff_contact_name = name || null;
+                if (phone !== (stop.dropoff_contact_phone ?? ""))
+                  patch.dropoff_contact_phone = phone || null;
+                if (Object.keys(patch).length) saveMutation.mutate(patch);
+              }}
+              nameLabel={t("transportCompanyPanel.trips.fieldContactName")}
+              phoneLabel={t("transportCompanyPanel.trips.fieldContactPhone")}
+            />
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
               <Textarea rows={2} {...field("dropoff_notes")} />
@@ -1074,6 +1168,79 @@ function StopDetailDialog({
             >
               <UserPlus className="mr-1 size-4" /> {t("transportCompanyPanel.trips.addContact")}
             </Button>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("transportCompanyPanel.trips.microchipSectionTitle")}
+            </p>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldMicrochip")}</Label>
+              <Input
+                placeholder={t("transportCompanyPanel.trips.fieldMicrochipPlaceholder")}
+                {...field("microchip_number")}
+              />
+            </div>
+            {recognition && (
+              <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
+                <ScanLine className="mt-0.5 size-4 shrink-0 text-accent" />
+                <div>
+                  <p className="font-medium">{t("transportCompanyPanel.trips.recognizedTitle")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {recognition.times_transported === 1
+                      ? t("transportCompanyPanel.trips.recognizedOnce")
+                      : `${t("transportCompanyPanel.trips.recognizedTimesPrefix")} ${recognition.times_transported} ${t("transportCompanyPanel.trips.recognizedTimesSuffix")}`}
+                    {recognition.last_transported_at &&
+                      ` · ${t("transportCompanyPanel.trips.recognizedLastSeen")} ${new Date(recognition.last_transported_at).toLocaleDateString("en-GB")}`}
+                  </p>
+                  {!!recognition.companies?.length && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("transportCompanyPanel.trips.recognizedByPrefix")}{" "}
+                      {recognition.companies.join(", ")}
+                    </p>
+                  )}
+                  {recognition.known_pedigree_dog_slug && (
+                    <Link
+                      to="/dogs/$slug"
+                      params={{ slug: recognition.known_pedigree_dog_slug }}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t("transportCompanyPanel.trips.viewPedigreeProfile")}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label>{t("transportCompanyPanel.trips.photosLabel")}</Label>
+              {photosQuery.isLoading ? null : (photosQuery.data ?? []).length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(photosQuery.data ?? []).map((photo) => (
+                    <StopPhotoThumb
+                      key={photo.id}
+                      photo={photo}
+                      onRemove={() => removePhotoMutation.mutate(photo)}
+                      removing={removePhotoMutation.isPending}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm font-medium text-primary hover:underline">
+                <Camera className="size-4" /> {t("transportCompanyPanel.trips.addPhoto")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadPhotoMutation.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadPhotoMutation.mutate(file);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -1147,6 +1314,40 @@ function ExtraContactRow({
         onClick={onRemove}
       >
         <Trash2 className="size-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// A trip-stop-photos object is only ever viewable through a short-lived signed URL (the bucket is
+// private) — resolved on demand per thumbnail, same posture as every other private-bucket viewer
+// in this app (see getSignedFileUrl's own doc comment in src/lib/storage/media.ts).
+function StopPhotoThumb({
+  photo,
+  onRemove,
+  removing,
+}: {
+  photo: TripStopPhotoRow;
+  onRemove: () => void;
+  removing: boolean;
+}) {
+  const urlQuery = useQuery({
+    queryKey: ["trip-stop-photo-url", photo.id],
+    queryFn: () => getStopPhotoUrl(photo.storage_path),
+  });
+  return (
+    <div className="group relative size-20 overflow-hidden rounded-lg border border-border/60 bg-secondary/40">
+      {urlQuery.data && (
+        <img src={urlQuery.data} alt="" className="size-full object-cover" loading="lazy" />
+      )}
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={removing}
+        onClick={onRemove}
+        className="absolute right-0.5 top-0.5 size-6 bg-background/80 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        <Trash2 className="size-3" />
       </Button>
     </div>
   );

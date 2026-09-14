@@ -5028,11 +5028,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transport_contacts_linked_organisation_id_fkey"
+            columns: ["linked_organisation_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
+          },
+          {
             foreignKeyName: "transport_contacts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organisations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "public_kennel_owner_identity_verification"
+            referencedColumns: ["organisation_id"]
           },
         ]
       }
@@ -6062,6 +6076,45 @@ export type Database = {
           },
         ]
       }
+      trip_stop_photos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          storage_path: string
+          trip_stop_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          storage_path: string
+          trip_stop_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          storage_path?: string
+          trip_stop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stop_photos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stop_photos_trip_stop_id_fkey"
+            columns: ["trip_stop_id"]
+            isOneToOne: false
+            referencedRelation: "trip_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_stops: {
         Row: {
           animal_label: string
@@ -6073,6 +6126,7 @@ export type Database = {
           dropoff_maps_url: string | null
           dropoff_notes: string | null
           id: string
+          microchip_number: string | null
           picked_up_at: string | null
           pickup_address_text: string | null
           pickup_contact_name: string | null
@@ -6095,6 +6149,7 @@ export type Database = {
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
+          microchip_number?: string | null
           picked_up_at?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
@@ -6117,6 +6172,7 @@ export type Database = {
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
           id?: string
+          microchip_number?: string | null
           picked_up_at?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
@@ -7571,6 +7627,20 @@ export type Database = {
       place_legal_hold: {
         Args: { p_reason: string; p_subject_profile_id: string }
         Returns: string
+      }
+      recognize_transported_microchip: {
+        Args: { p_microchip: string }
+        Returns: {
+          companies: string[]
+          first_transported_at: string
+          known_marketplace_animal_id: string
+          known_marketplace_animal_name: string
+          known_pedigree_dog_id: string
+          known_pedigree_dog_name: string
+          known_pedigree_dog_slug: string
+          last_transported_at: string
+          times_transported: number
+        }[]
       }
       recompute_dog_parent_relationship_verification: {
         Args: { p_relationship_id: string }

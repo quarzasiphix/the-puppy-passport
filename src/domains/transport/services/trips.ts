@@ -1,5 +1,11 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import {
+  uploadPrivateFile,
+  removeFile,
+  getSignedFileUrl,
+  sanitizeFilenameForStoragePath,
+} from "@/lib/storage/media";
 
 // Trips — a transport company's own multi-stop dispatch tool for internally-organized runs (e.g.
 // "trip to Netherlands, 6 dogs"), separate from the customer-facing, compliance-driven
@@ -303,4 +309,74 @@ export async function acceptJoinRequestAsStop(
   });
   await respondToJoinRequest(request.id, "accepted", decidedBy);
   return stop;
+}
+
+// --- Transported-animal registry: microchip recognition + photos -------------------------------
+// See 20260926000000_trip_stop_microchip_and_photos.sql's own header for the privacy boundary:
+// recognize_transported_microchip() only ever returns aggregate facts (a count, a date range,
+// distinct company names) plus a public pedigree/marketplace cross-reference — never another
+// company's raw trip data.
+
+export type RecognizeMicrochipResult =
+  Database["public"]["Functions"]["recognize_transported_microchip"]["Returns"][number];
+
+export async function recognizeTransportedMicrochip(
+  microchip: string,
+): Promise<RecognizeMicrochipResult | null> {
+  const trimmed = microchip.trim();
+  if (!trimmed) return null;
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("recognize_transported_microchip", {
+    p_microchip: trimmed,
+  });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
+const TRIP_STOP_PHOTOS_BUCKET = "trip-stop-photos";
+
+export type TripStopPhotoRow = Database["public"]["Tables"]["trip_stop_photos"]["Row"];
+
+export async function listStopPhotos(stopId: string): Promise<TripStopPhotoRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_stop_photos")
+    .select("*")
+    .eq("trip_stop_id", stopId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data as TripStopPhotoRow[];
+}
+
+// Resolves every photo's private storage_path to a short-lived signed URL for display — same
+// "never persist/store a bare link" posture as every other private bucket in this app.
+export async function getStopPhotoUrl(storagePath: string): Promise<string> {
+  return getSignedFileUrl(TRIP_STOP_PHOTOS_BUCKET, storagePath);
+}
+
+export async function uploadStopPhoto(
+  stopId: string,
+  file: File,
+  createdBy: string,
+): Promise<TripStopPhotoRow> {
+  const objectPath = `${stopId}/${Date.now()}-${sanitizeFilenameForStoragePath(file.name)}`;
+  await uploadPrivateFile(TRIP_STOP_PHOTOS_BUCKET, objectPath, file);
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trip_stop_photos")
+    .insert({ trip_stop_id: stopId, storage_path: objectPath, created_by: createdBy })
+    .select()
+    .single();
+  if (error) {
+    await removeFile(TRIP_STOP_PHOTOS_BUCKET, objectPath);
+    throw error;
+  }
+  return data as TripStopPhotoRow;
+}
+
+export async function removeStopPhoto(photoId: string, storagePath: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("trip_stop_photos").delete().eq("id", photoId);
+  if (error) throw error;
+  await removeFile(TRIP_STOP_PHOTOS_BUCKET, storagePath);
 }
