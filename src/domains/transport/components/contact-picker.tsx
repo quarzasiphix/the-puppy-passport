@@ -6,7 +6,14 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/shared/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/shared/ui/command";
 import { createContact, listContacts, type ContactRow } from "../services/contacts";
 
 // Replaces a raw "Contact name" + "Contact phone" input pair on a stop, wherever one appears —
@@ -21,6 +28,7 @@ export function ContactPicker({
   name,
   phone,
   onChange,
+  onBlur,
   nameLabel = "Contact name",
   phoneLabel = "Contact phone",
 }: {
@@ -28,6 +36,11 @@ export function ContactPicker({
   name: string;
   phone: string;
   onChange: (fields: { name: string; phone: string }) => void;
+  // Optional — lets a caller with its own autosave-on-blur convention (e.g. a stop's edit dialog)
+  // hook into "the user is done editing this field" the same way a plain <Input onBlur> would.
+  // Also fired immediately after picking a saved contact, since selecting one is just as much a
+  // deliberate, complete edit as tabbing out of a typed field.
+  onBlur?: (fields: { name: string; phone: string }) => void;
   nameLabel?: string;
   phoneLabel?: string;
 }) {
@@ -59,7 +72,9 @@ export function ContactPicker({
   });
 
   const selectContact = (contact: ContactRow) => {
-    onChange({ name: contact.name, phone: contact.phone ?? "" });
+    const fields = { name: contact.name, phone: contact.phone ?? "" };
+    onChange(fields);
+    onBlur?.(fields);
     setOpen(false);
   };
 
@@ -100,11 +115,19 @@ export function ContactPicker({
             </PopoverContent>
           </Popover>
         </div>
-        <Input value={name} onChange={(e) => onChange({ name: e.target.value, phone })} />
+        <Input
+          value={name}
+          onChange={(e) => onChange({ name: e.target.value, phone })}
+          onBlur={() => onBlur?.({ name, phone })}
+        />
       </div>
       <div>
         <Label className="text-xs">{phoneLabel}</Label>
-        <Input value={phone} onChange={(e) => onChange({ name, phone: e.target.value })} />
+        <Input
+          value={phone}
+          onChange={(e) => onChange({ name, phone: e.target.value })}
+          onBlur={() => onBlur?.({ name, phone })}
+        />
       </div>
 
       {name.trim() && !exactMatch && (

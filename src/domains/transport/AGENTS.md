@@ -217,6 +217,38 @@ a plain RLS-scoped table call with no client-side org filter — so the new ops 
 the only new function is `listOpsTrips()`, which joins `organisations(name)` since a single ops
 list now spans many companies (`listMyTrips()` itself stays untouched/company-scoped).
 
+## Stop model unification + saved contacts (added 2026-09-14)
+
+`route_stops` (introduced the same day, above) had drifted from `trip_stops`'s shape — one row per
+*point* (pickup/dropoff/rest) instead of one row per *animal* with both legs embedded. Redesigned
+in `20260924000000_route_stops_pickup_dropoff_shape.sql` to match `trip_stops` exactly: every
+animal stop now carries `pickup_*`/`dropoff_*` pairs (maps url, address, contact name/phone,
+notes) on the same row; `stop_type` keeps its original enum values at the database layer but the
+UI (`operations/routes.$id.tsx`) only ever presents a binary choice — "Animal pickup/dropoff"
+(stored as `'pickup'`, arbitrarily — the type no longer distinguishes anything once both legs are
+on the row) vs `'rest'`. New table `route_stop_contacts` (exact mirror of `trip_stop_contacts`,
+ops-only RLS) covers a 3rd+ contact. Also closed a parity gap: `trip_stop_contacts` had never
+gotten the `"ops staff manage all..."` policy the rest of `trips`/`trip_stops` got — ops staff can
+now see/manage extra contacts on a company's trip too (`operations/trips.$id.tsx`).
+
+**Saved contacts** ("clients to come back to") — new table `transport_contacts`
+(`20260925000000_transport_contacts.sql`), deliberately not the heavyweight `organisations` table
+(verification/slug/ownership overhead for what's often just a phone number). `organization_id`
+null = ops's own shared address book; a real id = that company's private list, which can also
+read (never write) the ops-wide shared book — gated by requiring the reader be an active member of
+a `transport_company`-type org (`transport_contacts`'s read policy), not blanket-authenticated,
+since these rows carry private individuals' phone numbers/emails.
+
+New shared component `components/contact-picker.tsx` (a `Command`+`Popover` combobox — both
+already in `src/shared/ui`, previously unused) replaces every raw "contact name" + "contact phone"
+input pair across the domain: `operations/routes.$id.tsx`'s stop dialog, `operations/trips.$id.tsx`'s
+stop dialog, and both stop-editing surfaces in `transport-company/trips.$tripId.tsx` (the add-stop
+form, which uses `react-hook-form`, bridges via `watch`/`setValue`; the autosave-on-blur
+`StopDetailDialog` bridges via the component's optional `onBlur` prop). Typing a name with no saved
+match shows an inline "Save to contacts" action. Two new management pages so a contact is
+somewhere to return to directly, not only reachable mid-edit: `operations/contacts.tsx` and
+`transport-company/contacts.tsx` (both added to their nav configs).
+
 ## Related docs
 
 - `docs/DOMAIN_MODEL.md` — the full transport data model (largest section in that doc), the
@@ -227,6 +259,11 @@ list now spans many companies (`listMyTrips()` itself stays untouched/company-sc
   trigger design; not read directly in this pass.
 
 ## Last significant change
+
+2026-09-14 (sixth pass): unified the route/trip stop model and added saved contacts — see "Stop
+model unification + saved contacts" above. Three new migrations:
+`20260924000000_route_stops_pickup_dropoff_shape.sql`, `20260925000000_transport_contacts.sql`,
+and the `route_stop_contacts` table (created in the first of those two).
 
 2026-09-14 (fifth pass): ops route field/status editing (route name, dates, destinations,
 capacity, and a status dropdown, all on `routes.$id.tsx` — completing the "full custom route" CRUD
