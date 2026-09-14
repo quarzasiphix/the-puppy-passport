@@ -36,6 +36,7 @@ import {
   ShieldCheck,
   Shuffle,
   Milestone,
+  BookUser,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { DashboardNavItem } from "@/app/layouts/dashboard-shell";
@@ -240,6 +241,11 @@ export const transportCompanyNav: DashboardNavItem[] = [
   },
   { to: "/dashboard/transport-company/team", label: "transportCompanyPanel.nav.team", icon: Users },
   {
+    to: "/dashboard/transport-company/contacts",
+    label: "transportCompanyPanel.nav.contacts",
+    icon: BookUser,
+  },
+  {
     to: "/dashboard/transport-company/profile",
     label: "transportCompanyPanel.nav.publicProfile",
     icon: Building2,
@@ -251,26 +257,134 @@ export const transportCompanyNav: DashboardNavItem[] = [
   },
 ];
 
+// Grouped into named sections (ops-panel IA redesign, 2026-09-14) — the old flat 20-item list
+// (grown from an original 18 as the trips/contacts pages were added) gave every destination equal
+// weight regardless of where it sits in an ops person's actual workflow, exactly the same problem
+// the breeder panel had before its own 2026-09-10 redesign above — same `section` mechanism reused
+// here, not a new one. Grouped by process stage: a request comes in and gets reviewed/quoted, gets
+// planned onto a route/trip and dispatched, is tracked while live and once done, draws on the
+// fleet/contacts/documents ops manages, occasionally needs a safety/compliance escalation, and
+// feeds two financial views. Kept as literal English strings (not i18n keys) — unlike breederNav,
+// every ops route file is deliberately English-only (confirmed by grep: zero useTranslation calls
+// across all 24 files), so converting only the nav would be an inconsistent half-measure;
+// DashboardShell's t() call safely renders a literal string unchanged when no matching key exists.
 export const operationsNav: DashboardNavItem[] = [
   { to: "/dashboard/operations", label: "Operations overview", icon: LayoutDashboard, exact: true },
-  { to: "/dashboard/operations/new-requests", label: "New requests", icon: Inbox },
-  { to: "/dashboard/operations/review-queue", label: "Review queue", icon: ClipboardCheck },
-  { to: "/dashboard/operations/quotations", label: "Quotations", icon: Receipt },
-  { to: "/dashboard/operations/routes", label: "Planned routes", icon: RouteIcon },
-  { to: "/dashboard/operations/trips", label: "Company trips", icon: Milestone },
-  { to: "/dashboard/operations/profitability", label: "Profitability", icon: TrendingUp },
-  { to: "/dashboard/operations/payouts", label: "Payouts", icon: Coins },
-  { to: "/dashboard/operations/active", label: "Active transports", icon: Truck },
-  { to: "/dashboard/operations/matching", label: "Matching suggestions", icon: Sparkles },
-  { to: "/dashboard/operations/dispatch", label: "Dispatch", icon: Users },
-  { to: "/dashboard/operations/calendar", label: "Calendar", icon: Calendar },
-  { to: "/dashboard/operations/vehicles", label: "Vehicles", icon: Car },
-  { to: "/dashboard/operations/drivers", label: "Drivers", icon: UserRound },
-  { to: "/dashboard/operations/documents", label: "Documents", icon: FileText },
-  { to: "/dashboard/operations/compliance-holds", label: "Compliance holds", icon: ShieldAlert },
-  { to: "/dashboard/operations/welfare-cases", label: "Welfare cases", icon: HeartPulse },
-  { to: "/dashboard/operations/incidents", label: "Incidents", icon: AlertOctagon },
-  { to: "/dashboard/operations/completed", label: "Completed transports", icon: CheckCircle2 },
+
+  {
+    to: "/dashboard/operations/new-requests",
+    label: "New requests",
+    icon: Inbox,
+    section: "Intake & review",
+  },
+  {
+    to: "/dashboard/operations/review-queue",
+    label: "Review queue",
+    icon: ClipboardCheck,
+    section: "Intake & review",
+  },
+  {
+    to: "/dashboard/operations/quotations",
+    label: "Quotations",
+    icon: Receipt,
+    section: "Intake & review",
+  },
+
+  {
+    to: "/dashboard/operations/matching",
+    label: "Matching suggestions",
+    icon: Sparkles,
+    section: "Planning & dispatch",
+  },
+  {
+    to: "/dashboard/operations/routes",
+    label: "Planned routes",
+    icon: RouteIcon,
+    section: "Planning & dispatch",
+  },
+  {
+    to: "/dashboard/operations/trips",
+    label: "Company trips",
+    icon: Milestone,
+    section: "Planning & dispatch",
+  },
+  {
+    to: "/dashboard/operations/dispatch",
+    label: "Dispatch",
+    icon: Users,
+    section: "Planning & dispatch",
+  },
+  {
+    to: "/dashboard/operations/calendar",
+    label: "Calendar",
+    icon: Calendar,
+    section: "Planning & dispatch",
+  },
+
+  {
+    to: "/dashboard/operations/active",
+    label: "Active transports",
+    icon: Truck,
+    section: "Live transports",
+  },
+  {
+    to: "/dashboard/operations/completed",
+    label: "Completed transports",
+    icon: CheckCircle2,
+    section: "Live transports",
+  },
+
+  {
+    to: "/dashboard/operations/vehicles",
+    label: "Vehicles",
+    icon: Car,
+    section: "Fleet & contacts",
+  },
+  {
+    to: "/dashboard/operations/drivers",
+    label: "Drivers",
+    icon: UserRound,
+    section: "Fleet & contacts",
+  },
+  {
+    to: "/dashboard/operations/contacts",
+    label: "Saved contacts",
+    icon: BookUser,
+    section: "Fleet & contacts",
+  },
+  {
+    to: "/dashboard/operations/documents",
+    label: "Documents",
+    icon: FileText,
+    section: "Fleet & contacts",
+  },
+
+  {
+    to: "/dashboard/operations/compliance-holds",
+    label: "Compliance holds",
+    icon: ShieldAlert,
+    section: "Safety & compliance",
+  },
+  {
+    to: "/dashboard/operations/welfare-cases",
+    label: "Welfare cases",
+    icon: HeartPulse,
+    section: "Safety & compliance",
+  },
+  {
+    to: "/dashboard/operations/incidents",
+    label: "Incidents",
+    icon: AlertOctagon,
+    section: "Safety & compliance",
+  },
+
+  {
+    to: "/dashboard/operations/profitability",
+    label: "Profitability",
+    icon: TrendingUp,
+    section: "Financials",
+  },
+  { to: "/dashboard/operations/payouts", label: "Payouts", icon: Coins, section: "Financials" },
 ];
 
 // Deliberately a single item — this workspace is opened on a phone during a job, not browsed.
