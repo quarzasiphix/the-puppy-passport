@@ -280,6 +280,20 @@ function TripDetailPage() {
   const nextPickup = pickupStops[0];
   const nextDelivery = dropoffStops[0];
 
+  // Straightforward sum of what's recorded per animal — grouped by currency rather than assuming
+  // a trip is single-currency, since pickup_currency/dropoff_currency legs could plausibly cross a
+  // border. Every stop with an amount entered counts, regardless of pickup/delivery status — this
+  // is "what the trip is worth," not "what's been physically collected so far."
+  const earningsByCurrency = stops.reduce<Record<string, number>>((totals, s) => {
+    if (s.payment_amount == null) return totals;
+    const currency = s.payment_currency ?? "PLN";
+    totals[currency] = (totals[currency] ?? 0) + Number(s.payment_amount);
+    return totals;
+  }, {});
+  const earningsSummary = Object.entries(earningsByCurrency)
+    .map(([currency, amount]) => `${amount.toFixed(2)} ${currency}`)
+    .join(" + ");
+
   // Every phone number reachable from this trip, flattened into one callable list for the
   // Contacts tab — pickup/dropoff contacts already on each stop only (trip_stop_contacts, the
   // per-stop "extra contacts" added inside StopDetailDialog, stay inside that stop's own dialog
@@ -497,7 +511,15 @@ function TripDetailPage() {
           )}
 
           {stops.length > 0 && (
-            <div className="mb-6 grid gap-4 grid-cols-2 sm:grid-cols-4">
+            <div className="mb-6 grid gap-4 grid-cols-2 sm:grid-cols-5">
+              <div className="rounded-2xl border border-border/70 bg-card p-4">
+                <div className="text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.trips.tripEarnings")}
+                </div>
+                <div className="mt-1 font-display text-2xl font-semibold">
+                  {earningsSummary || "—"}
+                </div>
+              </div>
               <div className="rounded-2xl border border-border/70 bg-card p-4">
                 <div className="text-xs text-muted-foreground">
                   {t("transportCompanyPanel.trips.progressPickedUp")}
@@ -1200,6 +1222,42 @@ function StopDetailDialog({
       toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
   });
 
+  // Payment fields are numeric/enum-typed in the DB, unlike every other field on this dialog
+  // (plain text), so they get their own small local state + mutation rather than being forced
+  // through the string-only field()/saveMutation machinery above.
+  const [paymentAmount, setPaymentAmount] = useState(
+    stop.payment_amount != null ? String(stop.payment_amount) : "",
+  );
+  const [paymentCurrency, setPaymentCurrency] = useState(stop.payment_currency ?? "");
+  useEffect(() => {
+    setPaymentAmount(stop.payment_amount != null ? String(stop.payment_amount) : "");
+    setPaymentCurrency(stop.payment_currency ?? "");
+  }, [stop]);
+
+  const paymentMutation = useMutation({
+    mutationFn: (patch: {
+      payment_amount?: number | null;
+      payment_currency?: string | null;
+      payment_collected_at?: "pickup" | "dropoff" | null;
+    }) => updateTripStop(stop.id, patch),
+    onSuccess: invalidateStops,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+
+  const savePaymentAmount = () => {
+    const parsed = paymentAmount.trim() ? Number(paymentAmount) : null;
+    if (parsed !== stop.payment_amount) {
+      paymentMutation.mutate({
+        payment_amount: parsed,
+        // Defaults the currency to PLN the first time an amount is entered with no currency
+        // chosen yet, so "amount without a currency" never silently happens.
+        payment_currency: paymentCurrency || stop.payment_currency || "PLN",
+      });
+      if (!paymentCurrency && !stop.payment_currency) setPaymentCurrency("PLN");
+    }
+  };
+
   const contactsQuery = useQuery({
     queryKey: ["trip-stop-contacts", stop.id],
     queryFn: () => listStopContacts(stop.id),
@@ -1525,6 +1583,70 @@ function StopDetailDialog({
                   }}
                 />
               </label>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-3 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("transportCompanyPanel.trips.paymentSectionTitle")}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldPaymentAmount")}</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  onBlur={savePaymentAmount}
+                />
+              </div>
+              <div>
+                <Label>{t("transportCompanyPanel.trips.fieldPaymentCurrency")}</Label>
+                <Select
+                  value={paymentCurrency || "PLN"}
+                  onValueChange={(v) => {
+                    setPaymentCurrency(v);
+                    paymentMutation.mutate({ payment_currency: v });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLN">PLN</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldPaymentCollectedAt")}</Label>
+              <Select
+                value={stop.payment_collected_at ?? "unset"}
+                onValueChange={(v) =>
+                  paymentMutation.mutate({
+                    payment_collected_at: v === "unset" ? null : (v as "pickup" | "dropoff"),
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unset">
+                    {t("transportCompanyPanel.trips.paymentCollectedAtUnset")}
+                  </SelectItem>
+                  <SelectItem value="pickup">
+                    {t("transportCompanyPanel.trips.pickupSectionTitle")}
+                  </SelectItem>
+                  <SelectItem value="dropoff">
+                    {t("transportCompanyPanel.trips.dropoffSectionTitle")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

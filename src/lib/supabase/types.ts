@@ -6173,6 +6173,11 @@ export type Database = {
           dropoff_order: number
           id: string
           microchip_number: string | null
+          payment_amount: number | null
+          payment_collected_at:
+            | Database["public"]["Enums"]["trip_stop_payment_timing"]
+            | null
+          payment_currency: string | null
           picked_up_at: string | null
           pickup_address_text: string | null
           pickup_contact_name: string | null
@@ -6197,6 +6202,11 @@ export type Database = {
           dropoff_order: number
           id?: string
           microchip_number?: string | null
+          payment_amount?: number | null
+          payment_collected_at?:
+            | Database["public"]["Enums"]["trip_stop_payment_timing"]
+            | null
+          payment_currency?: string | null
           picked_up_at?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
@@ -6221,6 +6231,11 @@ export type Database = {
           dropoff_order?: number
           id?: string
           microchip_number?: string | null
+          payment_amount?: number | null
+          payment_collected_at?:
+            | Database["public"]["Enums"]["trip_stop_payment_timing"]
+            | null
+          payment_currency?: string | null
           picked_up_at?: string | null
           pickup_address_text?: string | null
           pickup_contact_name?: string | null
@@ -8415,6 +8430,7 @@ export type Database = {
         | "declined"
         | "withdrawn"
       trip_status: "planning" | "in_progress" | "completed" | "cancelled"
+      trip_stop_payment_timing: "pickup" | "dropoff"
       trip_stop_status: "pending" | "picked_up" | "delivered"
       verification_status:
         | "not_started"
@@ -9082,6 +9098,7 @@ export const Constants = {
         "withdrawn",
       ],
       trip_status: ["planning", "in_progress", "completed", "cancelled"],
+      trip_stop_payment_timing: ["pickup", "dropoff"],
       trip_stop_status: ["pending", "picked_up", "delivered"],
       verification_status: [
         "not_started",
