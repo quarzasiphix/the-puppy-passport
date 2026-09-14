@@ -226,8 +226,60 @@ function PostHogIdentity() {
   return null;
 }
 
+// A page open in a tab that's outlived a deploy will still be running the OLD index.html/root
+// bundle, which references route chunks by their old content-hashed filename. The moment a new
+// deploy replaces those files, any further client-side navigation (or lazy route load) in that
+// stale tab 404s trying to fetch a chunk that no longer exists — surfaces as "Failed to fetch
+// dynamically imported module" and can crash out through React's lazy-loading machinery (React
+// error #520) before ever reaching errorComponent above, since it's a module-loading failure, not
+// a component render error. The fix is always the same regardless of which exact error shape hits:
+// a fresh page load fetches the current, self-consistent index.html + chunks. Guarded by
+// sessionStorage so a *genuinely* broken deploy (a chunk 404ing even right after a fresh load)
+// reloads once, not in an infinite loop — after that it falls through to whatever error UI would
+// otherwise have shown.
+const CHUNK_RELOAD_GUARD_KEY = "anemalo:chunk-reload-guard";
+const CHUNK_LOAD_ERROR_PATTERN =
+  /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed/i;
+
+function reloadOnceForStaleChunk() {
+  if (typeof window === "undefined") return;
+  if (window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY)) return;
+  window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, "1");
+  window.location.reload();
+}
+
+function useChunkReloadGuard() {
+  useEffect(() => {
+    // Reaching this effect at all proves the current page booted successfully — clear any guard
+    // flag left over from a prior reload so a *later*, unrelated deploy in this same tab session
+    // can still trigger a fresh auto-reload instead of being silently suppressed forever.
+    window.sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
+
+    // Vite's own signal for a failed modulepreload/dynamic import — the most direct hook when it
+    // fires, but browsers/Vite versions vary in when exactly they raise it.
+    const onVitePreloadError = (event: Event) => {
+      event.preventDefault();
+      reloadOnceForStaleChunk();
+    };
+    // Fallback: the raw promise rejection from a dynamic import(), for cases vite:preloadError
+    // doesn't cover (e.g. TanStack Router's own lazy route loading).
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const message = event.reason instanceof Error ? event.reason.message : String(event.reason);
+      if (CHUNK_LOAD_ERROR_PATTERN.test(message)) reloadOnceForStaleChunk();
+    };
+
+    window.addEventListener("vite:preloadError", onVitePreloadError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => {
+      window.removeEventListener("vite:preloadError", onVitePreloadError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, []);
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useChunkReloadGuard();
 
   return (
     <QueryClientProvider client={queryClient}>
