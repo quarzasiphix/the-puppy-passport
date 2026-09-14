@@ -4485,31 +4485,52 @@ export type Database = {
       }
       route_stops: {
         Row: {
+          address_text: string | null
+          animal_label: string | null
           city: string | null
+          contact_name: string | null
+          contact_phone: string | null
           country: string | null
           id: string
+          maps_url: string | null
+          notes: string | null
           planned_time: string | null
           route_id: string
           stop_order: number
           stop_type: Database["public"]["Enums"]["route_stop_type"]
+          transport_request_id: string | null
         }
         Insert: {
+          address_text?: string | null
+          animal_label?: string | null
           city?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country?: string | null
           id?: string
+          maps_url?: string | null
+          notes?: string | null
           planned_time?: string | null
           route_id: string
           stop_order: number
           stop_type?: Database["public"]["Enums"]["route_stop_type"]
+          transport_request_id?: string | null
         }
         Update: {
+          address_text?: string | null
+          animal_label?: string | null
           city?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country?: string | null
           id?: string
+          maps_url?: string | null
+          notes?: string | null
           planned_time?: string | null
           route_id?: string
           stop_order?: number
           stop_type?: Database["public"]["Enums"]["route_stop_type"]
+          transport_request_id?: string | null
         }
         Relationships: [
           {
@@ -4524,6 +4545,27 @@ export type Database = {
             columns: ["route_id"]
             isOneToOne: false
             referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "driver_transport_job_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "public_transport_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: false
+            referencedRelation: "transport_requests"
             referencedColumns: ["id"]
           },
         ]

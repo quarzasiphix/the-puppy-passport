@@ -41,7 +41,10 @@ function CompanyDriverDetail() {
 
   const query = useQuery({ queryKey: ["driver", id], queryFn: () => getDriver(id) });
   const driver = query.data;
-  const statsQuery = useQuery({ queryKey: ["driver-stats", id], queryFn: () => getDriverStats(id) });
+  const statsQuery = useQuery({
+    queryKey: ["driver-stats", id],
+    queryFn: () => getDriverStats(id),
+  });
 
   const form = useForm<FormValues>({
     values: driver

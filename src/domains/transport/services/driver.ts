@@ -180,6 +180,46 @@ export async function getDriverTimeline(
   }));
 }
 
+// The two-way half of the review system: transport_reviews already lets the customer rate the
+// driver, but a driver has never had any way to report back the things only they'd know at
+// handover (20260921000000_driver_reviews.sql). One row per request, written by the individually
+// assigned driver only (RLS: is_assigned_driver_for_request()).
+export type DriverReviewInput = {
+  transportRequestId: string;
+  reviewerProfileId: string;
+  animalAsDescribed: boolean | null;
+  pickupAccessOk: boolean | null;
+  paperworkOk: boolean | null;
+  comment?: string;
+};
+
+export async function submitDriverReview(input: DriverReviewInput) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("driver_reviews").upsert(
+    {
+      transport_request_id: input.transportRequestId,
+      reviewer_profile_id: input.reviewerProfileId,
+      animal_as_described: input.animalAsDescribed,
+      pickup_access_ok: input.pickupAccessOk,
+      paperwork_ok: input.paperworkOk,
+      comment: input.comment || null,
+    },
+    { onConflict: "transport_request_id" },
+  );
+  if (error) throw error;
+}
+
+export async function getMyDriverReview(transportRequestId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("driver_reviews")
+    .select("id")
+    .eq("transport_request_id", transportRequestId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export const incidentTypeLabels: Record<string, string> = {
   delay: "Delay",
   vehicle_breakdown: "Vehicle breakdown",

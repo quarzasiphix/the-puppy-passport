@@ -27,6 +27,91 @@ export async function getRoute(id: string) {
   return data as RouteRow;
 }
 
+export async function updateRoute(
+  id: string,
+  patch: Database["public"]["Tables"]["routes"]["Update"],
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("routes").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export type RouteStopRow = Database["public"]["Tables"]["route_stops"]["Row"];
+
+// Ops's own full-column read of a route's stops — distinct from driver.ts's listRouteStops(),
+// which is deliberately column-minimized to what a driver needs (see that file's own comment);
+// this one is for the planning UI, so it needs every field.
+export async function listOpsRouteStops(routeId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("route_stops")
+    .select("*")
+    .eq("route_id", routeId)
+    .order("stop_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as RouteStopRow[];
+}
+
+export async function addRouteStop(
+  routeId: string,
+  payload: Omit<Database["public"]["Tables"]["route_stops"]["Insert"], "route_id" | "stop_order">,
+) {
+  const supabase = getSupabaseBrowserClient();
+  // New stop always goes at the end — reordering afterwards is a separate, explicit action
+  // (moveRouteStop) rather than something the caller has to compute here.
+  const { count, error: countError } = await supabase
+    .from("route_stops")
+    .select("id", { count: "exact", head: true })
+    .eq("route_id", routeId);
+  if (countError) throw countError;
+  const { error } = await supabase
+    .from("route_stops")
+    .insert({ ...payload, route_id: routeId, stop_order: count ?? 0 });
+  if (error) throw error;
+}
+
+export async function updateRouteStop(
+  id: string,
+  patch: Database["public"]["Tables"]["route_stops"]["Update"],
+) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("route_stops").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function removeRouteStop(id: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("route_stops").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// Swaps this stop's position with its immediate neighbor in the given direction — the same
+// low-tech "move up/move down" pattern this codebase already uses elsewhere instead of a
+// drag-and-drop library, safe because stop_order only ever needs a strict order, not stable ids
+// across the swap.
+export async function moveRouteStop(
+  stops: RouteStopRow[],
+  stopId: string,
+  direction: "up" | "down",
+) {
+  const index = stops.findIndex((s) => s.id === stopId);
+  const swapWith = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapWith < 0 || swapWith >= stops.length) return;
+  const supabase = getSupabaseBrowserClient();
+  const a = stops[index];
+  const b = stops[swapWith];
+  const { error } = await supabase
+    .from("route_stops")
+    .update({ stop_order: b.stop_order })
+    .eq("id", a.id);
+  if (error) throw error;
+  const { error: error2 } = await supabase
+    .from("route_stops")
+    .update({ stop_order: a.stop_order })
+    .eq("id", b.id);
+  if (error2) throw error2;
+}
+
 export async function listRouteAssignments(routeId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase

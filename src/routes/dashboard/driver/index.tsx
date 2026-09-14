@@ -1,17 +1,23 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowRight, Check, MapPin, Truck } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, MapPin, Truck } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Label } from "@/shared/ui/label";
+import { Textarea } from "@/shared/ui/textarea";
 import { useAuth } from "@/domains/identity";
 import {
   advanceJobStatus,
   driverStatusSteps,
   getMyActiveRoute,
   getMyDriverRecord,
+  getMyDriverReview,
   listMyJobsForRoute,
   listRouteStops,
+  submitDriverReview,
 } from "@/domains/transport";
 import type { TransportStatus } from "@/lib/supabase/enums";
 import { ReportIncidentDialog } from "@/domains/transport";
@@ -216,12 +222,92 @@ function DriverHome() {
                       )}
                     </div>
                   </div>
+                  {(job.status === "handover_confirmed" || job.status === "completed") && (
+                    <DriverReviewPrompt transportRequestId={job.id} userId={userId!} />
+                  )}
                 </div>
               );
             })}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// The two-way half of the review system — a driver reporting back on things only they'd know at
+// handover (was the animal as described, was the pickup location accessible, was the paperwork in
+// order), separate from the customer rating the driver via transport_reviews. Shown once a job
+// reaches handover_confirmed/completed and stays hidden after a review is already on file.
+function DriverReviewPrompt({
+  transportRequestId,
+  userId,
+}: {
+  transportRequestId: string;
+  userId: string;
+}) {
+  const queryClient = useQueryClient();
+  const [animalAsDescribed, setAnimalAsDescribed] = useState(true);
+  const [pickupAccessOk, setPickupAccessOk] = useState(true);
+  const [paperworkOk, setPaperworkOk] = useState(true);
+  const [comment, setComment] = useState("");
+
+  const reviewQuery = useQuery({
+    queryKey: ["my-driver-review", transportRequestId],
+    queryFn: () => getMyDriverReview(transportRequestId),
+  });
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      submitDriverReview({
+        transportRequestId,
+        reviewerProfileId: userId,
+        animalAsDescribed,
+        pickupAccessOk,
+        paperworkOk,
+        comment,
+      }),
+    onSuccess: () => {
+      toast.success("Thanks — recorded.");
+      queryClient.invalidateQueries({ queryKey: ["my-driver-review", transportRequestId] });
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not save this.")),
+  });
+
+  if (reviewQuery.isLoading) return null;
+
+  if (reviewQuery.data) {
+    return (
+      <div className="mt-3 flex items-center gap-1.5 border-t border-border/60 pt-3 text-xs text-success">
+        <CheckCircle2 className="size-3.5" /> Handover report submitted.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Quick handover report
+      </p>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={animalAsDescribed} onCheckedChange={(v) => setAnimalAsDescribed(!!v)} />
+        Animal was as described
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={pickupAccessOk} onCheckedChange={(v) => setPickupAccessOk(!!v)} />
+        Pickup location was accessible
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={paperworkOk} onCheckedChange={(v) => setPaperworkOk(!!v)} />
+        Paperwork was in order
+      </label>
+      <div>
+        <Label className="text-xs">Anything ops should know? (optional)</Label>
+        <Textarea rows={2} value={comment} onChange={(e) => setComment(e.target.value)} />
+      </div>
+      <Button size="sm" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+        Submit
+      </Button>
     </div>
   );
 }

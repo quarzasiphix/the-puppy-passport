@@ -113,20 +113,92 @@ app. Backs "the center of the platform" per `docs/DOMAIN_MODEL.md`'s description
   account linking instead goes through `drivers.login_email` (below), a separate mechanism.
   Revisit only if the product direction changes to unify these two onboarding paths.
 
-## Driver account linking (added 2026-09-14)
+## Driver account linking (added 2026-09-14, made audited/notifying the same day)
 
 `drivers.profile_id` existed since the original schema (used by `getMyDriverRecord()` to back the
 individual `/dashboard/driver` workspace) but nothing in the UI ever set it — every driver record
 was a disconnected free-text card. `20260918000000_driver_login_email_link.sql` adds
 `drivers.login_email` (plain text, distinct from `drivers.contact` which stays a free-text "how to
-reach them" note, not necessarily a login). `resolveProfileIdByEmail()` (`services/fleet.ts`) looks
-up `profiles` by email — safe under the existing `"profiles are viewable by any authenticated
-user"` RLS policy (`using (true)`, pre-existing, not introduced here). Every driver create/update
-call site (`operations/drivers.tsx`, `operations/drivers.$id.tsx`,
-`transport-company/drivers.tsx`, `transport-company/drivers.$id.tsx`) now re-derives `profile_id`
-from `login_email` on every save — never edited independently, so a changed email always
-re-resolves (or un-links) rather than leaving a stale link. No RPC needed since the RLS "manage"
-policies on `drivers` are already `ALL`-command.
+reach them" note, not necessarily a login).
+
+Linking goes through `link_driver_account(p_driver_id, p_login_email)` RPC
+(`20260919000000_link_driver_account_rpc.sql`), **not** a client-side resolve+update — `audit_logs`
+INSERT is RLS-restricted to `is_ops_staff()` only, which would silently block a transport-company
+caller from ever recording the audit row for their own driver. The RPC re-derives the exact same
+"can this caller manage this driver" condition the `drivers` RLS policies already use, resolves
+`profiles` by email (case-insensitive), and — only when the resulting link actually changed —
+writes one `audit_logs` row (`driver.account_linked`/`_unlinked`/`_relinked`) and, on a fresh link,
+inserts directly into `notifications` for the newly-linked profile (bypassing
+`create_notification_if_enabled()`'s own caller-authorization lock, which only permits notifying
+yourself/a moderator/your buyer-application's owner — none of which fit an ops/company caller
+notifying some other driver; a direct insert is safe here since `'security'`-category notifications
+are unconditionally delivered regardless of preference anyway, so it's exactly what that RPC would
+have done). `fleet.ts`'s `linkDriverAccount()` wraps the RPC; `resolveProfileIdByEmail()` is gone.
+Every driver create/update call site calls `updateDriver()` for ordinary fields and
+`linkDriverAccount()` once more for the email, in parallel.
+
+**No email provider exists in this app** (confirmed in
+`services/notification-templates.ts`'s own header comment) — "invite an unlinked driver to sign
+up" is a **copyable link** (`/signup?email=<address>`, prefilled via `_public/signup.tsx`'s
+`validateSearch`), not a sent email. The "Copy sign-up link" button only lives on the two driver
+detail pages, not the list cards/rows — the list cards are themselves one big `<Link>`, and a
+`<button>` nested inside an `<a>` is invalid HTML with unreliable click behavior.
+
+## Driver reputation + SLA overdue badge (added 2026-09-14)
+
+`transport_reviews.driver_rating` (customer rating the driver) existed since
+`20260101004700_transport_reviews.sql` but was never aggregated or shown anywhere.
+`getDriverStats(driverId)` (`services/fleet.ts`) reads a completed-job count plus
+average/count of `driver_rating`, shown as a "Reputation" card on both driver detail pages.
+Needed one new RLS policy — `"company members view reviews for their fleet's jobs"`
+(`20260920000000_transport_reviews_fleet_visibility.sql`, an additional permissive SELECT policy,
+mirrors the existing fleet-visibility condition on `transport_requests` itself) — since a company
+had no way to read reviews for its own driver's jobs before this.
+
+`isOverdue(status, latestDate)` (`services/transport.ts`) is a pure computed flag (past
+`latest_date`, not closed, not completed) — no schema/cron needed, since this app has no
+scheduled-function infrastructure; "SLA alerting" is a badge on `OpsRequestTable`
+(`components/ops-request-table.tsx`), the shared component already reused by 5+ ops list pages, so
+it surfaces everywhere at once rather than needing a push.
+
+## Ops bulk actions + two-way rating (added 2026-09-14)
+
+`OpsRequestTable` gained row checkboxes + a bulk status-change bar (calls the existing
+`change_ops_request_status` once per selected row via `Promise.all` — no new bulk RPC, ops
+selections are realistically tens of rows). `operations/welfare-cases.tsx` got the matching
+bulk-acknowledge. Neither exists on the phone-width card views (a multi-select workflow doesn't
+translate well to touch, and those cards are themselves full-width `<Link>`s).
+
+The two-way half of the review system: `driver_reviews` (new table,
+`20260921000000_driver_reviews.sql`) lets the individually assigned driver report back
+`animal_as_described`/`pickup_access_ok`/`paperwork_ok`/`comment` for a job — separate from
+`transport_reviews`, which is the customer rating the driver. RLS mirrors the identity check
+`transport_status_history` already uses (`is_assigned_driver_for_request()`), plus the same
+ops/company visibility shape as the new `transport_reviews` policy. `driver.ts`'s
+`submitDriverReview()`/`getMyDriverReview()` back a compact prompt on `dashboard/driver/index.tsx`,
+shown once a job reaches `handover_confirmed`/`completed` and no review exists yet.
+
+## Ops route planning (added 2026-09-14)
+
+`routes.vehicle_id`/`driver_id` and the `route_stops` table have existed since the original schema
+(`20260101001700_routes_and_fleet.sql`) — `route_stops` was already read by the driver's own
+workspace and the calendar view — but nothing in the app ever wrote to any of them. Ops "Routes"
+could only create a route shell and attach *existing* transport requests to it.
+`20260922000000_route_stops_planning_fields.sql` adds `animal_label`, `transport_request_id`
+(nullable — a stop can represent an animal that isn't a formal request yet), `address_text`,
+`maps_url`, `contact_name`, `contact_phone`, `notes` to `route_stops`, bringing it to the same
+planning shape `trip_stops` already has for a transport company's own Trips — deliberately kept as
+two separate features (a route groups multiple different customers' existing requests; a trip is a
+company's own internal job list), just now with parity in what they can each represent.
+
+`services/routes.ts` gained `updateRoute()`, `listOpsRouteStops()` (full-column, distinct from
+`driver.ts`'s already-column-minimized `listRouteStops()`), `addRouteStop()`/`updateRouteStop()`/
+`removeRouteStop()`, and `moveRouteStop()` (a low-tech up/down swap on `stop_order`, not a
+drag-and-drop library). All plain table operations, no new RPC — `"ops staff manage routes"`/
+`"ops staff manage route stops"` are already `ALL`-command RLS policies. UI lives entirely in
+`operations/routes.$id.tsx`: a vehicle/driver picker plus a full stop list with an add/edit dialog
+(type/city/country/planned time, and — for pickup/dropoff only, hidden for a plain rest stop —
+animal/address/maps link/contact).
 
 ## Related docs
 
@@ -138,6 +210,16 @@ policies on `drivers` are already `ALL`-command.
   trigger design; not read directly in this pass.
 
 ## Last significant change
+
+2026-09-14 (fourth pass): ops route planning — vehicle/driver assignment and a full stop editor
+on `routes.$id.tsx` (see "Ops route planning" above). New migration:
+`20260922000000_route_stops_planning_fields.sql`.
+
+2026-09-14 (third pass): closed the account-linking loop (audit trail + notification + copyable
+invite link — see "Driver account linking" above), added driver reputation + a computed SLA
+"Overdue" badge, and added ops bulk actions + the driver-side two-way review (see the two sections
+above). Three new migrations: `20260919000000_link_driver_account_rpc.sql`,
+`20260920000000_transport_reviews_fleet_visibility.sql`, `20260921000000_driver_reviews.sql`.
 
 2026-09-14 (second pass): a domain-wide mobile/desktop responsiveness audit (~35 files read) found
 two real, repeatable defects, both fixed: (1) `src/shared/ui/dialog.tsx`'s `DialogContent` had no

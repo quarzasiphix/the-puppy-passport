@@ -247,7 +247,9 @@ export function OpsRequestTable({
                     <td className="p-3">
                       <div className="flex flex-wrap items-center gap-1">
                         <Badge
-                          variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
+                          variant={
+                            holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"
+                          }
                           className="whitespace-nowrap capitalize"
                         >
                           {r.status.replace(/_/g, " ")}
@@ -293,7 +295,10 @@ export function OpsRequestTable({
                       {r.status.replace(/_/g, " ")}
                     </Badge>
                     {isOverdue(r.status, r.latest_date) && (
-                      <Badge variant="destructive" className="flex items-center gap-1 whitespace-nowrap">
+                      <Badge
+                        variant="destructive"
+                        className="flex items-center gap-1 whitespace-nowrap"
+                      >
                         <TriangleAlert className="size-3" /> Overdue
                       </Badge>
                     )}
