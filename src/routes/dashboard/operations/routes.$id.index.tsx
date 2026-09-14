@@ -50,6 +50,7 @@ import {
   type RouteStopRow,
 } from "@/domains/transport";
 import type { Database } from "@/lib/supabase/types";
+import { buildMapsSearchUrl, parseAddressFromMapsUrl } from "@/lib/maps";
 
 // Pure layout at /dashboard/operations/routes/$id.tsx renders <Outlet /> — same pattern as
 // dashboard/breeder/litters.tsx: this file is the route detail
@@ -614,6 +615,12 @@ function RouteDetail() {
                         onChange={(e) =>
                           setStopForm((f) => ({ ...f, pickupMapsUrl: e.target.value }))
                         }
+                        onBlur={(e) => {
+                          if (!stopForm.pickupAddressText.trim()) {
+                            const parsed = parseAddressFromMapsUrl(e.target.value);
+                            if (parsed) setStopForm((f) => ({ ...f, pickupAddressText: parsed }));
+                          }
+                        }}
                       />
                       <Input
                         placeholder="Address"
@@ -621,6 +628,15 @@ function RouteDetail() {
                         onChange={(e) =>
                           setStopForm((f) => ({ ...f, pickupAddressText: e.target.value }))
                         }
+                        onBlur={(e) => {
+                          const address = e.target.value.trim();
+                          if (address && !stopForm.pickupMapsUrl.trim()) {
+                            setStopForm((f) => ({
+                              ...f,
+                              pickupMapsUrl: buildMapsSearchUrl(address),
+                            }));
+                          }
+                        }}
                       />
                       <ContactPicker
                         organizationId={null}
@@ -654,6 +670,12 @@ function RouteDetail() {
                         onChange={(e) =>
                           setStopForm((f) => ({ ...f, dropoffMapsUrl: e.target.value }))
                         }
+                        onBlur={(e) => {
+                          if (!stopForm.dropoffAddressText.trim()) {
+                            const parsed = parseAddressFromMapsUrl(e.target.value);
+                            if (parsed) setStopForm((f) => ({ ...f, dropoffAddressText: parsed }));
+                          }
+                        }}
                       />
                       <Input
                         placeholder="Address"
@@ -661,6 +683,15 @@ function RouteDetail() {
                         onChange={(e) =>
                           setStopForm((f) => ({ ...f, dropoffAddressText: e.target.value }))
                         }
+                        onBlur={(e) => {
+                          const address = e.target.value.trim();
+                          if (address && !stopForm.dropoffMapsUrl.trim()) {
+                            setStopForm((f) => ({
+                              ...f,
+                              dropoffMapsUrl: buildMapsSearchUrl(address),
+                            }));
+                          }
+                        }}
                       />
                       <ContactPicker
                         organizationId={null}

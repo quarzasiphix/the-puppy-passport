@@ -25,6 +25,7 @@ import {
 } from "@/domains/transport";
 import { useAuth } from "@/domains/identity";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
+import { buildMapsSearchUrl, parseAddressFromMapsUrl } from "@/lib/maps";
 
 // A "neat view" of one stop — the read-focused counterpart to the edit Dialog already on
 // routes.$id.index.tsx (which stays exactly as it was: reorder/edit/remove). This page is a new,
@@ -117,6 +118,57 @@ function StopDetail({
       if (fields[key] !== (stop[key] ?? "")) saveMutation.mutate({ [key]: fields[key] || null });
     },
   });
+
+  // Same as field(), but wires the address<->Maps-link auto-fill both ways — see the identical
+  // pair in trips.$tripId.tsx's StopDetailDialog for the full reasoning.
+  const addressField = (addressKey: "pickup_address_text" | "dropoff_address_text") => {
+    const mapsKey = addressKey === "pickup_address_text" ? "pickup_maps_url" : "dropoff_maps_url";
+    return {
+      value: fields[addressKey],
+      onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setFields((f) => ({ ...f, [addressKey]: e.target.value })),
+      onBlur: () => {
+        const patch: Partial<typeof fields> = {};
+        if (fields[addressKey] !== (stop[addressKey] ?? "")) patch[addressKey] = fields[addressKey];
+        if (fields[addressKey].trim() && !fields[mapsKey].trim()) {
+          const generated = buildMapsSearchUrl(fields[addressKey]);
+          patch[mapsKey] = generated;
+          setFields((f) => ({ ...f, [mapsKey]: generated }));
+        }
+        if (Object.keys(patch).length) {
+          saveMutation.mutate(
+            Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v || null])),
+          );
+        }
+      },
+    };
+  };
+
+  const mapsUrlField = (mapsKey: "pickup_maps_url" | "dropoff_maps_url") => {
+    const addressKey =
+      mapsKey === "pickup_maps_url" ? "pickup_address_text" : "dropoff_address_text";
+    return {
+      value: fields[mapsKey],
+      onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setFields((f) => ({ ...f, [mapsKey]: e.target.value })),
+      onBlur: () => {
+        const patch: Partial<typeof fields> = {};
+        if (fields[mapsKey] !== (stop[mapsKey] ?? "")) patch[mapsKey] = fields[mapsKey];
+        if (fields[mapsKey].trim() && !fields[addressKey].trim()) {
+          const parsed = parseAddressFromMapsUrl(fields[mapsKey]);
+          if (parsed) {
+            patch[addressKey] = parsed;
+            setFields((f) => ({ ...f, [addressKey]: parsed }));
+          }
+        }
+        if (Object.keys(patch).length) {
+          saveMutation.mutate(
+            Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v || null])),
+          );
+        }
+      },
+    };
+  };
 
   // Debounced "instant recognition" — same pattern as trips.$tripId.tsx.
   const [recognition, setRecognition] = useState<RecognizeMicrochipResult | null>(null);
@@ -216,11 +268,11 @@ function StopDetail({
         <div className="space-y-3">
           <div>
             <Label>Google Maps link</Label>
-            <Input placeholder="https://maps.google.com/…" {...field("pickup_maps_url")} />
+            <Input placeholder="https://maps.google.com/…" {...mapsUrlField("pickup_maps_url")} />
           </div>
           <div>
             <Label>Address</Label>
-            <Input placeholder="Street, city" {...field("pickup_address_text")} />
+            <Input placeholder="Street, city" {...addressField("pickup_address_text")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -252,11 +304,11 @@ function StopDetail({
         <div className="space-y-3">
           <div>
             <Label>Google Maps link</Label>
-            <Input placeholder="https://maps.google.com/…" {...field("dropoff_maps_url")} />
+            <Input placeholder="https://maps.google.com/…" {...mapsUrlField("dropoff_maps_url")} />
           </div>
           <div>
             <Label>Address</Label>
-            <Input placeholder="Street, city" {...field("dropoff_address_text")} />
+            <Input placeholder="Street, city" {...addressField("dropoff_address_text")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

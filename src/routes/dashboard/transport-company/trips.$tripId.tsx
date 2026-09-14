@@ -70,6 +70,7 @@ import { useAuth } from "@/domains/identity";
 import { getMyTransportCompany } from "@/domains/breeders";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { useTranslation } from "@/shared/i18n";
+import { buildMapsSearchUrl, parseAddressFromMapsUrl } from "@/lib/maps";
 
 export const Route = createFileRoute("/dashboard/transport-company/trips/$tripId")({
   component: TripDetailPage,
@@ -543,6 +544,13 @@ function TripDetailPage() {
                       <Input
                         placeholder="https://maps.google.com/…"
                         {...stopForm.register("pickupMapsUrl")}
+                        onBlur={(e) => {
+                          stopForm.register("pickupMapsUrl").onBlur(e);
+                          if (!stopForm.getValues("pickupAddressText").trim()) {
+                            const parsed = parseAddressFromMapsUrl(e.target.value);
+                            if (parsed) stopForm.setValue("pickupAddressText", parsed);
+                          }
+                        }}
                       />
                     </div>
                     <div>
@@ -550,6 +558,13 @@ function TripDetailPage() {
                       <Input
                         placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
                         {...stopForm.register("pickupAddressText")}
+                        onBlur={(e) => {
+                          stopForm.register("pickupAddressText").onBlur(e);
+                          const address = e.target.value.trim();
+                          if (address && !stopForm.getValues("pickupMapsUrl").trim()) {
+                            stopForm.setValue("pickupMapsUrl", buildMapsSearchUrl(address));
+                          }
+                        }}
                       />
                     </div>
                     <ContactPicker
@@ -578,6 +593,13 @@ function TripDetailPage() {
                       <Input
                         placeholder="https://maps.google.com/…"
                         {...stopForm.register("dropoffMapsUrl")}
+                        onBlur={(e) => {
+                          stopForm.register("dropoffMapsUrl").onBlur(e);
+                          if (!stopForm.getValues("dropoffAddressText").trim()) {
+                            const parsed = parseAddressFromMapsUrl(e.target.value);
+                            if (parsed) stopForm.setValue("dropoffAddressText", parsed);
+                          }
+                        }}
                       />
                     </div>
                     <div>
@@ -585,6 +607,13 @@ function TripDetailPage() {
                       <Input
                         placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
                         {...stopForm.register("dropoffAddressText")}
+                        onBlur={(e) => {
+                          stopForm.register("dropoffAddressText").onBlur(e);
+                          const address = e.target.value.trim();
+                          if (address && !stopForm.getValues("dropoffMapsUrl").trim()) {
+                            stopForm.setValue("dropoffMapsUrl", buildMapsSearchUrl(address));
+                          }
+                        }}
                       />
                     </div>
                     <ContactPicker
@@ -1018,6 +1047,62 @@ function StopDetailDialog({
     },
   });
 
+  // Same as field(), but for an address-text input specifically: also auto-generates a plain
+  // Google Maps search link (buildMapsSearchUrl — no API key, just a deep link Maps itself
+  // resolves) into the paired *_maps_url field whenever that field is still empty. Never
+  // overwrites a link someone already pasted in by hand.
+  const addressField = (addressKey: "pickup_address_text" | "dropoff_address_text") => {
+    const mapsKey = addressKey === "pickup_address_text" ? "pickup_maps_url" : "dropoff_maps_url";
+    return {
+      value: fields[addressKey],
+      onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setFields((f) => ({ ...f, [addressKey]: e.target.value })),
+      onBlur: () => {
+        const patch: Partial<typeof fields> = {};
+        if (fields[addressKey] !== (stop[addressKey] ?? "")) patch[addressKey] = fields[addressKey];
+        if (fields[addressKey].trim() && !fields[mapsKey].trim()) {
+          const generated = buildMapsSearchUrl(fields[addressKey]);
+          patch[mapsKey] = generated;
+          setFields((f) => ({ ...f, [mapsKey]: generated }));
+        }
+        if (Object.keys(patch).length) {
+          saveMutation.mutate(
+            Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v || null])),
+          );
+        }
+      },
+    };
+  };
+
+  // The reverse direction — pasting a Maps link auto-fills the address field when it's still
+  // empty (parseAddressFromMapsUrl returns null for link shapes with no extractable address, in
+  // which case this is a no-op, same as addressField() above never overwriting a manual link).
+  const mapsUrlField = (mapsKey: "pickup_maps_url" | "dropoff_maps_url") => {
+    const addressKey =
+      mapsKey === "pickup_maps_url" ? "pickup_address_text" : "dropoff_address_text";
+    return {
+      value: fields[mapsKey],
+      onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setFields((f) => ({ ...f, [mapsKey]: e.target.value })),
+      onBlur: () => {
+        const patch: Partial<typeof fields> = {};
+        if (fields[mapsKey] !== (stop[mapsKey] ?? "")) patch[mapsKey] = fields[mapsKey];
+        if (fields[mapsKey].trim() && !fields[addressKey].trim()) {
+          const parsed = parseAddressFromMapsUrl(fields[mapsKey]);
+          if (parsed) {
+            patch[addressKey] = parsed;
+            setFields((f) => ({ ...f, [addressKey]: parsed }));
+          }
+        }
+        if (Object.keys(patch).length) {
+          saveMutation.mutate(
+            Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v || null])),
+          );
+        }
+      },
+    };
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -1040,13 +1125,13 @@ function StopDetailDialog({
             </p>
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
-              <Input placeholder="https://maps.google.com/…" {...field("pickup_maps_url")} />
+              <Input placeholder="https://maps.google.com/…" {...mapsUrlField("pickup_maps_url")} />
             </div>
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
               <Input
                 placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
-                {...field("pickup_address_text")}
+                {...addressField("pickup_address_text")}
               />
             </div>
             <ContactPicker
@@ -1079,13 +1164,16 @@ function StopDetailDialog({
             </p>
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
-              <Input placeholder="https://maps.google.com/…" {...field("dropoff_maps_url")} />
+              <Input
+                placeholder="https://maps.google.com/…"
+                {...mapsUrlField("dropoff_maps_url")}
+              />
             </div>
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldAddressText")}</Label>
               <Input
                 placeholder={t("transportCompanyPanel.trips.fieldAddressTextPlaceholder")}
-                {...field("dropoff_address_text")}
+                {...addressField("dropoff_address_text")}
               />
             </div>
             <ContactPicker
