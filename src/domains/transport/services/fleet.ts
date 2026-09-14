@@ -57,26 +57,25 @@ export async function listDrivers() {
 
 export async function createDriver(payload: Database["public"]["Tables"]["drivers"]["Insert"]) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("drivers").insert(payload);
+  const { data, error } = await supabase.from("drivers").insert(payload).select("id").single();
   if (error) throw error;
+  return data.id as string;
 }
 
-// Resolves an email a caller typed on a driver record to a real Anemalo account, so
-// drivers.profile_id can be kept in sync with drivers.login_email on every save (see
-// 20260918000000_driver_login_email_link.sql). Returns null both for an empty email and for one
-// that doesn't match any account yet — the caller stores login_email either way so the record
-// re-links automatically once that person signs up.
-export async function resolveProfileIdByEmail(email: string): Promise<string | null> {
-  const trimmed = email.trim();
-  if (!trimmed) return null;
+// Links (or unlinks/relinks) a driver record to a real Anemalo account by email — the audited,
+// notifying counterpart to a plain drivers.update(). Goes through link_driver_account()
+// (20260919000000_link_driver_account_rpc.sql) rather than a client-side resolve+update because
+// audit_logs INSERT is ops-staff-only under RLS, which would silently block a transport-company
+// caller from ever recording the audit row; the RPC re-derives the exact same "can this caller
+// manage this driver" condition as the drivers table's own RLS policies, so it can never do more
+// than a direct update already allowed.
+export async function linkDriverAccount(driverId: string, loginEmail: string) {
   const supabase = getSupabaseBrowserClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .ilike("email", trimmed)
-    .maybeSingle();
+  const { error } = await supabase.rpc("link_driver_account", {
+    p_driver_id: driverId,
+    p_login_email: loginEmail,
+  });
   if (error) throw error;
-  return data?.id ?? null;
 }
 
 export async function getDriver(id: string) {
@@ -93,6 +92,48 @@ export async function updateDriver(
   const supabase = getSupabaseBrowserClient();
   const { error } = await supabase.from("drivers").update(patch).eq("id", id);
   if (error) throw error;
+}
+
+export type DriverStats = {
+  completedJobs: number;
+  averageRating: number | null;
+  ratingCount: number;
+};
+
+// Reads transport_reviews.driver_rating (customer rating the driver, already on that table since
+// 20260101004700_transport_reviews.sql, never surfaced anywhere until now) plus a completed-job
+// count from transport_requests. Both queries are covered by existing RLS — ops sees every
+// request/review, a company sees reviews for jobs assigned to its own fleet via the new
+// "company members view reviews for their fleet's jobs" policy
+// (20260920000000_transport_reviews_fleet_visibility.sql) — no new table needed.
+export async function getDriverStats(driverId: string): Promise<DriverStats> {
+  const supabase = getSupabaseBrowserClient();
+
+  const [completedResult, ratingsResult] = await Promise.all([
+    supabase
+      .from("transport_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_driver_id", driverId)
+      .eq("status", "completed"),
+    supabase
+      .from("transport_reviews")
+      .select("driver_rating, transport_requests!inner(assigned_driver_id)")
+      .eq("transport_requests.assigned_driver_id", driverId)
+      .not("driver_rating", "is", null),
+  ]);
+
+  if (completedResult.error) throw completedResult.error;
+  if (ratingsResult.error) throw ratingsResult.error;
+
+  const ratings = (ratingsResult.data ?? [])
+    .map((r) => r.driver_rating)
+    .filter((r): r is number => r !== null);
+
+  return {
+    completedJobs: completedResult.count ?? 0,
+    averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null,
+    ratingCount: ratings.length,
+  };
 }
 
 // A transport company's "Jobs"/"Calendar"/"Dispatch" pages all read from this: requests currently

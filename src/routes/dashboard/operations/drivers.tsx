@@ -15,12 +15,7 @@ import {
   DialogTrigger,
 } from "@/shared/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/form";
-import {
-  createDriver,
-  expiryWarnings,
-  listDrivers,
-  resolveProfileIdByEmail,
-} from "@/domains/transport";
+import { createDriver, expiryWarnings, linkDriverAccount, listDrivers } from "@/domains/transport";
 
 export const Route = createFileRoute("/dashboard/operations/drivers")({
   component: DriversPage,
@@ -49,15 +44,15 @@ function DriversPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) =>
-      createDriver({
+    mutationFn: async (values: FormValues) => {
+      const id = await createDriver({
         name: values.name,
         contact: values.contact || null,
         home_region: values.homeRegion || null,
         document_expiry_date: values.documentExpiryDate || null,
-        login_email: values.loginEmail || null,
-        profile_id: await resolveProfileIdByEmail(values.loginEmail),
-      }),
+      });
+      if (values.loginEmail) await linkDriverAccount(id, values.loginEmail);
+    },
     onSuccess: () => {
       toast.success("Driver added.");
       setOpen(false);

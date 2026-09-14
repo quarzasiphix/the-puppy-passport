@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, ChevronLeft, UserCheck } from "lucide-react";
+import { AlertTriangle, ChevronLeft, Copy, Star, UserCheck } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -12,7 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/shared/ui/f
 import {
   expiryWarnings,
   getDriver,
-  resolveProfileIdByEmail,
+  getDriverStats,
+  linkDriverAccount,
   updateDriver,
 } from "@/domains/transport";
 import type { Database } from "@/lib/supabase/types";
@@ -42,6 +43,7 @@ function OpsDriverDetail() {
 
   const query = useQuery({ queryKey: ["driver", id], queryFn: () => getDriver(id) });
   const driver = query.data;
+  const statsQuery = useQuery({ queryKey: ["driver-stats", id], queryFn: () => getDriverStats(id) });
 
   const form = useForm<FormValues>({
     values: driver
@@ -61,20 +63,22 @@ function OpsDriverDetail() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) =>
-      updateDriver(id, {
-        name: values.name,
-        contact: values.contact || null,
-        home_region: values.homeRegion || null,
-        availability_status: values.availabilityStatus || null,
-        qualification_status: values.qualificationStatus || "unverified",
-        document_expiry_date: values.documentExpiryDate || null,
-        emergency_contact: values.emergencyContact || null,
-        internal_verification_status: values.internalVerificationStatus,
-        internal_notes: values.internalNotes || null,
-        login_email: values.loginEmail || null,
-        profile_id: await resolveProfileIdByEmail(values.loginEmail),
-      }),
+    mutationFn: async (values: FormValues) => {
+      await Promise.all([
+        updateDriver(id, {
+          name: values.name,
+          contact: values.contact || null,
+          home_region: values.homeRegion || null,
+          availability_status: values.availabilityStatus || null,
+          qualification_status: values.qualificationStatus || "unverified",
+          document_expiry_date: values.documentExpiryDate || null,
+          emergency_contact: values.emergencyContact || null,
+          internal_verification_status: values.internalVerificationStatus,
+          internal_notes: values.internalNotes || null,
+        }),
+        linkDriverAccount(id, values.loginEmail),
+      ]);
+    },
     onSuccess: () => {
       toast.success("Driver updated.");
       queryClient.invalidateQueries({ queryKey: ["driver", id] });
@@ -82,6 +86,17 @@ function OpsDriverDetail() {
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save driver."),
   });
+
+  const copySignupLink = async () => {
+    if (!driver?.login_email) return;
+    const url = `${window.location.origin}/signup?email=${encodeURIComponent(driver.login_email)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Sign-up link copied.");
+    } catch {
+      toast.error("Could not copy the link.");
+    }
+  };
 
   if (query.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!driver) return <p className="text-sm text-destructive">Driver not found.</p>;
@@ -122,22 +137,58 @@ function OpsDriverDetail() {
         </div>
       )}
 
-      <div className="mb-6 flex items-center gap-1.5 text-sm">
+      <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
         {driver.profile_id ? (
           <span className="flex items-center gap-1.5 text-success">
             <UserCheck className="size-4" /> Linked to an Anemalo account — can sign in and see
             their own jobs.
           </span>
         ) : driver.login_email ? (
-          <span className="text-muted-foreground">
-            Waiting for {driver.login_email} to sign up — will link automatically once they do.
-          </span>
+          <>
+            <span className="text-muted-foreground">
+              Waiting for {driver.login_email} to sign up — will link automatically once they do.
+            </span>
+            <Button size="sm" variant="outline" onClick={copySignupLink}>
+              <Copy className="mr-1 size-3.5" /> Copy sign-up link
+            </Button>
+          </>
         ) : (
           <span className="text-muted-foreground">
             No account linked — add their email below to give them access to /dashboard/driver.
           </span>
         )}
       </div>
+
+      <section className="mb-6 rounded-2xl border border-border/70 bg-card p-5">
+        <h3 className="mb-3 font-display text-base font-semibold">Reputation</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <div className="text-xs text-muted-foreground">Completed jobs</div>
+            <div className="mt-1 font-display text-2xl font-semibold">
+              {statsQuery.data?.completedJobs ?? "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Average rating</div>
+            <div className="mt-1 flex items-center gap-1 font-display text-2xl font-semibold">
+              {statsQuery.data?.averageRating != null ? (
+                <>
+                  <Star className="size-5 fill-current text-warning" />
+                  {statsQuery.data.averageRating.toFixed(1)}
+                </>
+              ) : (
+                "—"
+              )}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Ratings received</div>
+            <div className="mt-1 font-display text-2xl font-semibold">
+              {statsQuery.data?.ratingCount ?? "—"}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-border/70 bg-card p-5">
         <h3 className="mb-3 font-display text-base font-semibold">Driver record</h3>

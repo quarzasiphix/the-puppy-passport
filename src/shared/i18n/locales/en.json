@@ -2214,10 +2214,15 @@
       "kpiDrivers": "Drivers",
       "kpiOpenJobs": "Open jobs",
       "kpiActiveDrivers": "Active drivers",
+      "kpiActiveTrips": "Active trips",
       "upcomingJobsTitle": "Upcoming jobs",
       "seeAllJobs": "Open dispatch",
       "loadingJobs": "Loading…",
-      "noUpcomingJobs": "No open jobs right now."
+      "noUpcomingJobs": "No open jobs right now.",
+      "yourTripsTitle": "Your trips",
+      "seeAllTrips": "See all trips",
+      "noActiveTrips": "No trips being planned right now.",
+      "planFirstTrip": "Plan a trip"
     },
     "dispatch": {
       "title": "Dispatch",
@@ -2298,7 +2303,14 @@
       "unlinkedBadge": "No account",
       "linkedNote": "Linked to an Anemalo account — can sign in and see their own jobs.",
       "waitingForSignupNotePrefix": "Waiting for this person to sign up with",
-      "unlinkedNote": "No account linked — add their email to give them their own sign-in."
+      "unlinkedNote": "No account linked — add their email to give them their own sign-in.",
+      "copySignupLink": "Copy sign-up link",
+      "signupLinkCopiedToast": "Sign-up link copied.",
+      "signupLinkCopyFailed": "Could not copy the link.",
+      "reputationTitle": "Reputation",
+      "completedJobs": "Completed jobs",
+      "averageRating": "Average rating",
+      "ratingsReceived": "Ratings received"
     },
     "jobs": {
       "title": "Jobs",

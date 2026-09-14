@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { TriangleAlert } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { listOpsTransportRequests } from "@/domains/operations";
+import { changeOpsRequestStatus, listOpsTransportRequests } from "@/domains/operations";
+import { isOverdue } from "../services/transport";
 import type { TransportStatus, TransportServiceType } from "@/lib/supabase/enums";
 
 const statusOptions = [
@@ -53,6 +58,9 @@ export function OpsRequestTable({
 }) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["ops-requests", fixedStatuses, statusFilter, serviceFilter],
@@ -74,8 +82,67 @@ export function OpsRequestTable({
 
   const rows = (query.data ?? []).filter((r) => !fixedStatuses || fixedStatuses.includes(r.status));
 
+  const bulkMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(
+        [...selected].map((id) =>
+          changeOpsRequestStatus({ id, newStatus: bulkStatus as TransportStatus }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      toast.success(`${selected.size} request${selected.size === 1 ? "" : "s"} updated.`);
+      setSelected(new Set());
+      setBulkStatus("");
+      queryClient.invalidateQueries({ queryKey: ["ops-requests"] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not update all selected requests."),
+  });
+
+  const toggleRow = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelected((prev) => (prev.size === rows.length ? new Set() : new Set(rows.map((r) => r.id))));
+  };
+
   return (
     <div>
+      {selected.size > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Select value={bulkStatus} onValueChange={setBulkStatus}>
+            <SelectTrigger className="h-9 w-[220px]">
+              <SelectValue placeholder="Change status to…" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize">
+                  {s.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            disabled={!bulkStatus || bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate()}
+          >
+            Apply
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {showFilters && (
         <div className="mb-4 flex flex-wrap gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -125,6 +192,13 @@ export function OpsRequestTable({
             <table className="w-full text-xs">
               <thead className="bg-secondary/60 text-left uppercase tracking-wide text-muted-foreground">
                 <tr>
+                  <th className="w-8 p-3">
+                    <Checkbox
+                      checked={rows.length > 0 && selected.size === rows.length}
+                      onCheckedChange={toggleAll}
+                      aria-label="Select all"
+                    />
+                  </th>
                   <th className="p-3">Request</th>
                   <th className="p-3">Animal</th>
                   <th className="p-3">Size</th>
@@ -140,6 +214,13 @@ export function OpsRequestTable({
               <tbody className="divide-y divide-border/60">
                 {rows.map((r) => (
                   <tr key={r.id} className="hover:bg-secondary/40">
+                    <td className="p-3">
+                      <Checkbox
+                        checked={selected.has(r.id)}
+                        onCheckedChange={() => toggleRow(r.id)}
+                        aria-label={`Select ${r.request_number}`}
+                      />
+                    </td>
                     <td className="p-3 font-medium">
                       <Link
                         to="/dashboard/operations/requests/$id"
@@ -164,12 +245,22 @@ export function OpsRequestTable({
                       </Badge>
                     </td>
                     <td className="p-3">
-                      <Badge
-                        variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
-                        className="whitespace-nowrap capitalize"
-                      >
-                        {r.status.replace(/_/g, " ")}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge
+                          variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
+                          className="whitespace-nowrap capitalize"
+                        >
+                          {r.status.replace(/_/g, " ")}
+                        </Badge>
+                        {isOverdue(r.status, r.latest_date) && (
+                          <Badge
+                            variant="destructive"
+                            className="flex items-center gap-1 whitespace-nowrap"
+                          >
+                            <TriangleAlert className="size-3" /> Overdue
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-muted-foreground">
                       {new Date(r.created_at).toLocaleDateString("en-GB")}
@@ -194,12 +285,19 @@ export function OpsRequestTable({
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-medium text-primary">{r.request_number}</span>
-                  <Badge
-                    variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
-                    className="whitespace-nowrap capitalize"
-                  >
-                    {r.status.replace(/_/g, " ")}
-                  </Badge>
+                  <div className="flex flex-wrap items-center justify-end gap-1">
+                    <Badge
+                      variant={holdOrProblemStatuses.has(r.status) ? "destructive" : "secondary"}
+                      className="whitespace-nowrap capitalize"
+                    >
+                      {r.status.replace(/_/g, " ")}
+                    </Badge>
+                    {isOverdue(r.status, r.latest_date) && (
+                      <Badge variant="destructive" className="flex items-center gap-1 whitespace-nowrap">
+                        <TriangleAlert className="size-3" /> Overdue
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-1 text-muted-foreground">

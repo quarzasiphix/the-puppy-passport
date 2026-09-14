@@ -357,6 +357,17 @@ export function isClosed(status: string) {
   return closedStatuses.has(status);
 }
 
+// A request is "overdue" once its own latest_date has passed while it's still actually in
+// progress — closed (rejected/cancelled) and completed requests are never overdue regardless of
+// their dates, since there's nothing left to be late for. Purely computed, no schema/cron needed:
+// this app has no scheduled-function infrastructure, so "SLA alerting" is a badge on pages already
+// being viewed, not a push.
+export function isOverdue(status: string, latestDate: string | null): boolean {
+  if (!latestDate) return false;
+  if (isClosed(status) || status === "completed") return false;
+  return new Date(latestDate).getTime() < Date.now();
+}
+
 // "Next action" copy for the customer dashboard — mirrors the brief's example wording
 // ("Upload the passport", "Confirm the quotation", ...) based on current status.
 export function nextActionForStatus(status: string): string {

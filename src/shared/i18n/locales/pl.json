@@ -2214,10 +2214,15 @@
       "kpiDrivers": "Kierowcy",
       "kpiOpenJobs": "Otwarte zlecenia",
       "kpiActiveDrivers": "Aktywni kierowcy",
+      "kpiActiveTrips": "Aktywne wyjazdy",
       "upcomingJobsTitle": "Nadchodzące zlecenia",
       "seeAllJobs": "Otwórz dyspozycję",
       "loadingJobs": "Ładowanie…",
-      "noUpcomingJobs": "Brak otwartych zleceń."
+      "noUpcomingJobs": "Brak otwartych zleceń.",
+      "yourTripsTitle": "Twoje wyjazdy",
+      "seeAllTrips": "Zobacz wszystkie wyjazdy",
+      "noActiveTrips": "Brak obecnie planowanych wyjazdów.",
+      "planFirstTrip": "Zaplanuj wyjazd"
     },
     "dispatch": {
       "title": "Dyspozycja",
@@ -2298,7 +2303,14 @@
       "unlinkedBadge": "Brak konta",
       "linkedNote": "Połączono z kontem Anemalo — może się zalogować i zobaczyć własne zlecenia.",
       "waitingForSignupNotePrefix": "Czeka na rejestrację tej osoby na adres",
-      "unlinkedNote": "Brak połączonego konta — dodaj email, aby umożliwić logowanie."
+      "unlinkedNote": "Brak połączonego konta — dodaj email, aby umożliwić logowanie.",
+      "copySignupLink": "Kopiuj link rejestracyjny",
+      "signupLinkCopiedToast": "Link rejestracyjny skopiowany.",
+      "signupLinkCopyFailed": "Nie udało się skopiować linku.",
+      "reputationTitle": "Reputacja",
+      "completedJobs": "Ukończone zlecenia",
+      "averageRating": "Średnia ocena",
+      "ratingsReceived": "Liczba ocen"
     },
     "jobs": {
       "title": "Zlecenia",

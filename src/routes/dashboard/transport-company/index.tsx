@@ -9,18 +9,30 @@ import {
   Shuffle,
   Users,
   ArrowRight,
+  MapPinned,
+  Plus,
 } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { useAuth } from "@/domains/identity";
 import { getMyTransportCompanyProfile } from "@/domains/breeders";
 import {
   listVehicles,
   listDrivers,
   listMyFleetJobs,
+  listMyTrips,
   isClosed,
   isOnHold,
+  type TripStatus,
 } from "@/domains/transport";
 import { useTranslation } from "@/shared/i18n";
+
+const TRIP_STATUS_BADGE_VARIANT: Record<TripStatus, "default" | "secondary" | "destructive"> = {
+  in_progress: "default",
+  planning: "secondary",
+  completed: "secondary",
+  cancelled: "destructive",
+};
 
 export const Route = createFileRoute("/dashboard/transport-company/")({
   component: TransportCompanyOverview,
@@ -40,11 +52,15 @@ function TransportCompanyOverview() {
   const vehiclesQuery = useQuery({ queryKey: ["vehicles"], queryFn: listVehicles });
   const driversQuery = useQuery({ queryKey: ["drivers"], queryFn: listDrivers });
   const jobsQuery = useQuery({ queryKey: ["my-fleet-jobs"], queryFn: listMyFleetJobs });
+  const tripsQuery = useQuery({ queryKey: ["my-trips"], queryFn: listMyTrips });
 
   const activeDrivers =
     driversQuery.data?.filter((d) => d.availability_status === "available").length ?? 0;
   const openJobs = jobsQuery.data?.filter((j) => !isClosed(j.status)) ?? [];
-  const upcomingJobs = openJobs.slice(0, 5);
+  const upcomingJobs = openJobs.slice(0, 4);
+  const activeTrips =
+    tripsQuery.data?.filter((tr) => tr.status === "planning" || tr.status === "in_progress") ?? [];
+  const tripsPreview = activeTrips.slice(0, 4);
 
   return (
     <div>
@@ -73,7 +89,17 @@ function TransportCompanyOverview() {
         </div>
       )}
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <Card
+          title={t("transportCompanyPanel.overview.kpiActiveTrips")}
+          value={activeTrips.length}
+          icon={<MapPinned className="size-5" />}
+        />
+        <Card
+          title={t("transportCompanyPanel.overview.kpiOpenJobs")}
+          value={openJobs.length}
+          icon={<Inbox className="size-5" />}
+        />
         <Card
           title={t("transportCompanyPanel.overview.kpiVehicles")}
           value={vehiclesQuery.data?.length ?? "—"}
@@ -89,14 +115,14 @@ function TransportCompanyOverview() {
           value={activeDrivers}
           icon={<UserRound className="size-5" />}
         />
-        <Card
-          title={t("transportCompanyPanel.overview.kpiOpenJobs")}
-          value={openJobs.length}
-          icon={<Inbox className="size-5" />}
-        />
       </div>
 
-      <div className="mt-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <QuickLink
+          to="/dashboard/transport-company/trips"
+          label={t("transportCompanyPanel.nav.trips")}
+          icon={<MapPinned className="size-5" />}
+        />
         <QuickLink
           to="/dashboard/transport-company/dispatch"
           label={t("transportCompanyPanel.nav.dispatch")}
@@ -119,56 +145,116 @@ function TransportCompanyOverview() {
         />
       </div>
 
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold">
-            {t("transportCompanyPanel.overview.upcomingJobsTitle")}
-          </h2>
-          <Link
-            to="/dashboard/transport-company/dispatch"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            {t("transportCompanyPanel.overview.seeAllJobs")}
-          </Link>
-        </div>
-        {jobsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">
-            {t("transportCompanyPanel.overview.loadingJobs")}
-          </p>
-        ) : upcomingJobs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
+      <div className="mt-8 grid gap-8 grid-cols-1 lg:grid-cols-2">
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">
+              {t("transportCompanyPanel.overview.yourTripsTitle")}
+            </h2>
+            <Link
+              to="/dashboard/transport-company/trips"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              {t("transportCompanyPanel.overview.seeAllTrips")}
+            </Link>
+          </div>
+          {tripsQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">
-              {t("transportCompanyPanel.overview.noUpcomingJobs")}
+              {t("transportCompanyPanel.overview.loadingJobs")}
             </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {upcomingJobs.map((j) => (
-              <Link
-                key={j.id}
-                to="/dashboard/transport-company/dispatch"
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
-              >
-                <div className="min-w-0">
-                  <div className="font-medium">{j.request_number}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {j.pickup_city ?? j.pickup_country} →{" "}
-                    {j.destination_city ?? j.destination_country}
-                    {j.earliest_date &&
-                      ` · ${new Date(j.earliest_date).toLocaleDateString("en-GB")}`}
+          ) : tripsPreview.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
+              <MapPinned className="mx-auto mb-2 size-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                {t("transportCompanyPanel.overview.noActiveTrips")}
+              </p>
+              <Button asChild size="sm" className="mt-4">
+                <Link to="/dashboard/transport-company/trips">
+                  <Plus className="mr-1 size-4" />{" "}
+                  {t("transportCompanyPanel.overview.planFirstTrip")}
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {tripsPreview.map((trip) => (
+                <Link
+                  key={trip.id}
+                  to="/dashboard/transport-company/trips/$tripId"
+                  params={{ tripId: trip.id }}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium">{trip.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {trip.departure_date
+                        ? new Date(trip.departure_date).toLocaleDateString("en-GB")
+                        : t("transportCompanyPanel.trips.status.planning")}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={isOnHold(j.status) ? "destructive" : "secondary"}>
-                    {j.status.replace(/_/g, " ")}
-                  </Badge>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={TRIP_STATUS_BADGE_VARIANT[trip.status]} className="capitalize">
+                      {t(`transportCompanyPanel.trips.status.${trip.status}`)}
+                    </Badge>
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">
+              {t("transportCompanyPanel.overview.upcomingJobsTitle")}
+            </h2>
+            <Link
+              to="/dashboard/transport-company/dispatch"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              {t("transportCompanyPanel.overview.seeAllJobs")}
+            </Link>
           </div>
-        )}
-      </section>
+          {jobsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">
+              {t("transportCompanyPanel.overview.loadingJobs")}
+            </p>
+          ) : upcomingJobs.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/40 p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t("transportCompanyPanel.overview.noUpcomingJobs")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {upcomingJobs.map((j) => (
+                <Link
+                  key={j.id}
+                  to="/dashboard/transport-company/dispatch"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-secondary/40"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium">{j.request_number}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {j.pickup_city ?? j.pickup_country} →{" "}
+                      {j.destination_city ?? j.destination_country}
+                      {j.earliest_date &&
+                        ` · ${new Date(j.earliest_date).toLocaleDateString("en-GB")}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={isOnHold(j.status) ? "destructive" : "secondary"}>
+                      {j.status.replace(/_/g, " ")}
+                    </Badge>
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

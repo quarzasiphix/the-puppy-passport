@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import {
   acknowledgeWelfareCase,
   listOpsWelfareCases,
@@ -22,6 +24,7 @@ const urgencyStyles: Record<string, string> = {
 
 function OpsWelfareCasesPage() {
   const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const casesQuery = useQuery({ queryKey: ["ops-welfare-cases"], queryFn: listOpsWelfareCases });
 
@@ -33,6 +36,28 @@ function OpsWelfareCasesPage() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not acknowledge."),
   });
 
+  const bulkAcknowledgeMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all([...selected].map((id) => acknowledgeWelfareCase(id)));
+    },
+    onSuccess: () => {
+      toast.success(`${selected.size} case${selected.size === 1 ? "" : "s"} acknowledged.`);
+      setSelected(new Set());
+      queryClient.invalidateQueries({ queryKey: ["ops-welfare-cases"] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Could not acknowledge all selected cases."),
+  });
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div>
       <header className="mb-6">
@@ -43,6 +68,22 @@ function OpsWelfareCasesPage() {
           every case still goes through acknowledgement and assessment here.
         </p>
       </header>
+
+      {selected.size > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Button
+            size="sm"
+            disabled={bulkAcknowledgeMutation.isPending}
+            onClick={() => bulkAcknowledgeMutation.mutate()}
+          >
+            Acknowledge selected
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-3">
         {casesQuery.data?.map((c) => (
@@ -82,7 +123,11 @@ function OpsWelfareCasesPage() {
             </Link>
 
             {!c.ops_acknowledged && (
-              <div className="mt-3">
+              <div className="mt-3 flex items-center gap-3">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
+                  Select
+                </label>
                 <Button
                   size="sm"
                   variant="outline"
