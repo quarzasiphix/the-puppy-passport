@@ -21,6 +21,8 @@ import {
   Milestone,
   ScanLine,
   Camera,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -28,6 +30,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Badge } from "@/shared/ui/badge";
 import { Switch } from "@/shared/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import {
   Dialog,
@@ -46,6 +49,8 @@ import {
   removeTripStop,
   markStopPickedUp,
   markStopDelivered,
+  moveTripStopPickupOrder,
+  moveTripStopDropoffOrder,
   setTripStatus,
   updateTrip,
   listJoinRequestsForTrip,
@@ -180,6 +185,20 @@ function TripDetailPage() {
     onError: (err) =>
       toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
   });
+  const movePickupMutation = useMutation({
+    mutationFn: (input: { stops: TripStopRow[]; stopId: string; direction: "up" | "down" }) =>
+      moveTripStopPickupOrder(input.stops, input.stopId, input.direction),
+    onSuccess: invalidateStops,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+  const moveDropoffMutation = useMutation({
+    mutationFn: (input: { stops: TripStopRow[]; stopId: string; direction: "up" | "down" }) =>
+      moveTripStopDropoffOrder(input.stops, input.stopId, input.direction),
+    onSuccess: invalidateStops,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
   const removeMutation = useMutation({
     mutationFn: removeTripStop,
     onSuccess: () => {
@@ -245,10 +264,21 @@ function TripDetailPage() {
 
   const pickedUpCount = stops.filter((s) => s.status !== "pending").length;
   const deliveredCount = stops.filter((s) => s.status === "delivered").length;
-  // "What's next" — the first stop, in planned order, that isn't fully done yet. Directly answers
-  // "what dog are we doing / what's next to drop off" from a glance at the top of the page instead
-  // of scanning the whole list.
-  const nextStop = stops.find((s) => s.status !== "delivered");
+  // Pickups and drop-offs are now two independent, independently-orderable queues (pickup_order/
+  // dropoff_order) instead of one combined stop_order — a stop leaves the Pickups queue once
+  // picked up, and leaves the Drop-offs queue once delivered, so "what's next" is a real answer on
+  // both sides instead of only ever tracking pickups.
+  const pickupStops = stops
+    .filter((s) => s.status === "pending")
+    .slice()
+    .sort((a, b) => a.pickup_order - b.pickup_order);
+  const dropoffStops = stops
+    .filter((s) => s.status === "picked_up")
+    .slice()
+    .sort((a, b) => a.dropoff_order - b.dropoff_order);
+  const completedStops = stops.filter((s) => s.status === "delivered");
+  const nextPickup = pickupStops[0];
+  const nextDelivery = dropoffStops[0];
 
   // Every phone number reachable from this trip, flattened into one callable list for the
   // Contacts tab — pickup/dropoff contacts already on each stop only (trip_stop_contacts, the
@@ -467,7 +497,7 @@ function TripDetailPage() {
           )}
 
           {stops.length > 0 && (
-            <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
+            <div className="mb-6 grid gap-4 grid-cols-2 sm:grid-cols-4">
               <div className="rounded-2xl border border-border/70 bg-card p-4">
                 <div className="text-xs text-muted-foreground">
                   {t("transportCompanyPanel.trips.progressPickedUp")}
@@ -486,15 +516,21 @@ function TripDetailPage() {
               </div>
               <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
                 <div className="text-xs text-muted-foreground">
-                  {t("transportCompanyPanel.trips.nextUp")}
+                  {t("transportCompanyPanel.trips.nextPickup")}
                 </div>
-                <div className="mt-1 font-display text-lg font-semibold">
-                  {nextStop
-                    ? `${nextStop.animal_label} — ${
-                        nextStop.status === "pending"
-                          ? t("transportCompanyPanel.trips.nextActionPickup")
-                          : t("transportCompanyPanel.trips.nextActionDropoff")
-                      }`
+                <div className="mt-1 font-display text-base font-semibold">
+                  {nextPickup
+                    ? nextPickup.animal_label
+                    : t("transportCompanyPanel.trips.nextUpDone")}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                <div className="text-xs text-muted-foreground">
+                  {t("transportCompanyPanel.trips.nextDelivery")}
+                </div>
+                <div className="mt-1 font-display text-base font-semibold">
+                  {nextDelivery
+                    ? nextDelivery.animal_label
                     : t("transportCompanyPanel.trips.nextUpDone")}
                 </div>
               </div>
@@ -526,6 +562,38 @@ function TripDetailPage() {
                       {...stopForm.register("animalLabel", { required: true })}
                     />
                   </div>
+
+                  {stops.length > 0 && (
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.copyPickupFromLabel")}</Label>
+                      <Select
+                        onValueChange={(stopId) => {
+                          const source = stops.find((s) => s.id === stopId);
+                          if (!source) return;
+                          stopForm.setValue("pickupMapsUrl", source.pickup_maps_url ?? "");
+                          stopForm.setValue("pickupAddressText", source.pickup_address_text ?? "");
+                          stopForm.setValue("pickupContactName", source.pickup_contact_name ?? "");
+                          stopForm.setValue(
+                            "pickupContactPhone",
+                            source.pickup_contact_phone ?? "",
+                          );
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={t("transportCompanyPanel.trips.copyPickupFromPlaceholder")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stops.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.animal_label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div>
                     <Label>{t("transportCompanyPanel.trips.fieldMicrochip")}</Label>
@@ -652,20 +720,117 @@ function TripDetailPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {stops.map((stop) => (
-                <StopCard
-                  key={stop.id}
-                  stop={stop}
-                  onOpenDetails={() => setDetailStopId(stop.id)}
-                  onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
-                  onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
-                  onRemove={() => removeMutation.mutate(stop.id)}
-                  markingPickedUp={pickedUpMutation.isPending}
-                  markingDelivered={deliveredMutation.isPending}
-                  removing={removeMutation.isPending}
-                />
-              ))}
+            <div className="space-y-6">
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                  {t("transportCompanyPanel.trips.pickupsQueueTitle")}
+                </h3>
+                {pickupStops.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("transportCompanyPanel.trips.nextUpDone")}
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {pickupStops.map((stop, i) => (
+                      <StopCard
+                        key={stop.id}
+                        stop={stop}
+                        onOpenDetails={() => setDetailStopId(stop.id)}
+                        onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
+                        onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
+                        onRemove={() => removeMutation.mutate(stop.id)}
+                        markingPickedUp={pickedUpMutation.isPending}
+                        markingDelivered={deliveredMutation.isPending}
+                        removing={removeMutation.isPending}
+                        onMoveUp={() =>
+                          movePickupMutation.mutate({
+                            stops: pickupStops,
+                            stopId: stop.id,
+                            direction: "up",
+                          })
+                        }
+                        onMoveDown={() =>
+                          movePickupMutation.mutate({
+                            stops: pickupStops,
+                            stopId: stop.id,
+                            direction: "down",
+                          })
+                        }
+                        moveUpDisabled={i === 0}
+                        moveDownDisabled={i === pickupStops.length - 1}
+                        moving={movePickupMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                  {t("transportCompanyPanel.trips.dropoffsQueueTitle")}
+                </h3>
+                {dropoffStops.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("transportCompanyPanel.trips.nextUpDone")}
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {dropoffStops.map((stop, i) => (
+                      <StopCard
+                        key={stop.id}
+                        stop={stop}
+                        onOpenDetails={() => setDetailStopId(stop.id)}
+                        onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
+                        onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
+                        onRemove={() => removeMutation.mutate(stop.id)}
+                        markingPickedUp={pickedUpMutation.isPending}
+                        markingDelivered={deliveredMutation.isPending}
+                        removing={removeMutation.isPending}
+                        onMoveUp={() =>
+                          moveDropoffMutation.mutate({
+                            stops: dropoffStops,
+                            stopId: stop.id,
+                            direction: "up",
+                          })
+                        }
+                        onMoveDown={() =>
+                          moveDropoffMutation.mutate({
+                            stops: dropoffStops,
+                            stopId: stop.id,
+                            direction: "down",
+                          })
+                        }
+                        moveUpDisabled={i === 0}
+                        moveDownDisabled={i === dropoffStops.length - 1}
+                        moving={moveDropoffMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {completedStops.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                    {t("transportCompanyPanel.trips.completedQueueTitle")}
+                  </h3>
+                  <div className="space-y-3">
+                    {completedStops.map((stop) => (
+                      <StopCard
+                        key={stop.id}
+                        stop={stop}
+                        onOpenDetails={() => setDetailStopId(stop.id)}
+                        onMarkPickedUp={() => pickedUpMutation.mutate(stop.id)}
+                        onMarkDelivered={() => deliveredMutation.mutate(stop.id)}
+                        onRemove={() => removeMutation.mutate(stop.id)}
+                        markingPickedUp={pickedUpMutation.isPending}
+                        markingDelivered={deliveredMutation.isPending}
+                        removing={removeMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
@@ -815,6 +980,11 @@ function StopCard({
   markingPickedUp,
   markingDelivered,
   removing,
+  onMoveUp,
+  onMoveDown,
+  moveUpDisabled,
+  moveDownDisabled,
+  moving,
 }: {
   stop: TripStopRow;
   onOpenDetails: () => void;
@@ -824,6 +994,11 @@ function StopCard({
   markingPickedUp: boolean;
   markingDelivered: boolean;
   removing: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  moveUpDisabled?: boolean;
+  moveDownDisabled?: boolean;
+  moving?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -843,6 +1018,26 @@ function StopCard({
           </Badge>
         </button>
         <div className="flex items-center gap-1">
+          {onMoveUp && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={moveUpDisabled || moving}
+              onClick={onMoveUp}
+            >
+              <ChevronUp className="size-4" />
+            </Button>
+          )}
+          {onMoveDown && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={moveDownDisabled || moving}
+              onClick={onMoveDown}
+            >
+              <ChevronDown className="size-4" />
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={onOpenDetails}>
             <Info className="mr-1 size-4" /> {t("transportCompanyPanel.trips.viewDetails")}
           </Button>

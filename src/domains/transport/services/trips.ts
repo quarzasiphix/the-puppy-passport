@@ -89,39 +89,92 @@ export async function setTripStatus(tripId: string, status: TripStatus): Promise
   await updateTrip(tripId, { status });
 }
 
+// Ordered by pickup_order by default — callers that need the drop-off sequence sort this list
+// client-side by dropoff_order instead (see trips.$tripId.tsx), rather than issuing a second query
+// for the same rows.
 export async function listTripStops(tripId: string): Promise<TripStopRow[]> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("trip_stops")
     .select("*")
     .eq("trip_id", tripId)
-    .order("stop_order", { ascending: true });
+    .order("pickup_order", { ascending: true });
   if (error) throw error;
   return data as TripStopRow[];
 }
 
-// Appends at the end of the trip's current stop order — the common case (adding dogs to the plan
-// as they're confirmed), not a general reordering tool. `stop_order` starts at 1.
+// Appends at the end of the trip's current pickup AND drop-off order — the common case (adding
+// dogs to the plan as they're confirmed), not a general reordering tool. Both sequences start a
+// new stop off at "last," same as the single stop_order this replaced used to.
 export async function addTripStop(
   tripId: string,
-  payload: Omit<TripStopInsert, "trip_id" | "stop_order">,
+  payload: Omit<TripStopInsert, "trip_id" | "pickup_order" | "dropoff_order">,
 ): Promise<TripStopRow> {
   const supabase = getSupabaseBrowserClient();
   const { data: existing, error: existingError } = await supabase
     .from("trip_stops")
-    .select("stop_order")
-    .eq("trip_id", tripId)
-    .order("stop_order", { ascending: false })
-    .limit(1);
+    .select("pickup_order, dropoff_order")
+    .eq("trip_id", tripId);
   if (existingError) throw existingError;
-  const nextOrder = (existing?.[0]?.stop_order ?? 0) + 1;
+  const nextPickupOrder = Math.max(0, ...(existing ?? []).map((s) => s.pickup_order)) + 1;
+  const nextDropoffOrder = Math.max(0, ...(existing ?? []).map((s) => s.dropoff_order)) + 1;
   const { data, error } = await supabase
     .from("trip_stops")
-    .insert({ ...payload, trip_id: tripId, stop_order: nextOrder })
+    .insert({
+      ...payload,
+      trip_id: tripId,
+      pickup_order: nextPickupOrder,
+      dropoff_order: nextDropoffOrder,
+    })
     .select()
     .single();
   if (error) throw error;
   return data as TripStopRow;
+}
+
+// Swaps two rows' pickup_order (or dropoff_order) — no unique constraint on either column (see
+// this feature's own migration header), so a plain two-step swap is safe, unlike the
+// UNIQUE-constrained stop_order this replaced.
+async function swapTripStopOrder(
+  stops: TripStopRow[],
+  stopId: string,
+  direction: "up" | "down",
+  column: "pickup_order" | "dropoff_order",
+): Promise<void> {
+  const index = stops.findIndex((s) => s.id === stopId);
+  const swapWith = direction === "up" ? index - 1 : index + 1;
+  if (index === -1 || swapWith < 0 || swapWith >= stops.length) return;
+  const supabase = getSupabaseBrowserClient();
+  const a = stops[index];
+  const b = stops[swapWith];
+  const patchFor = (value: number): TripStopUpdate =>
+    column === "pickup_order" ? { pickup_order: value } : { dropoff_order: value };
+  const { error } = await supabase.from("trip_stops").update(patchFor(b[column])).eq("id", a.id);
+  if (error) throw error;
+  const { error: error2 } = await supabase
+    .from("trip_stops")
+    .update(patchFor(a[column]))
+    .eq("id", b.id);
+  if (error2) throw error2;
+}
+
+// `stops` must already be sorted by the sequence being reordered (pickup_order or dropoff_order
+// respectively) — same "caller provides the current order" contract routes.ts's moveRouteStop
+// always used.
+export async function moveTripStopPickupOrder(
+  stops: TripStopRow[],
+  stopId: string,
+  direction: "up" | "down",
+): Promise<void> {
+  await swapTripStopOrder(stops, stopId, direction, "pickup_order");
+}
+
+export async function moveTripStopDropoffOrder(
+  stops: TripStopRow[],
+  stopId: string,
+  direction: "up" | "down",
+): Promise<void> {
+  await swapTripStopOrder(stops, stopId, direction, "dropoff_order");
 }
 
 export async function updateTripStop(stopId: string, patch: TripStopUpdate): Promise<void> {

@@ -4576,6 +4576,7 @@ export type Database = {
           dropoff_contact_phone: string | null
           dropoff_maps_url: string | null
           dropoff_notes: string | null
+          dropoff_order: number
           id: string
           microchip_number: string | null
           pickup_address_text: string | null
@@ -4583,9 +4584,9 @@ export type Database = {
           pickup_contact_phone: string | null
           pickup_maps_url: string | null
           pickup_notes: string | null
+          pickup_order: number
           planned_time: string | null
           route_id: string
-          stop_order: number
           stop_type: Database["public"]["Enums"]["route_stop_type"]
           transport_request_id: string | null
         }
@@ -4598,6 +4599,7 @@ export type Database = {
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
+          dropoff_order: number
           id?: string
           microchip_number?: string | null
           pickup_address_text?: string | null
@@ -4605,9 +4607,9 @@ export type Database = {
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null
           pickup_notes?: string | null
+          pickup_order: number
           planned_time?: string | null
           route_id: string
-          stop_order: number
           stop_type?: Database["public"]["Enums"]["route_stop_type"]
           transport_request_id?: string | null
         }
@@ -4620,6 +4622,7 @@ export type Database = {
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
+          dropoff_order?: number
           id?: string
           microchip_number?: string | null
           pickup_address_text?: string | null
@@ -4627,9 +4630,9 @@ export type Database = {
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null
           pickup_notes?: string | null
+          pickup_order?: number
           planned_time?: string | null
           route_id?: string
-          stop_order?: number
           stop_type?: Database["public"]["Enums"]["route_stop_type"]
           transport_request_id?: string | null
         }
@@ -6167,6 +6170,7 @@ export type Database = {
           dropoff_contact_phone: string | null
           dropoff_maps_url: string | null
           dropoff_notes: string | null
+          dropoff_order: number
           id: string
           microchip_number: string | null
           picked_up_at: string | null
@@ -6175,8 +6179,8 @@ export type Database = {
           pickup_contact_phone: string | null
           pickup_maps_url: string | null
           pickup_notes: string | null
+          pickup_order: number
           status: Database["public"]["Enums"]["trip_stop_status"]
-          stop_order: number
           transport_request_id: string | null
           trip_id: string
           updated_at: string
@@ -6190,6 +6194,7 @@ export type Database = {
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
+          dropoff_order: number
           id?: string
           microchip_number?: string | null
           picked_up_at?: string | null
@@ -6198,8 +6203,8 @@ export type Database = {
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null
           pickup_notes?: string | null
+          pickup_order: number
           status?: Database["public"]["Enums"]["trip_stop_status"]
-          stop_order: number
           transport_request_id?: string | null
           trip_id: string
           updated_at?: string
@@ -6213,6 +6218,7 @@ export type Database = {
           dropoff_contact_phone?: string | null
           dropoff_maps_url?: string | null
           dropoff_notes?: string | null
+          dropoff_order?: number
           id?: string
           microchip_number?: string | null
           picked_up_at?: string | null
@@ -6221,8 +6227,8 @@ export type Database = {
           pickup_contact_phone?: string | null
           pickup_maps_url?: string | null
           pickup_notes?: string | null
+          pickup_order?: number
           status?: Database["public"]["Enums"]["trip_stop_status"]
-          stop_order?: number
           transport_request_id?: string | null
           trip_id?: string
           updated_at?: string

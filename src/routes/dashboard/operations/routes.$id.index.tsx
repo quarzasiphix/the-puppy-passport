@@ -42,7 +42,8 @@ import {
   listRouteAssignments,
   listRouteStopContacts,
   listVehicles,
-  moveRouteStop,
+  moveRouteStopPickupOrder,
+  moveRouteStopDropoffOrder,
   removeRouteStop,
   removeRouteStopContact,
   updateRoute,
@@ -314,9 +315,15 @@ function RouteDetail() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not remove stop."),
   });
 
-  const moveStopMutation = useMutation({
-    mutationFn: (input: { stopId: string; direction: "up" | "down" }) =>
-      moveRouteStop(stopsQuery.data ?? [], input.stopId, input.direction),
+  const movePickupMutation = useMutation({
+    mutationFn: (input: { stops: RouteStopRow[]; stopId: string; direction: "up" | "down" }) =>
+      moveRouteStopPickupOrder(input.stops, input.stopId, input.direction),
+    onSuccess: invalidateStops,
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not reorder stops."),
+  });
+  const moveDropoffMutation = useMutation({
+    mutationFn: (input: { stops: RouteStopRow[]; stopId: string; direction: "up" | "down" }) =>
+      moveRouteStopDropoffOrder(input.stops, input.stopId, input.direction),
     onSuccess: invalidateStops,
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not reorder stops."),
   });
@@ -346,6 +353,16 @@ function RouteDetail() {
   );
   const selectedCandidate = candidates.find((c) => c.id === pickerRequestId);
   const warnings = selectedCandidate ? checkRouteCompatibility(route, selectedCandidate) : [];
+
+  // Two independent planning sequences instead of one combined stop_order — pickup_order and
+  // dropoff_order can now interleave however the real circuit runs. Rest/fuel stops only carry a
+  // pickup leg conceptually, so they're sequenced in the pickup list only.
+  const allStops = stopsQuery.data ?? [];
+  const pickupOrderedStops = allStops.slice().sort((a, b) => a.pickup_order - b.pickup_order);
+  const dropoffOrderedStops = allStops
+    .filter((s) => s.stop_type !== "rest")
+    .slice()
+    .sort((a, b) => a.dropoff_order - b.dropoff_order);
 
   return (
     <div>
@@ -605,6 +622,38 @@ function RouteDetail() {
                       />
                     </div>
 
+                    {allStops.filter((s) => s.id !== editingStop?.id).length > 0 && (
+                      <div>
+                        <Label className="text-xs">Copy pickup from… (optional)</Label>
+                        <Select
+                          onValueChange={(stopId) => {
+                            const source = allStops.find((s) => s.id === stopId);
+                            if (!source) return;
+                            setStopForm((f) => ({
+                              ...f,
+                              pickupMapsUrl: source.pickup_maps_url ?? "",
+                              pickupAddressText: source.pickup_address_text ?? "",
+                              pickupContactName: source.pickup_contact_name ?? "",
+                              pickupContactPhone: source.pickup_contact_phone ?? "",
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Same address as another animal?" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allStops
+                              .filter((s) => s.id !== editingStop?.id)
+                              .map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  {s.animal_label || `${s.city ?? "?"}, ${s.country ?? "?"}`}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="space-y-3 rounded-xl border border-border/60 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Pickup
@@ -804,22 +853,74 @@ function RouteDetail() {
         {!stopsQuery.data?.length ? (
           <p className="text-sm text-muted-foreground">No stops planned yet.</p>
         ) : (
-          <div className="space-y-3">
-            {stopsQuery.data.map((s, i) => (
-              <RouteStopCard
-                key={s.id}
-                routeId={id}
-                stop={s}
-                isFirst={i === 0}
-                isLast={i === stopsQuery.data.length - 1}
-                onMoveUp={() => moveStopMutation.mutate({ stopId: s.id, direction: "up" })}
-                onMoveDown={() => moveStopMutation.mutate({ stopId: s.id, direction: "down" })}
-                onEdit={() => openEditStop(s)}
-                onRemove={() => removeStopMutation.mutate(s.id)}
-                moving={moveStopMutation.isPending}
-                removing={removeStopMutation.isPending}
-              />
-            ))}
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Pickup order</h3>
+              <div className="space-y-3">
+                {pickupOrderedStops.map((s, i) => (
+                  <RouteStopCard
+                    key={s.id}
+                    routeId={id}
+                    stop={s}
+                    isFirst={i === 0}
+                    isLast={i === pickupOrderedStops.length - 1}
+                    onMoveUp={() =>
+                      movePickupMutation.mutate({
+                        stops: pickupOrderedStops,
+                        stopId: s.id,
+                        direction: "up",
+                      })
+                    }
+                    onMoveDown={() =>
+                      movePickupMutation.mutate({
+                        stops: pickupOrderedStops,
+                        stopId: s.id,
+                        direction: "down",
+                      })
+                    }
+                    onEdit={() => openEditStop(s)}
+                    onRemove={() => removeStopMutation.mutate(s.id)}
+                    moving={movePickupMutation.isPending}
+                    removing={removeStopMutation.isPending}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {dropoffOrderedStops.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Drop-off order</h3>
+                <div className="space-y-3">
+                  {dropoffOrderedStops.map((s, i) => (
+                    <RouteStopCard
+                      key={s.id}
+                      routeId={id}
+                      stop={s}
+                      isFirst={i === 0}
+                      isLast={i === dropoffOrderedStops.length - 1}
+                      onMoveUp={() =>
+                        moveDropoffMutation.mutate({
+                          stops: dropoffOrderedStops,
+                          stopId: s.id,
+                          direction: "up",
+                        })
+                      }
+                      onMoveDown={() =>
+                        moveDropoffMutation.mutate({
+                          stops: dropoffOrderedStops,
+                          stopId: s.id,
+                          direction: "down",
+                        })
+                      }
+                      onEdit={() => openEditStop(s)}
+                      onRemove={() => removeStopMutation.mutate(s.id)}
+                      moving={moveDropoffMutation.isPending}
+                      removing={removeStopMutation.isPending}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
