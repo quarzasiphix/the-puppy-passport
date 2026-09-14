@@ -29,12 +29,21 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+// Lets a copyable "sign-up link" prefill the email — e.g. the ops/transport-company "Copy sign-up
+// link" button for a driver whose account doesn't exist yet (dashboard/operations/drivers.$id.tsx).
+// Purely a convenience default; never trusted for anything (the real account is still created
+// however signUp() normally works). Same zod-optional shape as signin.tsx's own searchSchema, so
+// every existing `<Link to="/signup">` elsewhere stays search-optional.
+const searchSchema = z.object({ email: z.string().optional() });
+
 export const Route = createFileRoute("/_public/signup")({
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: "Create an account — Anemalo" }] }),
   component: SignUp,
 });
 
 function SignUp() {
+  const { email: prefillEmail } = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const posthog = usePostHog();
@@ -50,7 +59,7 @@ function SignUp() {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      email: "",
+      email: prefillEmail ?? "",
       password: "",
       firstName: "",
       lastName: "",

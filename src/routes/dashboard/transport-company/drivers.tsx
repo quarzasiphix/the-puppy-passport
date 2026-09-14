@@ -17,7 +17,7 @@ import {
 } from "@/shared/ui/dialog";
 import { useAuth } from "@/domains/identity";
 import { getMyTransportCompany } from "@/domains/breeders";
-import { createDriver, listDrivers, resolveProfileIdByEmail } from "@/domains/transport";
+import { createDriver, linkDriverAccount, listDrivers } from "@/domains/transport";
 import { getFriendlyErrorMessage } from "@/shared/lib/errors";
 import { useTranslation } from "@/shared/i18n";
 
@@ -47,14 +47,14 @@ function DriversPage() {
   const form = useForm<FormValues>({ defaultValues: { name: "", contact: "", loginEmail: "" } });
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) =>
-      createDriver({
+    mutationFn: async (values: FormValues) => {
+      const id = await createDriver({
         organization_id: companyQuery.data!.id,
         name: values.name,
         contact: values.contact || null,
-        login_email: values.loginEmail || null,
-        profile_id: await resolveProfileIdByEmail(values.loginEmail),
-      }),
+      });
+      if (values.loginEmail) await linkDriverAccount(id, values.loginEmail);
+    },
     onSuccess: () => {
       toast.success(t("transportCompanyPanel.drivers.addedToast"));
       setOpen(false);

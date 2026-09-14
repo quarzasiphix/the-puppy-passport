@@ -1263,6 +1263,68 @@ export type Database = {
           },
         ]
       }
+      driver_reviews: {
+        Row: {
+          animal_as_described: boolean | null
+          comment: string | null
+          created_at: string
+          id: string
+          paperwork_ok: boolean | null
+          pickup_access_ok: boolean | null
+          reviewer_profile_id: string
+          transport_request_id: string
+        }
+        Insert: {
+          animal_as_described?: boolean | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          paperwork_ok?: boolean | null
+          pickup_access_ok?: boolean | null
+          reviewer_profile_id: string
+          transport_request_id: string
+        }
+        Update: {
+          animal_as_described?: boolean | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          paperwork_ok?: boolean | null
+          pickup_access_ok?: boolean | null
+          reviewer_profile_id?: string
+          transport_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_reviews_reviewer_profile_id_fkey"
+            columns: ["reviewer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: true
+            referencedRelation: "driver_transport_job_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: true
+            referencedRelation: "public_transport_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_transport_request_id_fkey"
+            columns: ["transport_request_id"]
+            isOneToOne: true
+            referencedRelation: "transport_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           availability_status: string | null
@@ -7289,6 +7351,10 @@ export type Database = {
       }
       last_auth_at: { Args: never; Returns: string }
       leave_organisation: { Args: { p_org_id: string }; Returns: undefined }
+      link_driver_account: {
+        Args: { p_driver_id: string; p_login_email: string }
+        Returns: undefined
+      }
       mark_reservation_payout_paid: {
         Args: { p_payout_id: string; p_payout_reference?: string }
         Returns: undefined
