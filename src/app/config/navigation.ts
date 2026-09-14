@@ -35,6 +35,7 @@ import {
   Network,
   ShieldCheck,
   Shuffle,
+  Milestone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { DashboardNavItem } from "@/app/layouts/dashboard-shell";
@@ -256,6 +257,7 @@ export const operationsNav: DashboardNavItem[] = [
   { to: "/dashboard/operations/review-queue", label: "Review queue", icon: ClipboardCheck },
   { to: "/dashboard/operations/quotations", label: "Quotations", icon: Receipt },
   { to: "/dashboard/operations/routes", label: "Planned routes", icon: RouteIcon },
+  { to: "/dashboard/operations/trips", label: "Company trips", icon: Milestone },
   { to: "/dashboard/operations/profitability", label: "Profitability", icon: TrendingUp },
   { to: "/dashboard/operations/payouts", label: "Payouts", icon: Coins },
   { to: "/dashboard/operations/active", label: "Active transports", icon: Truck },

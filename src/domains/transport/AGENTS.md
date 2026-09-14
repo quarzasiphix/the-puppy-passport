@@ -200,6 +200,23 @@ drag-and-drop library). All plain table operations, no new RPC — `"ops staff m
 (type/city/country/planned time, and — for pickup/dropoff only, hidden for a plain rest stop —
 animal/address/maps link/contact).
 
+## Ops trips oversight (added 2026-09-14)
+
+Transport-company Trips were only ever visible to that company's own members or a true
+`is_admin()` — the broader `"operations"` role (everyone on the day-to-day ops dashboard) had zero
+RLS access to any company's trip data. `20260923000000_ops_staff_manage_all_trips.sql` adds
+`"ops staff manage all trips"`/`"ops staff manage all trip stops"` (`is_ops_staff()`, same pattern
+as every other ops-wide policy in this domain) — deliberately scoped to `trips`/`trip_stops` only,
+not `trip_join_requests` or the public-listing columns, so the company-facing join-request/public-
+visibility workflow stays that company's own decision, not something ops reaches into.
+
+Every function in `services/trips.ts` (`getTrip`, `listTripStops`, `updateTrip`, `setTripStatus`,
+`addTripStop`/`updateTripStop`/`removeTripStop`, `markStopPickedUp`/`markStopDelivered`) is already
+a plain RLS-scoped table call with no client-side org filter — so the new ops pages
+(`operations/trips.tsx` list, `operations/trips.$id.tsx` detail) reuse them completely unchanged;
+the only new function is `listOpsTrips()`, which joins `organisations(name)` since a single ops
+list now spans many companies (`listMyTrips()` itself stays untouched/company-scoped).
+
 ## Related docs
 
 - `docs/DOMAIN_MODEL.md` — the full transport data model (largest section in that doc), the
@@ -210,6 +227,11 @@ animal/address/maps link/contact).
   trigger design; not read directly in this pass.
 
 ## Last significant change
+
+2026-09-14 (fifth pass): ops route field/status editing (route name, dates, destinations,
+capacity, and a status dropdown, all on `routes.$id.tsx` — completing the "full custom route" CRUD
+alongside the fourth pass's stop editor) plus full ops oversight of transport-company Trips (see
+"Ops trips oversight" above). New migration: `20260923000000_ops_staff_manage_all_trips.sql`.
 
 2026-09-14 (fourth pass): ops route planning — vehicle/driver assignment and a full stop editor
 on `routes.$id.tsx` (see "Ops route planning" above). New migration:

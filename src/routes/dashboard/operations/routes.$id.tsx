@@ -8,9 +8,11 @@ import {
   ChevronUp,
   MapPin,
   Pencil,
+  Phone,
   Plus,
   Trash2,
   TriangleAlert,
+  UserPlus,
 } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { Badge } from "@/shared/ui/badge";
@@ -29,15 +31,19 @@ import {
 import { listOpsTransportRequests } from "@/domains/operations";
 import {
   addRouteStop,
+  addRouteStopContact,
   assignRequestToRoute,
   checkRouteCompatibility,
+  ContactPicker,
   getRoute,
   listDrivers,
   listOpsRouteStops,
   listRouteAssignments,
+  listRouteStopContacts,
   listVehicles,
   moveRouteStop,
   removeRouteStop,
+  removeRouteStopContact,
   updateRoute,
   updateRouteStop,
   type RouteStopRow,
@@ -48,44 +54,82 @@ export const Route = createFileRoute("/dashboard/operations/routes/$id")({
   component: RouteDetail,
 });
 
+type RouteDetailsFormValues = {
+  routeName: string;
+  departureDate: string;
+  originCountry: string;
+  destinationCountries: string;
+  maxCapacity: string;
+};
+
+const routeStatusOptions: Database["public"]["Enums"]["route_status"][] = [
+  "planning",
+  "confirmed",
+  "in_progress",
+  "completed",
+  "cancelled",
+];
+
+// route_stop_type keeps its original 'pickup'/'dropoff'/'rest' values at the database layer, but
+// since every animal stop now carries BOTH a pickup leg and a dropoff leg on the same row (the
+// trip_stops shape), the pickup/dropoff distinction is no longer meaningful here — the only real
+// choice ops makes is "an animal is being handled at this stop" (stored as 'pickup', arbitrarily)
+// vs "this is just a rest/fuel stop" ('rest').
+type StopKind = "animal" | "rest";
+
 type StopFormValues = {
-  stopType: Database["public"]["Enums"]["route_stop_type"];
+  kind: StopKind;
   city: string;
   country: string;
   plannedTime: string;
   animalLabel: string;
-  addressText: string;
-  mapsUrl: string;
-  contactName: string;
-  contactPhone: string;
-  notes: string;
+  pickupMapsUrl: string;
+  pickupAddressText: string;
+  pickupContactName: string;
+  pickupContactPhone: string;
+  pickupNotes: string;
+  dropoffMapsUrl: string;
+  dropoffAddressText: string;
+  dropoffContactName: string;
+  dropoffContactPhone: string;
+  dropoffNotes: string;
 };
 
 const EMPTY_STOP_FORM: StopFormValues = {
-  stopType: "pickup",
+  kind: "animal",
   city: "",
   country: "",
   plannedTime: "",
   animalLabel: "",
-  addressText: "",
-  mapsUrl: "",
-  contactName: "",
-  contactPhone: "",
-  notes: "",
+  pickupMapsUrl: "",
+  pickupAddressText: "",
+  pickupContactName: "",
+  pickupContactPhone: "",
+  pickupNotes: "",
+  dropoffMapsUrl: "",
+  dropoffAddressText: "",
+  dropoffContactName: "",
+  dropoffContactPhone: "",
+  dropoffNotes: "",
 };
 
 function stopFormFromRow(s: RouteStopRow): StopFormValues {
   return {
-    stopType: s.stop_type,
+    kind: s.stop_type === "rest" ? "rest" : "animal",
     city: s.city ?? "",
     country: s.country ?? "",
     plannedTime: s.planned_time ? s.planned_time.slice(0, 16) : "",
     animalLabel: s.animal_label ?? "",
-    addressText: s.address_text ?? "",
-    mapsUrl: s.maps_url ?? "",
-    contactName: s.contact_name ?? "",
-    contactPhone: s.contact_phone ?? "",
-    notes: s.notes ?? "",
+    pickupMapsUrl: s.pickup_maps_url ?? "",
+    pickupAddressText: s.pickup_address_text ?? "",
+    pickupContactName: s.pickup_contact_name ?? "",
+    pickupContactPhone: s.pickup_contact_phone ?? "",
+    pickupNotes: s.pickup_notes ?? "",
+    dropoffMapsUrl: s.dropoff_maps_url ?? "",
+    dropoffAddressText: s.dropoff_address_text ?? "",
+    dropoffContactName: s.dropoff_contact_name ?? "",
+    dropoffContactPhone: s.dropoff_contact_phone ?? "",
+    dropoffNotes: s.dropoff_notes ?? "",
   };
 }
 
@@ -94,6 +138,8 @@ function RouteDetail() {
   const queryClient = useQueryClient();
   const posthog = usePostHog();
   const [pickerRequestId, setPickerRequestId] = useState<string>("");
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsForm, setDetailsForm] = useState<RouteDetailsFormValues | null>(null);
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [editingStop, setEditingStop] = useState<RouteStopRow | null>(null);
   const [stopForm, setStopForm] = useState<StopFormValues>(EMPTY_STOP_FORM);
@@ -143,19 +189,67 @@ function RouteDetail() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update route."),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: (status: Database["public"]["Enums"]["route_status"]) =>
+      updateRoute(id, { status }),
+    onSuccess: () => {
+      toast.success("Status updated.");
+      invalidateRoute();
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update status."),
+  });
+
+  const detailsMutation = useMutation({
+    mutationFn: (values: RouteDetailsFormValues) =>
+      updateRoute(id, {
+        route_name: values.routeName,
+        departure_date: values.departureDate || null,
+        origin_country: values.originCountry || null,
+        destination_countries: values.destinationCountries
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean),
+        max_capacity: Number(values.maxCapacity) || 1,
+      }),
+    onSuccess: () => {
+      toast.success("Route details updated.");
+      setDetailsDialogOpen(false);
+      invalidateRoute();
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update route."),
+  });
+
+  const openEditDetails = () => {
+    if (!routeQuery.data) return;
+    const r = routeQuery.data;
+    setDetailsForm({
+      routeName: r.route_name,
+      departureDate: r.departure_date ?? "",
+      originCountry: r.origin_country ?? "",
+      destinationCountries: r.destination_countries.join(", "),
+      maxCapacity: String(r.max_capacity),
+    });
+    setDetailsDialogOpen(true);
+  };
+
   const stopMutation = useMutation({
     mutationFn: (values: StopFormValues) => {
       const payload = {
-        stop_type: values.stopType,
+        stop_type: values.kind === "rest" ? ("rest" as const) : ("pickup" as const),
         city: values.city || null,
         country: values.country || null,
         planned_time: values.plannedTime ? new Date(values.plannedTime).toISOString() : null,
-        animal_label: values.animalLabel || null,
-        address_text: values.addressText || null,
-        maps_url: values.mapsUrl || null,
-        contact_name: values.contactName || null,
-        contact_phone: values.contactPhone || null,
-        notes: values.notes || null,
+        animal_label: values.kind === "animal" ? values.animalLabel || null : null,
+        pickup_maps_url: values.pickupMapsUrl || null,
+        pickup_address_text: values.pickupAddressText || null,
+        pickup_contact_name: values.pickupContactName || null,
+        pickup_contact_phone: values.pickupContactPhone || null,
+        pickup_notes: values.pickupNotes || null,
+        dropoff_maps_url: values.dropoffMapsUrl || null,
+        dropoff_address_text: values.dropoffAddressText || null,
+        dropoff_contact_name: values.dropoffContactName || null,
+        dropoff_contact_phone: values.dropoffContactPhone || null,
+        dropoff_notes: values.dropoffNotes || null,
       };
       return editingStop ? updateRouteStop(editingStop.id, payload) : addRouteStop(id, payload);
     },
@@ -167,6 +261,42 @@ function RouteDetail() {
       invalidateStops();
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not save this stop."),
+  });
+
+  // Extra contacts (beyond the primary pickup/dropoff pair) only make sense once a stop already
+  // exists, so this query/mutation pair is scoped to whichever stop is currently being edited.
+  const stopContactsQuery = useQuery({
+    queryKey: ["route-stop-contacts", editingStop?.id],
+    enabled: !!editingStop,
+    queryFn: () => listRouteStopContacts(editingStop!.id),
+  });
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
+  const [newContactRole, setNewContactRole] = useState("");
+
+  const invalidateStopContacts = () =>
+    queryClient.invalidateQueries({ queryKey: ["route-stop-contacts", editingStop?.id] });
+
+  const addContactMutation = useMutation({
+    mutationFn: () =>
+      addRouteStopContact(editingStop!.id, {
+        contact_name: newContactName,
+        contact_phone: newContactPhone || null,
+        role_label: newContactRole || null,
+      }),
+    onSuccess: () => {
+      setNewContactName("");
+      setNewContactPhone("");
+      setNewContactRole("");
+      invalidateStopContacts();
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not add contact."),
+  });
+
+  const removeContactMutation = useMutation({
+    mutationFn: (contactId: string) => removeRouteStopContact(contactId),
+    onSuccess: invalidateStopContacts,
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not remove contact."),
   });
 
   const removeStopMutation = useMutation({
@@ -222,7 +352,12 @@ function RouteDetail() {
 
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-medium">{route.route_name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-2xl font-medium">{route.route_name}</h1>
+            <Button size="sm" variant="ghost" onClick={openEditDetails}>
+              <Pencil className="size-4" />
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             {route.route_number} · {route.origin_country ?? "?"} →{" "}
             {route.destination_countries.join(", ") || "?"}
@@ -230,10 +365,97 @@ function RouteDetail() {
               ` · Departs ${new Date(route.departure_date).toLocaleDateString("en-GB")}`}
           </p>
         </div>
-        <Badge variant="secondary" className="capitalize">
-          {route.status}
-        </Badge>
+        <Select
+          value={route.status}
+          onValueChange={(v) =>
+            statusMutation.mutate(v as Database["public"]["Enums"]["route_status"])
+          }
+        >
+          <SelectTrigger className="w-40 capitalize">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {routeStatusOptions.map((s) => (
+              <SelectItem key={s} value={s} className="capitalize">
+                {s.replace(/_/g, " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </header>
+
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit route</DialogTitle>
+          </DialogHeader>
+          {detailsForm && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                detailsMutation.mutate(detailsForm);
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <Label className="text-xs">Route name</Label>
+                <Input
+                  value={detailsForm.routeName}
+                  onChange={(e) =>
+                    setDetailsForm((f) => (f ? { ...f, routeName: e.target.value } : f))
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Departure date</Label>
+                  <Input
+                    type="date"
+                    value={detailsForm.departureDate}
+                    onChange={(e) =>
+                      setDetailsForm((f) => (f ? { ...f, departureDate: e.target.value } : f))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Max capacity</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={detailsForm.maxCapacity}
+                    onChange={(e) =>
+                      setDetailsForm((f) => (f ? { ...f, maxCapacity: e.target.value } : f))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Origin country</Label>
+                  <Input
+                    value={detailsForm.originCountry}
+                    onChange={(e) =>
+                      setDetailsForm((f) => (f ? { ...f, originCountry: e.target.value } : f))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Destination countries (comma separated)</Label>
+                  <Input
+                    value={detailsForm.destinationCountries}
+                    onChange={(e) =>
+                      setDetailsForm((f) =>
+                        f ? { ...f, destinationCountries: e.target.value } : f,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={detailsMutation.isPending}>
+                Save changes
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="mb-6 rounded-xl border border-border/70 bg-card p-4">
         <div className="flex items-center justify-between text-sm">
@@ -312,7 +534,7 @@ function RouteDetail() {
                 <Plus className="mr-1 size-4" /> Add stop
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingStop ? "Edit stop" : "Add stop"}</DialogTitle>
               </DialogHeader>
@@ -321,26 +543,20 @@ function RouteDetail() {
                   e.preventDefault();
                   stopMutation.mutate(stopForm);
                 }}
-                className="space-y-3"
+                className="space-y-4"
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Type</Label>
+                    <Label className="text-xs">Kind</Label>
                     <Select
-                      value={stopForm.stopType}
-                      onValueChange={(v) =>
-                        setStopForm((f) => ({
-                          ...f,
-                          stopType: v as Database["public"]["Enums"]["route_stop_type"],
-                        }))
-                      }
+                      value={stopForm.kind}
+                      onValueChange={(v) => setStopForm((f) => ({ ...f, kind: v as StopKind }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pickup">Pickup</SelectItem>
-                        <SelectItem value="dropoff">Dropoff</SelectItem>
+                        <SelectItem value="animal">Animal pickup/dropoff</SelectItem>
                         <SelectItem value="rest">Rest / fuel stop</SelectItem>
                       </SelectContent>
                     </Select>
@@ -368,8 +584,9 @@ function RouteDetail() {
                     />
                   </div>
                 </div>
-                {stopForm.stopType !== "rest" && (
-                  <div className="space-y-3 rounded-xl border border-border/60 p-3">
+
+                {stopForm.kind === "animal" && (
+                  <>
                     <div>
                       <Label className="text-xs">Animal</Label>
                       <Input
@@ -378,59 +595,172 @@ function RouteDetail() {
                         onChange={(e) =>
                           setStopForm((f) => ({ ...f, animalLabel: e.target.value }))
                         }
+                        required
                       />
                     </div>
-                    <div>
-                      <Label className="text-xs">Address</Label>
+
+                    <div className="space-y-3 rounded-xl border border-border/60 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Pickup
+                      </p>
                       <Input
-                        value={stopForm.addressText}
+                        placeholder="https://maps.google.com/…"
+                        value={stopForm.pickupMapsUrl}
                         onChange={(e) =>
-                          setStopForm((f) => ({ ...f, addressText: e.target.value }))
+                          setStopForm((f) => ({ ...f, pickupMapsUrl: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="Address"
+                        value={stopForm.pickupAddressText}
+                        onChange={(e) =>
+                          setStopForm((f) => ({ ...f, pickupAddressText: e.target.value }))
+                        }
+                      />
+                      <ContactPicker
+                        organizationId={null}
+                        name={stopForm.pickupContactName}
+                        phone={stopForm.pickupContactPhone}
+                        onChange={({ name, phone }) =>
+                          setStopForm((f) => ({
+                            ...f,
+                            pickupContactName: name,
+                            pickupContactPhone: phone,
+                          }))
+                        }
+                      />
+                      <Textarea
+                        rows={2}
+                        placeholder="Notes"
+                        value={stopForm.pickupNotes}
+                        onChange={(e) =>
+                          setStopForm((f) => ({ ...f, pickupNotes: e.target.value }))
                         }
                       />
                     </div>
-                    <div>
-                      <Label className="text-xs">Maps link</Label>
+
+                    <div className="space-y-3 rounded-xl border border-border/60 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Dropoff
+                      </p>
                       <Input
                         placeholder="https://maps.google.com/…"
-                        value={stopForm.mapsUrl}
-                        onChange={(e) => setStopForm((f) => ({ ...f, mapsUrl: e.target.value }))}
+                        value={stopForm.dropoffMapsUrl}
+                        onChange={(e) =>
+                          setStopForm((f) => ({ ...f, dropoffMapsUrl: e.target.value }))
+                        }
+                      />
+                      <Input
+                        placeholder="Address"
+                        value={stopForm.dropoffAddressText}
+                        onChange={(e) =>
+                          setStopForm((f) => ({ ...f, dropoffAddressText: e.target.value }))
+                        }
+                      />
+                      <ContactPicker
+                        organizationId={null}
+                        name={stopForm.dropoffContactName}
+                        phone={stopForm.dropoffContactPhone}
+                        onChange={({ name, phone }) =>
+                          setStopForm((f) => ({
+                            ...f,
+                            dropoffContactName: name,
+                            dropoffContactPhone: phone,
+                          }))
+                        }
+                      />
+                      <Textarea
+                        rows={2}
+                        placeholder="Notes"
+                        value={stopForm.dropoffNotes}
+                        onChange={(e) =>
+                          setStopForm((f) => ({ ...f, dropoffNotes: e.target.value }))
+                        }
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs">Contact name</Label>
-                        <Input
-                          value={stopForm.contactName}
-                          onChange={(e) =>
-                            setStopForm((f) => ({ ...f, contactName: e.target.value }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Contact phone</Label>
-                        <Input
-                          value={stopForm.contactPhone}
-                          onChange={(e) =>
-                            setStopForm((f) => ({ ...f, contactPhone: e.target.value }))
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  </>
                 )}
-                <div>
-                  <Label className="text-xs">Notes</Label>
-                  <Textarea
-                    rows={2}
-                    value={stopForm.notes}
-                    onChange={(e) => setStopForm((f) => ({ ...f, notes: e.target.value }))}
-                  />
-                </div>
+
                 <Button type="submit" className="w-full" disabled={stopMutation.isPending}>
                   {editingStop ? "Save changes" : "Add stop"}
                 </Button>
               </form>
+
+              {editingStop && stopForm.kind === "animal" && (
+                <div className="space-y-3 rounded-xl border border-border/60 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Extra contacts
+                  </p>
+                  {!stopContactsQuery.data?.length ? (
+                    <p className="text-xs text-muted-foreground">
+                      No extra contacts yet — the pickup/dropoff contacts above cover most cases.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {stopContactsQuery.data.map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-start justify-between gap-2 rounded-lg bg-secondary/40 p-2"
+                        >
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {c.contact_name}
+                              {c.role_label && (
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                  ({c.role_label})
+                                </span>
+                              )}
+                            </div>
+                            {c.contact_phone && (
+                              <a
+                                href={`tel:${c.contact_phone}`}
+                                className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+                              >
+                                <Phone className="size-3" /> {c.contact_phone}
+                              </a>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            disabled={removeContactMutation.isPending}
+                            onClick={() => removeContactMutation.mutate(c.id)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      placeholder="Role"
+                      value={newContactRole}
+                      onChange={(e) => setNewContactRole(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Name"
+                      value={newContactName}
+                      onChange={(e) => setNewContactName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Phone"
+                      value={newContactPhone}
+                      onChange={(e) => setNewContactPhone(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={!newContactName.trim() || addContactMutation.isPending}
+                    onClick={() => addContactMutation.mutate()}
+                  >
+                    <UserPlus className="mr-1 size-4" /> Add contact
+                  </Button>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
         </div>
@@ -447,7 +777,7 @@ function RouteDetail() {
                     <div>
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <Badge variant="secondary" className="capitalize">
-                          {s.stop_type}
+                          {s.stop_type === "rest" ? "Rest" : "Animal"}
                         </Badge>
                         {s.animal_label || `${s.city ?? "?"}, ${s.country ?? "?"}`}
                       </div>
@@ -461,14 +791,33 @@ function RouteDetail() {
                           {new Date(s.planned_time).toLocaleString("en-GB")}
                         </div>
                       )}
-                      {s.address_text && <div className="text-xs">{s.address_text}</div>}
-                      {(s.contact_name || s.contact_phone) && (
-                        <div className="text-xs text-muted-foreground">
-                          {[s.contact_name, s.contact_phone].filter(Boolean).join(" · ")}
+                      {(s.pickup_address_text || s.pickup_contact_phone) && (
+                        <div className="mt-1 text-xs">
+                          <span className="font-medium">Pickup: </span>
+                          {s.pickup_address_text || "No address"}
+                          {s.pickup_contact_phone && (
+                            <a
+                              href={`tel:${s.pickup_contact_phone}`}
+                              className="ml-1 text-primary hover:underline"
+                            >
+                              {s.pickup_contact_phone}
+                            </a>
+                          )}
                         </div>
                       )}
-                      {s.notes && (
-                        <div className="mt-1 text-xs text-muted-foreground">{s.notes}</div>
+                      {(s.dropoff_address_text || s.dropoff_contact_phone) && (
+                        <div className="text-xs">
+                          <span className="font-medium">Dropoff: </span>
+                          {s.dropoff_address_text || "No address"}
+                          {s.dropoff_contact_phone && (
+                            <a
+                              href={`tel:${s.dropoff_contact_phone}`}
+                              className="ml-1 text-primary hover:underline"
+                            >
+                              {s.dropoff_contact_phone}
+                            </a>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

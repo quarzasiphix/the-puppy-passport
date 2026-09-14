@@ -523,16 +523,17 @@ function TripDetailPage() {
                         {...stopForm.register("pickupAddressText")}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                        <Input {...stopForm.register("pickupContactName")} />
-                      </div>
-                      <div>
-                        <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                        <Input {...stopForm.register("pickupContactPhone")} />
-                      </div>
-                    </div>
+                    <ContactPicker
+                      organizationId={companyId}
+                      name={stopForm.watch("pickupContactName")}
+                      phone={stopForm.watch("pickupContactPhone")}
+                      onChange={({ name, phone }) => {
+                        stopForm.setValue("pickupContactName", name);
+                        stopForm.setValue("pickupContactPhone", phone);
+                      }}
+                      nameLabel={t("transportCompanyPanel.trips.fieldContactName")}
+                      phoneLabel={t("transportCompanyPanel.trips.fieldContactPhone")}
+                    />
                     <div>
                       <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
                       <Textarea rows={2} {...stopForm.register("pickupNotes")} />
@@ -557,16 +558,17 @@ function TripDetailPage() {
                         {...stopForm.register("dropoffAddressText")}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>{t("transportCompanyPanel.trips.fieldContactName")}</Label>
-                        <Input {...stopForm.register("dropoffContactName")} />
-                      </div>
-                      <div>
-                        <Label>{t("transportCompanyPanel.trips.fieldContactPhone")}</Label>
-                        <Input {...stopForm.register("dropoffContactPhone")} />
-                      </div>
-                    </div>
+                    <ContactPicker
+                      organizationId={companyId}
+                      name={stopForm.watch("dropoffContactName")}
+                      phone={stopForm.watch("dropoffContactPhone")}
+                      onChange={({ name, phone }) => {
+                        stopForm.setValue("dropoffContactName", name);
+                        stopForm.setValue("dropoffContactPhone", phone);
+                      }}
+                      nameLabel={t("transportCompanyPanel.trips.fieldContactName")}
+                      phoneLabel={t("transportCompanyPanel.trips.fieldContactPhone")}
+                    />
                     <div>
                       <Label>{t("transportCompanyPanel.trips.fieldNotes")}</Label>
                       <Textarea rows={2} {...stopForm.register("dropoffNotes")} />

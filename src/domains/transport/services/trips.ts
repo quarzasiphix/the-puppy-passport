@@ -39,6 +39,23 @@ export async function listMyTrips(): Promise<TripRow[]> {
   return rows.sort((a, b) => TRIP_STATUS_SORT_WEIGHT[a.status] - TRIP_STATUS_SORT_WEIGHT[b.status]);
 }
 
+// Ops oversight (added 2026-09-14, "ops staff manage all trips"
+// 20260923000000_ops_staff_manage_all_trips.sql) — every company's trips, not just the caller's
+// own, with the owning organisation's name for display since a single ops list now spans many
+// companies. listMyTrips() itself stays untouched/company-scoped by its own RLS policy; this is a
+// separate query rather than overloading that name with role-dependent meaning.
+export type OpsTripRow = TripRow & { organisations: { name: string } | null };
+
+export async function listOpsTrips(): Promise<OpsTripRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("trips")
+    .select("*, organisations(name)")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as OpsTripRow[];
+}
+
 export async function getTrip(tripId: string): Promise<TripRow> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase.from("trips").select("*").eq("id", tripId).single();

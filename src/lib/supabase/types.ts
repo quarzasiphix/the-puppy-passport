@@ -4483,17 +4483,66 @@ export type Database = {
           },
         ]
       }
+      route_stop_contacts: {
+        Row: {
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          messenger_name: string | null
+          notes: string | null
+          role_label: string | null
+          route_stop_id: string
+          updated_at: string
+        }
+        Insert: {
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          messenger_name?: string | null
+          notes?: string | null
+          role_label?: string | null
+          route_stop_id: string
+          updated_at?: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          messenger_name?: string | null
+          notes?: string | null
+          role_label?: string | null
+          route_stop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_stop_contacts_route_stop_id_fkey"
+            columns: ["route_stop_id"]
+            isOneToOne: false
+            referencedRelation: "route_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       route_stops: {
         Row: {
-          address_text: string | null
           animal_label: string | null
           city: string | null
-          contact_name: string | null
-          contact_phone: string | null
           country: string | null
+          dropoff_address_text: string | null
+          dropoff_contact_name: string | null
+          dropoff_contact_phone: string | null
+          dropoff_maps_url: string | null
+          dropoff_notes: string | null
           id: string
-          maps_url: string | null
-          notes: string | null
+          pickup_address_text: string | null
+          pickup_contact_name: string | null
+          pickup_contact_phone: string | null
+          pickup_maps_url: string | null
+          pickup_notes: string | null
           planned_time: string | null
           route_id: string
           stop_order: number
@@ -4501,15 +4550,20 @@ export type Database = {
           transport_request_id: string | null
         }
         Insert: {
-          address_text?: string | null
           animal_label?: string | null
           city?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
           country?: string | null
+          dropoff_address_text?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          dropoff_notes?: string | null
           id?: string
-          maps_url?: string | null
-          notes?: string | null
+          pickup_address_text?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          pickup_notes?: string | null
           planned_time?: string | null
           route_id: string
           stop_order: number
@@ -4517,15 +4571,20 @@ export type Database = {
           transport_request_id?: string | null
         }
         Update: {
-          address_text?: string | null
           animal_label?: string | null
           city?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
           country?: string | null
+          dropoff_address_text?: string | null
+          dropoff_contact_name?: string | null
+          dropoff_contact_phone?: string | null
+          dropoff_maps_url?: string | null
+          dropoff_notes?: string | null
           id?: string
-          maps_url?: string | null
-          notes?: string | null
+          pickup_address_text?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          pickup_maps_url?: string | null
+          pickup_notes?: string | null
           planned_time?: string | null
           route_id?: string
           stop_order?: number
@@ -4903,6 +4962,76 @@ export type Database = {
             columns: ["requester_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transport_contacts: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          linked_organisation_id: string | null
+          name: string
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+          role_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          linked_organisation_id?: string | null
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          role_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          linked_organisation_id?: string | null
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          role_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transport_contacts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_contacts_linked_organisation_id_fkey"
+            columns: ["linked_organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transport_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
         ]

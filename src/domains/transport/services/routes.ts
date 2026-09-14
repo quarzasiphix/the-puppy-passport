@@ -85,6 +85,44 @@ export async function removeRouteStop(id: string) {
   if (error) throw error;
 }
 
+// A route stop's own pickup_contact_*/dropoff_contact_* columns cover the common case (one
+// contact per leg); route_stop_contacts holds any additional ones — exact mirror of
+// trips.ts's listStopContacts/addStopContact/removeStopContact for trip_stops.
+export type RouteStopContactRow = Database["public"]["Tables"]["route_stop_contacts"]["Row"];
+export type RouteStopContactInsert =
+  Database["public"]["Tables"]["route_stop_contacts"]["Insert"];
+
+export async function listRouteStopContacts(routeStopId: string): Promise<RouteStopContactRow[]> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("route_stop_contacts")
+    .select("*")
+    .eq("route_stop_id", routeStopId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as RouteStopContactRow[];
+}
+
+export async function addRouteStopContact(
+  routeStopId: string,
+  payload: Omit<RouteStopContactInsert, "route_stop_id">,
+): Promise<RouteStopContactRow> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("route_stop_contacts")
+    .insert({ ...payload, route_stop_id: routeStopId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as RouteStopContactRow;
+}
+
+export async function removeRouteStopContact(contactId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.from("route_stop_contacts").delete().eq("id", contactId);
+  if (error) throw error;
+}
+
 // Swaps this stop's position with its immediate neighbor in the given direction — the same
 // low-tech "move up/move down" pattern this codebase already uses elsewhere instead of a
 // drag-and-drop library, safe because stop_order only ever needs a strict order, not stable ids
