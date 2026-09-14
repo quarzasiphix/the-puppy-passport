@@ -804,103 +804,23 @@ function RouteDetail() {
         {!stopsQuery.data?.length ? (
           <p className="text-sm text-muted-foreground">No stops planned yet.</p>
         ) : (
-          <ol className="space-y-2">
+          <div className="space-y-3">
             {stopsQuery.data.map((s, i) => (
-              <li key={s.id} className="rounded-xl border border-border/70 p-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                    <div>
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        <Badge variant="secondary" className="capitalize">
-                          {s.stop_type === "rest" ? "Rest" : "Animal"}
-                        </Badge>
-                        {s.animal_label || `${s.city ?? "?"}, ${s.country ?? "?"}`}
-                      </div>
-                      {s.animal_label && (
-                        <div className="text-xs text-muted-foreground">
-                          {s.city ?? "?"}, {s.country ?? "?"}
-                        </div>
-                      )}
-                      {s.planned_time && (
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(s.planned_time).toLocaleString("en-GB")}
-                        </div>
-                      )}
-                      {(s.pickup_address_text || s.pickup_contact_phone) && (
-                        <div className="mt-1 text-xs">
-                          <span className="font-medium">Pickup: </span>
-                          {s.pickup_address_text || "No address"}
-                          {s.pickup_contact_phone && (
-                            <a
-                              href={`tel:${s.pickup_contact_phone}`}
-                              className="ml-1 text-primary hover:underline"
-                            >
-                              {s.pickup_contact_phone}
-                            </a>
-                          )}
-                        </div>
-                      )}
-                      {(s.dropoff_address_text || s.dropoff_contact_phone) && (
-                        <div className="text-xs">
-                          <span className="font-medium">Dropoff: </span>
-                          {s.dropoff_address_text || "No address"}
-                          {s.dropoff_contact_phone && (
-                            <a
-                              href={`tel:${s.dropoff_contact_phone}`}
-                              className="ml-1 text-primary hover:underline"
-                            >
-                              {s.dropoff_contact_phone}
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {s.stop_type !== "rest" && (
-                      <Link
-                        to="/dashboard/operations/routes/$id/stop/$stopId"
-                        params={{ id, stopId: s.id }}
-                      >
-                        <Button size="sm" variant="ghost">
-                          <Eye className="size-4" />
-                        </Button>
-                      </Link>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === 0 || moveStopMutation.isPending}
-                      onClick={() => moveStopMutation.mutate({ stopId: s.id, direction: "up" })}
-                    >
-                      <ChevronUp className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={i === stopsQuery.data.length - 1 || moveStopMutation.isPending}
-                      onClick={() => moveStopMutation.mutate({ stopId: s.id, direction: "down" })}
-                    >
-                      <ChevronDown className="size-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => openEditStop(s)}>
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      disabled={removeStopMutation.isPending}
-                      onClick={() => removeStopMutation.mutate(s.id)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              </li>
+              <RouteStopCard
+                key={s.id}
+                routeId={id}
+                stop={s}
+                isFirst={i === 0}
+                isLast={i === stopsQuery.data.length - 1}
+                onMoveUp={() => moveStopMutation.mutate({ stopId: s.id, direction: "up" })}
+                onMoveDown={() => moveStopMutation.mutate({ stopId: s.id, direction: "down" })}
+                onEdit={() => openEditStop(s)}
+                onRemove={() => removeStopMutation.mutate(s.id)}
+                moving={moveStopMutation.isPending}
+                removing={removeStopMutation.isPending}
+              />
             ))}
-          </ol>
+          </div>
         )}
       </section>
 
@@ -968,6 +888,142 @@ function RouteDetail() {
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+// A leg's "Open in Maps" is derived from mapsUrl when saved, or built on the fly from addressText
+// otherwise (buildMapsSearchUrl) — a stop saved before the address<->Maps auto-fill existed can
+// have an address with no maps_url yet, and this is exactly the button that should still work for
+// it rather than silently showing nothing.
+function StopLegSummary({
+  title,
+  mapsUrl,
+  addressText,
+  contactName,
+  contactPhone,
+}: {
+  title: string;
+  mapsUrl: string | null;
+  addressText: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+}) {
+  const resolvedMapsUrl = mapsUrl || (addressText ? buildMapsSearchUrl(addressText) : null);
+  if (!addressText && !contactPhone && !contactName) return null;
+  return (
+    <div className="flex-1 rounded-lg bg-secondary/40 p-2.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </p>
+      {addressText && <p className="mt-1 text-xs">{addressText}</p>}
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {resolvedMapsUrl && (
+          <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs">
+            <a href={resolvedMapsUrl} target="_blank" rel="noreferrer">
+              <MapPin className="mr-1 size-3" /> Maps
+            </a>
+          </Button>
+        )}
+        {contactPhone && (
+          <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs">
+            <a href={`tel:${contactPhone}`}>
+              <Phone className="mr-1 size-3" /> {contactName || contactPhone}
+            </a>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RouteStopCard({
+  routeId,
+  stop,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+  onEdit,
+  onRemove,
+  moving,
+  removing,
+}: {
+  routeId: string;
+  stop: RouteStopRow;
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onEdit: () => void;
+  onRemove: () => void;
+  moving: boolean;
+  removing: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-card p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Badge variant="secondary" className="capitalize">
+            {stop.stop_type === "rest" ? "Rest" : "Animal"}
+          </Badge>
+          {stop.animal_label || `${stop.city ?? "?"}, ${stop.country ?? "?"}`}
+          {stop.planned_time && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {new Date(stop.planned_time).toLocaleString("en-GB")}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {stop.stop_type !== "rest" && (
+            <Link
+              to="/dashboard/operations/routes/$id/stop/$stopId"
+              params={{ id: routeId, stopId: stop.id }}
+            >
+              <Button size="sm" variant="ghost">
+                <Eye className="size-4" />
+              </Button>
+            </Link>
+          )}
+          <Button size="sm" variant="ghost" disabled={isFirst || moving} onClick={onMoveUp}>
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button size="sm" variant="ghost" disabled={isLast || moving} onClick={onMoveDown}>
+            <ChevronDown className="size-4" />
+          </Button>
+          <Button size="sm" variant="ghost" onClick={onEdit}>
+            <Pencil className="size-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive"
+            disabled={removing}
+            onClick={onRemove}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      </div>
+
+      {stop.stop_type !== "rest" && (
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <StopLegSummary
+            title="Pickup"
+            mapsUrl={stop.pickup_maps_url}
+            addressText={stop.pickup_address_text}
+            contactName={stop.pickup_contact_name}
+            contactPhone={stop.pickup_contact_phone}
+          />
+          <StopLegSummary
+            title="Drop-off"
+            mapsUrl={stop.dropoff_maps_url}
+            addressText={stop.dropoff_address_text}
+            contactName={stop.dropoff_contact_name}
+            contactPhone={stop.dropoff_contact_phone}
+          />
+        </div>
+      )}
     </div>
   );
 }

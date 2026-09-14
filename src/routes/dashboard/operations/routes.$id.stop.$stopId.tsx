@@ -511,16 +511,20 @@ function StopLegCard({
         <div className="space-y-2">
           {addressText && <p className="text-sm">{addressText}</p>}
           <div className="flex flex-wrap gap-2">
-            {mapsUrl ? (
+            {mapsUrl || addressText ? (
               <Button asChild size="sm" variant="outline">
-                <a href={mapsUrl} target="_blank" rel="noreferrer">
+                {/* No saved link needed — a plain address still opens the right pin via
+                    buildMapsSearchUrl, same as a manually pasted link would. */}
+                <a
+                  href={mapsUrl || buildMapsSearchUrl(addressText!)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <MapPin className="mr-1 size-3.5" /> Open in Maps
                 </a>
               </Button>
             ) : (
-              !addressText && (
-                <span className="text-xs text-muted-foreground">No address saved</span>
-              )
+              <span className="text-xs text-muted-foreground">No address saved</span>
             )}
             {contactPhone && (
               <Button asChild size="sm" variant="outline">
