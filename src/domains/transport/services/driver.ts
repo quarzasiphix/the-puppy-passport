@@ -51,7 +51,7 @@ export async function listRouteStops(routeId: string) {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("route_stops")
-    .select("id, pickup_order, city, country, stop_type, planned_time")
+    .select("id, pickup_order, city, country, stop_type, pickup_time, dropoff_time")
     .eq("route_id", routeId)
     .order("pickup_order", { ascending: true });
   if (error) throw error;

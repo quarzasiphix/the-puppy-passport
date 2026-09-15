@@ -84,11 +84,13 @@ export const Route = createFileRoute("/dashboard/transport-company/trips/$tripId
 type StopFormValues = {
   animalLabel: string;
   microchipNumber: string;
+  pickupTime: string;
   pickupMapsUrl: string;
   pickupAddressText: string;
   pickupContactName: string;
   pickupContactPhone: string;
   pickupNotes: string;
+  dropoffTime: string;
   dropoffMapsUrl: string;
   dropoffAddressText: string;
   dropoffContactName: string;
@@ -99,11 +101,13 @@ type StopFormValues = {
 const EMPTY_STOP_FORM: StopFormValues = {
   animalLabel: "",
   microchipNumber: "",
+  pickupTime: "",
   pickupMapsUrl: "",
   pickupAddressText: "",
   pickupContactName: "",
   pickupContactPhone: "",
   pickupNotes: "",
+  dropoffTime: "",
   dropoffMapsUrl: "",
   dropoffAddressText: "",
   dropoffContactName: "",
@@ -152,11 +156,13 @@ function TripDetailPage() {
       addTripStop(tripId, {
         animal_label: values.animalLabel,
         microchip_number: values.microchipNumber || null,
+        pickup_time: values.pickupTime ? new Date(values.pickupTime).toISOString() : null,
         pickup_maps_url: values.pickupMapsUrl || null,
         pickup_address_text: values.pickupAddressText || null,
         pickup_contact_name: values.pickupContactName || null,
         pickup_contact_phone: values.pickupContactPhone || null,
         pickup_notes: values.pickupNotes || null,
+        dropoff_time: values.dropoffTime ? new Date(values.dropoffTime).toISOString() : null,
         dropoff_maps_url: values.dropoffMapsUrl || null,
         dropoff_address_text: values.dropoffAddressText || null,
         dropoff_contact_name: values.dropoffContactName || null,
@@ -631,6 +637,10 @@ function TripDetailPage() {
                       {t("transportCompanyPanel.trips.pickupSectionTitle")}
                     </p>
                     <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldTime")}</Label>
+                      <Input type="datetime-local" {...stopForm.register("pickupTime")} />
+                    </div>
+                    <div>
                       <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
                       <Input
                         placeholder="https://maps.google.com/…"
@@ -679,6 +689,10 @@ function TripDetailPage() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {t("transportCompanyPanel.trips.dropoffSectionTitle")}
                     </p>
+                    <div>
+                      <Label>{t("transportCompanyPanel.trips.fieldTime")}</Label>
+                      <Input type="datetime-local" {...stopForm.register("dropoffTime")} />
+                    </div>
                     <div>
                       <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
                       <Input
@@ -943,6 +957,7 @@ function TripDetailPage() {
 function ContactBlock({
   title,
   kind = "pickup",
+  time,
   mapsUrl,
   addressText,
   contactName,
@@ -951,6 +966,7 @@ function ContactBlock({
 }: {
   title: string;
   kind?: "pickup" | "dropoff";
+  time?: string | null;
   mapsUrl: string | null;
   addressText?: string | null;
   contactName: string | null;
@@ -979,7 +995,10 @@ function ContactBlock({
           : "flex-1 rounded-xl border-l-4 border-l-warning bg-warning/10 p-3"
       }
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+        {time && ` · ${new Date(time).toLocaleString("en-GB")}`}
+      </p>
       {addressText && (
         <button
           type="button"
@@ -1105,6 +1124,7 @@ function StopCard({
       <div className="mt-3 flex flex-col gap-3 sm:flex-row">
         <ContactBlock
           title={t("transportCompanyPanel.trips.pickupSectionTitle")}
+          time={stop.pickup_time}
           mapsUrl={stop.pickup_maps_url}
           addressText={stop.pickup_address_text}
           contactName={stop.pickup_contact_name}
@@ -1114,6 +1134,7 @@ function StopCard({
         <ContactBlock
           title={t("transportCompanyPanel.trips.dropoffSectionTitle")}
           kind="dropoff"
+          time={stop.dropoff_time}
           mapsUrl={stop.dropoff_maps_url}
           addressText={stop.dropoff_address_text}
           contactName={stop.dropoff_contact_name}
@@ -1286,6 +1307,35 @@ function StopDetailDialog({
     }
   };
 
+  // Same reasoning as the payment fields above — timestamptz in the DB, a sliced
+  // "YYYY-MM-DDTHH:mm" string in a datetime-local input, so its own small state/mutation.
+  const [pickupTime, setPickupTime] = useState(
+    stop.pickup_time ? stop.pickup_time.slice(0, 16) : "",
+  );
+  const [dropoffTime, setDropoffTime] = useState(
+    stop.dropoff_time ? stop.dropoff_time.slice(0, 16) : "",
+  );
+  useEffect(() => {
+    setPickupTime(stop.pickup_time ? stop.pickup_time.slice(0, 16) : "");
+    setDropoffTime(stop.dropoff_time ? stop.dropoff_time.slice(0, 16) : "");
+  }, [stop]);
+
+  const timeMutation = useMutation({
+    mutationFn: (patch: { pickup_time?: string | null; dropoff_time?: string | null }) =>
+      updateTripStop(stop.id, patch),
+    onSuccess: invalidateStops,
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err, t("transportCompanyPanel.trips.stopUpdateFailed"))),
+  });
+  const savePickupTime = () => {
+    const iso = pickupTime ? new Date(pickupTime).toISOString() : null;
+    if (iso !== stop.pickup_time) timeMutation.mutate({ pickup_time: iso });
+  };
+  const saveDropoffTime = () => {
+    const iso = dropoffTime ? new Date(dropoffTime).toISOString() : null;
+    if (iso !== stop.dropoff_time) timeMutation.mutate({ dropoff_time: iso });
+  };
+
   const contactsQuery = useQuery({
     queryKey: ["trip-stop-contacts", stop.id],
     queryFn: () => listStopContacts(stop.id),
@@ -1407,6 +1457,15 @@ function StopDetailDialog({
               {t("transportCompanyPanel.trips.pickupSectionTitle")}
             </p>
             <div>
+              <Label>{t("transportCompanyPanel.trips.fieldTime")}</Label>
+              <Input
+                type="datetime-local"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                onBlur={savePickupTime}
+              />
+            </div>
+            <div>
               <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
               <Input placeholder="https://maps.google.com/…" {...mapsUrlField("pickup_maps_url")} />
             </div>
@@ -1445,6 +1504,15 @@ function StopDetailDialog({
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("transportCompanyPanel.trips.dropoffSectionTitle")}
             </p>
+            <div>
+              <Label>{t("transportCompanyPanel.trips.fieldTime")}</Label>
+              <Input
+                type="datetime-local"
+                value={dropoffTime}
+                onChange={(e) => setDropoffTime(e.target.value)}
+                onBlur={saveDropoffTime}
+              />
+            </div>
             <div>
               <Label>{t("transportCompanyPanel.trips.fieldMapsUrl")}</Label>
               <Input

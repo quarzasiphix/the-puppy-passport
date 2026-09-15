@@ -110,6 +110,35 @@ function StopDetail({
     onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update this stop.")),
   });
 
+  // Pickup/dropoff time are timestamptz in the DB but a datetime-local input works in a sliced
+  // "YYYY-MM-DDTHH:mm" string, so — same reasoning as the payment fields on trips.$tripId.tsx —
+  // they get their own small state/mutation instead of the generic string-only field() above.
+  const [pickupTime, setPickupTime] = useState(
+    stop.pickup_time ? stop.pickup_time.slice(0, 16) : "",
+  );
+  const [dropoffTime, setDropoffTime] = useState(
+    stop.dropoff_time ? stop.dropoff_time.slice(0, 16) : "",
+  );
+  useEffect(() => {
+    setPickupTime(stop.pickup_time ? stop.pickup_time.slice(0, 16) : "");
+    setDropoffTime(stop.dropoff_time ? stop.dropoff_time.slice(0, 16) : "");
+  }, [stop]);
+
+  const timeMutation = useMutation({
+    mutationFn: (patch: { pickup_time?: string | null; dropoff_time?: string | null }) =>
+      updateRouteStop(stop.id, patch),
+    onSuccess: onStopChanged,
+    onError: (err) => toast.error(getFriendlyErrorMessage(err, "Could not update this stop.")),
+  });
+  const savePickupTime = () => {
+    const iso = pickupTime ? new Date(pickupTime).toISOString() : null;
+    if (iso !== stop.pickup_time) timeMutation.mutate({ pickup_time: iso });
+  };
+  const saveDropoffTime = () => {
+    const iso = dropoffTime ? new Date(dropoffTime).toISOString() : null;
+    if (iso !== stop.dropoff_time) timeMutation.mutate({ dropoff_time: iso });
+  };
+
   const field = (key: keyof typeof fields) => ({
     value: fields[key],
     onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -248,16 +277,14 @@ function StopDetail({
         <h1 className="font-display text-2xl font-medium">
           {stop.animal_label || `${stop.city ?? "?"}, ${stop.country ?? "?"}`}
         </h1>
-        {stop.planned_time && (
-          <p className="text-sm text-muted-foreground">
-            {new Date(stop.planned_time).toLocaleString("en-GB")}
-          </p>
-        )}
       </header>
 
       <StopLegCard
         title="Pickup"
         kind="pickup"
+        time={pickupTime}
+        onTimeChange={setPickupTime}
+        onTimeBlur={savePickupTime}
         mapsUrl={stop.pickup_maps_url}
         addressText={stop.pickup_address_text}
         contactName={stop.pickup_contact_name}
@@ -295,6 +322,9 @@ function StopDetail({
       <StopLegCard
         title="Drop-off"
         kind="dropoff"
+        time={dropoffTime}
+        onTimeChange={setDropoffTime}
+        onTimeBlur={saveDropoffTime}
         mapsUrl={stop.dropoff_maps_url}
         addressText={stop.dropoff_address_text}
         contactName={stop.dropoff_contact_name}
@@ -478,6 +508,9 @@ function StopDetail({
 function StopLegCard({
   title,
   kind,
+  time,
+  onTimeChange,
+  onTimeBlur,
   mapsUrl,
   addressText,
   contactName,
@@ -489,6 +522,9 @@ function StopLegCard({
 }: {
   title: string;
   kind: "pickup" | "dropoff";
+  time: string;
+  onTimeChange: (value: string) => void;
+  onTimeBlur: () => void;
   mapsUrl: string | null;
   addressText: string | null;
   contactName: string | null;
@@ -518,13 +554,22 @@ function StopLegCard({
           : "mb-6 rounded-2xl border border-border/70 border-l-4 border-l-warning bg-warning/10 p-5"
       }
     >
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </p>
-        <Button size="sm" variant="ghost" onClick={onToggleEdit}>
-          <Pencil className="mr-1 size-3.5" /> {editing ? "Done" : "Edit"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Input
+            type="datetime-local"
+            className="h-8 w-auto text-xs"
+            value={time}
+            onChange={(e) => onTimeChange(e.target.value)}
+            onBlur={onTimeBlur}
+          />
+          <Button size="sm" variant="ghost" onClick={onToggleEdit}>
+            <Pencil className="mr-1 size-3.5" /> {editing ? "Done" : "Edit"}
+          </Button>
+        </div>
       </div>
 
       {editing ? (

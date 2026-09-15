@@ -2161,6 +2161,7 @@
       "fieldNotes": "Notes",
       "fieldAnimalLabel": "Animal",
       "fieldAnimalLabelPlaceholder": "e.g. Bella (Golden Retriever)",
+      "fieldTime": "Time",
       "fieldMapsUrl": "Address (Google Maps link)",
       "fieldAddressText": "Address (text, optional)",
       "fieldAddressTextPlaceholder": "e.g. ul. Przykładowa 12, Warsaw",

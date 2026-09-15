@@ -88,7 +88,8 @@ type StopFormValues = {
   kind: StopKind;
   city: string;
   country: string;
-  plannedTime: string;
+  pickupTime: string;
+  dropoffTime: string;
   animalLabel: string;
   pickupMapsUrl: string;
   pickupAddressText: string;
@@ -106,7 +107,8 @@ const EMPTY_STOP_FORM: StopFormValues = {
   kind: "animal",
   city: "",
   country: "",
-  plannedTime: "",
+  pickupTime: "",
+  dropoffTime: "",
   animalLabel: "",
   pickupMapsUrl: "",
   pickupAddressText: "",
@@ -125,7 +127,8 @@ function stopFormFromRow(s: RouteStopRow): StopFormValues {
     kind: s.stop_type === "rest" ? "rest" : "animal",
     city: s.city ?? "",
     country: s.country ?? "",
-    plannedTime: s.planned_time ? s.planned_time.slice(0, 16) : "",
+    pickupTime: s.pickup_time ? s.pickup_time.slice(0, 16) : "",
+    dropoffTime: s.dropoff_time ? s.dropoff_time.slice(0, 16) : "",
     animalLabel: s.animal_label ?? "",
     pickupMapsUrl: s.pickup_maps_url ?? "",
     pickupAddressText: s.pickup_address_text ?? "",
@@ -245,7 +248,8 @@ function RouteDetail() {
         stop_type: values.kind === "rest" ? ("rest" as const) : ("pickup" as const),
         city: values.city || null,
         country: values.country || null,
-        planned_time: values.plannedTime ? new Date(values.plannedTime).toISOString() : null,
+        pickup_time: values.pickupTime ? new Date(values.pickupTime).toISOString() : null,
+        dropoff_time: values.dropoffTime ? new Date(values.dropoffTime).toISOString() : null,
         animal_label: values.kind === "animal" ? values.animalLabel || null : null,
         pickup_maps_url: values.pickupMapsUrl || null,
         pickup_address_text: values.pickupAddressText || null,
@@ -585,11 +589,13 @@ function RouteDetail() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Planned time</Label>
+                    <Label className="text-xs">
+                      {stopForm.kind === "rest" ? "Planned time" : "Pickup time"}
+                    </Label>
                     <Input
                       type="datetime-local"
-                      value={stopForm.plannedTime}
-                      onChange={(e) => setStopForm((f) => ({ ...f, plannedTime: e.target.value }))}
+                      value={stopForm.pickupTime}
+                      onChange={(e) => setStopForm((f) => ({ ...f, pickupTime: e.target.value }))}
                     />
                   </div>
                   <div>
@@ -713,6 +719,16 @@ function RouteDetail() {
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Dropoff
                       </p>
+                      <div>
+                        <Label className="text-xs">Drop-off time</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stopForm.dropoffTime}
+                          onChange={(e) =>
+                            setStopForm((f) => ({ ...f, dropoffTime: e.target.value }))
+                          }
+                        />
+                      </div>
                       <Input
                         placeholder="https://maps.google.com/…"
                         value={stopForm.dropoffMapsUrl}
@@ -1000,6 +1016,7 @@ function RouteDetail() {
 function StopLegSummary({
   title,
   kind,
+  time,
   mapsUrl,
   addressText,
   contactName,
@@ -1007,13 +1024,14 @@ function StopLegSummary({
 }: {
   title: string;
   kind: "pickup" | "dropoff";
+  time: string | null;
   mapsUrl: string | null;
   addressText: string | null;
   contactName: string | null;
   contactPhone: string | null;
 }) {
   const resolvedMapsUrl = mapsUrl || (addressText ? buildMapsSearchUrl(addressText) : null);
-  if (!addressText && !contactPhone && !contactName) return null;
+  if (!addressText && !contactPhone && !contactName && !time) return null;
 
   const copyAddress = async () => {
     if (!addressText) return;
@@ -1037,6 +1055,7 @@ function StopLegSummary({
     >
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
+        {time && ` · ${new Date(time).toLocaleString("en-GB")}`}
       </p>
       {addressText && (
         <button
@@ -1099,9 +1118,9 @@ function RouteStopCard({
             {stop.stop_type === "rest" ? "Rest" : "Animal"}
           </Badge>
           {stop.animal_label || `${stop.city ?? "?"}, ${stop.country ?? "?"}`}
-          {stop.planned_time && (
+          {stop.stop_type === "rest" && stop.pickup_time && (
             <span className="text-xs font-normal text-muted-foreground">
-              {new Date(stop.planned_time).toLocaleString("en-GB")}
+              {new Date(stop.pickup_time).toLocaleString("en-GB")}
             </span>
           )}
         </div>
@@ -1142,6 +1161,7 @@ function RouteStopCard({
           <StopLegSummary
             title="Pickup"
             kind="pickup"
+            time={stop.pickup_time}
             mapsUrl={stop.pickup_maps_url}
             addressText={stop.pickup_address_text}
             contactName={stop.pickup_contact_name}
@@ -1150,6 +1170,7 @@ function RouteStopCard({
           <StopLegSummary
             title="Drop-off"
             kind="dropoff"
+            time={stop.dropoff_time}
             mapsUrl={stop.dropoff_maps_url}
             addressText={stop.dropoff_address_text}
             contactName={stop.dropoff_contact_name}
